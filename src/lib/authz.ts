@@ -18,7 +18,10 @@ export type Subject = Pick<Viewer, "id" | "roles" | "departments">;
 export type Action =
   // Annual budgets (Part A)
   | "annual.view"
+  /** Pick a department on the form, joining it if needed (FR-03, FR-38). */
+  | "annual.start"
   | "annual.edit_draft"
+  | "annual.delete_draft"
   | "annual.submit"
   | "annual.revise"
   | "annual.decide"
@@ -137,7 +140,10 @@ const RULES: Record<Action, readonly Rule[]> = {
     { roles: BOARD, check: approvedOnly, readOnly: true },
     { roles: ["system_admin"], readOnly: true },
   ],
+  // Any requester may pick any department on the form; picking it makes them a representative.
+  "annual.start": [{ roles: ["requester"] }],
   "annual.edit_draft": [{ roles: ["requester"], check: ownDepartment }],
+  "annual.delete_draft": [{ roles: ["requester"], check: ownDepartment }],
   "annual.submit": [{ roles: ["requester"], check: ownDepartment }],
   "annual.revise": [{ roles: ["requester"], check: ownDepartment }],
   "annual.decide": [{ roles: ACCOUNTANTS, check: notOwnDepartment }],

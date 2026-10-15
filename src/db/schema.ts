@@ -309,6 +309,36 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: updatedAt(),
 });
 
+/**
+ * People who can sign church cheques (FR-53, 9.18a). Kept by the administrator; they
+ * need no app account. Never deleted: removing sets `active_until`, and payments keep
+ * the signer's id and a name snapshot.
+ */
+export const signingAuthorities = pgTable(
+  "signing_authorities",
+  {
+    id: id(),
+    name: text("name").notNull(),
+    email: text("email"),
+    activeFrom: date("active_from").notNull(),
+    activeUntil: date("active_until"),
+    removedReason: text("removed_reason"),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    version: version(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check("signing_authorities_name_length", sql`char_length(${t.name}) between 1 and 100`),
+    check(
+      "signing_authorities_dates",
+      sql`${t.activeUntil} is null or ${t.activeUntil} >= ${t.activeFrom}`,
+    ),
+  ],
+);
+
 /** Per-year counters for IFC-{year}-0001 and EXP-{year}-0001 (CLAUDE.md conventions). */
 export const referenceSequences = pgTable(
   "reference_sequences",
@@ -318,6 +348,27 @@ export const referenceSequences = pgTable(
     lastValue: integer("last_value").notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.kind, t.year] })],
+);
+
+/**
+ * Idempotency keys for submit, approve and pay actions (FR-10, CLAUDE.md conventions).
+ * The key comes from the form; a repeat (double click, retry) returns the first result.
+ */
+export const idempotencyKeys = pgTable(
+  "idempotency_keys",
+  {
+    key: uuid("key").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    /** e.g. "annual.submit". */
+    action: text("action").notNull(),
+    entityId: uuid("entity_id").notNull(),
+    /** What the first call returned, so a repeat returns the same. */
+    result: jsonb("result").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("idempotency_keys_created_idx").on(t.createdAt)],
 );
 
 // ---------------------------------------------------------------- annual budget requests (9.7, 9.8)

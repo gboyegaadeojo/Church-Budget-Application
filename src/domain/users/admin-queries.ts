@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, ne, or, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { departments, userDepartments, userRoles, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
@@ -89,6 +89,42 @@ export async function leaderCandidates(tx: Tx, requireVerified: boolean) {
     )
     .orderBy(asc(users.displayName));
   return rows;
+}
+
+export type AccountantMember = {
+  id: string;
+  name: string;
+  email: string;
+  /** Holds the accountant role, so can be the Primary. */
+  accountant: boolean;
+};
+
+/** Active people with the accountant or backup approver role (FR-33 Settings list). */
+export async function accountantTeam(tx: Tx): Promise<AccountantMember[]> {
+  const rows = await tx
+    .select({
+      id: users.id,
+      name: users.displayName,
+      email: users.email,
+      role: userRoles.role,
+    })
+    .from(users)
+    .innerJoin(userRoles, eq(userRoles.userId, users.id))
+    .where(
+      and(
+        inArray(userRoles.role, ["accountant", "backup_approver"]),
+        eq(users.active, true),
+        ne(users.accessStatus, "inactive"),
+      ),
+    )
+    .orderBy(asc(users.displayName));
+  const byId = new Map<string, AccountantMember>();
+  for (const r of rows) {
+    const member = byId.get(r.id) ?? { id: r.id, name: r.name, email: r.email, accountant: false };
+    if (r.role === "accountant") member.accountant = true;
+    byId.set(r.id, member);
+  }
+  return [...byId.values()];
 }
 
 /** Requesters who currently fail the Group Leader check (FR-01a Settings list). */

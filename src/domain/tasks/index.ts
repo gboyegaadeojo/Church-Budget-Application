@@ -1,4 +1,6 @@
+import { getDb } from "@/db";
 import type { Viewer } from "@/lib/roles";
+import { annualRequesterTasks, canHaveAnnualRequesterTasks } from "./annual";
 import type { Task, TaskProvider } from "./types";
 
 export type { Task, TaskProvider } from "./types";
@@ -6,8 +8,12 @@ export type { Task, TaskProvider } from "./types";
 /**
  * Providers are registered as each part of the app is built
  * (annual budgets in Stage 1, expenses in Stage 3, spending in Stage 4).
+ * Each skips the database for people it can have nothing for.
  */
-export const taskProviders: TaskProvider[] = [];
+export const taskProviders: TaskProvider[] = [
+  async (viewer) =>
+    canHaveAnnualRequesterTasks(viewer) ? annualRequesterTasks(getDb(), viewer) : [],
+];
 
 /**
  * Everything waiting for this person across all their roles, oldest first (FR-37).

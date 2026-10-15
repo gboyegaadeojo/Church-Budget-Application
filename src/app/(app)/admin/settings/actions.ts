@@ -2,7 +2,9 @@
 
 import { adminCopy } from "@/copy/admin";
 import { RuleError } from "@/domain/errors";
+import { addSigner, editSigner, removeSigner } from "@/domain/signers/service";
 import {
+  setPrimaryAccountant,
   testPerson,
   updateSignInSettings,
   updateTaxRate,
@@ -16,6 +18,66 @@ import { getPlanningCenterDirectory } from "@/lib/pco-directory";
 
 const s = adminCopy.settings;
 const PAGE = "/admin/settings";
+
+export async function primaryAccountantAction(
+  _: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await setPrimaryAccountant(tx, viewer, {
+        userId: form.text(data, "userId"),
+        versions: form.json(data, "versions"),
+      });
+      return s.accountants.saved;
+    },
+    { paths: [PAGE] },
+  );
+}
+
+export async function addSignerAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      const signer = await addSigner(tx, viewer, {
+        name: form.text(data, "name"),
+        email: form.text(data, "email"),
+        activeFrom: form.text(data, "activeFrom"),
+      });
+      return s.signers.added(signer.name);
+    },
+    { paths: [PAGE] },
+  );
+}
+
+export async function editSignerAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await editSigner(tx, viewer, {
+        id: form.text(data, "id"),
+        version: form.text(data, "version"),
+        name: form.text(data, "name"),
+        email: form.text(data, "email"),
+      });
+      return s.signers.edited;
+    },
+    { paths: [PAGE] },
+  );
+}
+
+export async function removeSignerAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await removeSigner(tx, viewer, {
+        id: form.text(data, "id"),
+        version: form.text(data, "version"),
+        removeFrom: form.text(data, "removeFrom"),
+        reason: form.text(data, "reason"),
+      });
+      return s.signers.removed;
+    },
+    { paths: [PAGE] },
+  );
+}
 
 export async function taxRateAction(_: ActionState, data: FormData): Promise<ActionState> {
   return runAction(

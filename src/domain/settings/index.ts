@@ -26,6 +26,8 @@ export const SETTING_DEFAULTS = {
   signin_planning_center_enabled: "true",
   /** Shown on access-denied screens as who to contact (DRD 6.1a). */
   admin_contact_email: "",
+  /** FR-33: who gets the accountant emails; other accountant-role holders are backups. */
+  primary_accountant_user_id: "",
 } as const;
 
 export type SettingKey = keyof typeof SETTING_DEFAULTS;

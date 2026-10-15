@@ -213,10 +213,11 @@ You can **see everything** but cannot approve or pay unless you are also given t
 Tax rate (applies to new submissions only), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), email settings, sign-in options (Google, Planning Center, email), backup reminder delay, and the weekly audit summary email.
 
 - **Sales tax**: type the new rate (for example 12 or 12.5) and confirm. Requests already submitted keep the rate they were submitted with.
+- **Accountants**: more than one person can have the Accountant role (give it in Users & Roles). Choose the **Primary accountant**, who gets the accountant emails; everyone else with the Accountant or Backup approver role is a backup approver. If the Primary accountant loses the role or is deactivated, choose a new one here.
 - **Church time zone**: deadlines, release times and emails use it (default America/Winnipeg).
 - **Sign-in and Planning Center**: the contact email shown to people who can't sign in, which sign-in buttons appear, the custom field and the values that count as a Group Leader, and which roles need the check. Use **Test a person** to try the field and values on someone before you save. The **Requesters failing verification** list shows who is suspended or not yet verified.
 
-**Signing authorities**: **Add signer** when someone can sign cheques; **Remove** when they no longer can. Removed signers stay on past payments. Keep at least two active.
+**Signing authorities**: the people who can sign church cheques. They don't need an account in the app. **Add signer** when someone can sign cheques (name, optional email, and the date they start). To fix a spelling or remove someone, open **Edit {name}**; **Remove** takes the date they stop and an optional reason. Removed signers stay on the list and on every payment they signed. When the Church Administrator records a cheque payment, she picks the two people who signed from this list, so keep at least two active; the page warns you when fewer remain.
 
 ### Keeping it healthy
 

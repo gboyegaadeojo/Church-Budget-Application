@@ -5,6 +5,7 @@ import { userRoles, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { promoteBackupsWhenPrimaryLeaves } from "@/domain/departments/service";
 import { ConflictError, parseInput, RuleError, ValidationError } from "@/domain/errors";
+import { clearPrimaryAccountantIf } from "@/domain/settings/service";
 import { writeAudit, type AuditActor } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
 import { ROLES, type Role } from "@/lib/roles";
@@ -171,6 +172,14 @@ export async function setUserRoles(
       "Primary lost the Requester role",
     );
   }
+  if (removed.includes("accountant")) {
+    await clearPrimaryAccountantIf(
+      tx,
+      user.id,
+      actorOf(actor, actingRole),
+      "the Primary accountant lost the Accountant role",
+    );
+  }
   // TODO(step 7): email the person about the role change (DRD 7.5).
 }
 
@@ -212,6 +221,12 @@ export async function setUserActive(
       user.id,
       actorOf(actor, actingRole),
       "Primary was deactivated",
+    );
+    await clearPrimaryAccountantIf(
+      tx,
+      user.id,
+      actorOf(actor, actingRole),
+      "the Primary accountant was deactivated",
     );
   }
   return { name: user.displayName };

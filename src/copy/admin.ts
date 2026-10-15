@@ -303,6 +303,62 @@ export const adminCopy = {
     failingEmpty: "Every requester passes the Group Leader check.",
     failingSuspended: "Suspended",
     failingUnverified: "Not verified",
+    accountants: {
+      heading: "Accountants",
+      intro:
+        "Choose the Primary accountant. Everyone else with the Accountant or Backup approver role is a backup approver and covers when the Primary is away.",
+      primary: "Primary accountant",
+      choose: "Choose the Primary accountant",
+      save: "Save Primary accountant",
+      saved: "Primary accountant saved.",
+      primaryBadge: "Primary accountant",
+      backupBadge: "Backup approver",
+      noPrimary: "No Primary accountant is set. Accountant emails have nowhere to go.",
+      empty: "Nobody has the Accountant role yet. Give it to someone in Users & Roles.",
+      usersLink: "Go to Users & Roles",
+      errors: {
+        notAccountant: "Choose someone who has the Accountant role and an active account.",
+      },
+    },
+    signers: {
+      heading: "Signing authorities",
+      intro:
+        "People who can sign church cheques. When a payment is made by cheque, the two people who signed it are chosen from this list. They don't need an account in the app.",
+      columns: { name: "Name", email: "Email", activeFrom: "Active from", status: "Status" },
+      active: "Active",
+      inactiveFrom: (date: string) => `Inactive from ${date}`,
+      fewerThanTwo: (n: number) =>
+        n === 0
+          ? "There are no active signers. Cheque payments need two signers."
+          : "Only one signer is active. Cheque payments need two signers.",
+      empty: "No signers yet. Add the people who can sign church cheques.",
+      addHeading: "Add a signer",
+      name: "Name",
+      email: "Email",
+      activeFromLabel: "Active from",
+      activeFromHint: "Leave empty to start today.",
+      add: "Add signer",
+      added: (name: string) => `${name} was added.`,
+      edit: "Save",
+      edited: "Signer updated.",
+      editLabel: (name: string) => `Edit ${name}`,
+      remove: "Remove",
+      removeFrom: "Inactive from",
+      removeFromHint: "Past payments they signed keep their name.",
+      removeReason: "Reason",
+      removeTitle: (name: string) => `Remove ${name} as a signer?`,
+      removeBody:
+        "They won't be offered when a cheque payment is recorded from that date. Payments they already signed keep their name.",
+      removed: "Signer removed.",
+      errors: {
+        nameRequired: "Enter the signer's name.",
+        nameTooLong: "Keep the name to 100 characters or fewer.",
+        email: "Enter a valid email address, or leave it empty.",
+        date: "Enter a valid date.",
+        removeBeforeStart: "The date can't be before the signer became active.",
+        alreadyRemoved: "This signer has already been removed.",
+      },
+    },
     errors: {
       taxRate: "Enter a rate between 0 and 100, with up to 2 decimals (for example 12 or 12.5).",
       timeZone: "Choose a time zone from the list.",

@@ -1,11 +1,11 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { adminCopy } from "@/copy/admin";
-import { appSettings } from "@/db/schema";
+import { appSettings, userRoles, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { ConflictError, parseInput, RuleError, ValidationError } from "@/domain/errors";
 import { checkLeader, type LeaderCheck } from "@/domain/users/leader-check";
-import { changedFields, writeAudit } from "@/lib/audit";
+import { changedFields, writeAudit, type AuditActor } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
 import { formatTaxRate, percentToTaxRate } from "@/lib/money";
 import type { PcoPerson, PlanningCenterDirectory } from "@/lib/pco";
@@ -180,6 +180,66 @@ export async function updateSignInSettings(
     input.versions,
     "admin.signin_settings_changed",
   );
+}
+
+// ---------------------------------------------------------------- Primary accountant (FR-33)
+
+/** Marks one accountant as Primary; everyone else with an accountant role is a backup. */
+export async function setPrimaryAccountant(
+  tx: Tx,
+  actor: Subject,
+  input: { userId: string; versions: Record<string, unknown> },
+): Promise<void> {
+  assertCan(actor, "admin.settings");
+  const userId = (input.userId ?? "").trim();
+  const [person] = z.uuid().safeParse(userId).success
+    ? await tx
+        .select({ id: users.id, active: users.active, status: users.accessStatus })
+        .from(users)
+        .innerJoin(userRoles, eq(userRoles.userId, users.id))
+        .where(and(eq(users.id, userId), eq(userRoles.role, "accountant")))
+        .limit(1)
+    : [];
+  if (!person || !person.active || person.status === "inactive") {
+    throw new ValidationError({ userId: s.accountants.errors.notAccountant });
+  }
+  await writeSettings(
+    tx,
+    actor,
+    { primary_accountant_user_id: userId },
+    input.versions,
+    "admin.primary_accountant_changed",
+  );
+}
+
+/**
+ * Clears the Primary accountant when that person loses the accountant role or is
+ * deactivated, so emails never go to someone who can't act. Audited as automatic.
+ */
+export async function clearPrimaryAccountantIf(
+  tx: Tx,
+  userId: string,
+  actor: AuditActor,
+  why: string,
+): Promise<void> {
+  const { primary_accountant_user_id } = await readSettings(tx, ["primary_accountant_user_id"]);
+  if (primary_accountant_user_id !== userId) return;
+  await tx
+    .update(appSettings)
+    .set({ value: "", updatedAt: new Date(), version: sql`${appSettings.version} + 1` })
+    .where(eq(appSettings.key, "primary_accountant_user_id"));
+  await writeAudit(tx, {
+    actor,
+    area: "admin",
+    eventType: "admin.primary_accountant_cleared",
+    entity: { type: "setting", id: "primary_accountant_user_id" },
+    reason: `Automatic: ${why}`,
+    details: {
+      before: { primary_accountant_user_id: userId },
+      after: { primary_accountant_user_id: "" },
+    },
+  });
+  // TODO(step 7): email the administrators to choose a new Primary accountant.
 }
 
 // ---------------------------------------------------------------- test a person

@@ -104,6 +104,18 @@ Record any choice the specs leave open, and any deviation from them.
 - **The custom-field picker** lists Planning Center's People fields when it can reach Planning Center. Otherwise it falls back to a text box, so the setting can still be changed during an outage.
 - **"Test a person"** sends the Save form's current values to a separate action, so it tests the field and values as typed, before they're saved (AC-11). It runs outside a form submission, because React 19 resets a form after a form action and would wipe the unsaved changes. It looks up personal information, so every test is audited.
 
+## Stage 1, step 5a: annual request services
+
+- **Drafts use the tax rate in Settings**, not the cycle's `default_tax_rate`. FR-07a says the administrator's rate applies to drafts and new submissions, and it is snapshotted on the request at submission (AC-34). Drafts store no amounts; totals are calculated when the draft is shown.
+- **Drafts may hold unfinished lines.** Autosave never fails because a row is half-typed: an empty quantity counts as 1, an empty price as $0.00, and fully blank rows are dropped. Anything typed must still be valid (a quantity of 0, a negative price or a non-http link is refused). Submission adds the rest: a title, a justification, at least one item, item names, and a note on any $0.00 item (rule 8).
+- **Deleting a draft (FR-05).** Only a draft that was never submitted can be deleted. It is audited first, with its content. Draft events (started, saved, deleted) name the request in `entity_id` but leave the `budget_request_id` link empty, because that foreign key would block the deletion. From submission on, events are linked and the request can never be deleted. A request sent back to Draft because its proposed department was rejected keeps its history and can't be deleted.
+- **Picking a department on the form (FR-03, FR-38).** Picking a department joins the person as its Primary if it has none, otherwise as a Representative (`source = form_pick`, audited). Only verified Group Leaders may join while the Planning Center check is on. Typing a name that already exists, in any case, reuses that department; a new name creates a Proposed department. If the department already has a request this cycle, the person is sent to it, so there is still one request per department per cycle.
+- **Proposed departments can submit.** "Only active departments take new submissions" is read as excluding inactive departments. A request for a Proposed department can be submitted and is labelled until the administrator decides (FR-03); the accountant can't decide it until then (step 6).
+- **A revision with no changes is refused** and uses no edit (FR-12: only a confirmed change uses one). Answering a clarification may have no changes and never uses an edit (AC-42).
+- **Deadline.** Submission is refused after the department's deadline (its extension if any, otherwise the cycle's). Revisions after the deadline are allowed, because they are limited by the two edits and the accountant may ask for changes.
+- **Idempotency keys** (`idempotency_keys`, migration `0006`) belong to one person and one action. A repeat returns the stored first result; a key reused by someone else, or for another action, is refused.
+- **Emails are deferred to step 7.** The receipt, the accountant notice, the revision notice and the administrator's "someone joined" or "new department proposed" emails are marked `TODO(step 7)` where the outbox row will be written.
+
 ## Up to two ranked Backups per department (2026-10-15)
 
 - **A department can have a Primary, Backup 1 and Backup 2** (FR-38, AC-116, AC-120 updated). Some departments run at two locations and have three people who request on their behalf. Representatives were already unlimited and can already request (FR-32); the second Backup adds a second person who covers and takes over.
@@ -111,6 +123,13 @@ Record any choice the specs leave open, and any deviation from them.
 - **Stored as `user_departments.backup_rank`** (1 or 2, only on Backup rows), with a unique index per department and rank and a check that ties rank to type (migration `0004_backup_ranks`, which makes existing Backups Backup 1). In code a leader's place is one "slot" (`src/domain/departments/slots.ts`).
 - **Changing places:** giving someone a place that's taken makes its holder a Representative. When a leader moves into another leader's place, the two swap (for example, Make Backup 1 on Backup 2).
 - **Escalations and Away (Stage 2, FR-33, FR-38)** go to both Backups.
+
+## Several accountants and cheque signers, set up in Admin now (2026-10-15)
+
+- **Several accountants, one Primary (FR-33 as written).** Any number of people can hold the Accountant or Backup approver role. The administrator picks the Primary accountant in Admin → Settings → Accountants; everyone else is a backup approver. It's stored as the `primary_accountant_user_id` setting, version-checked and audited like other settings. If that person loses the Accountant role or is deactivated, the setting is cleared automatically (audited as `admin.primary_accountant_cleared`) and the page warns until a new Primary is chosen. Away and email routing still arrive with FR-33 (Stage 2) and the outbox (step 7).
+- **Cheque signers are a list, not a role (FR-53).** The people who sign cheques are often board members or a treasurer who never use the app, so they don't need an account. The administrator keeps them in Admin → Settings → Signing authorities: name, optional email, active from, and (when removed) the date they stop plus an optional reason. `active_until` is the first day a signer may no longer sign.
+- **Built now, used in Stage 3.** The list is ready before Record payment (6B.5), which will offer only active signers, require two different people on every cheque (AC-76, AC-135), and keep each signer's id and name snapshot on the payment.
+- **Signers are never deleted.** A database trigger refuses DELETE on `signing_authorities` (migration `0005_signing_authorities`), so every past payment can still name who signed it.
 
 ## No two-step verification requirement (2026-10-15)
 

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { daysWaiting, getMyTasks, type Task, type TaskProvider } from "@/domain/tasks";
+import {
+  daysWaiting,
+  getMyTasks,
+  taskProviders,
+  type Task,
+  type TaskProvider,
+} from "@/domain/tasks";
 import type { Viewer } from "@/lib/roles";
 
 const viewer: Viewer = {
@@ -34,8 +40,11 @@ describe("getMyTasks", () => {
     expect(await getMyTasks(viewer, [provider(), provider()])).toEqual([]);
   });
 
-  it("is empty with the registered providers while none exist yet", async () => {
-    expect(await getMyTasks(viewer)).toEqual([]);
+  it("registered providers return nothing, without the database, for people they don't apply to", async () => {
+    // Annual requester tasks need a department; their queries are covered by integration tests.
+    const accountant: Viewer = { ...viewer, roles: ["accountant"], departments: [] };
+    expect(taskProviders).toHaveLength(1);
+    expect(await getMyTasks(accountant)).toEqual([]);
   });
 
   it("merges every provider and lists the oldest first", async () => {

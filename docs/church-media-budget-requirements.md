@@ -1393,7 +1393,7 @@ The Church Administrator and accountant see, for the selected cycle:
 
 ## FR-33: Backup Approver
 
-- More than one user can hold the accountant role. The administrator marks one as **Primary accountant** and others as **Backup approver**.
+- More than one user can hold the accountant role. The administrator marks one as **Primary accountant** in Admin → Settings → Accountants; everyone else with the Accountant or Backup approver role is a **Backup approver**. If the Primary accountant loses the Accountant role or is deactivated, the setting is cleared and the administrator chooses a new one.
 - The primary accountant can set **Away** (with optional dates). While away, accountant emails go to the backup approver(s), and the dashboards show who is covering.
 - Backup approvers have the same permissions as the accountant.
 - Nobody can approve, decline, or adjust a request for a department they are assigned to as a representative. Such requests are routed to another accountant-role user, and the review screen explains why.
@@ -1475,7 +1475,7 @@ Confirmed by G (2026-10-15): departments are tagged in Planning Center the same 
 
 ## FR-53: Cheque Signing Authorities
 
-- The administrator keeps the list of people who can sign church cheques on Admin → Settings → **Signing authorities**: name, optional email, and active from and to dates.
+- The administrator keeps the list of people who can sign church cheques on Admin → Settings → **Signing authorities**: name, optional email, and active from and to dates. Signers don't need an app account. The list is built in Stage 1 (Admin), so it's ready before Record payment uses it in Stage 3.
 - **Add** a signer at any time. **Remove** marks them inactive from a date (with an optional reason); they disappear from the Record payment dialog but stay on every past payment they signed. Signers are never deleted (CLAUDE.md rule 6).
 - A signer can be edited (for example a name spelling); past payments keep the name as it was when recorded.
 - Record payment (6B.5) offers only active signers and requires two different people for a cheque.
