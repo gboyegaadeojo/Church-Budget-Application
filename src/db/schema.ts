@@ -350,6 +350,27 @@ export const referenceSequences = pgTable(
   (t) => [primaryKey({ columns: [t.kind, t.year] })],
 );
 
+/**
+ * Idempotency keys for submit, approve and pay actions (FR-10, CLAUDE.md conventions).
+ * The key comes from the form; a repeat (double click, retry) returns the first result.
+ */
+export const idempotencyKeys = pgTable(
+  "idempotency_keys",
+  {
+    key: uuid("key").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    /** e.g. "annual.submit". */
+    action: text("action").notNull(),
+    entityId: uuid("entity_id").notNull(),
+    /** What the first call returned, so a repeat returns the same. */
+    result: jsonb("result").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("idempotency_keys_created_idx").on(t.createdAt)],
+);
+
 // ---------------------------------------------------------------- annual budget requests (9.7, 9.8)
 
 export const budgetRequests = pgTable(

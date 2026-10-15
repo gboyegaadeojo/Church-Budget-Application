@@ -64,6 +64,13 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     OWN,
     ["act", "no", "no", "no", "no", "no", "no"],
   ],
+  [
+    "start a budget for any department (FR-03)",
+    "annual.start",
+    YOUTH,
+    ["act", "no", "no", "no", "no", "no", "no"],
+  ],
+  ["delete a draft", "annual.delete_draft", OWN, ["act", "no", "no", "no", "no", "no", "no"]],
   ["submit a budget request", "annual.submit", OWN, ["act", "no", "no", "no", "no", "no", "no"]],
   ["edit a submitted request", "annual.revise", OWN, ["act", "no", "no", "no", "no", "no", "no"]],
   [
@@ -279,6 +286,9 @@ describe("multi-role users (union of roles)", () => {
 describe("System Administrator", () => {
   const admin = who(["system_admin"]);
   const MONEY_ACTIONS: Action[] = [
+    "annual.start",
+    "annual.edit_draft",
+    "annual.delete_draft",
     "annual.submit",
     "annual.revise",
     "annual.decide",
