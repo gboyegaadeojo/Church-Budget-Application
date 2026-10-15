@@ -14,7 +14,7 @@
 |---|---|---|
 | 1.0 | — | Initial design baseline from the church. |
 | 1.1–2.3 | 2026-10-15 | Contrast fixes; 3-step form with sticky totals; full status vocabulary; role navigation; money formatting; branding; English only; email set; messages; Annual Budget vs Expenses areas; Planning Center sign-in states; "Other" department; scheduled decision release; two-level expense approval; Ready to process and Record payment. Appendix A lists the v1.0 → v1.1 review changes. |
-| 3.3 | 2026-10-15 | Primary and Backup requester chips and cover banner; Planning Center mapping on Departments; Analytics & Audit dashboard (6.13); global search and breadcrumbs for easier navigation. |
+| 3.3 | 2026-10-15 | Continue with email on sign-in; Change deadline and extensions; Signing authorities screen. Also: Primary and Backup requester chips and cover banner; Planning Center mapping on Departments; Analytics & Audit dashboard (6.13); global search and breadcrumbs for easier navigation. |
 | 3.2 | 2026-10-15 | Reopen action, board total vs allocated indicator, "How will this be bought" on purchase requests. |
 | 3.1 | 2026-10-15 | One application: Home with My tasks across roles, navigation grouped by area, Vice-Chair, administrator read-only views of everything. |
 | 3.0 | 2026-10-15 | Consolidated for build: "(new)" markers removed, navigation cleaned, open questions resolved into decisions. No design changes. |
@@ -545,7 +545,7 @@ Include:
 - Church application identity.
 - Clear product name.
 - Short description of the application.
-- **Continue with Planning Center** and **Continue with Google** buttons, equal size, stacked, each following its brand guidelines. A line underneath: "Department leaders: your Group Leader status in Planning Center is checked when you sign in."
+- **Continue with Planning Center** and **Continue with Google** buttons, equal size, stacked, each following its brand guidelines, then a quieter **Continue with email** text button (FR-01b) that opens an email field, then a 6-digit code field (one input with `autocomplete="one-time-code"`, paste-friendly), then for staff an authenticator code step. A line underneath: "Department leaders: your Group Leader status in Planning Center is checked when you sign in."
 - Access restriction explanation where appropriate.
 - Helpful access-request instructions.
 - Short privacy note (what is stored: name, email, budget data).
@@ -947,7 +947,8 @@ Export controls must remain unavailable to unauthorized users; the Church Admini
 
 - **Users & Roles:** searchable table, role chips, department assignments, active toggle; confirmation for deactivation.
 - **Departments:** list with active toggle, rename, and a **Leaders** column showing the Primary and Backup requester as chips ("Primary · Sam Lee", "Backup · Ada Obi") or a warning-tone "No backup" badge, with a filter for it. A department's page has **Set Primary**, **Set Backup** and **Make Primary** actions (confirmation dialog), and a **Planning Center** panel: source picker (Services team, Groups group or tag, custom field value) loaded from Planning Center, mode (Suggest / Automatic), "Team leaders count as Group Leaders" toggle, last sync time, **Sync now**, and the suggestions list with **Add as Primary / Backup / Representative** and **Ignore**. People no longer leaders in Planning Center show a "No longer a team leader" badge. Rename shows a history note: "Past requests keep the old name"; **Add departments** dialog with a paste-a-list option; a **Proposed** tab with a badge count, each row showing the typed name, who proposed it, the linked submission, close matches, and actions **Add to list**, **Merge into…**, **Reject** (reason required).
-- **Budget cycles:** status (Draft / Open / Closed), deadline, spending period end, lock state.
+- **Budget cycles:** status (Draft / Open / Closed), deadline with **Change deadline** (date, reason, preview of who will be emailed), per-department **Extensions** list with **Give extension**, spending period end, lock state.
+- **Signing authorities** (FR-53): table of name, email, active from, status; **Add signer**; **Remove** (date and optional reason, confirmation); warning banner when fewer than two are active.
 - **Planning Center:** connection status and last sync; custom field picker and accepted values; **Test a person** search showing pass/fail with the reason; toggles for which roles require verification and which sign-in buttons appear; list of requesters failing verification.
 - **Branding:** logo, church name, application name, accent color with live preview and contrast check (see 3.8).
 - **Settings:** sales tax rate (with warning: "Changes apply to new submissions only"), near-limit threshold, accountant notification email, sender address, monthly summary toggle.
