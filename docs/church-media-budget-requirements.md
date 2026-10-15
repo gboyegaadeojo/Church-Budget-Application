@@ -4,9 +4,9 @@
 **Document type:** Product Requirements Document (PRD) and Software Requirements Specification (SRS)
 **Organization:** Immanuel Fellowship Church (IFC)
 **Product:** Church Media Budget Submission and Approval System
-**Version:** 3.2
+**Version:** 3.3
 **Status:** Final requirements for build
-**Companion documents:** [Design Requirements (DRD)](church-media-budget-design.md) · [README](../README.md) · [Build guide for Claude Code](../CLAUDE.md)
+**Companion documents:** [Design Requirements (DRD)](church-media-budget-design.md) · [User manual](user-manual.md) · [Go-live checklist](go-live-checklist.md) · [README](../README.md) · [Build guide for Claude Code](../CLAUDE.md)
 **Currency:** Canadian dollars (CAD)
 **Sales tax:** 12% on every total, one combined line, no exempt items (FR-07a)
 **Language:** English (Canada) only
@@ -19,6 +19,7 @@
 |---|---|---|
 | 1.0 | — | Initial baseline from the church. |
 | 1.1–2.5 | 2026-10-15 | 12% sales tax; spending tracking; branding; complete email notifications; shared department requests and backup approver; Part A (annual budget, approved amount incl. tax) vs Part B (expense submissions); Planning Center sign-in and Group Leader check; scheduled decision release and "Other" department; free-tier stack; two-level expense approval with Board Chair and Church Administrator payment processing. |
+| 3.3 | 2026-10-15 | Primary and backup requester per department (FR-38); Planning Center team mapping for departments (FR-39); Activity, audit and analytics dashboard with a complete activity log (FR-52, FR-22 extended); AC-116 to AC-130; go-live checklist (Section 21) and user manual (Section 22). |
 | 3.2 | 2026-10-15 | Completeness check: added reopen workflow (FR-18a), board-approved church total per cycle (4.2), "how will this be bought" on purchase requests (FR-40), privacy requests (FR-36), two-step verification for staff (10.1); refreshed page list (Section 8) and requester navigation (7.2) to match the one-app design. |
 | 3.1 | 2026-10-15 | One application for all roles with a single sign-in and a combined "My tasks" home (FR-37); Vice-Chair named as the backup board approver; System Administrator can see everything, read-only. |
 | 3.0 | 2026-10-15 | Consolidated for build: roles reordered, authorization matrix includes all roles, FR index added, acceptance criteria renumbered AC-1 onward in one section, delivery plan rewritten as stages, decisions log merged. No requirement changes. |
@@ -37,6 +38,8 @@
 | Acceptance criteria (AC-1 onward) | Section 14 |
 | Delivery stages | Section 15 |
 | Decisions, open items, tech stack, handover | Section 20 |
+| Go-live checklist (every tool, account and integration) | Section 21 and [go-live-checklist.md](go-live-checklist.md) |
+| User manual (how to use the app, by role) | Section 22 and [user-manual.md](user-manual.md) |
 
 ### Two parts of the application
 
@@ -221,6 +224,8 @@ A department representative is an authorized church user responsible for prepari
 
 A user assigned to multiple departments may submit for each assigned department.
 
+Each department has one **Primary requester** and can have a **Backup requester** (FR-38). Both have every permission above for that department; the Primary is the person accountable for the department's budget, and the Backup covers when the Primary is Away or does not respond.
+
 ## 3.2 Accountant
 
 The accountant is responsible for reviewing and deciding on departmental budget requests.
@@ -301,7 +306,9 @@ The system administrator ("Administrator" in this document) maintains applicatio
 
 - Manage the department list.
 - Add, deactivate, or rename departments.
-- Assign users to departments.
+- Assign users to departments, and mark each department's Primary and Backup requester (FR-38).
+- Map departments to Planning Center teams, groups, or a custom field value, and review the suggested representatives (FR-39).
+- Use the Activity, audit and analytics dashboard (FR-52).
 - Assign requester, accountant, backup approver, Board Chair, Vice-Chair, church administrator, and administrator roles.
 - Activate or deactivate users.
 - Configure annual budget cycles and submission deadlines.
@@ -352,6 +359,9 @@ The system administrator ("Administrator" in this document) maintains applicatio
 | Process and record expense payment (Part B) | No | Yes | No | Yes | No |
 | View all expenses, receipts, and payments | Own department | Yes | Those sent to them, and their department budgets | Yes | Yes (read-only) |
 | See the "My tasks" home (FR-37) | Yes | Yes | Yes | Yes | Yes |
+| Set Primary and Backup requester (FR-38) | Primary can nominate a Backup | No | No | No | Yes |
+| Map departments to Planning Center (FR-39) | No | No | No | No | Yes |
+| Activity, audit and analytics dashboard (FR-52) | Own department's activity | Annual budget, expense and spending analytics; financial audit log | Analytics for expenses they decided; read-only | Spending and payment analytics; spending audit log | Everything, including sign-ins, settings and access changes |
 
 The Vice-Chair column is identical to the Board Chair column. A person with several roles gets the union of their roles' permissions, still subject to the conflict-of-interest rules (FR-33, FR-47).
 
@@ -578,7 +588,10 @@ Refunds and returns follow the same steps with the entry type **Refund**, which 
 | FR-35 | Copy last year's request | Part A | 2 |
 | FR-36 | Help and privacy | Core | 1 |
 | FR-37 | One application, "My tasks" home | Core | 1 (tasks for Part B and spending added in Stages 3–4) |
+| FR-38 | Primary and backup requester per department | Core | 1 |
+| FR-39 | Planning Center team mapping for departments | Access | 2 |
 | FR-40 to FR-51 | Expense submissions, two-level approval, payment | Part B | 3 |
+| FR-52 | Activity, audit and analytics dashboard | Core | 1 (activity log), 2 (annual analytics), 4 (expense and spending analytics) |
 
 
 ## FR-01: Google Authentication (included)
@@ -614,7 +627,7 @@ Purpose: confirm that the person submitting budgets or expenses is a recognized 
 - **Google sign-ins are verified too:** when a requester signs in with Google, the app finds the Planning Center person with the same email and checks the field. If no Planning Center person matches, requester access is denied with an explanation.
 - **When checked:** at every sign-in, and by a nightly sync for all requesters.
 - **If the field is removed in Planning Center:** requester access is suspended at the next check; drafts and history are kept; the department's other representatives keep the request; the administrator and accountant get an email; the user sees "Your Group Leader status in Planning Center could not be confirmed."
-- **New leaders:** a verified Group Leader who signs in for the first time without department assignments sees "Waiting for department assignment", and the administrator is emailed to assign departments. Departments are assigned in the app (optional future: map Planning Center groups or a second custom field to departments).
+- **New leaders:** a verified Group Leader who signs in for the first time without department assignments sees "Waiting for department assignment", and the administrator is emailed to assign departments. Departments are assigned in the app, or suggested automatically from Planning Center when the department is mapped to a team, group, or custom field value (FR-39).
 - **If Planning Center is unavailable:** users verified in the last 72 hours can continue; others see a "Planning Center can't be reached, try again shortly" message. Outages are logged and the administrator is emailed.
 - The app stores only the Planning Center person ID, name, email, the checked field value, and the last verification time. It does not import other Planning Center data.
 - Every verification result change (granted, suspended, restored) is audited.
@@ -1191,6 +1204,13 @@ Record at minimum:
 - Spending period locks and reopenings.
 - Export activity.
 - Notification attempts and failures.
+- Sign-ins (success and failure, with the method: Google or Planning Center), sign-outs, and session expiry.
+- Access denied events (a person tried a page or action their roles do not allow).
+- Planning Center verification results and team-mapping syncs (FR-01a, FR-39).
+- Primary and Backup requester changes (FR-38).
+- Settings and branding changes, Away on and off, and decision release scheduling.
+- Expense submissions, both approval levels, payments recorded, and receipt uploads and views (6B).
+- Messages sent (the event, not the message text, which stays on the request).
 
 Each audit event should contain:
 
@@ -1201,8 +1221,9 @@ Each audit event should contain:
 - Timestamp.
 - Relevant before-and-after values or a safe change summary.
 - Reason, where applicable.
+- The area (Annual Budget, Expenses, Spending, Admin, Access), the department and cycle when there is one, and the role the actor acted in.
 
-Audit records must not be editable or deletable through normal user interfaces.
+Audit records must not be editable or deletable through normal user interfaces. They are append-only in the database (no update or delete grants for the application user on the audit table). Ordinary page views are not recorded, except views of receipts and exports, so the log stays useful and does not track people's browsing. The Activity, audit and analytics dashboard (FR-52) is the way to search and report on this log.
 
 ## FR-23: No Attachments
 
@@ -1367,6 +1388,90 @@ The Church Administrator and accountant see, for the selected cycle:
 - Navigation shows the union of the person's roles, grouped by area (Annual Budget, Expenses, Spending, Reports, Admin), not by role.
 - The task list count appears as a badge on Home, and the same items drive reminder emails (FR-21, FR-49).
 - Tasks disappear as soon as they are done or handled by someone else (e.g. the Vice-Chair approves while the Chair is away).
+
+## FR-38: Primary and Backup Requester per Department
+
+Purpose: every department has a named person accountable for its budget and a second person who can step in, so a budget or expense is never stuck because one leader is busy or away.
+
+- Each active department has one **Primary requester** and, optionally, one **Backup requester**. Both must be verified Group Leaders (FR-01a). Other representatives (FR-32) remain allowed and keep their access; they show as "Representative".
+- Who sets them:
+  - The administrator sets or changes the Primary and Backup on Admin → Departments.
+  - The Primary can nominate a Backup from verified Group Leaders on their department page. The nomination takes effect at once, is audited, and the administrator is emailed and can undo it.
+  - The first person to pick a department on the form (FR-03) becomes its Primary if it has none; anyone after that becomes a Representative until the administrator or Primary changes it.
+- Both the Primary and the Backup can do everything a representative can: create, edit, preview and submit the annual budget, answer clarifications, send messages, and submit expenses for the department. Edits still belong to the request (FR-32): together they cannot exceed 2.
+- Emails: every representative receives the department's request emails (FR-21). The Primary is shown as the contact on the accountant dashboard, Excel exports, and emails to approvers.
+- My tasks (FR-37): department tasks (for example "Respond to clarification") appear for both the Primary and the Backup. Reminder emails go to the Primary first; if the task is still open after the **escalation delay** (administrator setting, default 3 days), the Backup is reminded too and the task shows "Backup reminded".
+- Away: the Primary can set Away with dates (as in FR-33). While Away, reminders and new-task emails go to the Backup, and the department page shows "Covered by {Backup} until {date}".
+- If the Primary is suspended (FR-01a), deactivated, or removed, the Backup becomes Primary automatically, the administrator is emailed, and the department shows "No backup" until a new Backup is set. If neither remains, FR-32's "No representative" rule applies.
+- The accountant dashboard and Admin → Departments show a "No backup" badge for departments without one. The administrator can filter on it.
+- Conflict of interest (FR-33, 3.3) applies to the Primary and the Backup in the same way as to any representative.
+- Every change of Primary or Backup is audited with who made it and why (reason optional for administrator changes, automatic text for system promotions).
+
+## FR-39: Planning Center Team Mapping for Departments
+
+Purpose: the church already organizes its ministries in Planning Center (for example the Media team that runs ProPresenter is a team in Planning Center Services, with its team leaders). Mapping each department to that team keeps the app's department leaders in step with Planning Center instead of entering them twice.
+
+Assumption: "ProPresenter tag" in the original ask means the Planning Center team or tag that ProPresenter reads its plans from. ProPresenter itself has no people or permissions data, so the app maps to Planning Center, which the app already uses for sign-in (decision logged in 20.1).
+
+- On Admin → Departments → **Planning Center mapping**, the administrator links each department to **one** source:
+  - a **Services team** (for example "Media / Production"): its **team leaders** are the department's leaders;
+  - a **Groups group** (or every group with a chosen **group tag**): its group **leaders** are the department's leaders;
+  - a **People custom field value** (for example field "Department" = "Media"): people with that value, who also pass the Group Leader check, are the department's leaders.
+- The list of teams, groups, tags and field values is loaded from Planning Center, read-only, using the church's server credentials (the same Personal Access Token as FR-01a). The app never writes to Planning Center.
+- **Sync:** at each sign-in for that person, and in the nightly `pco-verify` job for all mapped departments. The admin page shows the last sync time and a **Sync now** button.
+- **Mode** per department (administrator setting):
+  - **Suggest** (default): leaders found in Planning Center appear on the department as "Suggested by Planning Center"; the administrator clicks **Add** (as Primary, Backup or Representative) or **Ignore**. People who left the team are flagged "No longer a team leader in Planning Center" but keep access until the administrator removes them.
+  - **Automatic:** leaders found are added as Representatives automatically (the Primary and Backup are still chosen by a person, FR-38), and people who are no longer leaders are removed at the next sync. The department's requests stay with the department (FR-32).
+- A mapped leader still has to pass the Group Leader check (FR-01a) to act as a requester. The mapping decides **which** department; the custom field decides **whether** they are a leader. The administrator can turn on "Team leaders count as Group Leaders" per department, which skips the custom field check for that department's mapped leaders.
+- A first-time Group Leader who is a mapped leader of exactly one department lands on that department instead of "Waiting for department assignment" (Automatic mode) or sees "Your administrator has been asked to confirm you for Media" (Suggest mode).
+- The app stores only the mapping (source type, Planning Center ID, display name), and for each person the source they were matched through and the last sync time (9.3, 9.4). No other Planning Center data is imported.
+- If Planning Center is unavailable, the last known mapping stays in force; the 72-hour rule of FR-01a applies to verification.
+- Every mapping change, sync result (added, flagged, removed), and administrator decision on a suggestion is audited.
+- Unmapped departments work exactly as before (assigned in the app).
+
+## FR-52: Activity, Audit and Analytics Dashboard
+
+Purpose: one place to see everything that happens on the platform, answer "who did what, when and why", and see how the budget year is going, without exporting to Excel first.
+
+Location: **Reports → Analytics & Audit** in the one app (FR-37). What each person sees follows the matrix in 3.6; the server filters every query by role and department.
+
+### Overview tab (analytics)
+
+- Filters at the top that apply to the whole page and are kept in the address so a view can be bookmarked or shared: budget cycle (default: current), department, area (Annual Budget, Expenses, Spending), date range.
+- **Headline cards:** board total vs allocated; requested vs approved (with tax); committed, spent, remaining; expenses waiting at each approval level; payments waiting; average days from submission to decision and from approval to payment.
+- **Charts:**
+  - Annual budget status by department (stacked bar: Not started, Draft, Submitted, In review, Approved, Declined).
+  - Budget vs actual by department (bar, with remaining and overspend highlighted).
+  - Spending over time (monthly line, current vs last year when there is one).
+  - Expense pipeline (counts and amounts at each status).
+  - Turnaround times (accountant review, Board Chair approval, payment), with the slowest items listed.
+- Every chart has a table view and an **Export** button (Excel, FR-20 rules). Clicking a bar or row drills down to the list of items behind it, then to the item itself.
+- All amounts are computed on the server from the same `money.ts` totals as the rest of the app, so the dashboard, exports and emails agree to the cent.
+
+### Activity tab (audit log)
+
+- A searchable, filterable timeline of every audit event (FR-22): when, who (and the role they acted in), what, which item, and the reason. Each row expands to show before-and-after values.
+- Filters: person, role, area, event type (with groups such as "Decisions", "Money changes", "Access and sign-in", "Settings"), department, cycle, date range, and a free-text search over reference numbers and names.
+- Quick views: "Today", "Decisions this week", "Money changes", "Failed sign-ins and access denied", "Settings and role changes", "Emails that failed".
+- Clicking a reference number opens the item with its full history. Each item's own History tab shows the same events for that item only.
+- **Export** the filtered log to Excel. Exporting the audit log is itself audited.
+
+### Access tab (administrator only)
+
+- Sign-ins per day and by method, failed sign-ins, access denied attempts, suspended Planning Center verifications, users without two-step verification on staff roles, departments without a Backup requester (FR-38), mapping sync problems (FR-39).
+- Each row links to the user or department to fix it.
+
+### Alerts
+
+- The administrator can turn on a weekly summary email (off by default) with the headline cards and anything unusual: repeated failed sign-ins for one account, access denied spikes, settings changes, audit export.
+- These go through the outbox (FR-21) and appear in My tasks for the administrator when there is something to act on.
+
+### Rules
+
+- Read-only: nothing on this dashboard changes data; actions happen on the item's own page.
+- Requesters see only their own department's analytics and activity, without payment details (20.1).
+- Charts follow DRD 6.13: accessible colours, table alternatives, keyboard navigation, and no information conveyed by colour alone.
+- Performance: the Overview loads within the targets in 13.1 for a full year of data; heavy figures may be pre-computed by the nightly job and labelled "Updated at {time}".
 
 # 6B. Part B: Expense Submissions
 
@@ -1822,9 +1927,9 @@ One application; pages appear according to the person's roles (FR-37). Full scre
 
 **Spending:** My department budget (requester) · Spending dashboard · Record spending / correct / void · Department ledger · Budget amendment · Spending period lock.
 
-**Reports:** Excel exports (annual budgets, line items, budget vs actual, spending ledger, amendments, expenses, expense lines, payments).
+**Reports:** Excel exports (annual budgets, line items, budget vs actual, spending ledger, amendments, expenses, expense lines, payments) · Analytics & Audit dashboard: Overview, Activity, Access (FR-52).
 
-**Admin:** Users and roles (incl. two-step confirmation for staff roles) · Departments and Proposed departments · Budget cycles · Settings (tax rate, thresholds, Planning Center, branding, email, signing authorities, time zone) · Notifications and audit · Read-only views of everything.
+**Admin:** Users and roles (incl. two-step confirmation for staff roles) · Departments, Primary and Backup requesters, Planning Center mapping, and Proposed departments · Budget cycles · Settings (tax rate, thresholds, Planning Center, branding, email, signing authorities, time zone) · Notifications and audit · Read-only views of everything.
 
 Navigation must be role-aware and must not expose actions to unauthorized users.
 
@@ -1875,6 +1980,13 @@ A separate user-role association table is recommended if users may have multiple
 - `status` (`active`, `inactive`, `proposed`, `rejected`)
 - `proposed_by_user_id` (nullable)
 - `merged_into_department_id` (nullable)
+- `pco_source_type` (nullable: `services_team`, `groups_group`, `groups_tag`, `people_field_value`) (FR-39)
+- `pco_source_id` (nullable)
+- `pco_source_name` (nullable, display snapshot)
+- `pco_mapping_mode` (`suggest` or `automatic`, default `suggest`)
+- `pco_leaders_count_as_group_leaders` (boolean, default false)
+- `pco_last_synced_at` (nullable)
+- `version`
 - `created_at`
 - `updated_at`
 
@@ -1882,6 +1994,11 @@ A separate user-role association table is recommended if users may have multiple
 
 - `user_id`
 - `department_id`
+- `representative_type` (`primary`, `backup`, `representative`) (FR-38). A partial unique index allows at most one `primary` and one `backup` per department.
+- `source` (`manual`, `form_pick`, `pco_mapping`)
+- `pco_status` (nullable: `suggested`, `confirmed`, `no_longer_leader`, `ignored`)
+- `pco_last_seen_at` (nullable)
+- `away_from`, `away_until` (nullable, Primary only)
 - `created_at`
 - `assigned_by_user_id`
 
@@ -2008,11 +2125,21 @@ Decision values may include Approved, Returned for Clarification, and Declined.
 ## 9.13 AuditEvent
 
 - `id`
-- `actor_user_id`
-- `budget_request_id`
+- `actor_user_id` (nullable for system events)
+- `actor_kind` (`user`, `system`, `job`)
+- `acting_role` (nullable)
+- `area` (`annual`, `expenses`, `spending`, `admin`, `access`)
 - `event_type`
+- `entity_type` and `entity_id` (the request, expense, entry, user, department, setting, and so on)
+- `budget_request_id` (nullable, kept for Part A queries)
+- `department_id` (nullable)
+- `cycle_id` (nullable)
 - `event_timestamp`
-- `details`
+- `reason` (nullable)
+- `details` (JSON: before and after values or a safe summary)
+- `request_ip_hash` (nullable; for sign-in and access events only, hashed)
+
+Indexes on (`event_timestamp`), (`area`, `event_type`), (`department_id`, `cycle_id`), (`actor_user_id`), and (`entity_type`, `entity_id`) keep the FR-52 Activity tab fast. AppSetting gains `backup_escalation_days` (default 3) and `weekly_audit_summary` (boolean, default off).
 
 ## 9.14 NotificationLog
 
@@ -2446,6 +2573,30 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 - **AC-114** With a board-approved church total of $150,000.00 and $140,000.00 already approved, approving a $15,000.00 department budget shows a warning that it exceeds the board total by $5,000.00.
 - **AC-115** A purchase request requires "How it will be bought", and the choice appears to the Church Administrator in Ready to process.
 
+## Primary and Backup Requester (FR-38)
+
+- **AC-116** The administrator can set one Primary and one Backup requester per department; a second Primary is rejected by the server.
+- **AC-117** A Primary can nominate a verified Group Leader as Backup; the administrator is emailed and the change is audited.
+- **AC-118** A clarification task left open for 3 days reminds the Backup requester, and the task shows "Backup reminded".
+- **AC-119** While the Primary is Away, new-task emails go to the Backup, and the department shows "Covered by" the Backup.
+- **AC-120** When the Primary is deactivated, the Backup becomes Primary automatically, the administrator is emailed, and the department shows "No backup".
+
+## Planning Center Team Mapping (FR-39)
+
+- **AC-121** The administrator can map the Media department to a Planning Center Services team loaded from Planning Center.
+- **AC-122** In Suggest mode, a team leader in Planning Center appears as "Suggested by Planning Center" and gets access only after the administrator adds them.
+- **AC-123** In Automatic mode, a team leader removed in Planning Center loses representative access at the next sync, and the department's requests stay with the department.
+- **AC-124** A mapped team leader without the Group Leader field cannot submit, unless "Team leaders count as Group Leaders" is on for that department.
+
+## Activity, Audit and Analytics (FR-52)
+
+- **AC-125** Every event type listed in FR-22, including sign-ins, access denied, and settings changes, appears in the Activity tab with actor, role, time, item, and reason.
+- **AC-126** Filtering the Activity tab by department, person, event group, and date range returns only matching events, and the filtered view can be exported to Excel; the export is audited.
+- **AC-127** The Overview totals (approved, committed, spent, remaining) match the Spending dashboard and the Budget vs Actual export to the cent.
+- **AC-128** A requester sees only their own department's analytics and activity, with no payment details; a direct request for another department's data is refused by the server.
+- **AC-129** Clicking a chart bar opens the list of items behind it, and each chart has an accessible table view.
+- **AC-130** No user, including the administrator, can edit or delete an audit event through the app or its API.
+
 ---
 
 # 15. Delivery Stages
@@ -2461,12 +2612,14 @@ Build and release in stages. Each stage is usable on its own and ends with its a
 - Accountant dashboard and review: approve as requested, approve a different amount (incl. tax, board reference), line changes, clarification, decline, reopen (FR-13 to FR-18a).
 - Approval emails sent immediately; all Part A emails in FR-21; audit; Excel export; no attachments; help and privacy (FR-19, FR-20 to FR-23, FR-36).
 - One application with role-based navigation and the My tasks home; administrator read-only access to everything (FR-37, 3.5).
-- Acceptance: Authentication, Planning Center, Departments (except scheduled release), Request Creation, Sales Tax, Submission, Accountant Review, Export and Audit, Usability.
+- Primary and Backup requester per department (FR-38) and the full activity log with the Activity tab of the Analytics & Audit dashboard (FR-22, FR-52).
+- Acceptance: Authentication, Planning Center, Departments (except scheduled release), Request Creation, Sales Tax, Submission, Accountant Review, Export and Audit, Usability, Primary and Backup Requester, AC-125, AC-126, AC-130.
 
 ## Stage 2: Annual Budget polish
 
 - Scheduled decision release (FR-19a), request messages (FR-31), backup approver and Away (FR-33), optional large-amount second approval (FR-34), copy last year (FR-35), branding (FR-30), email preferences and digest.
-- Acceptance: Departments and Decision Release (release items), Notifications/Sharing, Branding.
+- Planning Center team mapping (FR-39). Overview and Access tabs of the Analytics & Audit dashboard for annual budgets (FR-52).
+- Acceptance: Departments and Decision Release (release items), Notifications/Sharing, Branding, Planning Center Team Mapping, AC-128, AC-129.
 
 ## Stage 3: Expense Submissions (Part B)
 
@@ -2477,11 +2630,12 @@ Build and release in stages. Each stage is usable on its own and ends with its a
 ## Stage 4: Spending tracking and amendments
 
 - Church Administrator spending entries, refunds, voids, budget vs actual dashboard, amendments, alerts, requester budget panel, year-end lock, spending exports (FR-24 to FR-29).
-- Acceptance: Spending Tracking.
+- Expense and spending analytics on the Analytics & Audit dashboard (FR-52).
+- Acceptance: Spending Tracking, AC-127.
 
 ## Stage 5: Hardening and launch
 
-- Security review, accessibility pass with a screen reader, mobile testing, backup and restore test, email deliverability test, pilot with the accountant, Board Chair, church administrator, and two departments, short user guides.
+- Security review, accessibility pass with a screen reader, mobile testing, backup and restore test, email deliverability test, pilot with the accountant, Board Chair, church administrator, and two departments, user manual checked against the built app (Section 22), go-live checklist complete (Section 21).
 
 # 16. Future Enhancements
 
@@ -2579,6 +2733,11 @@ Every item from the original request is covered:
 | Two-level expense approval (accountant, Board Chair), then email to the church administrator; payment method recorded; requester gets approved email | 3.3, 6B.4, 6B.5, FR-49, AC-73–77 |
 | Expense submission form during the year | Section 6B (FR-40 to FR-51), AC-65–81 |
 | Admin assistant records what each department spent and what remains | 3.4, 5.7, FR-24 to FR-29, AC-82–91 |
+| A second requester for each department | FR-38, AC-116–120 |
+| Team mapping: department tagged like the ministry leader in Planning Center (ProPresenter) | FR-39, AC-121–124 |
+| Dashboard, reports and analytics auditing everything done on the platform, easy to navigate | FR-22, FR-52, DRD 6.13, AC-125–130 |
+| Instruction manual on how to use the platform | Section 22, [user-manual.md](user-manual.md) |
+| Every tool and integration needed to go live | Section 21, [go-live-checklist.md](go-live-checklist.md) |
 
 ---
 
@@ -2603,6 +2762,9 @@ Every item from the original request is covered:
 - Receipt files are allowed on expense claims only.
 - Everything runs on free tiers; email via Gmail from a church Google account, Brevo as fallback.
 - Requirements and design stay as separate documents, linked by a README. Claude Code will develop the application.
+- Each department has a Primary requester and an optional Backup requester (FR-38).
+- Departments can be mapped to Planning Center teams so leaders stay in step (FR-39). Assumed: the "ProPresenter tag" is the Planning Center team or tag, since ProPresenter itself holds no people data.
+- An Analytics & Audit dashboard covers everything done on the platform (FR-52).
 
 ## 20.2 Defaults in place (change in Settings or by revising this document)
 
@@ -2614,7 +2776,9 @@ Every item from the original request is covered:
 | Approved amount per line visible to requesters | Yes, in approval email and request details. |
 | Church Administrator can correct others' spending entries | Yes, with a reason, audited. |
 | Monthly spending summary email | Off. |
-| Departments source | Assigned in the app, not imported from Planning Center. |
+| Departments source | Assigned in the app; optional Planning Center mapping per department (FR-39), in Suggest mode. |
+| Backup requester escalation delay | 3 days (FR-38). |
+| Weekly audit summary email | Off (FR-52). |
 | Staff roles need Group Leader field | No. |
 | Who can submit expense claims | Department representatives and people given Expense submitter permission. |
 | Expense claim deadline | 90 days after purchase. |
@@ -2673,3 +2837,27 @@ Church volunteers change, so the app must not depend on one person:
 - Create the hosting, database, email provider, domain, and Google sign-in project under a church-owned account (e.g. a church Google Workspace admin account), not a personal one.
 - Keep a short admin guide: how to add users and departments, open a cycle, change the tax rate or branding, and who to contact for technical help.
 - Keep a separate test (staging) copy of the app for trying changes before they reach real users.
+
+---
+
+# 21. Go-Live Checklist
+
+Everything needed to put the app live, on free tiers only (20.3), is in **[go-live-checklist.md](go-live-checklist.md)**: each account, tool and integration, who owns it, what to configure, the environment variable it feeds, and the launch-day steps. In short:
+
+| # | Tool or account | Used for |
+|---|---|---|
+| 1 | Church-owned Google account (Workspace for Nonprofits if eligible) | Owns every other account; sends email |
+| 2 | GitHub (repository, Actions, secrets) | Code, CI, scheduled jobs, backups |
+| 3 | Netlify (free) | Hosting the app |
+| 4 | Neon Postgres (free) | Database, plus a branch for staging |
+| 5 | Google Cloud project | Google sign-in (OAuth client) and Gmail API sending |
+| 6 | Planning Center | Sign-in (OAuth app), Group Leader check and team mapping (Personal Access Token) |
+| 7 | Cloudflare R2 (free) | Receipts and logo files |
+| 8 | Google Drive folder + encryption key | Nightly encrypted database backups |
+| 9 | Brevo (free, optional) | Email fallback |
+
+---
+
+# 22. User Manual
+
+The instruction manual for people using the app is **[user-manual.md](user-manual.md)**. It is organized by role (getting started, requester, Primary and Backup requester, accountant, Board Chair and Vice-Chair, Church Administrator, System Administrator) with a short FAQ, and it is the source for the in-app Help page (FR-36). It is written from this specification; Stage 5 checks it against the built app and adds screenshots.
