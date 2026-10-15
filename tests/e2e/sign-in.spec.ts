@@ -86,6 +86,13 @@ test.describe("Sign-in (FR-01, FR-01a, DRD 6.1, 6.1a)", () => {
     // Still signed in, but every app page leads back here until a department is assigned.
     await page.goto("/annual");
     await expect(page).toHaveURL(/\/access-denied\/waiting$/);
+    // While a cycle is open, they can pick their department on the form (FR-03, FR-38).
+    await page.getByRole("link", { name: "Choose your department" }).click();
+    await expect(page).toHaveURL(/\/annual\/new$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Start a budget request" }),
+    ).toBeVisible();
+    await expect(page.getByText(/You don't represent a department yet/)).toBeVisible();
   });
 
   test("AC-10 the accountant signs in without the Planning Center field", async ({ page }) => {

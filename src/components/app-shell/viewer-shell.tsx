@@ -2,7 +2,7 @@ import "server-only";
 import { navigationFor } from "@/domain/navigation";
 import { roleChips } from "@/domain/users/role-chips";
 import { hasRole } from "@/lib/roles";
-import { getViewer } from "@/lib/viewer";
+import { getViewerAllowingWaiting as getViewer } from "@/lib/viewer";
 import { AccountMenu } from "./account-menu";
 import { BottomBar } from "./bottom-bar";
 import { Brand } from "./brand";

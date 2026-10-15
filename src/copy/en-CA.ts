@@ -125,6 +125,9 @@ export const copy = {
     fakeAs: (label: string) => `Sign in as ${label}`,
   },
   accessDenied: {
+    pickDepartment:
+      "A budget cycle is open. If you lead a department, you can choose it now and start its budget.",
+    pickDepartmentAction: "Choose your department",
     title: "Can't sign you in",
     signedInWith: (email: string) => `You signed in with ${email}.`,
     useDifferentAccount: "Use a different account",
@@ -160,5 +163,11 @@ export const copy = {
         body: "This Planning Center account hasn't been linked to your Church Budget account yet. Sign in once with Google using the same email address, or ask the administrator to link it.",
       },
     },
+  },
+  /** The financial summary (DRD 6.4), shared by every screen and email with amounts. */
+  money: {
+    subtotal: "Subtotal (before tax)",
+    salesTax: (rate: string) => `Sales tax (${rate})`,
+    total: "Total (incl. tax)",
   },
 } as const;

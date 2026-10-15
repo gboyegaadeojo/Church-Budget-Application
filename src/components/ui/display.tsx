@@ -101,13 +101,13 @@ export function EmptyState({ children }: { children: React.ReactNode }) {
 }
 
 /** DRD 11 permission-denied state: no data, a plain explanation. */
-export function PermissionDenied() {
+export function PermissionDenied({ body = adminCopy.denied.body }: { body?: string }) {
   return (
     <div className={cn(cardClass, "flex items-start gap-3")}>
       <ShieldAlert className="mt-1 size-6 shrink-0 text-warning" aria-hidden="true" />
       <div className="space-y-1">
         <h1 className="text-xl font-semibold">{adminCopy.denied.title}</h1>
-        <p className="text-sm text-fg-muted">{adminCopy.denied.body}</p>
+        <p className="text-sm text-fg-muted">{body}</p>
       </div>
     </div>
   );

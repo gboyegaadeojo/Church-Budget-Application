@@ -80,6 +80,7 @@ export async function seedTestData(client) {
     "office@example.org",
   ]);
 
+  const ids = {};
   for (const p of PEOPLE) {
     const { rows } = await client.query(
       `insert into users (email, display_name, google_subject_id, pco_person_id,
@@ -89,6 +90,7 @@ export async function seedTestData(client) {
       [p.email, p.name, p.googleSubject ?? null, p.pcoPersonId ?? null, p.leader],
     );
     const userId = rows[0].id;
+    ids[p.email] = userId;
     for (const role of p.roles) {
       await client.query("insert into user_roles (user_id, role) values ($1, $2)", [userId, role]);
     }
@@ -101,4 +103,12 @@ export async function seedTestData(client) {
       );
     }
   }
+
+  // FY2027 is open, with its deadline 60 days out, so the annual form can be used (FR-03).
+  await client.query(
+    `insert into budget_cycles (name, budget_year, start_date, submission_deadline, status,
+       default_tax_rate, created_by_user_id)
+     values ('FY2027', 2027, '2027-01-01', now() + interval '60 days', 'open', '0.1200', $1)`,
+    [ids["gina.admin@example.org"]],
+  );
 }
