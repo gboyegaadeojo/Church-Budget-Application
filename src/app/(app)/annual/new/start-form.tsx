@@ -59,7 +59,7 @@ export function StartForm({
       </p>
 
       <fieldset
-        className="space-y-3"
+        className="min-w-0 space-y-3"
         aria-describedby={errors.departmentId ? `${ids}-dept-error` : undefined}
       >
         <legend className="text-sm font-medium">{s.department}</legend>
@@ -88,10 +88,20 @@ export function StartForm({
                   value={c.id}
                   checked={selected === c.id}
                   onChange={() => setSelected(c.id)}
+                  // Named by the department alone; the badges describe it.
+                  aria-labelledby={`${ids}-${c.id}-name`}
+                  aria-describedby={c.existing || c.yours ? `${ids}-${c.id}-tags` : undefined}
                   className="size-5 shrink-0 accent-accent"
                 />
-                <span className="flex-1 text-sm">{c.name}</span>
-                {c.yours && <Badge tone="info">{s.yours}</Badge>}
+                <span id={`${ids}-${c.id}-name`} className="flex-1 text-sm">
+                  {c.name}
+                </span>
+                {(c.existing || c.yours) && (
+                  <span id={`${ids}-${c.id}-tags`} className="flex gap-1.5">
+                    {c.existing && <Badge>{s.hasBudget}</Badge>}
+                    {c.yours && <Badge tone="info">{s.yours}</Badge>}
+                  </span>
+                )}
               </label>
             </li>
           ))}

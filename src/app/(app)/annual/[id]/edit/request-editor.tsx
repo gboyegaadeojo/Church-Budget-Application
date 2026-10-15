@@ -2,16 +2,20 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useFieldArray, useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   AlertCircle,
   ArrowDown,
   ArrowUp,
   CheckCircle2,
+  ChevronRight,
   ChevronUp,
   Info,
   Loader2,
+  MoreVertical,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -113,6 +117,8 @@ export function RequestEditor({
   const [serverTotals, setServerTotals] = useState(request.totals);
   const [restored, setRestored] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [exiting, setExiting] = useState(false);
+  const router = useRouter();
   const versionRef = useRef(request.version);
   const chain = useRef<Promise<boolean>>(Promise.resolve(true));
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -258,6 +264,13 @@ export function RequestEditor({
     setStep(2);
   }
 
+  /** Saves now, then leaves; a failed save keeps the person here with the error shown. */
+  async function saveAndExit() {
+    setExiting(true);
+    if (await saveNow()) router.push("/annual?saved=draft");
+    else setExiting(false);
+  }
+
   const heading = f.steps[step];
   const others = request.alsoEditing;
 
@@ -347,10 +360,29 @@ export function RequestEditor({
                     {f.back}
                   </button>
                 )}
-                {mode !== "draft" && (
-                  <Link href={`/annual/${request.id}`} className={buttonClass("ghost")}>
-                    {f.cancelEdit}
-                  </Link>
+                {mode === "draft" ? (
+                  <button
+                    type="button"
+                    onClick={() => void saveAndExit()}
+                    disabled={exiting}
+                    aria-busy={exiting || undefined}
+                    className={buttonClass("secondary")}
+                  >
+                    {exiting && (
+                      <Loader2
+                        className="size-4 animate-spin motion-reduce:animate-none"
+                        aria-hidden="true"
+                      />
+                    )}
+                    {f.saveAndExit}
+                  </button>
+                ) : (
+                  <div className="space-y-1">
+                    <Link href={`/annual/${request.id}`} className={buttonClass("ghost")}>
+                      {f.cancelEdit}
+                    </Link>
+                    <p className="text-xs text-fg-muted">{f.cancelEditHint}</p>
+                  </div>
                 )}
               </div>
               {step === 0 ? (
@@ -506,26 +538,47 @@ function ItemsStep({
           {listError}
         </p>
       )}
-      {count === 0 && <p className="text-sm text-fg-muted">{f.noItems}</p>}
-      <ol className="space-y-4">
-        {lines.fields.map((field, i) => (
-          <li key={field.id}>
-            <LineFields
-              form={form}
-              index={i}
-              count={count}
-              line={values.lines?.[i] ?? BLANK_LINE}
-              onMove={(to) => lines.move(i, to)}
-              onRemove={() => askRemove(i)}
-              onEnterLast={add}
-            />
-          </li>
-        ))}
-      </ol>
-      <button type="button" onClick={add} className={buttonClass("secondary")}>
-        <Plus className="size-4" aria-hidden="true" />
-        {f.addItem}
-      </button>
+      <div className="rounded-control border border-border">
+        {/* Column headings on wider screens; every field keeps its own label for screen readers. */}
+        <div
+          aria-hidden="true"
+          className={cn(
+            ROW_COLUMNS,
+            "hidden rounded-t-control border-b border-border bg-surface-2 px-3 py-2 text-xs font-medium text-fg-muted md:grid",
+          )}
+        >
+          <span>{f.itemName}</span>
+          <span className="text-right">{f.quantity}</span>
+          <span className="text-right">{f.unitPrice}</span>
+          <span className="text-right">{f.lineTotal}</span>
+          <span />
+        </div>
+        {count === 0 ? (
+          <p className="px-3 py-4 text-sm text-fg-muted">{f.noItems}</p>
+        ) : (
+          <ol className="divide-y divide-border">
+            {lines.fields.map((field, i) => (
+              <li key={field.id}>
+                <LineFields
+                  form={form}
+                  index={i}
+                  count={count}
+                  line={values.lines?.[i] ?? BLANK_LINE}
+                  onMove={(to) => lines.move(i, to)}
+                  onRemove={() => askRemove(i)}
+                  onEnterLast={add}
+                />
+              </li>
+            ))}
+          </ol>
+        )}
+        <div className="border-t border-border px-1 py-1">
+          <button type="button" onClick={add} className={buttonClass("ghost", "text-accent")}>
+            <Plus className="size-4" aria-hidden="true" />
+            {f.addItem}
+          </button>
+        </div>
+      </div>
 
       <AlertDialog.Root
         open={removing !== null}
@@ -563,6 +616,10 @@ function ItemsStep({
   );
 }
 
+/** Item | Qty | Unit price | Line total | actions, on screens wide enough for one row. */
+const ROW_COLUMNS =
+  "gap-x-3 md:grid-cols-[minmax(0,1fr)_5rem_8.5rem_6.5rem_2.75rem] lg:grid-cols-[minmax(0,1fr)_4.5rem_8rem_6rem_2.5rem]";
+
 function LineFields({
   form,
   index,
@@ -585,6 +642,10 @@ function LineFields({
   const errors = form.formState.errors.lines?.[index];
   const total = lineTotalOf(line.quantity ?? "", line.unitPrice ?? "");
   const last = index === count - 1;
+  // Link and notes stay tucked away until wanted, or while they hold something.
+  const [moreOpen, setMoreOpen] = useState(() => Boolean(line.link || line.notes));
+  const more = moreOpen || Boolean(errors?.link || errors?.notes);
+
   // Enter never submits the form; in the last row it adds a new one (DRD 6.3).
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
@@ -597,42 +658,61 @@ function LineFields({
     label: string,
     options: {
       inputMode?: "numeric" | "decimal" | "url";
+      type?: string;
       hint?: string;
       className?: string;
-      type?: string;
+      inputClassName?: string;
+      /** The column heading shows this label on wider screens. */
+      inColumn?: boolean;
+      prefix?: string;
     } = {},
   ) => {
     const error = errors?.[name]?.message;
     const id = `${ids}-${name}`;
+    const optional = name === "link" || name === "notes";
     return (
-      <div className={cn("space-y-1.5", options.className)}>
-        <label htmlFor={id} className="block text-sm font-medium">
-          {label}
-          {(name === "link" || name === "notes") && (
-            <span className="font-normal text-fg-muted"> {adminCopy.common.optional}</span>
+      <div className={cn("min-w-0 space-y-1", options.className)}>
+        <label
+          htmlFor={id}
+          className={cn(
+            "block text-xs font-medium text-fg-muted",
+            options.inColumn && "md:sr-only",
           )}
+        >
+          {label}
+          {optional && ` ${adminCopy.common.optional}`}
         </label>
-        <input
-          id={id}
-          type={options.type ?? "text"}
-          inputMode={options.inputMode}
-          autoComplete="off"
-          {...form.register(`lines.${index}.${name}`)}
-          onKeyDown={onKeyDown}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={
-            [options.hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") ||
-            undefined
-          }
-          className={inputClass}
-        />
+        <div className="relative">
+          {options.prefix && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-fg-muted"
+            >
+              {options.prefix}
+            </span>
+          )}
+          <input
+            id={id}
+            type={options.type ?? "text"}
+            inputMode={options.inputMode}
+            autoComplete="off"
+            {...form.register(`lines.${index}.${name}`)}
+            onKeyDown={onKeyDown}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={
+              [options.hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") ||
+              undefined
+            }
+            className={cn(inputClass, options.prefix && "pl-6", options.inputClassName)}
+          />
+        </div>
         {options.hint && (
           <p id={`${id}-hint`} className="text-xs text-fg-muted">
             {options.hint}
           </p>
         )}
         {error && (
-          <p id={`${id}-error`} className="text-sm text-danger">
+          <p id={`${id}-error`} className="text-xs text-danger">
             {error}
           </p>
         )}
@@ -641,69 +721,122 @@ function LineFields({
   };
 
   return (
-    <fieldset className="space-y-4 rounded-control border border-border p-4">
+    <fieldset className="min-w-0 space-y-1 px-3 pt-3 pb-1">
       {/* The legend must be the fieldset's first child to name the group. */}
       <legend className="sr-only">{f.item(n)}</legend>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p aria-hidden="true" className="text-sm font-semibold">
-          {f.item(n)}
-        </p>
-        <div className="flex gap-1">
-          <IconButton label={f.moveUp(n)} disabled={index === 0} onClick={() => onMove(index - 1)}>
-            <ArrowUp className="size-4" aria-hidden="true" />
-          </IconButton>
-          <IconButton label={f.moveDown(n)} disabled={last} onClick={() => onMove(index + 1)}>
-            <ArrowDown className="size-4" aria-hidden="true" />
-          </IconButton>
-          <IconButton label={f.remove(n)} onClick={onRemove} danger>
-            <Trash2 className="size-4" aria-hidden="true" />
-          </IconButton>
+      <div className={cn("grid grid-cols-[5.5rem_minmax(0,1fr)] gap-y-3 md:gap-y-0", ROW_COLUMNS)}>
+        <div className="col-span-2 flex items-end gap-2 md:col-span-1 md:block">
+          {field("name", f.itemName, { inColumn: true, className: "flex-1" })}
+          <div className="md:hidden">
+            <ItemMenu
+              n={n}
+              first={index === 0}
+              last={last}
+              onUp={() => onMove(index - 1)}
+              onDown={() => onMove(index + 1)}
+              onRemove={onRemove}
+            />
+          </div>
         </div>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-6">
-        {field("name", f.itemName, { className: "sm:col-span-6" })}
-        {field("quantity", f.quantity, { inputMode: "numeric", className: "sm:col-span-2" })}
-        {field("unitPrice", f.unitPrice, { inputMode: "decimal", className: "sm:col-span-2" })}
-        <div className="space-y-1.5 sm:col-span-2">
-          <p className="text-sm font-medium">{f.lineTotal}</p>
-          <p className="tabular flex min-h-11 items-center text-sm font-semibold lg:min-h-10">
+        {field("quantity", f.quantity, {
+          inputMode: "numeric",
+          inColumn: true,
+          inputClassName: "tabular text-right",
+        })}
+        {field("unitPrice", f.unitPrice, {
+          inputMode: "decimal",
+          inColumn: true,
+          prefix: "$",
+          inputClassName: "tabular text-right",
+        })}
+        <div className="col-span-2 flex min-w-0 items-baseline justify-between md:col-span-1 md:block md:space-y-1 md:text-right">
+          <p className="text-xs font-medium text-fg-muted md:sr-only">{f.lineTotal}</p>
+          <p className="tabular text-sm font-semibold md:flex md:min-h-11 md:items-center md:justify-end lg:min-h-10">
             {total === null ? "—" : formatCAD(total)}
           </p>
         </div>
-        {field("link", f.link, { inputMode: "url", type: "url", className: "sm:col-span-3" })}
-        {field("notes", f.notes, { hint: f.notesHint, className: "sm:col-span-3" })}
+        <div className="hidden justify-end md:flex">
+          <ItemMenu
+            n={n}
+            first={index === 0}
+            last={last}
+            onUp={() => onMove(index - 1)}
+            onDown={() => onMove(index + 1)}
+            onRemove={onRemove}
+          />
+        </div>
+      </div>
+
+      <button
+        type="button"
+        aria-expanded={more}
+        aria-controls={`${ids}-more`}
+        onClick={() => setMoreOpen((o) => !o)}
+        className="-ml-1 inline-flex min-h-11 items-center gap-1 rounded-control px-1 text-xs font-medium text-accent hover:underline lg:min-h-9"
+      >
+        <ChevronRight
+          className={cn("size-3.5 transition-transform duration-fast", more && "rotate-90")}
+          aria-hidden="true"
+        />
+        {f.linkAndNotes}
+        <span className="sr-only"> {f.forItem(n)}</span>
+      </button>
+      <div id={`${ids}-more`} hidden={!more} className="grid gap-3 pb-2 sm:grid-cols-2">
+        {field("link", f.link, { inputMode: "url", type: "url" })}
+        {field("notes", f.notes, { hint: f.notesHint })}
       </div>
     </fieldset>
   );
 }
 
-function IconButton({
-  label,
-  onClick,
-  disabled,
-  danger,
-  children,
+/** Move up, Move down and Remove for one item, in one keyboard-friendly menu. */
+function ItemMenu({
+  n,
+  first,
+  last,
+  onUp,
+  onDown,
+  onRemove,
 }: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  danger?: boolean;
-  children: React.ReactNode;
+  n: number;
+  first: boolean;
+  last: boolean;
+  onUp: () => void;
+  onDown: () => void;
+  onRemove: () => void;
 }) {
+  const itemClass =
+    "flex min-h-11 cursor-pointer items-center gap-2 rounded-control px-3 text-sm outline-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40 data-[highlighted]:bg-surface-hover lg:min-h-9";
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "grid size-11 place-items-center rounded-control border border-border-strong bg-surface transition-colors duration-fast hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40 lg:size-10",
-        danger && "text-danger",
-      )}
-    >
-      {children}
-    </button>
+    <DropdownMenu.Root modal={false}>
+      <DropdownMenu.Trigger
+        aria-label={f.itemActions(n)}
+        className="grid size-11 place-items-center rounded-control text-fg-muted transition-colors duration-fast hover:bg-surface-hover hover:text-fg lg:size-10"
+      >
+        <MoreVertical className="size-4" aria-hidden="true" />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={4}
+          className="z-(--z-overlay) min-w-44 rounded-card border border-border bg-surface p-1 text-fg shadow-overlay"
+        >
+          <DropdownMenu.Item disabled={first} onSelect={onUp} className={itemClass}>
+            <ArrowUp className="size-4" aria-hidden="true" />
+            {f.moveUp(n)}
+          </DropdownMenu.Item>
+          <DropdownMenu.Item disabled={last} onSelect={onDown} className={itemClass}>
+            <ArrowDown className="size-4" aria-hidden="true" />
+            {f.moveDown(n)}
+          </DropdownMenu.Item>
+          <DropdownMenu.Separator className="my-1 h-px bg-border" />
+          <DropdownMenu.Item onSelect={onRemove} className={cn(itemClass, "text-danger")}>
+            <Trash2 className="size-4" aria-hidden="true" />
+            {f.remove(n)}
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
 

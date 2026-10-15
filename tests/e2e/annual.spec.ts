@@ -37,8 +37,21 @@ async function fillItem(
   await row.getByLabel("Item name").fill(item.name);
   await row.getByLabel("Quantity").fill(item.quantity);
   await row.getByLabel("Unit price (before tax)").fill(item.price);
+  if (item.link || item.notes) await openLinkAndNotes(page, n);
   if (item.link) await row.getByLabel("Product link").fill(item.link);
   if (item.notes) await row.getByLabel("Notes").fill(item.notes);
+}
+
+/** Link and notes sit behind a toggle under each item. */
+async function openLinkAndNotes(page: Page, n: number) {
+  const toggle = page.getByRole("button", { name: `Link and notes for item ${n}` });
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+}
+
+/** Move up, Move down and Remove are in each item's actions menu. */
+async function itemAction(page: Page, n: number, action: string) {
+  await page.getByRole("button", { name: `Item ${n} actions` }).click();
+  await page.getByRole("menuitem", { name: action }).click();
 }
 
 /** A whole draft → items → preview → submit; returns the request's page URL. */
@@ -56,7 +69,15 @@ async function submitBudget(page: Page, department: string) {
 
 async function reviseQuantity(page: Page, quantity: string) {
   await page.getByRole("link", { name: "Edit request" }).click();
+  // The form opens with the submitted request, not a blank one (client navigation).
+  await expect(page.getByLabel("Request title")).not.toHaveValue("");
+  await expect(page.getByLabel("Why are you requesting this budget?")).toHaveValue(
+    "Line one\nLine two",
+  );
   await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByRole("group", { name: "Item 1" }).getByLabel("Item name")).toHaveValue(
+    "Microphone",
+  );
   await page.getByRole("group", { name: "Item 1" }).getByLabel("Quantity").fill(quantity);
   await page.getByRole("button", { name: "Preview" }).click();
   await page.getByRole("button", { name: "Save changes" }).click();
@@ -73,11 +94,13 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await signInAs(page, PEOPLE.gina);
     await page.goto("/annual");
     await expect(page.getByText("FY2027 is open for submissions.")).toBeVisible();
-    await page.getByRole("link", { name: "Submit annual budget" }).click();
+    await page
+      .getByRole("link", { name: /^Submit (annual budget|a budget for another department)$/ })
+      .click();
 
     // Step 1: the department list has the person's own first and Other last (AC-13).
     const radios = page.getByRole("radio");
-    await expect(radios.first()).toHaveAccessibleName(/Media Team/);
+    await expect(radios.first()).toHaveAccessibleDescription(/Yours/);
     await expect(radios.last()).toHaveAccessibleName("Other (type your department)");
     await page.getByRole("radio", { name: "Drama Team", exact: true }).check();
     await page.getByRole("button", { name: "Continue" }).click();
@@ -109,7 +132,7 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await page.getByRole("group", { name: "Item 1" }).getByLabel("Quantity").fill("2");
 
     // Move up / Move down reorder without a mouse drag.
-    await page.getByRole("button", { name: "Move item 2 up" }).click();
+    await itemAction(page, 2, "Move item 2 up");
     await expect(page.getByRole("group", { name: "Item 1" }).getByLabel("Item name")).toHaveValue(
       "Gaffer tape",
     );
@@ -162,6 +185,7 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await row.getByLabel("Item name").fill("Bus rental");
     await row.getByLabel("Quantity").fill("1.5");
     await row.getByLabel("Unit price (before tax)").fill("-20");
+    await openLinkAndNotes(page, 1);
     await row.getByLabel("Product link").fill("ftp://example.com/bus");
     await page.getByRole("button", { name: "Preview" }).click();
 
@@ -197,7 +221,10 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     const sam = await samContext.newPage();
     await signInAs(sam, PEOPLE.sam);
     await sam.goto("/annual/new");
-    await sam.getByRole("radio", { name: "Evangelism Team", exact: true }).check();
+    const evangelism = sam.getByRole("radio", { name: "Evangelism Team", exact: true });
+    await expect(evangelism).toHaveAccessibleDescription("Has a budget");
+    await evangelism.check();
+    await expect(sam.getByRole("button", { name: "Continue" })).toHaveCount(0);
     await expect(
       sam.getByText("Evangelism Team already has a budget started by Gina Admin."),
     ).toBeVisible();
@@ -206,6 +233,11 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await expect(sam.getByText("2 of 2 edits left for this request")).toBeVisible();
     await reviseQuantity(sam, "2");
     await expect(sam.getByText("You can make 1 change before it's reviewed.")).toBeVisible();
+    await sam.goto("/annual");
+    const budget = sam.getByRole("listitem").filter({ hasText: "Evangelism Team" });
+    await expect(budget.getByText("1 of 2 edits left")).toBeVisible();
+    await expect(budget.getByRole("link", { name: "Edit budget" })).toBeVisible();
+    await expect(sam.getByRole("link", { name: "Submit annual budget" })).toHaveCount(0);
     await samContext.close();
 
     // Gina sees the shared count, uses the last edit, and then can't edit again.
@@ -229,11 +261,11 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await page.getByRole("button", { name: "Next" }).click();
     await fillItem(page, 1, { name: "Name badges", quantity: "20", price: "3.50" });
 
-    await page.getByRole("button", { name: "Remove item 1" }).click();
+    await itemAction(page, 1, "Remove item 1");
     const dialog = page.getByRole("alertdialog", { name: "Remove Name badges?" });
     await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(page.getByRole("group", { name: "Item 1" })).toBeVisible();
-    await page.getByRole("button", { name: "Remove item 1" }).click();
+    await itemAction(page, 1, "Remove item 1");
     await dialog.getByRole("button", { name: "Remove item" }).click();
     await expect(page.getByRole("group", { name: "Item 1" })).toHaveCount(0);
 
@@ -246,7 +278,22 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "My department budget" }),
     ).toBeVisible();
-    await expect(page.getByText("Ushering Team").filter({ visible: true })).toHaveCount(0);
+    await expect(
+      page.getByRole("main").getByText("Ushering Team").filter({ visible: true }),
+    ).toHaveCount(0);
+  });
+
+  test("Save and exit keeps the draft and returns to the dashboard", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.gina);
+    await startBudget(page, "Men's Fellowship");
+    const editUrl = page.url();
+    await fillDetails(page, "Men's Fellowship 2027");
+    await page.getByRole("button", { name: "Save and exit" }).click();
+    await page.waitForURL(/\/annual\?saved=draft$/);
+    await expect(page.getByText("Draft saved. Continue it any time from here.")).toBeVisible();
+    await page.goto(editUrl);
+    await expect(page.getByLabel("Request title")).toHaveValue("Men's Fellowship 2027");
   });
 
   test("AC-14 Other suggests a close match before creating a proposed department", async ({
@@ -297,7 +344,7 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await expect(page.getByRole("button", { name: "Submit request" })).toBeFocused();
     await page.keyboard.press("Enter");
     await page.waitForURL(/\?done=submitted$/);
-    await expect(page.getByText("$44.80")).toHaveCount(2);
+    await expect(page.getByText("$44.80").filter({ visible: true })).toHaveCount(2);
   });
 
   for (const [label, viewport] of [

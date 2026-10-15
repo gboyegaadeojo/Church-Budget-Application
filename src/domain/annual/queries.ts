@@ -175,6 +175,7 @@ export type MyRequest = {
   status: AnnualStatus;
   title: string;
   referenceNumber: string | null;
+  departmentId: string;
   departmentName: string;
   cycleId: string;
   cycleName: string;
@@ -203,6 +204,7 @@ export async function listMyRequests(tx: Tx, actor: Subject): Promise<MyRequest[
     status: request.status,
     title: request.title,
     referenceNumber: request.referenceNumber,
+    departmentId: request.departmentId,
     departmentName,
     cycleId: request.budgetCycleId,
     cycleName,

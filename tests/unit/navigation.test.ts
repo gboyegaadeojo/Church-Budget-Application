@@ -185,6 +185,20 @@ describe("roleChips", () => {
     ).toEqual(["Accountant", "Requester: Media", "Requester: Youth"]);
   });
 
+  it("shows three department chips at most, then a count, so the menu stays short", () => {
+    const departments = ["A", "B", "C", "D", "E"].map((name) => ({
+      id: name,
+      name,
+      representativeType: "representative" as const,
+    }));
+    expect(roleChips({ roles: ["requester"], departments })).toEqual([
+      "Requester: A",
+      "Requester: B",
+      "Requester: C",
+      "+2 more departments",
+    ]);
+  });
+
   it("shows a plain Requester chip when no department is assigned yet", () => {
     expect(roleChips({ roles: ["requester"], departments: [] })).toEqual(["Requester"]);
   });

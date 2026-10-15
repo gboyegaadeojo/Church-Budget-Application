@@ -59,7 +59,7 @@ export function AccountMenu({ name, email, roleChips, canBeAway }: AccountMenuPr
             align="end"
             sideOffset={8}
             collisionPadding={16}
-            className="z-(--z-overlay) w-[min(20rem,calc(100vw-2rem))] rounded-card border border-border bg-surface p-2 text-fg shadow-overlay"
+            className="z-(--z-overlay) max-h-(--radix-dropdown-menu-content-available-height) w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-card border border-border bg-surface p-2 text-fg shadow-overlay"
           >
             {/* Plain divs and spans only: a role="menu" may not contain lists or paragraphs. */}
             <div className="px-3 py-2">

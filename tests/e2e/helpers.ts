@@ -24,10 +24,28 @@ export async function signInAs(page: Page, who: string, path = "/sign-in") {
 }
 
 export async function expectNoHorizontalScroll(page: Page) {
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
+  const { overflow, culprits } = await page.evaluate(() => {
+    const width = document.documentElement.clientWidth;
+    // The outermost visible elements past the right edge, outside any scrolling region.
+    const culprits = [...document.querySelectorAll("body *")]
+      .filter((el) => {
+        const box = el.getBoundingClientRect();
+        if (box.width === 0 || box.right <= width + 0.5) return false;
+        for (let p = el.parentElement; p; p = p.parentElement) {
+          if (["auto", "hidden", "scroll", "clip"].includes(getComputedStyle(p).overflowX)) {
+            return false;
+          }
+        }
+        return true;
+      })
+      .slice(0, 5)
+      .map(
+        (el) =>
+          `<${el.tagName.toLowerCase()} class="${el.className}"> ${el.textContent?.slice(0, 60)}`,
+      );
+    return { overflow: document.documentElement.scrollWidth - width, culprits };
+  });
+  expect(overflow, `Wider than the screen:\n${culprits.join("\n")}`).toBeLessThanOrEqual(0);
 }
 
 export async function expectAxeClean(page: Page) {
