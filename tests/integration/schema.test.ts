@@ -12,6 +12,8 @@ import {
   userDepartments,
 } from "@/db/schema";
 import type { Db } from "@/db/types";
+import { getChurchTimeZone } from "@/domain/settings";
+import { fallbackTimeZone } from "@/lib/time-zone";
 import { splitInclusive, totalForward } from "@/lib/money";
 import { createTestDb, expectRejected, type TestDb } from "./helpers/db";
 import {
@@ -53,7 +55,24 @@ describe("migrations", () => {
       sales_tax_rate: "0.1200",
       near_limit_threshold: "0.80",
       backup_escalation_days: "3",
+      church_timezone: "America/Winnipeg",
     });
+  });
+
+  it("reads the church time zone, falling back when it is invalid", async () => {
+    expect(await getChurchTimeZone(db)).toBe("America/Winnipeg");
+    await db
+      .update(appSettings)
+      .set({ value: "Not/AZone" })
+      .where(eq(appSettings.key, "church_timezone"));
+    try {
+      expect(await getChurchTimeZone(db)).toBe(fallbackTimeZone());
+    } finally {
+      await db
+        .update(appSettings)
+        .set({ value: "America/Winnipeg" })
+        .where(eq(appSettings.key, "church_timezone"));
+    }
   });
 });
 

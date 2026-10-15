@@ -30,7 +30,7 @@ If the two documents disagree about **behaviour**, the requirements win. If they
 | Expense approval | Accountant, then Board Chair; then the church administrator records payment | Req 6B.4–6B.5 |
 | Attachments | None, except receipts on expense claims and the admin's logo | Req FR-23, 6B.9 |
 | Emails | Every update emails the people involved; annual decisions can be held for a scheduled release | Req FR-21, FR-19a, FR-49 |
-| Sign-in | Google or Planning Center; requesters need the Group Leader custom field | Req FR-01, FR-01a |
+| Sign-in | Google or Planning Center; requesters need the Group Leader custom field ("Ministry Leader" = "Yes") | Req FR-01, FR-01a |
 | Cost | Free tiers only (Gmail, Netlify, Neon, GitHub Actions, Cloudflare R2) | Req 20.3 |
 | Department leaders | One Primary and an optional Backup requester per department | Req FR-38 |
 | Planning Center teams | Departments can be mapped to a Planning Center team, group or tag to keep leaders in step | Req FR-39 |
@@ -54,7 +54,7 @@ It is **one application** for everyone: one web address, one sign-in, and a Home
 ## What the church needs to provide before building starts
 
 - [x] Department list (18 departments, Req FR-03). Representatives aren't pre-loaded because leaders change; they join by signing in or through Planning Center mapping
-- [ ] Planning Center: G creates the OAuth app and API key, and confirms the custom field and value for Group Leader
+- [ ] Planning Center: G creates the OAuth app and API key, and confirms the custom field and value for Group Leader (default "Ministry Leader" = "Yes")
 - [ ] Email addresses for the accountant, Board Chair, Vice-Chair, backup approver, church administrator, and two system administrators; any address works (Req FR-01b)
 - [ ] A church-owned Google account to own hosting, database, email and code (explained in the [go-live checklist](docs/go-live-checklist.md))
 - [ ] Cheque signing authorities' names; editable later in the app (Req FR-53)

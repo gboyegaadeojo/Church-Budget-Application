@@ -1,25 +1,16 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import {
+  DESKTOP,
+  expectAxeClean,
+  expectNoHorizontalScroll,
+  MOBILE,
+  PEOPLE,
+  signInAs,
+} from "./helpers";
 
-const MOBILE = { width: 360, height: 780 };
-const DESKTOP = { width: 1440, height: 900 };
-
-async function expectNoHorizontalScroll(page: Page) {
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
-}
-
-async function expectAxeClean(page: Page) {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-    .analyze();
-  expect(results.violations).toEqual([]);
-}
-
-/** Home has finished streaming in once My tasks shows its empty state. */
+/** Signs in as a person with every role; Home has streamed in once My tasks is empty. */
 async function gotoHome(page: Page) {
+  await signInAs(page, PEOPLE.gina);
   await page.goto("/");
   await expect(page.getByText("You're all caught up.")).toBeVisible();
 }
@@ -53,7 +44,7 @@ test.describe("Home and app shell", () => {
     await page.getByRole("button", { name: "Open account menu" }).click();
     const menu = page.getByRole("menu");
     await expect(menu.getByText("Accountant", { exact: true })).toBeVisible();
-    await expect(menu.getByText("Requester: Media")).toBeVisible();
+    await expect(menu.getByText("Requester: Media Team")).toBeVisible();
     await expect(menu.getByRole("menuitemradio", { name: "System" })).toBeVisible();
     await expect(menu.getByRole("menuitem", { name: /Sign out/ })).toBeVisible();
   });
@@ -68,7 +59,6 @@ test.describe("Home and app shell", () => {
     await expect(
       page.getByRole("contentinfo").getByRole("link", { name: "Privacy" }),
     ).toBeVisible();
-    await expect(page.getByRole("note")).toContainText("Preview mode");
     await expectNoHorizontalScroll(page);
   });
 
@@ -87,7 +77,7 @@ test.describe("Home and app shell", () => {
 
     // The footer is not hidden behind the fixed bottom bar.
     const footer = page.getByRole("contentinfo");
-    await footer.scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     const footerBox = await footer.boundingBox();
     const barBox = await bar.boundingBox();
     expect(footerBox!.y + footerBox!.height).toBeLessThanOrEqual(barBox!.y + 1);
@@ -127,6 +117,8 @@ test.describe("Home and app shell", () => {
   });
 
   test("AC-103 unknown pages are a 404 and coming-soon pages are reachable", async ({ page }) => {
+    await signInAs(page, PEOPLE.gina);
+    await page.waitForURL("/");
     const missing = await page.goto("/no-such-page");
     expect(missing?.status()).toBe(404);
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();

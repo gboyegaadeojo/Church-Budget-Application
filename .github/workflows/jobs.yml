@@ -1,0 +1,30 @@
+name: Scheduled jobs
+
+# Nightly jobs only for now. The 15-minute jobs (outbox, decision release) arrive with
+# their features; see docs/go-live-checklist.md about GitHub Actions minutes.
+on:
+  schedule:
+    - cron: "15 8 * * *" # 03:15 Winnipeg time in summer (08:15 UTC); 02:15 in winter
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pco-verify:
+    name: Planning Center Group Leader check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Call the app
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          JOBS_SECRET: ${{ secrets.JOBS_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$JOBS_SECRET" ]; then
+            echo "APP_URL or JOBS_SECRET is not set yet; skipping."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error --max-time 300 \
+            -X POST -H "Authorization: Bearer $JOBS_SECRET" \
+            "$APP_URL/api/jobs/pco-verify"

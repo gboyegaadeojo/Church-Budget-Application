@@ -1,28 +1,28 @@
 import "server-only";
 import { cache } from "react";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { isRole, ROLES, type Viewer } from "./roles";
+import { auth } from "@/auth";
+import { getDb } from "@/db";
+import { loadViewer } from "@/domain/users/viewer";
+import type { Viewer } from "./roles";
 
 /**
- * TEMPORARY until sign-in lands (Stage 1, step 3): returns a sample person so the
- * shell and Home can be built and tested. Roles come from PREVIEW_ROLES
- * (comma-separated), defaulting to every role. See docs/decisions.md.
+ * The signed-in person for this request, with their effective roles read fresh from
+ * the database. Redirects to /sign-in without a session, and to the matching
+ * access-denied screen (DRD 6.1a) when the account can't use the app right now.
  *
- * It is request-time, like the real session read will be, so every caller must
- * already sit behind a <Suspense> boundary (Cache Components). Memoized per request.
+ * It reads the session cookie, so every caller sits behind a <Suspense> boundary
+ * (Cache Components). Memoized per request.
  */
 export const getViewer = cache(async (): Promise<Viewer> => {
+  // Request-time first: Auth.js uses crypto before it reads cookies (Cache Components).
   await connection();
-  const fromEnv = process.env.PREVIEW_ROLES?.split(",")
-    .map((r) => r.trim())
-    .filter(isRole);
-  return {
-    id: "preview",
-    name: "Preview User",
-    email: "preview@example.org",
-    roles: fromEnv && fromEnv.length > 0 ? fromEnv : ROLES,
-    departments: [{ id: "media", name: "Media", representativeType: "primary" }],
-  };
-});
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) redirect("/sign-in");
 
-export const IS_PREVIEW_VIEWER = true;
+  const result = await loadViewer(getDb(), userId);
+  if (!result.ok) redirect(`/access-denied/${result.reason}`);
+  return result.viewer;
+});
