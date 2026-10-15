@@ -95,6 +95,13 @@ export const AREAS: readonly AreaDef[] = [
         label: n.exports,
         act: ["accountant", "backup_approver", "church_admin", "system_admin"],
       },
+      {
+        // FR-52, DRD 6.13: everyone sees it, scoped by role on the server; the board reads only.
+        href: "/reports/analytics",
+        label: n.analyticsAndAudit,
+        act: ["requester", "accountant", "backup_approver", "church_admin", "system_admin"],
+        view: BOARD,
+      },
     ],
   },
   {
@@ -142,6 +149,17 @@ export function allNavHrefs(): string[] {
     FOOTER_LINKS.map((l) => l.href),
   );
   return [...new Set(hrefs)];
+}
+
+/** The link label for a known page, or undefined if the navigation has no such page. */
+export function labelForHref(href: string): string | undefined {
+  const all = [...AREAS.flatMap((a) => a.items), ...FOOTER_LINKS];
+  return all.find((item) => item.href === href)?.label;
+}
+
+/** Whether a link is the current page. Links match exactly so "/spending" is not active on "/spending/ledger". */
+export function isActiveHref(pathname: string, href: string): boolean {
+  return pathname === href;
 }
 
 /** The area a path belongs to, for highlighting the active link. */

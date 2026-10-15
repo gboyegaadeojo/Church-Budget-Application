@@ -23,7 +23,10 @@ export function formatCAD(cents: number): string {
   const abs = Math.abs(cents);
   const dollars = Math.trunc(abs / 100);
   const rem = abs % 100;
-  // Intl gets a value with at most two decimals, so no float rounding can leak in.
-  const formatted = CAD.format(Number(`${dollars}.${String(rem).padStart(2, "0")}`));
+  // Intl only ever sees whole dollars (exact as integers); the cents are put into the
+  // fraction part as text, so no float rounding can leak in at any size.
+  const formatted = CAD.formatToParts(dollars)
+    .map((part) => (part.type === "fraction" ? String(rem).padStart(2, "0") : part.value))
+    .join("");
   return cents < 0 ? `−${formatted}` : formatted;
 }

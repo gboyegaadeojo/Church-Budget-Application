@@ -71,7 +71,8 @@
   --color-danger: var(--danger);
   --color-info: var(--info);
 
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans:
+    "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   --radius-control: 8px;
   --radius-card: 14px;
@@ -90,7 +91,10 @@
   --ease-enter: cubic-bezier(0, 0, 0.2, 1);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
 
+/* Layering order (DRD 10). Plain variables, used as z-(--z-nav) etc. */
+:root {
   --z-sticky: 20;
   --z-nav: 30;
   --z-overlay: 40;

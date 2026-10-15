@@ -1,4 +1,12 @@
-import { CalendarRange, FileSpreadsheet, House, Receipt, Settings, Wallet, type LucideProps } from "lucide-react";
+import {
+  CalendarRange,
+  FileSpreadsheet,
+  House,
+  Receipt,
+  Settings,
+  Wallet,
+  type LucideProps,
+} from "lucide-react";
 import type { AreaId } from "@/domain/navigation";
 
 const ICONS = {

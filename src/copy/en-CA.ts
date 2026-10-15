@@ -9,6 +9,11 @@ export const copy = {
     skipToContent: "Skip to main content",
     previewBanner:
       "Preview mode: sign-in is not connected yet, so you are seeing the app as a sample person with every role.",
+    previewLabel: "Preview",
+    metaDescription:
+      "Annual budgets, expenses and spending for Immanuel Fellowship Church departments.",
+    footerNote: "Amounts are in Canadian dollars (CAD).",
+    loading: "Loading…",
   },
   roles: {
     requester: "Requester",
@@ -45,6 +50,7 @@ export const copy = {
     ledger: "Ledger",
     budgetVsActual: "Budget vs actual",
     exports: "Exports",
+    analyticsAndAudit: "Analytics & Audit",
     usersAndRoles: "Users & Roles",
     budgetCycles: "Budget Cycles",
     settings: "Settings",
@@ -56,6 +62,8 @@ export const copy = {
     collapseSidebar: "Collapse sidebar",
     expandSidebar: "Expand sidebar",
     viewOnly: "View only",
+    mobileNavigation: "Quick navigation",
+    footerNavigation: "Footer",
   },
   account: {
     openMenu: "Open account menu",
@@ -68,6 +76,7 @@ export const copy = {
     away: "Away",
     signOut: "Sign out",
     comingSoon: "Coming soon",
+    roleChip: (role: string, department?: string) => (department ? `${role}: ${department}` : role),
   },
   home: {
     title: "Home",
@@ -77,9 +86,12 @@ export const copy = {
     allCaughtUp: "You're all caught up.",
     allCaughtUpDetail: "Anything that needs your action will appear here.",
     atAGlance: "At a glance",
-    atAGlanceEmpty: "Your budget and approval summaries will appear here once a budget year is set up.",
+    atAGlanceEmpty:
+      "Your budget and approval summaries will appear here once a budget year is set up.",
     recentActivity: "Recent activity",
     recentActivityEmpty: "No activity yet.",
+    taskBadgeLabel: (count: number) =>
+      count === 1 ? "1 task waiting for you" : `${count} tasks waiting for you`,
     waiting: (days: number) =>
       days < 1 ? "Waiting since today" : days === 1 ? "Waiting 1 day" : `Waiting ${days} days`,
   },
