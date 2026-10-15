@@ -2840,7 +2840,7 @@ Every item from the original request is covered:
 - Expenses need two approvals: accountant, then Board Chair (Vice-Chair as backup); then the Church Administrator processes and records how it was paid.
 - One application for every role; the System Administrator sees everything, read-only.
 - Receipt files are allowed on expense claims only.
-- Everything runs on free tiers; email via Gmail from a church Google account, Brevo as fallback.
+- Everything runs on free tiers; email via Resend (the church's existing account) from a church-domain address.
 - Requirements and design stay as separate documents, linked by a README. Claude Code will develop the application.
 - Each department has a Primary requester and an optional Backup requester (FR-38).
 - Departments can be mapped to Planning Center teams, groups, tags or a custom field so leaders stay in step (FR-39).
@@ -2878,8 +2878,7 @@ Decision (G, 2026-10-15): **everything must run on free tiers; the church pays f
 
 | Need | Free choice | Free limit (approx.) | Notes |
 |---|---|---|---|
-| Email | **Gmail API from a church Google account** (preferred) | ~2,000/day with Google Workspace (free for registered charities through Google for Nonprofits); ~500/day with a regular Gmail account | Sends from the church's own address, no extra domain setup, fits Google sign-in. Expected use is a few hundred emails a month. |
-| Email (fallback) | Brevo free plan | ~300/day | Only if Gmail sending is not possible. Can send from a Gmail address or a church domain (domain gives better delivery). |
+| Email | **Resend free plan** (the church already uses Resend) | 3,000/month, 100/day, 1 verified domain; shared with the church's other Resend apps | Sends from an address on the church's verified domain. Expected use is a few hundred emails a month. There is no second provider: emails that fail or go over the daily limit stay in the outbox and are retried. |
 | Hosting | Netlify free or Cloudflare Pages/Workers free | Generous for this size | Vercel's free Hobby plan is limited to personal, non-commercial use, so check its terms before using it for a church. |
 | Database | Neon free Postgres | ~0.5 GB, sleeps when idle and wakes in about a second | Supabase free also works, but pauses projects after a week of no activity, which matters for a seasonal app. |
 | Backups | Nightly database export by a free GitHub Actions job to a private church Google Drive folder | Free | Free database tiers have limited or no backups. |
@@ -2931,15 +2930,15 @@ Everything needed to put the app live, on free tiers only (20.3), is in **[go-li
 
 | # | Tool or account | Used for |
 |---|---|---|
-| 1 | Church-owned Google account (Workspace for Nonprofits if eligible) | Owns every other account; sends email |
+| 1 | Church-owned Google account (Workspace for Nonprofits if eligible) | Owns every other account and the backups |
 | 2 | GitHub (repository, Actions, secrets) | Code, CI, scheduled jobs, backups |
 | 3 | Netlify (free) | Hosting the app |
 | 4 | Neon Postgres (free) | Database, plus a branch for staging |
-| 5 | Google Cloud project | Google sign-in (OAuth client) and Gmail API sending |
+| 5 | Google Cloud project | Google sign-in (OAuth client) and Drive access for backups |
 | 6 | Planning Center | Sign-in (OAuth app), Group Leader check and team mapping (Personal Access Token) |
 | 7 | Cloudflare R2 (free) | Receipts and logo files |
 | 8 | Google Drive folder + encryption key | Nightly encrypted database backups |
-| 9 | Brevo (free, optional) | Email fallback |
+| 9 | Resend (free, the church's existing account) | Sending all email |
 
 ---
 

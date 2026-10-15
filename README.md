@@ -31,7 +31,7 @@ If the two documents disagree about **behaviour**, the requirements win. If they
 | Attachments | None, except receipts on expense claims and the admin's logo | Req FR-23, 6B.9 |
 | Emails | Every update emails the people involved; annual decisions can be held for a scheduled release | Req FR-21, FR-19a, FR-49 |
 | Sign-in | Google or Planning Center; requesters need the Group Leader custom field ("Ministry Leader" = "Yes") | Req FR-01, FR-01a |
-| Cost | Free tiers only (Gmail, Netlify, Neon, GitHub Actions, Cloudflare R2) | Req 20.3 |
+| Cost | Free tiers only (Resend, Netlify, Neon, GitHub Actions, Cloudflare R2) | Req 20.3 |
 | Department leaders | One Primary and an optional Backup requester per department | Req FR-38 |
 | Planning Center teams | Departments can be mapped to a Planning Center team, group or tag to keep leaders in step | Req FR-39 |
 | Audit and analytics | Reports → Analytics & Audit: charts, full activity log, access checks | Req FR-52 |

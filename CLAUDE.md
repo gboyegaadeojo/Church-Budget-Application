@@ -33,7 +33,7 @@ Read the relevant FRs and the DRD screen section before starting any feature. If
 | Database | Neon Postgres (free) with the Drizzle ORM and Drizzle migrations |
 | Auth | Auth.js (NextAuth v5): Google provider + custom OAuth provider for Planning Center |
 | Planning Center | People API, called server-side with the church's Personal Access Token |
-| Email | Gmail API from a church Google account (Nodemailer with Gmail OAuth2); Brevo SMTP as fallback behind the same `EmailSender` interface |
+| Email | Resend (REST API via `fetch`, the church's existing account) behind an `EmailSender` interface; a fake sender in tests |
 | Files (receipts, logo) | Cloudflare R2 (S3 API), private bucket, signed URLs |
 | Excel | ExcelJS, server-side |
 | Hosting | Netlify free (Next.js runtime) |
@@ -59,7 +59,7 @@ src/
     money.ts            # cents math, tax forward & inclusive, formatting (en-CA CAD)
     authz.ts            # role and department checks, used by every action
     audit.ts            # writeAudit(tx, event)
-    email/              # outbox, templates (shared layout), senders (gmail, brevo)
+    email/              # outbox, templates (shared layout), senders (resend, fake)
     pco.ts              # Planning Center client: leader verification + team mapping (FR-39), read-only
     excel/              # workbook builders + formula-injection guard
     storage.ts          # R2 signed upload/download
@@ -97,7 +97,7 @@ Work stage by stage. A stage is done when its ACs pass in CI.
    4. Admin: users and roles, departments (with Proposed, Primary and Backup requester, FR-38), cycles, settings (tax, Planning Center).
    5. Annual budget form: details → items with sticky summary → preview → confirm; drafts and autosave; 2 edits; shared department requests (FR-03 to FR-12, FR-32).
    6. Accountant dashboard and review: approve as requested, approve a different amount (inclusive), line changes, clarification, decline (FR-13 to FR-18).
-   7. Email outbox + Gmail sender + Part A templates (FR-19, FR-21). Excel exports (FR-20). Help and privacy pages (FR-36).
+   7. Email outbox + Resend sender + Part A templates (FR-19, FR-21). Excel exports (FR-20). Help and privacy pages (FR-36).
    8. Full activity log (FR-22 as extended) and the Activity tab of Analytics & Audit (FR-52); global search and breadcrumbs (DRD 6.0).
 2. **Stage 2:** scheduled decision release (FR-19a), messages (FR-31), backup approver and Away (FR-33), FR-34, copy last year (FR-35), branding (FR-30), email preferences, Planning Center team mapping (FR-39), Analytics & Audit Overview and Access tabs (FR-52).
 3. **Stage 3: Expenses** (6B, FR-40 to FR-51): purchase requests, claims and receipts (R2), budget strip, accountant → Board Chair approval, Ready to process, Record payment, expense emails and exports, auto spending entries.
@@ -136,13 +136,12 @@ AUTH_SECRET, AUTH_URL
 GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 PCO_CLIENT_ID, PCO_CLIENT_SECRET          # OAuth sign-in
 PCO_APP_ID, PCO_PAT_SECRET                # server-side People API (Personal Access Token)
-GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN, GMAIL_SENDER
-BREVO_SMTP_USER, BREVO_SMTP_KEY           # fallback, optional
+RESEND_API_KEY, RESEND_FROM               # email sending (From is on the church's verified domain)
 R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
 JOBS_SECRET
 APP_TIMEZONE=America/Winnipeg
 # GitHub Actions only (backup.yml)
-BACKUP_AGE_RECIPIENT, GDRIVE_FOLDER_ID, GDRIVE_REFRESH_TOKEN
+BACKUP_AGE_RECIPIENT, GDRIVE_FOLDER_ID, GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET, GDRIVE_REFRESH_TOKEN
 ```
 
 See `docs/go-live-checklist.md` for where each value comes from. Note its warning on GitHub Actions minutes for the 15-minute jobs.

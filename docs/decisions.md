@@ -97,3 +97,18 @@ Record any choice the specs leave open, and any deviation from them.
 
 - **Region: AWS US East (Ohio)**, to match Netlify's default server region, so the database sits next to the app rather than next to the church. Every page queries the database, so this matters more than distance to users.
 - **Compute autoscaling maximum: 0.25 CU**, so the free plan's monthly compute hours aren't used up by a larger compute size. Both are in the go-live checklist.
+
+## Stage 1, step 4
+
+- **Settings → Planning Center shows the connection status, not a "last sync" time.** The page checks the connection live with the church's token. A last-sync time comes when the nightly `pco-verify` job records one. Planning Center team mapping (FR-39) is Stage 2.
+- **The custom-field picker** lists Planning Center's People fields when it can reach Planning Center. Otherwise it falls back to a text box, so the setting can still be changed during an outage.
+- **"Test a person"** sends the Save form's current values to a separate action, so it tests the field and values as typed, before they're saved (AC-11). It runs outside a form submission, because React 19 resets a form after a form action and would wipe the unsaved changes. It looks up personal information, so every test is audited.
+
+## Email: Resend only (2026-10-15)
+
+- **Resend is the only email provider.** It replaces both the Gmail API (the spec's primary sender) and Brevo (the spec's fallback). The church already uses Resend for other applications, and Resend has no Gmail refresh token that can expire and silently stop email. It sits behind the `EmailSender` interface, with a fake sender in tests. Environment variables: `RESEND_API_KEY`, `RESEND_FROM`; the `GMAIL_*` variables are gone.
+- **No second provider.** If Resend fails, emails stay in `email_outbox`, and the `send-outbox` job retries them with backoff. Failed emails appear in Admin → Notifications & Audit. Actions never wait on email (CLAUDE.md constraint 7), so an outage delays emails but loses nothing.
+- **Free plan limits are shared.** Resend's free plan allows 3,000 emails a month, 100 a day and one verified domain, all shared with the church's other Resend apps. Normal use is a few hundred a month. A burst, such as opening a cycle or releasing every decision at once, could reach the daily cap. Emails over the cap are refused, stay in the outbox and go out the next day. Step 7 must treat Resend's rate-limit and quota answers as "retry later", not as permanent failures.
+- **Emails come from the church domain.** Resend needs a verified domain, so the From address is something like `budget@<church-domain>`.
+- **The backup job gets its own Google OAuth client** (`GDRIVE_CLIENT_ID`, `GDRIVE_CLIENT_SECRET`) instead of reusing the Gmail one.
+- **Step 7 calls Resend's REST API with `fetch`**, adding no dependency. It sends the outbox row id as the `Idempotency-Key`, so a retry never sends an email twice.
