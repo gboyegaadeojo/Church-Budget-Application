@@ -35,15 +35,16 @@ export async function ViewerAccountMenu() {
   );
 }
 
-/** Static stand-in for the sidebar while the viewer loads; same width so nothing shifts. */
+/** Static stand-in for the sidebar while the viewer loads; same widths so nothing shifts. */
 export function SidebarFallback() {
   return (
     <div
       aria-hidden="true"
-      className="sticky top-0 hidden h-dvh w-64 shrink-0 border-r border-border bg-surface lg:block"
+      className="sticky top-0 hidden h-dvh shrink-0 border-r border-border bg-surface md:block md:w-[76px] lg:w-72"
     >
       <div className="flex h-16 items-center px-4">
-        <Brand />
+        <Brand compact className="mx-auto lg:hidden" />
+        <Brand className="hidden lg:flex" />
       </div>
     </div>
   );

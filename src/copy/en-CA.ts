@@ -61,6 +61,10 @@ export const copy = {
     viewOnly: "View only",
     mobileNavigation: "Quick navigation",
     footerNavigation: "Footer",
+    areaPages: (area: string) => `${area} pages`,
+    allPages: "All pages",
+    allPagesHint: "Everything you can open, grouped by area.",
+    closeMenu: "Close",
   },
   account: {
     openMenu: "Open account menu",

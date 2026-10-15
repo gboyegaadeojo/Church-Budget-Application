@@ -100,6 +100,7 @@ test.describe("Sign-in (FR-01, FR-01a, DRD 6.1, 6.1a)", () => {
     await signInAs(page, PEOPLE.pat);
     await expect(page).toHaveURL("/");
     const nav = page.getByRole("navigation", { name: "Main navigation" });
+    await nav.getByRole("button", { name: "Annual Budget" }).click();
     await expect(nav.getByRole("link", { name: "Review dashboard" })).toBeVisible();
     await expect(nav.getByRole("link", { name: "My department's budget" })).toHaveCount(0);
   });
