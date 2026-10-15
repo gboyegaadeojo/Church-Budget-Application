@@ -119,7 +119,6 @@ describe("permissions", () => {
           email: "x@example.org",
           displayName: "X",
           roles: ["requester"],
-          twoStepConfirmed: false,
         }),
       ),
     ).rejects.toBeInstanceOf(ForbiddenError);
@@ -151,7 +150,6 @@ describe("users and roles (FR-02)", () => {
         email: " New.Accountant@Example.org ",
         displayName: "Nia Accountant",
         roles: ["accountant"],
-        twoStepConfirmed: true,
       }),
     );
     const [row] = await db.select().from(users).where(eq(users.id, userId));
@@ -167,29 +165,25 @@ describe("users and roles (FR-02)", () => {
     expect((await audits("admin.user_added", userId))[0]).toMatchObject({
       actorUserId: admin.id,
       actingRole: "system_admin",
-      details: { twoStepConfirmed: true, after: { roles: ["accountant"] } },
+      details: { after: { roles: ["accountant"] } },
     });
   });
 
-  it("requires two-step verification to be confirmed for staff roles only", async () => {
-    await expect(
-      run((tx) =>
-        addStaff(tx, admin, {
-          email: "chair@example.org",
-          displayName: "Chair",
-          roles: ["board_chair"],
-          twoStepConfirmed: false,
-        }),
-      ),
-    ).rejects.toMatchObject({ fieldErrors: { twoStepConfirmed: expect.any(String) } });
-    await run((tx) =>
+  it("adds staff roles without any two-step verification confirmation", async () => {
+    const { userId } = await run((tx) =>
       addStaff(tx, admin, {
-        email: "lead@example.org",
-        displayName: "Lead",
-        roles: ["requester"],
-        twoStepConfirmed: false,
+        email: "chair@example.org",
+        displayName: "Chair",
+        roles: ["board_chair", "system_admin"],
       }),
     );
+    expect(await loadViewer(db, userId)).toMatchObject({
+      ok: true,
+      viewer: { roles: expect.arrayContaining(["board_chair", "system_admin"]) },
+    });
+    // Leave exactly one stand-alone administrator for the tests below.
+    const [row] = await db.select().from(users).where(eq(users.id, userId));
+    await run((tx) => setUserActive(tx, admin, { userId, active: false, version: row.version }));
   });
 
   it("refuses an email that already has an account, ignoring case", async () => {
@@ -199,7 +193,6 @@ describe("users and roles (FR-02)", () => {
           email: "NEW.ACCOUNTANT@example.org",
           displayName: "Again",
           roles: ["accountant"],
-          twoStepConfirmed: true,
         }),
       ),
     ).rejects.toMatchObject({ fieldErrors: { email: expect.any(String) } });
@@ -234,7 +227,6 @@ describe("users and roles (FR-02)", () => {
         userId: leaving.id,
         roles: ["requester"],
         version: leaving.version,
-        twoStepConfirmed: false,
       }),
     );
     await run((tx) =>
@@ -245,7 +237,6 @@ describe("users and roles (FR-02)", () => {
         userId: arriving.id,
         roles: ["accountant"],
         version: arriving.version,
-        twoStepConfirmed: true,
       }),
     );
 
@@ -269,7 +260,6 @@ describe("users and roles (FR-02)", () => {
           userId: admin.id,
           roles: ["accountant"],
           version: v,
-          twoStepConfirmed: true,
         }),
       ),
     ).rejects.toBeInstanceOf(RuleError);
@@ -283,7 +273,6 @@ describe("users and roles (FR-02)", () => {
         userId: first.id,
         roles: ["accountant"],
         version: first.version,
-        twoStepConfirmed: true,
       }),
     );
     expect(await loadViewer(db, first.id)).toMatchObject({ viewer: { roles: ["accountant"] } });
@@ -318,7 +307,6 @@ describe("users and roles (FR-02)", () => {
         userId: staff.id,
         roles: ["church_admin", "accountant"],
         version: staff.version,
-        twoStepConfirmed: true,
       }),
     );
     await expect(
@@ -327,7 +315,6 @@ describe("users and roles (FR-02)", () => {
           userId: staff.id,
           roles: ["requester"],
           version: staff.version,
-          twoStepConfirmed: false,
         }),
       ),
     ).rejects.toBeInstanceOf(ConflictError);

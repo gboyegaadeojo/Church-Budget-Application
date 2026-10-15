@@ -50,10 +50,6 @@ export const adminCopy = {
     emailHint: "Any address works. They sign in with Google or Planning Center using it.",
     displayName: "Name",
     roles: "Roles",
-    twoStep:
-      "I confirm this person has two-step verification turned on for their Google or Planning Center account.",
-    twoStepHint:
-      "Required for accountant, board, Church Administrator and System Administrator roles (Requirements 10.1).",
     add: "Add staff member",
     added: (name: string) => `${name} was added.`,
     rolesHeading: "Roles",
@@ -88,7 +84,6 @@ export const adminCopy = {
       emailTaken: "Someone already has an account with this email address.",
       nameRequired: "Enter a name.",
       rolesRequired: "Choose at least one role.",
-      twoStepRequired: "Confirm that this person has two-step verification turned on.",
       lastAdmin:
         "You're the last System Administrator. Add another administrator first, so the church never loses access.",
       lastAdminDeactivate:

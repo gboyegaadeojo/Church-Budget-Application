@@ -17,16 +17,6 @@ import { ROLES, type Role } from "@/lib/roles";
 
 const u = adminCopy.users;
 
-/** Roles that need two-step verification confirmed when assigned (Requirements 10.1). */
-export const STAFF_ROLES: readonly Role[] = [
-  "accountant",
-  "backup_approver",
-  "board_chair",
-  "vice_chair",
-  "church_admin",
-  "system_admin",
-];
-
 type UserRow = typeof users.$inferSelect;
 
 const rolesSchema = z.array(z.enum(ROLES)).min(1, u.errors.rolesRequired);
@@ -91,19 +81,15 @@ const addStaffSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email(u.errors.emailInvalid)),
   displayName: z.string().trim().min(1, u.errors.nameRequired).max(100),
   roles: rolesSchema,
-  twoStepConfirmed: z.boolean(),
 });
 
 export async function addStaff(
   tx: Tx,
   actor: Subject,
-  input: { email: string; displayName: string; roles: string[]; twoStepConfirmed: boolean },
+  input: { email: string; displayName: string; roles: string[] },
 ): Promise<{ userId: string; name: string }> {
   const { actingRole } = assertCan(actor, "admin.users");
   const data = parseInput(addStaffSchema, input);
-  if (data.roles.some((r) => STAFF_ROLES.includes(r)) && !data.twoStepConfirmed) {
-    throw new ValidationError({ twoStepConfirmed: u.errors.twoStepRequired });
-  }
   const existing = await tx
     .select({ id: users.id })
     .from(users)
@@ -124,10 +110,7 @@ export async function addStaff(
     area: "admin",
     eventType: "admin.user_added",
     entity: { type: "user", id: created.id },
-    details: {
-      after: { email: data.email, name: data.displayName, roles },
-      twoStepConfirmed: data.twoStepConfirmed,
-    },
+    details: { after: { email: data.email, name: data.displayName, roles } },
   });
   // TODO(step 7): email the person that they have access (DRD 7.5 "role change").
   return { userId: created.id, name: data.displayName };
@@ -142,7 +125,7 @@ export async function addStaff(
 export async function setUserRoles(
   tx: Tx,
   actor: Subject,
-  input: { userId: string; roles: string[]; version: unknown; twoStepConfirmed: boolean },
+  input: { userId: string; roles: string[]; version: unknown },
 ): Promise<void> {
   const { actingRole } = assertCan(actor, "admin.users");
   const { roles: wanted, version } = parseInput(
@@ -156,9 +139,6 @@ export async function setUserRoles(
   const removed = current.filter((r) => !next.includes(r));
   if (added.length === 0 && removed.length === 0) return;
 
-  if (added.some((r) => STAFF_ROLES.includes(r)) && !input.twoStepConfirmed) {
-    throw new ValidationError({ twoStepConfirmed: u.errors.twoStepRequired });
-  }
   if (removed.includes("system_admin") && (await otherActiveAdmins(tx, user.id)) === 0) {
     throw new RuleError(u.errors.lastAdmin);
   }
@@ -181,7 +161,6 @@ export async function setUserRoles(
       person: { id: user.id, name: user.displayName },
       before: { roles: current },
       after: { roles: next },
-      ...(added.some((r) => STAFF_ROLES.includes(r)) ? { twoStepConfirmed: true } : {}),
     },
   });
   if (removed.includes("requester")) {

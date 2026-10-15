@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ActionForm,
-  CheckboxField,
-  CheckboxGroup,
-  SubmitButton,
-} from "@/components/ui/action-form";
+import { ActionForm, CheckboxGroup, SubmitButton } from "@/components/ui/action-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { adminCopy } from "@/copy/admin";
 import { saveRolesAction } from "../actions";
@@ -52,7 +47,6 @@ export function RolesForm({
           defaultValues={roles}
           hint={u.rolesHint}
         />
-        <CheckboxField name="twoStepConfirmed" label={u.twoStep} hint={u.twoStepHint} />
         {removingOwnAdmin ? (
           <ConfirmDialog
             formId={formId}

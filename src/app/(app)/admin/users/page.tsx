@@ -1,13 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ActionForm,
-  CheckboxField,
-  CheckboxGroup,
-  SubmitButton,
-  TextField,
-} from "@/components/ui/action-form";
+import { ActionForm, CheckboxGroup, SubmitButton, TextField } from "@/components/ui/action-form";
 import {
   AdminSkeleton,
   Badge,
@@ -92,7 +86,6 @@ async function UsersContent({ searchParams }: Pick<PageProps<"/admin/users">, "s
             <TextField name="displayName" label={u.displayName} autoComplete="off" required />
           </div>
           <CheckboxGroup name="roles" legend={u.roles} options={ROLE_OPTIONS} />
-          <CheckboxField name="twoStepConfirmed" label={u.twoStep} hint={u.twoStepHint} />
           <SubmitButton>{u.add}</SubmitButton>
         </ActionForm>
       </Section>

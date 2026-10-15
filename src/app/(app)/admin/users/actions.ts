@@ -14,7 +14,6 @@ export async function addStaffAction(_: ActionState, data: FormData): Promise<Ac
         email: form.text(data, "email"),
         displayName: form.text(data, "displayName"),
         roles: form.all(data, "roles"),
-        twoStepConfirmed: form.checked(data, "twoStepConfirmed"),
       });
       return u.added(name);
     },
@@ -30,7 +29,6 @@ export async function saveRolesAction(_: ActionState, data: FormData): Promise<A
         userId,
         roles: form.all(data, "roles"),
         version: form.text(data, "version"),
-        twoStepConfirmed: form.checked(data, "twoStepConfirmed"),
       });
       return u.rolesSaved;
     },
