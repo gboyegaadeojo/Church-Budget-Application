@@ -44,7 +44,7 @@ You never need to switch accounts. If you are both an accountant and a requester
 ### Getting around
 
 - The menu is grouped by area: **Home, Annual Budget, Expenses, Spending, Reports, Admin**. You only see what your roles allow. On a phone, the bar at the bottom has Home, Annual Budget, Expenses and Spending, and **More** has the rest.
-- **Search** (top bar, or press `/`): type a reference number such as `EXP-2027-0042` or `IFC-2027-MEDIA-0007`, a department, or a person.
+- **Search** (top bar, or press `/`): type a reference number such as `EXP-2027-0042` or `IFC-2027-0007`, a department, or a person.
 - **Breadcrumbs** under the top bar show where you are; click any part to go back up.
 - Every reference number, department and person name is a link.
 

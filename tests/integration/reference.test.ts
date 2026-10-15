@@ -16,15 +16,15 @@ afterAll(async () => {
 });
 
 describe("nextReference", () => {
-  it("numbers annual budgets per year: IFC-{year}-MEDIA-0001 (AC-37)", async () => {
-    expect(await nextReference(db, "annual", 2027)).toBe("IFC-2027-MEDIA-0001");
-    expect(await nextReference(db, "annual", 2027)).toBe("IFC-2027-MEDIA-0002");
-    expect(await nextReference(db, "annual", 2028)).toBe("IFC-2028-MEDIA-0001");
+  it("numbers annual budgets per year: IFC-{year}-0001 (AC-37)", async () => {
+    expect(await nextReference(db, "annual", 2027)).toBe("IFC-2027-0001");
+    expect(await nextReference(db, "annual", 2027)).toBe("IFC-2027-0002");
+    expect(await nextReference(db, "annual", 2028)).toBe("IFC-2028-0001");
   });
 
   it("numbers expenses separately: EXP-{year}-0001", async () => {
     expect(await nextReference(db, "expense", 2027)).toBe("EXP-2027-0001");
-    expect(await nextReference(db, "annual", 2027)).toBe("IFC-2027-MEDIA-0003");
+    expect(await nextReference(db, "annual", 2027)).toBe("IFC-2027-0003");
   });
 
   it("gives the number back when the transaction rolls back", async () => {

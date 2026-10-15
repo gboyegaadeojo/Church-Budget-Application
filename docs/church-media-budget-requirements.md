@@ -884,7 +884,7 @@ Prevent duplicate requests caused by repeated button clicks or network retries (
 
 After successful submission:
 
-- Generate a unique request reference number (e.g. `IFC-2027-MEDIA-0007`).
+- Generate a unique request reference number (e.g. `IFC-2027-0007`).
 - Save the request transactionally.
 - Display a success page.
 - Show the subtotal, sales tax, total including tax, and submission timestamp.
@@ -1161,7 +1161,7 @@ For a single-request export, the line-item sheet ends with Subtotal, Sales tax, 
 - Format monetary values consistently in CAD.
 - Preserve links where possible.
 - Include export generation date and selected filters.
-- Use a consistent worksheet and file naming convention (e.g. `FY2027_Media_Budget_Youth_IFC-2027-MEDIA-0007.xlsx`).
+- Use a consistent worksheet and file naming convention (e.g. `FY2027_Media_Budget_Youth_IFC-2027-0007.xlsx`).
 - Prevent spreadsheet formula injection in user-provided text.
 - Export authoritative server-side values.
 - Restrict exports to authorized accountant users.
@@ -2908,7 +2908,7 @@ All accounts are created under a church-owned Google account (20.5), never a per
 3. **Make "Approve as requested" one click** (plus confirmation), and keep "Approve with changes" one step further, so routine approvals are fast.
 4. **Pre-select the department** when a user has only one.
 5. **Show remaining edits** prominently on the request details page and in every receipt email ("You have 1 edit remaining").
-6. **Use a readable reference number** such as `IFC-2027-MEDIA-0007` in emails and Excel file names.
+6. **Use a readable reference number** such as `IFC-2027-0007` in emails and Excel file names.
 7. **Keep emails simple:** plain HTML with the totals table and a "View in app" button; no attachments.
 8. **Plan a short pilot** with the accountant and two departments before opening the cycle to everyone.
 9. **Record retention:** keep approved and declined requests for at least six years to align with typical CRA charity recordkeeping.
