@@ -32,6 +32,7 @@ import {
   setDepartmentActive,
   setRepresentative,
 } from "@/domain/departments/service";
+import { slotOf } from "@/domain/departments/slots";
 import { ConflictError, RuleError, ValidationError } from "@/domain/errors";
 import { getSignInSettings } from "@/domain/settings";
 import {
@@ -522,25 +523,103 @@ Young Couples Ministry
         .select()
         .from(userDepartments)
         .where(eq(userDepartments.departmentId, departmentId));
-      return Object.fromEntries(rows.map((r) => [r.userId, r.representativeType]));
+      return Object.fromEntries(
+        rows.map((r) => [
+          r.userId,
+          slotOf({ type: r.representativeType, backupRank: r.backupRank }),
+        ]),
+      );
     }
+
+    const set = (actor: Subject, departmentId: string, userId: string, type: string) =>
+      run((tx) => setRepresentative(tx, actor, { departmentId, userId, type }));
 
     it("sets Primary and Backup, and Make Primary on the Backup swaps them", async () => {
       const dept = await insertDepartment(db);
       const [a, b] = [await leader(), await leader()];
-      await run((tx) =>
-        setRepresentative(tx, admin, { departmentId: dept.id, userId: a.id, type: "primary" }),
-      );
-      await run((tx) =>
-        setRepresentative(tx, admin, { departmentId: dept.id, userId: b.id, type: "backup" }),
-      );
-      expect(await leadersOf(dept.id)).toEqual({ [a.id]: "primary", [b.id]: "backup" });
+      await set(admin, dept.id, a.id, "primary");
+      await set(admin, dept.id, b.id, "backup_1");
+      expect(await leadersOf(dept.id)).toEqual({ [a.id]: "primary", [b.id]: "backup_1" });
 
-      await run((tx) =>
-        setRepresentative(tx, admin, { departmentId: dept.id, userId: b.id, type: "primary" }),
-      );
-      expect(await leadersOf(dept.id)).toEqual({ [a.id]: "backup", [b.id]: "primary" });
+      await set(admin, dept.id, b.id, "primary");
+      expect(await leadersOf(dept.id)).toEqual({ [a.id]: "backup_1", [b.id]: "primary" });
       expect(await audits("admin.department_leader_changed", dept.id)).toHaveLength(3);
+    });
+
+    it("AC-116 holds up to two ranked Backups; filling a taken slot moves the holder", async () => {
+      const dept = await insertDepartment(db);
+      const [p, b1, b2, c] = [await leader(), await leader(), await leader(), await leader()];
+      await set(admin, dept.id, p.id, "primary");
+      await set(admin, dept.id, b1.id, "backup_1");
+      await set(admin, dept.id, b2.id, "backup_2");
+      expect(await leadersOf(dept.id)).toEqual({
+        [p.id]: "primary",
+        [b1.id]: "backup_1",
+        [b2.id]: "backup_2",
+      });
+
+      // Backup 2 to Backup 1 swaps the two Backups.
+      await set(admin, dept.id, b2.id, "backup_1");
+      expect(await leadersOf(dept.id)).toEqual({
+        [p.id]: "primary",
+        [b1.id]: "backup_2",
+        [b2.id]: "backup_1",
+      });
+
+      // A newcomer taking Backup 2 moves the holder to Representative: never a third Backup.
+      await set(admin, dept.id, c.id, "backup_2");
+      expect(await leadersOf(dept.id)).toEqual({
+        [p.id]: "primary",
+        [b1.id]: "representative",
+        [b2.id]: "backup_1",
+        [c.id]: "backup_2",
+      });
+    });
+
+    it("a lone Backup 2 moves up to Backup 1", async () => {
+      const dept = await insertDepartment(db);
+      const [b1, b2] = [await leader(), await leader()];
+      await set(admin, dept.id, b2.id, "backup_2");
+      expect(await leadersOf(dept.id)).toEqual({ [b2.id]: "backup_1" });
+
+      await set(admin, dept.id, b1.id, "backup_2");
+      await run((tx) => removeRepresentative(tx, admin, { departmentId: dept.id, userId: b2.id }));
+      expect(await leadersOf(dept.id)).toEqual({ [b1.id]: "backup_1" });
+    });
+
+    it("the Primary can name Backup 2, but not another Primary (FR-38)", async () => {
+      const dept = await insertDepartment(db);
+      const [p, b2] = [await leader(), await leader()];
+      await set(admin, dept.id, p.id, "primary");
+      const primary: Subject = {
+        id: p.id,
+        roles: ["requester"],
+        departments: [{ id: dept.id, name: dept.name, representativeType: "primary" }],
+      };
+      await set(primary, dept.id, b2.id, "backup_2");
+      expect(await leadersOf(dept.id)).toEqual({ [p.id]: "primary", [b2.id]: "backup_1" });
+      await expect(set(primary, dept.id, b2.id, "primary")).rejects.toBeInstanceOf(ForbiddenError);
+    });
+
+    it("AC-120 Backup 1 becomes Primary and Backup 2 moves up when the Primary leaves", async () => {
+      const dept = await insertDepartment(db);
+      const [p, b1, b2] = [await leader(), await leader(), await leader()];
+      await set(admin, dept.id, p.id, "primary");
+      await set(admin, dept.id, b1.id, "backup_1");
+      await set(admin, dept.id, b2.id, "backup_2");
+      await run((tx) =>
+        setUserActive(tx, admin, { userId: p.id, active: false, version: p.version }),
+      );
+      expect(await leadersOf(dept.id)).toEqual({
+        [p.id]: "representative",
+        [b1.id]: "primary",
+        [b2.id]: "backup_1",
+      });
+      const [promoted] = await audits("admin.department_backup_promoted", dept.id);
+      expect(promoted.details).toMatchObject({
+        before: { slot: "backup_1" },
+        after: { slot: "primary" },
+      });
     });
 
     it("replacing the Primary with someone new makes the old one a Representative", async () => {
@@ -594,9 +673,7 @@ Young Couples Ministry
         await run((tx) =>
           setRepresentative(tx, admin, { departmentId: dept.id, userId: p.id, type: "primary" }),
         );
-        await run((tx) =>
-          setRepresentative(tx, admin, { departmentId: dept.id, userId: b.id, type: "backup" }),
-        );
+        await set(admin, dept.id, b.id, "backup_1");
       }
       await run((tx) => removeRepresentative(tx, admin, { departmentId: deptA.id, userId: p1.id }));
       expect(await leadersOf(deptA.id)).toEqual({ [b1.id]: "primary" });

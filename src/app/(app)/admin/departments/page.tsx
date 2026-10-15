@@ -50,7 +50,7 @@ async function DepartmentsContent({
   const noBackupOnly = params.filter === "no-backup" && tab === "active";
   const db = getDb();
   const [all, proposedCount] = await Promise.all([listDepartments(db, tab), countProposed(db)]);
-  const list = noBackupOnly ? all.filter((x) => !x.backup) : all;
+  const list = noBackupOnly ? all.filter((x) => x.backups.length === 0) : all;
 
   return (
     <>
@@ -142,8 +142,10 @@ function DepartmentsTable({
                     ) : (
                       <Badge tone="warning">{d.noPrimary}</Badge>
                     )}
-                    {x.backup ? (
-                      <Badge>{d.backupChip(x.backup.name)}</Badge>
+                    {x.backups.length > 0 ? (
+                      x.backups.map((b, i) => (
+                        <Badge key={b.userId}>{d.backupChip(i + 1, b.name)}</Badge>
+                      ))
                     ) : (
                       // DRD 6.11: "No backup" is a warning, not an error.
                       <Badge tone="warning">{d.noBackup}</Badge>

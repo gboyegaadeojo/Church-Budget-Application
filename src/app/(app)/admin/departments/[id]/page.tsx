@@ -23,7 +23,7 @@ import { getDepartmentDetail, type Leader } from "@/domain/departments/queries";
 import { getChurchTimeZone, readSettings } from "@/domain/settings";
 import { leaderCandidates } from "@/domain/users/admin-queries";
 import { viewerAllowedTo } from "@/lib/admin-server";
-import type { RepresentativeType } from "@/lib/roles";
+import { LEADER_SLOTS, type LeaderSlot } from "@/domain/departments/slots";
 import { formatDateTime } from "@/lib/time-zone";
 import {
   acceptProposedAction,
@@ -206,12 +206,9 @@ async function DepartmentContent({ params }: Pick<PageProps<"/admin/departments/
                   name="type"
                   label={d.as}
                   defaultValue={
-                    leaders.some((l) => l.type === "primary") ? "representative" : "primary"
+                    leaders.some((l) => l.slot === "primary") ? "representative" : "primary"
                   }
-                  options={(["primary", "backup", "representative"] as const).map((t) => ({
-                    value: t,
-                    label: d.typeLabels[t],
-                  }))}
+                  options={LEADER_SLOTS.map((slot) => ({ value: slot, label: d.slotLabels[slot] }))}
                 />
               </div>
               <SubmitButton tone="secondary">{d.addPerson}</SubmitButton>
@@ -253,20 +250,15 @@ async function DepartmentContent({ params }: Pick<PageProps<"/admin/departments/
   );
 }
 
-const OTHER_TYPES: Record<RepresentativeType, { type: RepresentativeType; label: string }[]> = {
-  primary: [
-    { type: "backup", label: d.makeBackup },
-    { type: "representative", label: d.makeRepresentative },
-  ],
-  backup: [
-    { type: "primary", label: d.makePrimary },
-    { type: "representative", label: d.makeRepresentative },
-  ],
-  representative: [
-    { type: "primary", label: d.makePrimary },
-    { type: "backup", label: d.makeBackup },
-  ],
+const MAKE: Record<LeaderSlot, string> = {
+  primary: d.makePrimary,
+  backup_1: d.makeBackup1,
+  backup_2: d.makeBackup2,
+  representative: d.makeRepresentative,
 };
+
+/** The other slots a leader can move to. */
+const otherSlots = (slot: LeaderSlot) => LEADER_SLOTS.filter((s) => s !== slot);
 
 function LeaderRow({
   departmentId,
@@ -283,8 +275,8 @@ function LeaderRow({
       <div className="min-w-0">
         <span className="flex flex-wrap items-center gap-2">
           <span className="font-medium">{leader.name}</span>
-          <Badge tone={leader.type === "primary" ? "info" : "neutral"}>
-            {d.typeLabels[leader.type]}
+          <Badge tone={leader.slot === "primary" ? "info" : "neutral"}>
+            {d.slotLabels[leader.slot]}
           </Badge>
         </span>
         <span className="block text-xs break-all text-fg-muted">{leader.email}</span>
@@ -298,9 +290,9 @@ function LeaderRow({
           >
             <input type="hidden" name="departmentId" value={departmentId} />
             <input type="hidden" name="userId" value={leader.userId} />
-            {OTHER_TYPES[leader.type].map((o) => (
-              <SubmitButton key={o.type} tone="secondary" name="type" value={o.type}>
-                {o.label}
+            {otherSlots(leader.slot).map((slot) => (
+              <SubmitButton key={slot} tone="secondary" name="type" value={slot}>
+                {MAKE[slot]}
               </SubmitButton>
             ))}
           </ActionForm>

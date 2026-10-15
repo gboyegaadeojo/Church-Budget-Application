@@ -1,4 +1,4 @@
-import { and, eq, ne, sql } from "drizzle-orm";
+import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { adminCopy } from "@/copy/admin";
 import {
@@ -20,6 +20,7 @@ import { writeAudit, type AuditActor } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
 import type { RepresentativeType, Role } from "@/lib/roles";
 import { parseNameList, tidyName } from "./matching";
+import { LEADER_SLOTS, slotOf, slotParts, type LeaderSlot } from "./slots";
 import { transitionDepartment, type DepartmentEvent } from "./status";
 
 /**
@@ -342,17 +343,34 @@ async function leadersOf(tx: Tx, departmentId: string): Promise<LeaderRow[]> {
   return tx.select().from(userDepartments).where(eq(userDepartments.departmentId, departmentId));
 }
 
-async function setType(tx: Tx, rowId: string, type: RepresentativeType, assignedBy: string | null) {
+const slotOfRow = (row: LeaderRow): LeaderSlot =>
+  slotOf({ type: row.representativeType, backupRank: row.backupRank });
+
+/** Moves a leader to a slot; type and rank change together so the rank check always holds. */
+async function setSlot(tx: Tx, rowId: string, slot: LeaderSlot, assignedBy: string | null) {
+  const { type, backupRank } = slotParts(slot);
   await tx
     .update(userDepartments)
     .set({
       representativeType: type,
+      backupRank,
       assignedByUserId: assignedBy,
       version: sql`${userDepartments.version} + 1`,
       // Away dates belong to the Primary only (FR-38).
       ...(type === "primary" ? {} : { awayFrom: null, awayUntil: null }),
     })
     .where(eq(userDepartments.id, rowId));
+}
+
+/** Keeps Backup ranks without a gap: a lone Backup 2 becomes Backup 1. */
+async function compactBackups(tx: Tx, departmentId: string): Promise<void> {
+  const backups = (await leadersOf(tx, departmentId)).filter(
+    (l) => l.representativeType === "backup",
+  );
+  const second = backups.find((b) => b.backupRank === 2);
+  if (second && !backups.some((b) => b.backupRank === 1)) {
+    await setSlot(tx, second.id, "backup_1", second.assignedByUserId);
+  }
 }
 
 const ACTION_FOR: Record<
@@ -364,13 +382,18 @@ const ACTION_FOR: Record<
   representative: "admin.departments",
 };
 
-/** Makes someone the department's Primary, Backup or a Representative. */
+/**
+ * Makes someone the department's Primary, Backup 1, Backup 2 or a Representative.
+ * If they already hold a leading slot and the target is taken, the two swap; otherwise
+ * the person who held the target becomes a Representative.
+ */
 export async function setRepresentative(
   tx: Tx,
   actor: Subject,
   input: { departmentId: string; userId: string; type: string },
 ): Promise<void> {
-  const type = parseInput(z.enum(["primary", "backup", "representative"]), input.type);
+  const slot = parseInput(z.enum(LEADER_SLOTS), input.type);
+  const { type } = slotParts(slot);
   const { actingRole } = assertCan(actor, ACTION_FOR[type], { departmentId: input.departmentId });
   const department = await loadDepartment(tx, input.departmentId);
   if (department.status !== "active" && department.status !== "proposed") {
@@ -400,32 +423,39 @@ export async function setRepresentative(
 
   const leaders = await leadersOf(tx, department.id);
   const mine = leaders.find((l) => l.userId === person.id);
-  if (mine?.representativeType === type) return;
+  const mySlot = mine ? slotOfRow(mine) : null;
+  if (mySlot === slot) return;
 
-  const holder = leaders.find((l) => l.representativeType === type && l.userId !== person.id);
-  if (type === "primary" && holder) {
-    // "Make Primary" on the Backup swaps them; otherwise the old Primary becomes a Representative.
-    if (mine?.representativeType === "backup") {
-      await setType(tx, mine.id, "representative", actor.id);
-      await setType(tx, holder.id, "backup", actor.id);
+  // Representatives are unlimited; the other slots hold one person each.
+  const holder =
+    slot === "representative"
+      ? undefined
+      : leaders.find((l) => slotOfRow(l) === slot && l.userId !== person.id);
+  const swap = holder && mine && mySlot !== "representative" ? mySlot : null;
+  if (holder) {
+    if (swap && mine) {
+      // Free the person's slot first, so no unique index sees two holders at once.
+      await setSlot(tx, mine.id, "representative", actor.id);
+      await setSlot(tx, holder.id, swap, actor.id);
     } else {
-      await setType(tx, holder.id, "representative", actor.id);
+      await setSlot(tx, holder.id, "representative", actor.id);
     }
-  } else if (type === "backup" && holder) {
-    await setType(tx, holder.id, "representative", actor.id);
   }
 
   if (mine) {
-    await setType(tx, mine.id, type, actor.id);
+    await setSlot(tx, mine.id, slot, actor.id);
   } else {
+    const { type: newType, backupRank } = slotParts(slot);
     await tx.insert(userDepartments).values({
       userId: person.id,
       departmentId: department.id,
-      representativeType: type,
+      representativeType: newType,
+      backupRank,
       source: "manual",
       assignedByUserId: actor.id,
     });
   }
+  await compactBackups(tx, department.id);
   if (person.accessStatus === "pending_department") {
     await tx
       .update(users)
@@ -441,9 +471,11 @@ export async function setRepresentative(
     departmentId: department.id,
     details: {
       person: { id: person.id, name: person.displayName },
-      before: { type: mine?.representativeType ?? null },
-      after: { type },
-      replaced: holder ? { userId: holder.userId, type: holder.representativeType } : null,
+      before: { slot: mySlot },
+      after: { slot },
+      replaced: holder
+        ? { userId: holder.userId, slot: slotOfRow(holder), now: swap ?? "representative" }
+        : null,
     },
   });
 }
@@ -467,8 +499,10 @@ export async function removeRepresentative(
     eventType: "admin.department_leader_removed",
     entity: { type: "department", id: department.id },
     departmentId: department.id,
-    details: { person: { id: input.userId }, before: { type: row.representativeType } },
+    details: { person: { id: input.userId }, before: { slot: slotOfRow(row) } },
   });
+  // Removing Backup 1 moves Backup 2 up.
+  await compactBackups(tx, department.id);
   if (row.representativeType === "primary") {
     await promoteBackup(
       tx,
@@ -479,6 +513,7 @@ export async function removeRepresentative(
   }
 }
 
+/** Backup 1 becomes Primary and Backup 2 moves up to Backup 1 (FR-38). */
 async function promoteBackup(tx: Tx, departmentId: string, actor: AuditActor, why: string) {
   const [backup] = await tx
     .select()
@@ -489,9 +524,12 @@ async function promoteBackup(tx: Tx, departmentId: string, actor: AuditActor, wh
         eq(userDepartments.representativeType, "backup"),
       ),
     )
+    .orderBy(asc(userDepartments.backupRank))
     .limit(1);
   if (!backup) return;
-  await setType(tx, backup.id, "primary", null);
+  const from = slotOfRow(backup);
+  await setSlot(tx, backup.id, "primary", null);
+  await compactBackups(tx, departmentId);
   await writeAudit(tx, {
     actor,
     area: "admin",
@@ -501,8 +539,8 @@ async function promoteBackup(tx: Tx, departmentId: string, actor: AuditActor, wh
     reason: `Automatic: ${why}; the Backup became Primary`,
     details: {
       person: { id: backup.userId },
-      before: { type: "backup" },
-      after: { type: "primary" },
+      before: { slot: from },
+      after: { slot: "primary" },
     },
   });
   // TODO(step 7): email the administrator (FR-38).
@@ -525,7 +563,7 @@ export async function promoteBackupsWhenPrimaryLeaves(
       and(eq(userDepartments.userId, userId), eq(userDepartments.representativeType, "primary")),
     );
   for (const row of rows) {
-    await setType(tx, row.id, "representative", null);
+    await setSlot(tx, row.id, "representative", null);
     await promoteBackup(tx, row.departmentId, actor, why);
   }
 }

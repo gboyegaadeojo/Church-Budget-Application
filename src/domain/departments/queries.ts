@@ -4,6 +4,7 @@ import { budgetCycles, budgetRequests, departments, userDepartments, users } fro
 import type { Tx } from "@/db/types";
 import type { RepresentativeType } from "@/lib/roles";
 import { closeMatches } from "./matching";
+import { SLOT_ORDER, slotOf, type LeaderSlot } from "./slots";
 import type { DepartmentStatus } from "./status";
 
 /** Read models for Admin → Departments. Callers check `admin.departments` first. */
@@ -13,6 +14,7 @@ export type Leader = {
   name: string;
   email: string;
   type: RepresentativeType;
+  slot: LeaderSlot;
   verified: boolean;
 };
 
@@ -21,7 +23,8 @@ export type DepartmentListItem = {
   name: string;
   status: DepartmentStatus;
   primary: Leader | null;
-  backup: Leader | null;
+  /** Backup 1 then Backup 2 (FR-38). */
+  backups: Leader[];
   representatives: number;
 };
 
@@ -35,14 +38,19 @@ async function leadersByDepartment(tx: Tx, ids: string[]): Promise<Map<string, L
       name: users.displayName,
       email: users.email,
       type: userDepartments.representativeType,
+      backupRank: userDepartments.backupRank,
       verified: users.pcoLeaderVerified,
     })
     .from(userDepartments)
     .innerJoin(users, eq(users.id, userDepartments.userId))
     .where(inArray(userDepartments.departmentId, ids))
     .orderBy(asc(users.displayName));
-  for (const { departmentId, ...leader } of rows) {
-    map.set(departmentId, [...(map.get(departmentId) ?? []), leader]);
+  for (const { departmentId, backupRank, ...leader } of rows) {
+    const withSlot = { ...leader, slot: slotOf({ type: leader.type, backupRank }) };
+    map.set(departmentId, [...(map.get(departmentId) ?? []), withSlot]);
+  }
+  for (const list of map.values()) {
+    list.sort((a, b) => SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot] || a.name.localeCompare(b.name));
   }
   return map;
 }
@@ -67,7 +75,7 @@ export async function listDepartments(
       name: r.name,
       status: r.status,
       primary: list.find((l) => l.type === "primary") ?? null,
-      backup: list.find((l) => l.type === "backup") ?? null,
+      backups: list.filter((l) => l.type === "backup"),
       representatives: list.filter((l) => l.type === "representative").length,
     };
   });
@@ -86,8 +94,6 @@ export async function getDepartmentDetail(tx: Tx, id: string) {
   const [department] = await tx.select().from(departments).where(eq(departments.id, id)).limit(1);
   if (!department) return null;
   const leaders = (await leadersByDepartment(tx, [id])).get(id) ?? [];
-  const order: Record<RepresentativeType, number> = { primary: 0, backup: 1, representative: 2 };
-  leaders.sort((a, b) => order[a.type] - order[b.type] || a.name.localeCompare(b.name));
 
   const [proposer] = department.proposedByUserId
     ? await tx
