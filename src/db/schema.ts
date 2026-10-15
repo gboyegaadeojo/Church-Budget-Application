@@ -309,6 +309,36 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: updatedAt(),
 });
 
+/**
+ * People who can sign church cheques (FR-53, 9.18a). Kept by the administrator; they
+ * need no app account. Never deleted: removing sets `active_until`, and payments keep
+ * the signer's id and a name snapshot.
+ */
+export const signingAuthorities = pgTable(
+  "signing_authorities",
+  {
+    id: id(),
+    name: text("name").notNull(),
+    email: text("email"),
+    activeFrom: date("active_from").notNull(),
+    activeUntil: date("active_until"),
+    removedReason: text("removed_reason"),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    version: version(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check("signing_authorities_name_length", sql`char_length(${t.name}) between 1 and 100`),
+    check(
+      "signing_authorities_dates",
+      sql`${t.activeUntil} is null or ${t.activeUntil} >= ${t.activeFrom}`,
+    ),
+  ],
+);
+
 /** Per-year counters for IFC-{year}-0001 and EXP-{year}-0001 (CLAUDE.md conventions). */
 export const referenceSequences = pgTable(
   "reference_sequences",

@@ -63,7 +63,7 @@ Record the choice in `docs/decisions.md`.
 3. [ ] Send a test email from the app and confirm it arrives in Gmail, Outlook and Apple Mail inboxes, not spam.
 4. [ ] In Settings → Planning Center, **Test a person** for one Group Leader and one non-leader; run **Sync now** on one mapped department.
 5. [ ] Run the backup job, then **restore it into a Neon branch** and open the app against it (AC-107).
-6. [ ] Create the two System Administrators, then staff users and roles, paste the 18 departments, add signing authorities, create the FY2027 cycle, and set the tax rate (12%), branding, and email settings.
+6. [ ] Create the two System Administrators, then staff users and roles, choose the Primary accountant (Settings → Accountants), paste the 18 departments, add at least two signing authorities, create the FY2027 cycle, and set the tax rate (12%), branding, and email settings.
 7. [ ] Pilot for one or two weeks with the accountant, Board Chair, Church Administrator and two departments; fix what they find.
 8. [ ] Check the [user manual](user-manual.md) against the built app and link it from the Help page.
 9. [ ] Open the budget cycle; the app emails every department representative.

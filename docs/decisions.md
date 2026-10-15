@@ -112,6 +112,13 @@ Record any choice the specs leave open, and any deviation from them.
 - **Changing places:** giving someone a place that's taken makes its holder a Representative. When a leader moves into another leader's place, the two swap (for example, Make Backup 1 on Backup 2).
 - **Escalations and Away (Stage 2, FR-33, FR-38)** go to both Backups.
 
+## Several accountants and cheque signers, set up in Admin now (2026-10-15)
+
+- **Several accountants, one Primary (FR-33 as written).** Any number of people can hold the Accountant or Backup approver role. The administrator picks the Primary accountant in Admin → Settings → Accountants; everyone else is a backup approver. It's stored as the `primary_accountant_user_id` setting, version-checked and audited like other settings. If that person loses the Accountant role or is deactivated, the setting is cleared automatically (audited as `admin.primary_accountant_cleared`) and the page warns until a new Primary is chosen. Away and email routing still arrive with FR-33 (Stage 2) and the outbox (step 7).
+- **Cheque signers are a list, not a role (FR-53).** The people who sign cheques are often board members or a treasurer who never use the app, so they don't need an account. The administrator keeps them in Admin → Settings → Signing authorities: name, optional email, active from, and (when removed) the date they stop plus an optional reason. `active_until` is the first day a signer may no longer sign.
+- **Built now, used in Stage 3.** The list is ready before Record payment (6B.5), which will offer only active signers, require two different people on every cheque (AC-76, AC-135), and keep each signer's id and name snapshot on the payment.
+- **Signers are never deleted.** A database trigger refuses DELETE on `signing_authorities` (migration `0005_signing_authorities`), so every past payment can still name who signed it.
+
 ## No two-step verification requirement (2026-10-15)
 
 - **No role requires two-step verification.** This covers the accountant, backup approver, Board Chair, Vice-Chair, Church Administrator and System Administrator, at the church's request. It replaces Requirements 10.1's rule and the "I confirm this person has two-step verification" checkbox that Add staff and Roles required for staff roles.

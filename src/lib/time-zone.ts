@@ -73,6 +73,19 @@ export function zonedLocalToUtc(local: string, zone: string): Date | null {
   return utcToZonedLocal(result, zone) === local.trim() ? result : null;
 }
 
+/** The calendar date of `at` in `zone`, as "2026-11-30". */
+export function zonedDate(at: Date, zone: string): string {
+  return utcToZonedLocal(at, zone).slice(0, 10);
+}
+
+/** "Nov 30, 2026" for a plain calendar date ("2026-11-30"), which has no time zone. */
+export function formatDate(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "UTC", dateStyle: "medium" }).format(
+    new Date(Date.UTC(y, m - 1, d)),
+  );
+}
+
 /** "Nov 30, 2026, 5:00 p.m. CST": a date and time in the church time zone (en-CA). */
 export function formatDateTime(date: Date, zone: string): string {
   return new Intl.DateTimeFormat("en-CA", {

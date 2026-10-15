@@ -15,12 +15,14 @@ import { adminCopy } from "@/copy/admin";
 import { getDb } from "@/db";
 import { getChurchTimeZone, getSignInSettings, readSettings } from "@/domain/settings";
 import { settingVersions } from "@/domain/settings/service";
-import { failingRequesters } from "@/domain/users/admin-queries";
+import { churchToday, listSigners } from "@/domain/signers/service";
+import { accountantTeam, failingRequesters } from "@/domain/users/admin-queries";
 import { viewerAllowedTo } from "@/lib/admin-server";
 import { taxRateToPercent } from "@/lib/money";
 import type { PcoFieldDefinition } from "@/lib/pco";
 import { getPlanningCenterDirectory } from "@/lib/pco-directory";
 import { timeZoneAction } from "./actions";
+import { AccountantsSection, SignersSection } from "./people-sections";
 import { SignInSettingsForm, TaxRateForm } from "./settings-forms";
 
 const s = adminCopy.settings;
@@ -37,7 +39,10 @@ const SIGN_IN_KEYS = [
   "signin_planning_center_enabled",
 ] as const;
 
-/** Admin → Settings (DRD 6.11): sales tax, time zone, sign-in and Planning Center (FR-01a, FR-07a). */
+/**
+ * Admin → Settings (DRD 6.11): sales tax, Primary accountant, cheque signers, time zone,
+ * sign-in and Planning Center (FR-07a, FR-33, FR-53, FR-01a).
+ */
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
@@ -83,6 +88,11 @@ async function SettingsContent() {
     signInVersions,
     failing,
     pco,
+    { primary_accountant_user_id },
+    primaryVersions,
+    team,
+    signers,
+    today,
   ] = await Promise.all([
     readSettings(db, ["sales_tax_rate"]),
     getSignInSettings(db),
@@ -92,6 +102,11 @@ async function SettingsContent() {
     settingVersions(db, SIGN_IN_KEYS),
     failingRequesters(db),
     planningCenterStatus(),
+    readSettings(db, ["primary_accountant_user_id"]),
+    settingVersions(db, ["primary_accountant_user_id"]),
+    accountantTeam(db),
+    listSigners(db),
+    churchToday(db),
   ]);
 
   return (
@@ -101,6 +116,14 @@ async function SettingsContent() {
       <Section title={s.taxHeading} id="tax">
         <TaxRateForm percent={taxRateToPercent(sales_tax_rate)} versions={taxVersions} />
       </Section>
+
+      <AccountantsSection
+        team={team}
+        primaryId={primary_accountant_user_id}
+        versions={primaryVersions}
+      />
+
+      <SignersSection signers={signers} today={today} />
 
       <Section title={s.timeZoneHeading} id="time-zone">
         <ActionForm action={timeZoneAction} aria-label={s.timeZoneHeading}>

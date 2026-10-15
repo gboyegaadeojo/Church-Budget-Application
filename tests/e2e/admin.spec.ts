@@ -100,6 +100,51 @@ test.describe("Admin (Stage 1 step 4)", () => {
     await expect(page.getByRole("button", { name: "Change tax rate" })).toBeFocused();
   });
 
+  test("AC-134 AC-135 the administrator keeps the cheque signers list", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.gina);
+    await page.goto("/admin/settings");
+    const section = page.getByRole("region", { name: "Signing authorities" });
+    await expect(section.getByText("There are no active signers.", { exact: false })).toBeVisible();
+
+    const add = section.getByRole("form", { name: "Add a signer" });
+    for (const name of ["Pat Treasurer", "Lee Chair"]) {
+      await add.getByLabel("Name").fill(name);
+      await add.getByRole("button", { name: "Add signer" }).click();
+      await expect(add.getByText(`${name} was added.`)).toBeVisible();
+    }
+    await expect(section.getByText(/Cheque payments need two signers/)).toHaveCount(0);
+
+    await section.getByText("Edit Lee Chair").click();
+    await section
+      .getByRole("form", { name: "Remove" })
+      .getByRole("button", { name: "Remove" })
+      .click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Remove" }).click();
+    // The status badge ("Inactive from Oct 20, 2026"), not the Remove form's date label.
+    await expect(section.getByText(/^Inactive from \w{3} \d{1,2}, \d{4}$/)).toBeVisible();
+    await expect(section.getByText("Only one signer is active.", { exact: false })).toBeVisible();
+    // Removed signers stay on the list.
+    await expect(section.getByText("Lee Chair", { exact: true })).toBeVisible();
+    await expectAxeClean(page);
+  });
+
+  test("FR-33 the administrator picks the Primary accountant", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await signInAs(page, PEOPLE.gina);
+    await page.goto("/admin/settings");
+    const section = page.getByRole("region", { name: "Accountants" });
+    await section
+      .getByRole("combobox", { name: "Primary accountant" })
+      .selectOption({ label: "Pat Accountant" });
+    await section.getByRole("button", { name: "Save Primary accountant" }).click();
+    await expect(section.getByText("Primary accountant saved.")).toBeVisible();
+    await expect(section.getByText("No Primary accountant is set.", { exact: false })).toHaveCount(
+      0,
+    );
+    await expectNoHorizontalScroll(page);
+  });
+
   test("AC-5 people without the administrator role see permission denied", async ({ page }) => {
     await signInAs(page, PEOPLE.pat);
     for (const [path] of ADMIN_PAGES) {
