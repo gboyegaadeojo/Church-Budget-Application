@@ -1,0 +1,219 @@
+import { describe, expect, it, vi } from "vitest";
+import { checkLeader, parseYesNo, valueMatches } from "@/domain/users/leader-check";
+import {
+  FakePlanningCenterDirectory,
+  HttpPlanningCenterDirectory,
+  PlanningCenterUnavailableError,
+} from "@/lib/pco";
+
+describe("Yes/No values (Ministry Leader = Yes)", () => {
+  it.each(["Yes", "yes", "YES", " yes ", "true", "TRUE", "t", "y", "1", "checked", "on"])(
+    "%j means yes",
+    (value) => expect(parseYesNo(value)).toBe(true),
+  );
+
+  it.each(["No", "no", "false", "f", "n", "0", "", "unchecked", "off"])("%j means no", (value) =>
+    expect(parseYesNo(value)).toBe(false),
+  );
+
+  it.each(["maybe", "Group Leader", "2"])("%j is neither", (value) =>
+    expect(parseYesNo(value)).toBeNull(),
+  );
+
+  it("matches an accepted Yes however Planning Center stores it", () => {
+    for (const stored of ["Yes", "yes", "true", "True", "1"]) {
+      expect(valueMatches(stored, ["Yes"], "boolean")).toBe(true);
+    }
+    for (const stored of ["No", "false", "0", "", "Group Leader"]) {
+      expect(valueMatches(stored, ["Yes"], "boolean")).toBe(false);
+    }
+  });
+
+  it("can accept No if the administrator ever wants that", () => {
+    expect(valueMatches("false", ["No"], "boolean")).toBe(true);
+    expect(valueMatches("true", ["No"], "boolean")).toBe(false);
+  });
+
+  it("compares other field types as text, ignoring case and spaces", () => {
+    expect(valueMatches("Group Leader", ["group leader"], "string")).toBe(true);
+    expect(valueMatches(" Group Leader ", ["Group Leader"], "checkboxes")).toBe(true);
+    expect(valueMatches("true", ["Yes"], "string")).toBe(false);
+    expect(valueMatches("", [""], "string")).toBe(false);
+  });
+});
+
+/** Answers People API paths with canned JSON:API bodies, as Planning Center returns them. */
+function fakeFetch(routes: Record<string, unknown | number>) {
+  return vi.fn(async (input: string | URL | Request) => {
+    const url = new URL(input instanceof Request ? input.url : input);
+    const key = decodeURIComponent(url.pathname + url.search);
+    const route = routes[key];
+    if (route === undefined) return new Response("{}", { status: 404 });
+    if (typeof route === "number") return new Response("{}", { status: route });
+    return Response.json(route);
+  });
+}
+
+const PERSON_42 = {
+  data: {
+    type: "Person",
+    id: "42",
+    attributes: { name: "Sam Lee", status: "active" },
+    relationships: { emails: { data: [{ type: "Email", id: "9" }] } },
+  },
+  included: [{ type: "Email", id: "9", attributes: { address: "Sam@Example.org", primary: true } }],
+};
+
+const ROUTES = {
+  "/people/v2": { data: { type: "Organization", id: "100", attributes: { name: "IFC" } } },
+  "/people/v2/people/42?include=emails": PERSON_42,
+  "/people/v2/emails?where[address]=sam@example.org&per_page=25": {
+    data: [
+      {
+        type: "Email",
+        id: "9",
+        attributes: { address: "sam@example.org" },
+        relationships: { person: { data: { type: "Person", id: "42" } } },
+      },
+    ],
+  },
+  "/people/v2/field_definitions?per_page=100": {
+    data: [
+      {
+        type: "FieldDefinition",
+        id: "5",
+        attributes: { name: "Birthday Club", data_type: "boolean" },
+      },
+      {
+        type: "FieldDefinition",
+        id: "7",
+        attributes: { name: "Ministry Leader", data_type: "boolean", deleted_at: null },
+      },
+    ],
+  },
+  "/people/v2/people/42/field_data?where[field_definition_id]=7&per_page=100": {
+    data: [{ type: "FieldDatum", id: "300", attributes: { value: "true" } }],
+  },
+};
+
+describe("HttpPlanningCenterDirectory", () => {
+  const credentials = { appId: "app-id", secret: "pat-secret" };
+
+  it("calls the People API with the token and a User-Agent", async () => {
+    const fetchImpl = fakeFetch(ROUTES);
+    const dir = new HttpPlanningCenterDirectory(credentials, fetchImpl as typeof fetch);
+    await dir.organizationId();
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(String(url)).toBe("https://api.planningcenteronline.com/people/v2");
+    const headers = init.headers as Record<string, string>;
+    expect(headers.Authorization).toBe(
+      `Basic ${Buffer.from("app-id:pat-secret").toString("base64")}`,
+    );
+    expect(headers["User-Agent"]).toMatch(/Church Budget/);
+  });
+
+  it("reads the organization, people, emails, field definitions and field data", async () => {
+    const dir = new HttpPlanningCenterDirectory(credentials, fakeFetch(ROUTES) as typeof fetch);
+    expect(await dir.organizationId()).toBe("100");
+    expect(await dir.getPerson("42")).toEqual({
+      id: "42",
+      name: "Sam Lee",
+      status: "active",
+      emails: ["sam@example.org"],
+    });
+    expect(await dir.findPeopleByEmail(" SAM@example.org ")).toHaveLength(1);
+    expect(await dir.findFieldDefinition("ministry leader")).toEqual({
+      id: "7",
+      name: "Ministry Leader",
+      dataType: "boolean",
+    });
+    expect(await dir.getFieldValues("42", "7")).toEqual(["true"]);
+  });
+
+  it('checks a Yes/No field end to end: stored "true" passes an accepted "Yes"', async () => {
+    const dir = new HttpPlanningCenterDirectory(credentials, fakeFetch(ROUTES) as typeof fetch);
+    const result = await checkLeader(
+      dir,
+      { fieldName: "Ministry Leader", acceptedValues: ["Yes"] },
+      { email: "sam@example.org" },
+    );
+    expect(result).toMatchObject({ status: "leader", fieldValue: "true", person: { id: "42" } });
+  });
+
+  it("returns null for an unknown person and rejects non-numeric ids without calling", async () => {
+    const fetchImpl = fakeFetch(ROUTES);
+    const dir = new HttpPlanningCenterDirectory(credentials, fetchImpl as typeof fetch);
+    expect(await dir.getPerson("43")).toBeNull();
+    expect(await dir.getPerson("../admin")).toBeNull();
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([401, 403, 429, 500, 503])("treats HTTP %i as unavailable", async (status) => {
+    const dir = new HttpPlanningCenterDirectory(
+      credentials,
+      fakeFetch({ "/people/v2": status }) as typeof fetch,
+    );
+    await expect(dir.organizationId()).rejects.toBeInstanceOf(PlanningCenterUnavailableError);
+  });
+
+  it("treats a network failure as unavailable", async () => {
+    const dir = new HttpPlanningCenterDirectory(credentials, (async () => {
+      throw new TypeError("fetch failed");
+    }) as typeof fetch);
+    await expect(dir.getPerson("42")).rejects.toBeInstanceOf(PlanningCenterUnavailableError);
+  });
+
+  it("follows pagination for field definitions", async () => {
+    const dir = new HttpPlanningCenterDirectory(
+      credentials,
+      fakeFetch({
+        "/people/v2/field_definitions?per_page=100": {
+          data: [
+            { type: "FieldDefinition", id: "1", attributes: { name: "A", data_type: "string" } },
+          ],
+          links: {
+            next: "https://api.planningcenteronline.com/people/v2/field_definitions?per_page=100&offset=100",
+          },
+        },
+        "/people/v2/field_definitions?per_page=100&offset=100": {
+          data: [
+            {
+              type: "FieldDefinition",
+              id: "7",
+              attributes: { name: "Ministry Leader", data_type: "boolean" },
+            },
+          ],
+        },
+      }) as typeof fetch,
+    );
+    expect(await dir.findFieldDefinition("Ministry Leader")).toMatchObject({ id: "7" });
+  });
+});
+
+describe("checkLeader", () => {
+  const field = { id: "7", name: "Ministry Leader", dataType: "boolean" };
+  const fake = (fieldValues: Record<string, string[]>, status = "active") =>
+    new FakePlanningCenterDirectory({
+      organizationId: "100",
+      fields: [field],
+      people: [{ id: "42", name: "Sam", status, emails: ["sam@example.org"], fieldValues }],
+    });
+  const settings = { fieldName: "Ministry Leader", acceptedValues: ["Yes"] };
+
+  it("treats an inactive Planning Center profile as not a leader", async () => {
+    expect(
+      await checkLeader(fake({ "7": ["true"] }, "inactive"), settings, { pcoPersonId: "42" }),
+    ).toMatchObject({ status: "not_leader" });
+  });
+
+  it("reports no person, and an outage, without throwing", async () => {
+    expect(await checkLeader(fake({}), settings, { email: "x@example.org" })).toEqual({
+      status: "not_found",
+    });
+    const down = fake({});
+    down.data.unavailable = true;
+    expect(await checkLeader(down, settings, { pcoPersonId: "42" })).toMatchObject({
+      status: "unavailable",
+    });
+  });
+});

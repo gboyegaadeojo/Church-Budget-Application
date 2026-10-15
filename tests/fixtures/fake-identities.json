@@ -1,0 +1,53 @@
+[
+  {
+    "label": "Gina Admin (every role, Google)",
+    "provider": "google",
+    "subject": "google-gina",
+    "email": "gina.admin@example.org",
+    "name": "Gina Admin"
+  },
+  {
+    "label": "Sam Lee (Media leader, Planning Center)",
+    "provider": "planningcenter",
+    "subject": "1001",
+    "email": "sam.lee@example.org",
+    "name": "Sam Lee",
+    "organizationId": "100"
+  },
+  {
+    "label": "Ada Obi (new leader, Google)",
+    "provider": "google",
+    "subject": "google-ada",
+    "email": "ada.obi@example.org",
+    "name": "Ada Obi"
+  },
+  {
+    "label": "Jo Member (not a leader, Planning Center)",
+    "provider": "planningcenter",
+    "subject": "1003",
+    "email": "jo.member@example.org",
+    "name": "Jo Member",
+    "organizationId": "100"
+  },
+  {
+    "label": "Kim Former (leader removed, Google)",
+    "provider": "google",
+    "subject": "google-kim",
+    "email": "kim.former@example.org",
+    "name": "Kim Former"
+  },
+  {
+    "label": "Stranger (not in Planning Center, Google)",
+    "provider": "google",
+    "subject": "google-stranger",
+    "email": "stranger@example.org",
+    "name": "Stranger"
+  },
+  {
+    "label": "Accountant Pat (staff, Google)",
+    "provider": "google",
+    "subject": "google-pat",
+    "email": "pat.accountant@example.org",
+    "name": "Pat Accountant"
+  }
+]

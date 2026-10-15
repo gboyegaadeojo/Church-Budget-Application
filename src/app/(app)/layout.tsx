@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Brand } from "@/components/app-shell/brand";
 import { Footer } from "@/components/app-shell/footer";
-import { PreviewBanner } from "@/components/app-shell/preview-banner";
 import {
   AccountMenuFallback,
   SidebarFallback,
@@ -11,7 +10,6 @@ import {
   ViewerSidebar,
 } from "@/components/app-shell/viewer-shell";
 import { copy } from "@/copy/en-CA";
-import { IS_PREVIEW_VIEWER } from "@/lib/viewer";
 
 /**
  * One application for every role (DRD 6.0, FR-37): sidebar on desktop, bottom bar
@@ -34,7 +32,6 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         </Suspense>
 
         <div className="flex min-w-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0">
-          {IS_PREVIEW_VIEWER && <PreviewBanner />}
           <header className="sticky top-0 z-(--z-sticky) flex h-16 items-center justify-between gap-4 border-b border-border bg-bg/90 px-4 backdrop-blur lg:justify-end lg:px-8">
             <Link href="/" className="rounded-control lg:hidden">
               <Brand />

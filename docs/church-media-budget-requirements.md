@@ -632,8 +632,8 @@ Purpose: confirm that the person submitting budgets or expenses is a recognized 
 ### Leader verification (custom field)
 
 - The administrator configures in Settings → Planning Center:
-  - The People **custom field** to check (e.g. "Ministry Role" in the "Leadership" tab).
-  - The **accepted value(s)** (e.g. "Group Leader"; checkbox fields use "checked").
+  - The People **custom field** to check. Default: **"Ministry Leader"**, a Yes/No field.
+  - The **accepted value(s)**. Default: **"Yes"**. For a Yes/No field the app matches by meaning, so "Yes" also matches a stored "true" or "1". Other field types match the text, ignoring case.
 - The server checks the field using the church's own Planning Center API credentials (a Personal Access Token or the OAuth app's server credentials, stored as a secret), so the check works even for users who have no permission to see People data themselves.
 - **Who must be verified:** the Requester role (annual budget submissions and expense submissions, including Expense submitters). Accountant, backup approver, Church Administrator, and administrator roles are assigned in the app and do not need the field, unless the administrator turns that on.
 - **Google sign-ins are verified too:** when a requester signs in with Google, the app finds the Planning Center person with the same email and checks the field. If no Planning Center person matches, requester access is denied with an explanation.
@@ -2491,7 +2491,7 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 ## Planning Center
 
 - **AC-6** A person can sign in with Planning Center and with Google, and both reach the same account when the emails match.
-- **AC-7** A Planning Center person whose configured custom field is "Group Leader" can submit; one without it is denied requester access with a clear message.
+- **AC-7** A Planning Center person whose configured custom field has an accepted value (default "Ministry Leader" = "Yes") can submit; one without it is denied requester access with a clear message.
 - **AC-8** A Google sign-in for a requester is checked against the matching Planning Center person's custom field.
 - **AC-9** Removing the field in Planning Center suspends requester access by the next sign-in or nightly sync, keeps their drafts, and emails the administrator and accountant.
 - **AC-10** Accountant and Church Administrator users can sign in without the custom field (default setting).
@@ -2836,7 +2836,7 @@ Every item from the original request is covered:
 - Every update to a submission, decision, or budget emails the people involved.
 - Decision emails: immediate by default, or held and released together on a scheduled date and time.
 - Departments: administrator-managed list plus "Other" proposals; picking a department makes the user a representative.
-- Sign-in with Google or Planning Center; requesters must have the configured Group Leader custom field ("Ministry Role" = "Group Leader" to start).
+- Sign-in with Google or Planning Center; requesters must have the configured Group Leader custom field ("Ministry Leader" = "Yes" to start).
 - Expenses need two approvals: accountant, then Board Chair (Vice-Chair as backup); then the Church Administrator processes and records how it was paid.
 - One application for every role; the System Administrator sees everything, read-only.
 - Receipt files are allowed on expense claims only.

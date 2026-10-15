@@ -19,10 +19,12 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // The fake server runs the built app against an in-process Postgres (PGlite), seeded
+  // with test people, with fake Google and Planning Center sign-in. No credentials needed.
   webServer: {
     command: process.env.CI
-      ? `npm run start -- -p ${PORT}`
-      : `npm run build && npm run start -- -p ${PORT}`,
+      ? "node scripts/fake-server.mjs"
+      : "npm run build && node scripts/fake-server.mjs",
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,

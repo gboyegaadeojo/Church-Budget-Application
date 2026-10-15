@@ -26,7 +26,7 @@ This manual explains how to use the app, by role. It is written from the specifi
 
 1. Open the app's web address on a computer or phone.
 2. Choose **Continue with Google**, **Continue with Planning Center**, or **Continue with email** (we email you a 6-digit code). They all reach the same account if your email matches. Staff can use any email address, such as a work or personal one; staff signing in by email code also enter a code from an authenticator app.
-3. Department leaders must be marked as a **Group Leader** in Planning Center. If you see "Your Group Leader status in Planning Center could not be confirmed", ask your ministry's Planning Center administrator.
+3. Department leaders must be marked as a **Group Leader** in Planning Center: **Ministry Leader** set to **Yes** on their Planning Center profile. If you see "Your Group Leader status in Planning Center could not be confirmed", ask your ministry's Planning Center administrator.
 4. If you see "Waiting for department assignment", the System Administrator has been told and will add you.
 
 Staff (accountant, Board Chair, Vice-Chair, Church Administrator, System Administrator) must have 2-Step Verification on their Google account.

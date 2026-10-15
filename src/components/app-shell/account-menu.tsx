@@ -1,8 +1,10 @@
 "use client";
 
+import { useRef } from "react";
 import * as Menu from "@radix-ui/react-dropdown-menu";
 import { useTheme } from "next-themes";
 import { Check, LogOut, Mail, Monitor, Moon, Plane, Sun } from "lucide-react";
+import { signOutAction } from "@/app/actions/auth";
 import { copy } from "@/copy/en-CA";
 import { cn } from "@/lib/cn";
 
@@ -38,81 +40,87 @@ const itemClass =
 /** Account menu (DRD 6.0): roles as chips, theme choice, and sign out. No role switcher. */
 export function AccountMenu({ name, email, roleChips, canBeAway }: AccountMenuProps) {
   const { theme, setTheme } = useTheme();
+  // Sign out posts this form, which lives outside the menu so it survives the menu closing.
+  const signOutForm = useRef<HTMLFormElement>(null);
 
   return (
-    // Non-modal: a modal menu aria-hides the page while its links stay focusable (axe aria-hidden-focus).
-    <Menu.Root modal={false}>
-      <Menu.Trigger
-        aria-label={a.openMenu}
-        className="grid size-11 place-items-center rounded-full bg-accent-soft text-sm font-semibold text-accent transition-colors duration-fast hover:bg-surface-hover lg:size-10"
-      >
-        <span aria-hidden="true">{initials(name)}</span>
-      </Menu.Trigger>
-      <Menu.Portal>
-        <Menu.Content
-          align="end"
-          sideOffset={8}
-          collisionPadding={16}
-          className="z-(--z-overlay) w-[min(20rem,calc(100vw-2rem))] rounded-card border border-border bg-surface p-2 text-fg shadow-overlay"
+    <>
+      <form ref={signOutForm} action={signOutAction} hidden />
+      {/* Non-modal: a modal menu aria-hides the page while its links stay focusable (axe aria-hidden-focus). */}
+      <Menu.Root modal={false}>
+        <Menu.Trigger
+          aria-label={a.openMenu}
+          className="grid size-11 place-items-center rounded-full bg-accent-soft text-sm font-semibold text-accent transition-colors duration-fast hover:bg-surface-hover lg:size-10"
         >
-          {/* Plain divs and spans only: a role="menu" may not contain lists or paragraphs. */}
-          <div className="px-3 py-2">
-            <span className="block truncate font-semibold">{name}</span>
-            <span className="block truncate text-sm text-fg-muted">{email}</span>
-          </div>
+          <span aria-hidden="true">{initials(name)}</span>
+        </Menu.Trigger>
+        <Menu.Portal>
+          <Menu.Content
+            align="end"
+            sideOffset={8}
+            collisionPadding={16}
+            className="z-(--z-overlay) w-[min(20rem,calc(100vw-2rem))] rounded-card border border-border bg-surface p-2 text-fg shadow-overlay"
+          >
+            {/* Plain divs and spans only: a role="menu" may not contain lists or paragraphs. */}
+            <div className="px-3 py-2">
+              <span className="block truncate font-semibold">{name}</span>
+              <span className="block truncate text-sm text-fg-muted">{email}</span>
+            </div>
 
-          <Menu.Label className="px-3 pt-2 text-xs font-medium text-fg-muted">
-            {a.yourRoles}
-          </Menu.Label>
-          <div className="flex flex-wrap gap-1.5 px-3 pt-1.5 pb-2">
-            {roleChips.map((chip) => (
-              <span
-                key={chip}
-                className="rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-xs text-fg"
-              >
-                {chip}
-              </span>
-            ))}
-          </div>
+            <Menu.Label className="px-3 pt-2 text-xs font-medium text-fg-muted">
+              {a.yourRoles}
+            </Menu.Label>
+            <div className="flex flex-wrap gap-1.5 px-3 pt-1.5 pb-2">
+              {roleChips.map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-xs text-fg"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
 
-          <Menu.Separator className="my-1 h-px bg-border" />
+            <Menu.Separator className="my-1 h-px bg-border" />
 
-          <Menu.Label className="px-3 pt-2 pb-1 text-xs font-medium text-fg-muted">
-            {a.theme}
-          </Menu.Label>
-          <Menu.RadioGroup value={theme ?? "system"} onValueChange={setTheme}>
-            {THEMES.map(({ value, label, Icon }) => (
-              <Menu.RadioItem
-                key={value}
-                value={value}
-                className={itemClass}
-                onSelect={(event) => event.preventDefault()}
-              >
-                <Icon className="size-4" aria-hidden="true" />
-                <span className="flex-1">{label}</span>
-                <Menu.ItemIndicator>
-                  <Check className="size-4 text-accent" aria-hidden="true" />
-                </Menu.ItemIndicator>
-              </Menu.RadioItem>
-            ))}
-          </Menu.RadioGroup>
+            <Menu.Label className="px-3 pt-2 pb-1 text-xs font-medium text-fg-muted">
+              {a.theme}
+            </Menu.Label>
+            <Menu.RadioGroup value={theme ?? "system"} onValueChange={setTheme}>
+              {THEMES.map(({ value, label, Icon }) => (
+                <Menu.RadioItem
+                  key={value}
+                  value={value}
+                  className={itemClass}
+                  onSelect={(event) => event.preventDefault()}
+                >
+                  <Icon className="size-4" aria-hidden="true" />
+                  <span className="flex-1">{label}</span>
+                  <Menu.ItemIndicator>
+                    <Check className="size-4 text-accent" aria-hidden="true" />
+                  </Menu.ItemIndicator>
+                </Menu.RadioItem>
+              ))}
+            </Menu.RadioGroup>
 
-          <Menu.Separator className="my-1 h-px bg-border" />
+            <Menu.Separator className="my-1 h-px bg-border" />
 
-          <ComingSoonItem icon={<Mail className="size-4" aria-hidden="true" />}>
-            {a.emailPreferences}
-          </ComingSoonItem>
-          {canBeAway && (
-            <ComingSoonItem icon={<Plane className="size-4" aria-hidden="true" />}>
-              {a.away}
+            <ComingSoonItem icon={<Mail className="size-4" aria-hidden="true" />}>
+              {a.emailPreferences}
             </ComingSoonItem>
-          )}
-          <ComingSoonItem icon={<LogOut className="size-4" aria-hidden="true" />}>
-            {a.signOut}
-          </ComingSoonItem>
-        </Menu.Content>
-      </Menu.Portal>
-    </Menu.Root>
+            {canBeAway && (
+              <ComingSoonItem icon={<Plane className="size-4" aria-hidden="true" />}>
+                {a.away}
+              </ComingSoonItem>
+            )}
+            <Menu.Item className={itemClass} onSelect={() => signOutForm.current?.requestSubmit()}>
+              <LogOut className="size-4" aria-hidden="true" />
+              <span className="flex-1">{a.signOut}</span>
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Portal>
+      </Menu.Root>
+    </>
   );
 }
 

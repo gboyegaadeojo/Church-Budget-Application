@@ -7,9 +7,6 @@ export const copy = {
     churchName: "Immanuel Fellowship Church",
     appName: "Church Budget",
     skipToContent: "Skip to main content",
-    previewBanner:
-      "Preview mode: sign-in is not connected yet, so you are seeing the app as a sample person with every role.",
-    previewLabel: "Preview",
     metaDescription:
       "Annual budgets, expenses and spending for Immanuel Fellowship Church departments.",
     footerNote: "Amounts are in Canadian dollars (CAD).",
@@ -103,5 +100,65 @@ export const copy = {
   notFound: {
     title: "Page not found",
     body: "The page you were looking for does not exist or has moved.",
+  },
+  signIn: {
+    title: "Sign in",
+    heading: "Sign in to Church Budget",
+    description:
+      "Plan your department's annual budget, submit expenses and follow spending, all in one place.",
+    continueWithPlanningCenter: "Continue with Planning Center",
+    continueWithGoogle: "Continue with Google",
+    leaderNote:
+      "Department leaders: your Group Leader status in Planning Center is checked when you sign in.",
+    accessHeading: "Need access?",
+    accessLeaders:
+      "Department leaders get access once Planning Center shows them as a Group Leader. Ask your Planning Center administrator if you're not marked yet.",
+    accessStaff: "Church staff: ask the administrator to add your email address.",
+    contact: (email: string) => `Questions? Email ${email}.`,
+    privacyNote:
+      "We store your name, email address and your budget activity, only to run the church's budgets.",
+    error: "Sign-in didn't finish. Please try again.",
+    notConfigured:
+      "Sign-in isn't set up yet. The administrator needs to add the Google or Planning Center sign-in settings.",
+    fakeHeading: "Test sign-in",
+    fakeNote: "Local development only. These people come from tests/fixtures.",
+    fakeAs: (label: string) => `Sign in as ${label}`,
+  },
+  accessDenied: {
+    title: "Can't sign you in",
+    signedInWith: (email: string) => `You signed in with ${email}.`,
+    useDifferentAccount: "Use a different account",
+    contact: (email: string) => `If you think this is a mistake, email ${email}.`,
+    contactFallback: "If you think this is a mistake, contact the church office.",
+    reasons: {
+      "not-found": {
+        heading: "We couldn't find you in the church's Planning Center",
+        body: "Your Google email address doesn't match anyone in the church's Planning Center. Try signing in with Planning Center, or ask the church office to add this email to your profile.",
+      },
+      "not-leader": {
+        heading: "Submitting budgets is for Group Leaders",
+        body: "Your Planning Center profile isn't marked as a Group Leader. Ask your Planning Center administrator to update it, then sign in again.",
+      },
+      suspended: {
+        heading: "Your Group Leader status couldn't be confirmed",
+        body: "Your Group Leader status in Planning Center could not be confirmed. Your drafts are saved and will be here when your status is restored.",
+      },
+      waiting: {
+        heading: "You're verified",
+        body: "An administrator will assign your department shortly. You'll get an email when it's done.",
+      },
+      unavailable: {
+        heading: "We can't reach Planning Center",
+        body: "We can't reach Planning Center right now. Please try again shortly.",
+      },
+      "not-allowed": {
+        heading: "This account doesn't have access",
+        body: "This account isn't set up for Church Budget, or it has been turned off. Church staff: ask the administrator to add or reactivate your email address.",
+      },
+      "link-required": {
+        heading: "Sign in with Google first",
+        body: "This Planning Center account hasn't been linked to your Church Budget account yet. Sign in once with Google using the same email address, or ask the administrator to link it.",
+      },
+    },
   },
 } as const;
