@@ -1,0 +1,152 @@
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Activity, CircleCheck, LayoutGrid } from "lucide-react";
+import { AreaIcon } from "@/components/app-shell/area-icon";
+import { copy } from "@/copy/en-CA";
+import { daysWaiting, getMyTasks, type Task } from "@/domain/tasks";
+import { formatCAD } from "@/lib/money";
+import { getViewer } from "@/lib/viewer";
+
+const h = copy.home;
+
+export const metadata: Metadata = { title: h.title };
+
+/** Home: My tasks, At a glance, Recent activity (DRD 6.0, FR-37). */
+export default function HomePage() {
+  return (
+    <div className="space-y-8">
+      <h1 className="text-3xl font-semibold tracking-tight">{h.title}</h1>
+      <Suspense fallback={<HomeSkeleton />}>
+        <HomeContent />
+      </Suspense>
+    </div>
+  );
+}
+
+async function HomeContent() {
+  const viewer = await getViewer();
+  const tasks = await getMyTasks(viewer);
+  const firstName = viewer.name.split(" ")[0] ?? viewer.name;
+  const now = new Date();
+
+  return (
+    <>
+      <p className="-mt-6 text-fg-muted">{h.greeting(firstName)}</p>
+
+      <section aria-labelledby="my-tasks-heading" className="space-y-4">
+        <div className="flex items-center gap-3">
+          <h2 id="my-tasks-heading" className="text-xl font-semibold">
+            {h.myTasks}
+          </h2>
+          {tasks.length > 0 && (
+            <span
+              className="tabular rounded-full bg-accent px-2.5 py-0.5 text-sm font-medium text-on-accent"
+              aria-label={h.taskBadgeLabel(tasks.length)}
+            >
+              {tasks.length}
+            </span>
+          )}
+        </div>
+        {tasks.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 rounded-card border border-border bg-surface px-6 py-10 text-center shadow-card">
+            <CircleCheck className="size-8 text-success" aria-hidden="true" />
+            <p className="text-lg font-medium">{h.allCaughtUp}</p>
+            <p className="text-sm text-fg-muted">{h.allCaughtUpDetail}</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border rounded-card border border-border bg-surface shadow-card">
+            {tasks.map((task) => (
+              <TaskRow key={task.id} task={task} now={now} />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <div className="grid gap-8 lg:grid-cols-2">
+        <EmptySection
+          id="at-a-glance-heading"
+          title={h.atAGlance}
+          body={h.atAGlanceEmpty}
+          icon={<LayoutGrid className="size-5 text-fg-muted" aria-hidden="true" />}
+        />
+        <EmptySection
+          id="recent-activity-heading"
+          title={h.recentActivity}
+          body={h.recentActivityEmpty}
+          icon={<Activity className="size-5 text-fg-muted" aria-hidden="true" />}
+        />
+      </div>
+    </>
+  );
+}
+
+function TaskRow({ task, now }: { task: Task; now: Date }) {
+  return (
+    <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+      <span className="grid size-10 shrink-0 place-items-center rounded-control bg-accent-soft text-accent">
+        <AreaIcon area={task.area} className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">{task.action}</p>
+        <p className="text-sm text-fg-muted">
+          {task.item}
+          {task.amountCents !== undefined && (
+            <>
+              {" · "}
+              <span className="tabular">{formatCAD(task.amountCents)}</span>
+            </>
+          )}
+          {" · "}
+          {h.waiting(daysWaiting(task.waitingSince, now))}
+        </p>
+      </div>
+      <Link
+        href={task.href}
+        className="inline-flex min-h-11 items-center justify-center rounded-control bg-accent px-4 text-sm font-medium text-on-accent transition-colors duration-fast hover:bg-accent-hover lg:min-h-10"
+      >
+        {task.buttonLabel}
+      </Link>
+    </li>
+  );
+}
+
+function EmptySection({
+  id,
+  title,
+  body,
+  icon,
+}: {
+  id: string;
+  title: string;
+  body: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <section aria-labelledby={id} className="space-y-4">
+      <h2 id={id} className="text-xl font-semibold">
+        {title}
+      </h2>
+      <div className="flex items-start gap-3 rounded-card border border-border bg-surface p-5 text-sm text-fg-muted shadow-card">
+        {icon}
+        <p>{body}</p>
+      </div>
+    </section>
+  );
+}
+
+function HomeSkeleton() {
+  return (
+    <div aria-busy="true" className="space-y-4">
+      <span className="sr-only" role="status">
+        {copy.app.loading}
+      </span>
+      <div className="h-5 w-48 animate-pulse rounded-control bg-surface-2" />
+      <div className="h-40 animate-pulse rounded-card bg-surface-2" />
+      <div className="grid gap-8 lg:grid-cols-2">
+        <div className="h-28 animate-pulse rounded-card bg-surface-2" />
+        <div className="h-28 animate-pulse rounded-card bg-surface-2" />
+      </div>
+    </div>
+  );
+}

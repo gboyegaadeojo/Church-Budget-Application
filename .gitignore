@@ -147,3 +147,10 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Claude Code personal settings
+.claude/settings.local.json
+
+# Test output
+playwright-report/
+test-results/
