@@ -87,7 +87,7 @@ test.describe("Home and app shell", () => {
     await page.getByRole("menuitem", { name: "Users & Roles" }).click();
     await expect(page).toHaveURL(/\/admin\/users$/);
     await expect(page.getByRole("heading", { level: 1, name: "Users & Roles" })).toBeVisible();
-    await expect(page.getByText("Coming soon")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "People" })).toBeVisible();
   });
 
   test("AC-103 keyboard: skip link, account menu and theme choice", async ({ page }) => {

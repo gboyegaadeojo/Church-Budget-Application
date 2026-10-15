@@ -1,6 +1,7 @@
 import { and, eq, ne } from "drizzle-orm";
 import { userDepartments, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
+import { promoteBackupsWhenPrimaryLeaves } from "@/domain/departments/service";
 import { writeAudit, type AuditActor } from "@/lib/audit";
 import { PCO_GRACE_MS } from "./access";
 import type { LeaderCheck } from "./leader-check";
@@ -111,6 +112,13 @@ export async function applyVerification(
   if (wasLeader || user.accessStatus !== "suspended_not_leader") {
     // TODO(step 7): email the administrator and accountant through the outbox (FR-01a, AC-9).
     await audit("access.leader_suspended", { result: check.status });
+    // FR-38: a suspended Primary hands the department to its Backup.
+    await promoteBackupsWhenPrimaryLeaves(
+      tx,
+      user.id,
+      ctx.actor,
+      "Primary's Group Leader status was suspended",
+    );
   }
   return { requesterUsable: false, suspended: wasLeader };
 }

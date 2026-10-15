@@ -212,6 +212,10 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 Tax rate (applies to new submissions only), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), email settings, sign-in options (Google, Planning Center, email), backup reminder delay, and the weekly audit summary email.
 
+- **Sales tax**: type the new rate (for example 12 or 12.5) and confirm. Requests already submitted keep the rate they were submitted with.
+- **Church time zone**: deadlines, release times and emails use it (default America/Winnipeg).
+- **Sign-in and Planning Center**: the contact email shown to people who can't sign in, which sign-in buttons appear, the custom field and the values that count as a Group Leader, and which roles need the check. Use **Test a person** to try the field and values on someone before you save. The **Requesters failing verification** list shows who is suspended or not yet verified.
+
 **Signing authorities**: **Add signer** when someone can sign cheques; **Remove** when they no longer can. Removed signers stay on past payments. Keep at least two active.
 
 ### Keeping it healthy

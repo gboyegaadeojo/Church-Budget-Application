@@ -62,6 +62,8 @@ const unavailableDirectory: PlanningCenterDirectory = {
   findPeopleByEmail: notConfigured,
   getPerson: notConfigured,
   findFieldDefinition: notConfigured,
+  listFieldDefinitions: notConfigured,
+  searchPeople: notConfigured,
   getFieldValues: notConfigured,
 };
 

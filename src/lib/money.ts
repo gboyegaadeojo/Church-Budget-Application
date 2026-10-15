@@ -83,6 +83,22 @@ export function formatTaxRate(rate: TaxRate): string {
   return fraction ? `${whole}.${fraction}%` : `${whole}%`;
 }
 
+const PERCENT_PATTERN = /^(\d{1,3})(?:\.(\d{1,2}))?$/;
+
+/** What an administrator types ("12", "12.5", "7.05") as a stored rate ("0.1200"); null if invalid or over 100. */
+export function percentToTaxRate(percent: string): TaxRate | null {
+  const m = PERCENT_PATTERN.exec(percent.trim().replace(/%$/, "").trim());
+  if (!m) return null;
+  const hundredths = BigInt(m[1]) * 100n + BigInt((m[2] ?? "").padEnd(2, "0")); // = ten-thousandths
+  if (hundredths > RATE_SCALE) return null;
+  return `${hundredths / RATE_SCALE}.${String(hundredths % RATE_SCALE).padStart(4, "0")}`;
+}
+
+/** A stored rate as the percent an administrator edits: "0.1250" → "12.5". */
+export function taxRateToPercent(rate: TaxRate): string {
+  return formatTaxRate(rate).replace(/%$/, "");
+}
+
 /** Line total = quantity × unit price (before tax). Quantity is a whole number above zero. */
 export function lineTotal(quantity: number, unitPriceCents: number): number {
   if (!Number.isSafeInteger(quantity) || quantity <= 0) {
