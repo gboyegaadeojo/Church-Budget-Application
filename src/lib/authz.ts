@@ -24,6 +24,8 @@ export type Action =
   | "annual.delete_draft"
   | "annual.submit"
   | "annual.revise"
+  /** The accountant dashboard and review queue (FR-13, FR-14). */
+  | "annual.review"
   | "annual.decide"
   | "annual.reopen"
   | "annual.export_all"
@@ -146,6 +148,7 @@ const RULES: Record<Action, readonly Rule[]> = {
   "annual.delete_draft": [{ roles: ["requester"], check: ownDepartment }],
   "annual.submit": [{ roles: ["requester"], check: ownDepartment }],
   "annual.revise": [{ roles: ["requester"], check: ownDepartment }],
+  "annual.review": [{ roles: ACCOUNTANTS }, { roles: ["system_admin"], readOnly: true }],
   "annual.decide": [{ roles: ACCOUNTANTS, check: notOwnDepartment }],
   "annual.reopen": [{ roles: ACCOUNTANTS, check: notOwnDepartment }],
   "annual.export_all": [{ roles: [...ACCOUNTANTS, "system_admin"] }],

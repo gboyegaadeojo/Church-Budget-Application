@@ -35,6 +35,26 @@ export const annualCopy = {
     idempotencyKey: "Something went wrong. Reload the page and try again.",
     hasHistory: "This request has been submitted before, so it can't be deleted.",
     nothingChanged: "Nothing has changed, so no edit was used.",
+    // Accountant review (FR-15 to FR-18a)
+    notDecidable: "This request isn't waiting for a decision.",
+    notReopenable: "Only approved or declined requests can be reopened.",
+    staleVersion:
+      "The department changed this request since you opened it. Review the latest version, then decide.",
+    approvedTotalInvalid: "Enter the approved total including tax, like 30,000.00.",
+    approvedTotalTooLarge: "Enter an approved total of $100,000,000.00 or less.",
+    approvedTotalZero: "An approved total must be more than $0.00. To approve nothing, decline.",
+    noteRequired: "Add a note explaining the decision.",
+    returnNoteRequired: "Write what the department needs to clarify.",
+    declineReasonRequired: "Give a reason for declining.",
+    reopenReasonRequired: "Give a reason for reopening.",
+    noteTooLong: "Keep the note to 2,000 characters or fewer.",
+    boardReferenceTooLong: "Keep the board reference to 200 characters or fewer.",
+    adjustmentReasonTooLong: "Keep the reason to 500 characters or fewer.",
+    approvedQuantityInvalid: "Enter a whole number from 0 to 10,000.",
+    approvedPriceInvalid: "Enter a price before tax, like 1,025.00 (up to $1,000,000.00).",
+    linesMismatch: "The items changed since you opened this request. Reload it and try again.",
+    noLineChanges:
+      "No item was changed. Use Approve as requested, or change an approved quantity or price.",
   },
   tasks: {
     continueDraft: "Finish and submit your budget",

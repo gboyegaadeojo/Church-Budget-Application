@@ -74,6 +74,12 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
   ["submit a budget request", "annual.submit", OWN, ["act", "no", "no", "no", "no", "no", "no"]],
   ["edit a submitted request", "annual.revise", OWN, ["act", "no", "no", "no", "no", "no", "no"]],
   [
+    "see the accountant dashboard and review queue",
+    "annual.review",
+    {},
+    ["no", "act", "act", "no", "no", "no", "read"],
+  ],
+  [
     "approve, adjust, return or decline",
     "annual.decide",
     YOUTH,
