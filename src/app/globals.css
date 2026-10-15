@@ -27,6 +27,23 @@
   --info: #3267b1;
   --shadow-card: 0 1px 2px rgb(24 24 27 / 0.04), 0 1px 3px rgb(24 24 27 / 0.06);
   --shadow-overlay: 0 8px 24px rgb(24 24 27 / 0.12), 0 2px 6px rgb(24 24 27 / 0.08);
+  /*
+   * One colour per navigation area, so each group is recognisable at a glance.
+   * The strong colour is for icons, text and indicators; -soft is its tinted
+   * background. tests/unit/area-colours.test.ts keeps every pair at 4.5:1 or more.
+   */
+  --area-home: #6d45d8;
+  --area-home-soft: #efeafc;
+  --area-annual: #2860c0;
+  --area-annual-soft: #e7effc;
+  --area-expenses: #0f766e;
+  --area-expenses-soft: #ddf3ef;
+  --area-spending: #985a06;
+  --area-spending-soft: #fcefd9;
+  --area-reports: #be2a6e;
+  --area-reports-soft: #fce7f0;
+  --area-admin: #4a5568;
+  --area-admin-soft: #eceef3;
   color-scheme: light;
 }
 
@@ -50,6 +67,18 @@
   /* In dark mode elevation comes from lighter surfaces, not shadows (DRD 3.6). */
   --shadow-card: none;
   --shadow-overlay: 0 0 0 1px var(--border);
+  --area-home: #a78bfa;
+  --area-home-soft: #221a3a;
+  --area-annual: #7fb0ff;
+  --area-annual-soft: #14223d;
+  --area-expenses: #4fd1c0;
+  --area-expenses-soft: #0e2b28;
+  --area-spending: #f2b45a;
+  --area-spending-soft: #2e2210;
+  --area-reports: #ff8cc0;
+  --area-reports-soft: #36162b;
+  --area-admin: #b4bfcf;
+  --area-admin-soft: #1d212b;
   color-scheme: dark;
 }
 
@@ -70,6 +99,18 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-info: var(--info);
+  --color-area-home: var(--area-home);
+  --color-area-home-soft: var(--area-home-soft);
+  --color-area-annual: var(--area-annual);
+  --color-area-annual-soft: var(--area-annual-soft);
+  --color-area-expenses: var(--area-expenses);
+  --color-area-expenses-soft: var(--area-expenses-soft);
+  --color-area-spending: var(--area-spending);
+  --color-area-spending-soft: var(--area-spending-soft);
+  --color-area-reports: var(--area-reports);
+  --color-area-reports-soft: var(--area-reports-soft);
+  --color-area-admin: var(--area-admin);
+  --color-area-admin-soft: var(--area-admin-soft);
 
   --font-sans:
     "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -91,6 +132,47 @@
   --ease-enter: cubic-bezier(0, 0, 0.2, 1);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Navigation motion (DRD 5.5); the reduced-motion rule below flattens all of it. */
+  --animate-sheet-in: sheet-in var(--duration-emphasized) var(--ease-enter);
+  --animate-sheet-out: sheet-out var(--duration-standard) var(--ease-exit);
+  --animate-fade-in: fade-in var(--duration-standard) var(--ease-enter);
+  --animate-fade-out: fade-out var(--duration-fast) var(--ease-exit);
+  --animate-pop-in: pop-in var(--duration-standard) var(--ease-enter);
+  --animate-rise-in: rise-in var(--duration-standard) var(--ease-enter) both;
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes sheet-out {
+    to {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateX(-4px);
+    }
+  }
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
 }
 
 /* Layering order (DRD 10). Plain variables, used as z-(--z-nav) etc. */

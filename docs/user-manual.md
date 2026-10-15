@@ -43,7 +43,10 @@ You never need to switch accounts. If you are both an accountant and a requester
 
 ### Getting around
 
-- The menu is grouped by area: **Home, Annual Budget, Expenses, Spending, Reports, Admin**. You only see what your roles allow. On a phone, the bar at the bottom has Home, Annual Budget, Expenses and Spending, and **More** has the rest.
+- The menu is grouped by area: **Home, Annual Budget, Expenses, Spending, Reports, Admin**, each with its own colour. You only see what your roles allow.
+  - **Computer:** choose an area in the sidebar to open its pages; the area you are in opens by itself, and a dot marks it when it is closed. **Collapse sidebar** shrinks it to coloured icons.
+  - **Tablet:** the coloured icons down the left side are the areas; tap one to see its pages.
+  - **Phone:** the bar at the bottom has Home, Annual Budget, Expenses and Spending. **More** opens every page, grouped by area, plus Help and Privacy.
 - **Search** (top bar, or press `/`): type a reference number such as `EXP-2027-0042` or `IFC-2027-0007`, a department, or a person.
 - **Breadcrumbs** under the top bar show where you are; click any part to go back up.
 - Every reference number, department and person name is a link.
@@ -60,16 +63,18 @@ All amounts are Canadian dollars. Every total shows **Subtotal**, **Sales tax (1
 
 ## 2. Requesters: annual budget
 
-Each department submits one annual budget for the year.
+Each department submits **one** annual budget for the year. Once it has one (a draft or a submitted budget), nobody can start another for it: everyone in the department works on that one, and after submitting you edit it instead. **My department's budget** shows each of your departments' budgets with the next step (**Continue draft**, **Respond**, **Edit budget** or **View budget**); **Submit annual budget** appears only for a department that doesn't have one yet.
 
 ### Submit your department's budget
 
-1. Go to **Annual Budget → Submit**. If your department already has a draft, the app opens it.
-2. **Details:** choose your department (or **Other** and type it; the System Administrator will confirm it), give a title, and write why the department needs this budget. Or choose **Start from last year's request** to copy last year's items.
-3. **Items:** add each item with name, quantity, unit price (before tax), and an optional product link. The summary on the side (bottom on a phone) updates as you type.
-4. Your work saves automatically as a **draft**. You can leave and come back.
-5. **Preview:** check everything, including the totals.
-6. **Confirm submission.** You get a receipt email, and the accountant is told.
+1. Go to **Annual Budget → My department's budget** and choose **Submit annual budget** (or **Continue draft** if your department has one). The page shows the open cycle, its deadline and how many days are left.
+2. **Choose your department.** Your own departments are listed first, marked **Yours**; type in **Search departments** to narrow the list. If yours isn't there, choose **Other (type your department)** and type its name. If it looks like one on the list, the app asks "Did you mean …?". A new name is added as a new department for the System Administrator to confirm, and you can still finish and submit. A department that already has a budget this year is marked **Has a budget**; choosing it offers **Open it** instead of starting another.
+   - New Group Leaders who don't have a department yet see **Choose your department** on the "You're verified" screen while a cycle is open, and become their department's representative by picking it.
+3. **Request information:** give a title and write why the department needs this budget.
+4. **Budget items:** the items are a list with one row each: name, quantity, unit price (before tax) and the line total. Open **Link and notes** under an item to add a product link or a note (a $0.00 item needs a note). Use **Add item** (or press Enter in the last item). Each item's **⋯** menu has **Move up**, **Move down** and **Remove**; removing an item that has details asks first. The summary on the side (a bar at the bottom on a phone; tap **Show breakdown**) updates as you type.
+5. Your work saves automatically as a **draft** ("Saved just now"). Use **Save and exit** to save and go back to your budget page, or just leave and come back; if your sign-in times out, the app keeps what you typed on this device and offers it back. A draft that was never submitted can be deleted with **Delete draft**.
+6. **Preview:** check everything, including the totals. Use **Edit** to go back to a section.
+7. **Confirm submission**, then **Submit request** in the dialog. You see the reference number (for example IFC-2027-0001), the total including tax, and how many changes you can still make. Your receipt email arrives shortly, and the accountant is told.
 
 ### After you submit
 

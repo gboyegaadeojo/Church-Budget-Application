@@ -49,10 +49,10 @@ export async function viewerAllowedTo(
 }
 
 /** For server actions: the signed-in viewer, without the page-only rendering hooks. */
-async function actionViewer(): Promise<Viewer> {
+async function actionViewer(allowWaiting = false): Promise<Viewer> {
   const userId = (await auth())?.user?.id;
   if (!userId) redirect("/sign-in");
-  const result = await loadViewer(getDb(), userId);
+  const result = await loadViewer(getDb(), userId, { allowWaiting });
   if (!result.ok) redirect(`/access-denied/${result.reason}`);
   return result.viewer;
 }
@@ -76,19 +76,42 @@ async function conflictMessage(entity: { type: string; id: string }): Promise<st
   return adminCopy.common.conflict(last.name, formatDateTime(last.at, await getChurchTimeZone(db)));
 }
 
+type RunOptions = {
+  paths: string[];
+  latestHref?: string;
+  /** Let a verified leader with no department yet through (the annual form, FR-03). */
+  allowWaiting?: boolean;
+};
+
 /**
  * Runs `work` in one transaction as the signed-in person, then refreshes `paths`.
  * Every service checks permission itself; this only reports the outcome.
  */
 export async function runAction(
   work: (tx: Tx, viewer: Viewer) => Promise<string>,
-  options: { paths: string[]; latestHref?: string },
+  options: RunOptions,
 ): Promise<ActionState> {
-  const viewer = await actionViewer();
+  const result = await runForResult(
+    async (tx, viewer) => ({ message: await work(tx, viewer), data: null }),
+    options,
+  );
+  return result.status === "success" ? { status: "success", message: result.message } : result;
+}
+
+/** What runForResult returns: the action state plus, on success, what the service gave back. */
+export type ResultState<T> =
+  { status: "success"; message: string; data: T } | Extract<ActionState, { status: "error" }>;
+
+/** Like runAction, for actions whose caller needs data back (autosave, submit). */
+export async function runForResult<T>(
+  work: (tx: Tx, viewer: Viewer) => Promise<{ message: string; data: T }>,
+  options: RunOptions,
+): Promise<ResultState<T>> {
+  const viewer = await actionViewer(options.allowWaiting);
   try {
-    const message = await getDb().transaction((tx) => work(tx, viewer));
+    const { message, data } = await getDb().transaction((tx) => work(tx, viewer));
     for (const path of options.paths) revalidatePath(path);
-    return { status: "success", message };
+    return { status: "success", message, data };
   } catch (error) {
     if (error instanceof ForbiddenError) {
       await recordDenied(viewer, error.action, options.paths[0] ?? "action");
@@ -109,7 +132,7 @@ export async function runAction(
         latestHref: options.latestHref ?? options.paths[0],
       };
     }
-    console.error("Admin action failed", error);
+    console.error("Action failed", error);
     return { status: "error", message: adminCopy.common.unexpected };
   }
 }

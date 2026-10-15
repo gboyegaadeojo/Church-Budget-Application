@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { eq } from "drizzle-orm";
@@ -9,6 +10,7 @@ import { auth } from "@/auth";
 import { copy } from "@/copy/en-CA";
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
+import { getOpenCycle } from "@/domain/annual/queries";
 import { getSignInSettings } from "@/domain/settings";
 import { ACCESS_DENIED_REASONS, isAccessDeniedReason } from "@/domain/users/access";
 import { deniedEmail } from "@/lib/denied-email";
@@ -47,8 +49,29 @@ export default async function AccessDeniedPage({ params }: PageProps<"/access-de
         </div>
       </div>
       <Suspense fallback={<p className="text-sm text-fg-muted">{copy.app.loading}</p>}>
+        {reason === "waiting" && <PickDepartment />}
         <AccountDetails />
       </Suspense>
+    </div>
+  );
+}
+
+/**
+ * A verified leader waiting for a department can pick one on the annual form while a
+ * cycle is open (FR-03, FR-38), instead of waiting for the administrator.
+ */
+async function PickDepartment() {
+  await connection();
+  if (!(await getOpenCycle(getDb()))) return null;
+  return (
+    <div className="space-y-2 rounded-control border border-info p-4 text-sm">
+      <p>{d.pickDepartment}</p>
+      <Link
+        href="/annual/new"
+        className="inline-flex min-h-11 items-center rounded-control bg-accent px-4 font-medium text-on-accent transition-colors duration-fast hover:bg-accent-hover lg:min-h-10"
+      >
+        {d.pickDepartmentAction}
+      </Link>
     </div>
   );
 }

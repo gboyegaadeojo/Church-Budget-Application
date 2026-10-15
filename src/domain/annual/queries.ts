@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { budgetCycles, budgetRequests, departments, users } from "@/db/schema";
+import { budgetCycles, budgetRequests, departments, userDepartments, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { effectiveDeadline } from "@/domain/cycles/service";
 import { authorize, type Subject } from "@/lib/authz";
@@ -17,6 +17,11 @@ export type OpenCycle = {
   budgetYear: number;
   submissionDeadline: Date;
 };
+
+/** Whole days until a deadline, rounded up: 0 means it's due today or has passed. */
+export function daysUntil(deadline: Date, now: Date = new Date()): number {
+  return Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / 86_400_000));
+}
 
 /** The cycle taking submissions, if any (the latest year when several are open). */
 export async function getOpenCycle(tx: Tx): Promise<OpenCycle | null> {
@@ -87,6 +92,8 @@ export type RequestView = {
   cycle: { id: string; name: string; budgetYear: number; status: string };
   deadline: Date;
   requesterName: string;
+  /** Everyone who represents the department, who share this request (FR-32). */
+  representatives: { id: string; name: string }[];
   submittedAt: Date | null;
   lines: LineContent[];
   /** The snapshotted rate once submitted; the current Settings rate for a draft (FR-05). */
@@ -133,6 +140,12 @@ export async function getRequestView(
   if (!decision.allowed) return null;
 
   const lines = await linesOf(tx, request.id);
+  const representatives = await tx
+    .select({ id: users.id, name: users.displayName })
+    .from(userDepartments)
+    .innerJoin(users, eq(users.id, userDepartments.userId))
+    .where(and(eq(userDepartments.departmentId, request.departmentId), eq(users.active, true)))
+    .orderBy(asc(users.displayName));
   const rate = request.taxRate ?? (await currentTaxRate(tx));
   return {
     id: request.id,
@@ -145,6 +158,7 @@ export async function getRequestView(
     cycle: row.cycle,
     deadline: await effectiveDeadline(tx, request.budgetCycleId, request.departmentId),
     requesterName: row.requesterName,
+    representatives,
     submittedAt: request.submittedAt,
     lines,
     rate,
@@ -161,7 +175,9 @@ export type MyRequest = {
   status: AnnualStatus;
   title: string;
   referenceNumber: string | null;
+  departmentId: string;
   departmentName: string;
+  cycleId: string;
   cycleName: string;
   totalCents: number | null;
   editsRemaining: number;
@@ -188,7 +204,9 @@ export async function listMyRequests(tx: Tx, actor: Subject): Promise<MyRequest[
     status: request.status,
     title: request.title,
     referenceNumber: request.referenceNumber,
+    departmentId: request.departmentId,
     departmentName,
+    cycleId: request.budgetCycleId,
     cycleName,
     totalCents: request.requestedTotalCents,
     editsRemaining: editsRemaining(request),

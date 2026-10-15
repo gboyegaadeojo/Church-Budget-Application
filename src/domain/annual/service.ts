@@ -19,22 +19,18 @@ import { ConflictError, parseInput, RuleError, ValidationError } from "@/domain/
 import { getChurchTimeZone, readSettings } from "@/domain/settings";
 import { changedFields, writeAudit, type AuditActor } from "@/lib/audit";
 import { assertCan, type Action, type Subject } from "@/lib/authz";
-import {
-  lineTotal,
-  normalizeTaxRate,
-  sumCents,
-  totalForward,
-  type TaxBreakdown,
-} from "@/lib/money";
+import { lineTotal, normalizeTaxRate, type TaxBreakdown } from "@/lib/money";
 import type { Role } from "@/lib/roles";
 import { formatDateTime } from "@/lib/time-zone";
 import {
   requestContentSchema,
   submissionErrors,
+  totalsOf,
   type LineContent,
   type RequestContent,
   type RequestContentInput,
 } from "./schema";
+export { totalsOf } from "./schema";
 import { canTransition, InvalidTransitionError, transition, type AnnualEvent } from "./status";
 
 /**
@@ -125,11 +121,6 @@ async function replaceLines(tx: Tx, requestId: string, lines: readonly LineConte
       sortOrder,
     })),
   );
-}
-
-/** Subtotal, tax once on the subtotal, and total (FR-07). */
-export function totalsOf(lines: readonly LineContent[], rate: string): TaxBreakdown {
-  return totalForward(sumCents(lines.map((l) => lineTotal(l.quantity, l.unitPriceCents))), rate);
 }
 
 /** The sales tax rate for drafts and new submissions (FR-07a). */
@@ -274,7 +265,13 @@ async function pickDepartment(
   }
 
   const name = tidyName(input.otherName ?? "");
-  if (name === "") throw new ValidationError({ departmentId: e.chooseDepartment });
+  if (name === "") {
+    throw new ValidationError(
+      input.otherName === undefined
+        ? { departmentId: e.chooseDepartment }
+        : { otherName: e.otherNameRequired },
+    );
+  }
   if (name.length > 80) throw new ValidationError({ otherName: e.otherNameTooLong });
   const [existing] = await tx
     .select()

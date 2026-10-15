@@ -7,6 +7,7 @@ import {
   isActiveHref,
   labelForHref,
   navigationFor,
+  singlePage,
   type NavArea,
 } from "@/domain/navigation";
 import { roleChips } from "@/domain/users/role-chips";
@@ -170,6 +171,19 @@ describe("helpers", () => {
     expect(areaForPath("/admin")).toBe("admin");
     expect(areaForPath("/help")).toBe("home");
   });
+
+  it("shows a one-page area as a single link: Home by its area name, others by the page", () => {
+    const board = navigationFor(["board_chair"]);
+    const area = (id: string) => board.find((a) => a.id === id)!;
+    expect(singlePage(area("home"))).toEqual({ href: "/", label: "Home", viewOnly: false });
+    expect(singlePage(area("reports"))).toEqual({
+      href: "/reports/analytics",
+      label: "Analytics & Audit",
+      viewOnly: true,
+    });
+    const accountant = navigationFor(["accountant"]);
+    expect(singlePage(accountant.find((a) => a.id === "annual")!)).toBeUndefined();
+  });
 });
 
 describe("roleChips", () => {
@@ -183,6 +197,20 @@ describe("roleChips", () => {
         ],
       }),
     ).toEqual(["Accountant", "Requester: Media", "Requester: Youth"]);
+  });
+
+  it("shows three department chips at most, then a count, so the menu stays short", () => {
+    const departments = ["A", "B", "C", "D", "E"].map((name) => ({
+      id: name,
+      name,
+      representativeType: "representative" as const,
+    }));
+    expect(roleChips({ roles: ["requester"], departments })).toEqual([
+      "Requester: A",
+      "Requester: B",
+      "Requester: C",
+      "+2 more departments",
+    ]);
   });
 
   it("shows a plain Requester chip when no department is assigned yet", () => {

@@ -116,6 +116,21 @@ Record any choice the specs leave open, and any deviation from them.
 - **Idempotency keys** (`idempotency_keys`, migration `0006`) belong to one person and one action. A repeat returns the stored first result; a key reused by someone else, or for another action, is refused.
 - **Emails are deferred to step 7.** The receipt, the accountant notice, the revision notice and the administrator's "someone joined" or "new department proposed" emails are marked `TODO(step 7)` where the outbox row will be written.
 
+## Stage 1, step 5b: annual form screens (2026-10-15)
+
+- **Department step on its own page.** DRD 6.3 puts the department in step 1 with the title and justification. Choosing the department creates or opens the request (FR-03, FR-32), so it comes first at `/annual/new`; the editor's step 1 holds the title and justification, under the same progress indicator.
+- **Preview is a step in the editor, not a separate page.** Values stay in the form between steps (DRD 6.3 "Preserve entered values"). For a draft, the preview first saves, then shows the server's totals; submitting sends only the id, version and idempotency key, so what is submitted is exactly what was saved. For a revision or a clarification response, the preview shows the figures calculated with the same `money.ts` code at the request's snapshotted rate, and the server recalculates on confirm.
+- **One idempotency key per preview.** A double click or a retry from the same preview sends the same key (FR-10, AC-38); going back and previewing again makes a new one.
+- **Reorder with Move up / Move down only.** DRD 6.3 asks for a drag handle as well; menu items cover keyboard and touch without a drag-and-drop library. A drag handle can be added later.
+- **Items as a list, not boxes (after user testing).** One row per item (Item | Qty | Unit price | Line total), column headings on wider screens, two columns on a phone; link and notes behind a per-item toggle (open when they hold something or have an error); Move up, Move down and Remove in one ⋯ menu per item.
+- **Save and exit.** Drafts autosave, but people asked for an explicit way out: it saves now and returns to the dashboard with "Draft saved". Editing a submitted request has **Discard changes** instead, because nothing is saved (and no edit used) until it is confirmed.
+- **One budget per department, in the screens too.** The database and `startRequest` already allowed only one request per department per cycle (rule 1); the dashboard now shows each department's budget with its next step and offers **Submit** only for a department without one, and the picker marks departments that have one.
+- **Every save refreshes the request's pages.** Saves, submissions, revisions and deletions revalidate `/annual`, `/annual/[id]` and `/annual/[id]/edit`; without the last, the browser could reopen the edit form from an earlier, empty visit.
+- **Drafts are shared with the department's other representatives.** DRD 7.1 says a draft is "Only you can see it", but FR-32 makes the request the department's; the status text reads "Your department's leaders can see it".
+- **Leaders waiting for a department may open the form.** FR-01a's waiting screen stays for every other page; while a cycle is open it links to `/annual/new`, where picking a department makes them its representative (FR-38). The app shell loads the viewer once per request either way.
+- **Unsaved values on this device.** Every change is kept in `localStorage` with the version it was based on; it is offered back only if the request hasn't changed since, and removed once saved (DRD 11.1). Leaving with unsaved changes asks first.
+- **Not yet:** the Undo toast after removing an item (DRD 5.6; removing a populated item already asks first), the session-expiry warning (DRD 11.1), **Start from last year's budget** (FR-35, Stage 2), the My department budget panel (6.2a, Stage 4) and recent activity (step 8). The confirmation says "We'll email your receipt shortly" until the outbox exists (step 7).
+
 ## Up to two ranked Backups per department (2026-10-15)
 
 - **A department can have a Primary, Backup 1 and Backup 2** (FR-38, AC-116, AC-120 updated). Some departments run at two locations and have three people who request on their behalf. Representatives were already unlimited and can already request (FR-32); the second Backup adds a second person who covers and takes over.
@@ -146,3 +161,13 @@ Record any choice the specs leave open, and any deviation from them.
 - **Emails come from the church domain.** Resend needs a verified domain, so the From address is something like `budget@<church-domain>`.
 - **The backup job gets its own Google OAuth client** (`GDRIVE_CLIENT_ID`, `GDRIVE_CLIENT_SECRET`) instead of reusing the Gmail one.
 - **Step 7 calls Resend's REST API with `fetch`**, adding no dependency. It sends the outbox row id as the `Idempotency-Key`, so a retry never sends an email twice.
+
+## Navigation: calmer sidebar, area colours, tablet rail (2026-10-15)
+
+After user feedback that the sidebar was busy (a person with several roles saw about 20 links in six identical grey groups):
+
+- **Areas open one at a time.** On desktop each area with several pages is a button that opens its pages (an accordion); the area of the current page opens by itself, and opening another closes it. A closed area that holds the current page shows a dot. Areas with one page (Home, and Reports for most people) are a single link. Every page is still reachable, and `navigationFor(roles)` is unchanged; the server still checks every route.
+- **Each area has a colour** (Home violet, Annual Budget blue, Expenses teal, Spending amber, Reports pink, Admin slate), added to the DRD 3.2 palette as `--area-*` tokens in light and dark. The colour marks the area's icon tile, its open panel, the guide line down its pages and the active page. `tests/unit/area-colours.test.ts` keeps every pairing at 4.5:1 or more in both themes. Colour is never the only signal: the current page also has `aria-current`, weight and a dot.
+- **Tablets (768–1023 px) get an icon rail, not the bottom bar.** DRD 6.0 names only desktop (sidebar) and mobile (bottom bar). Below 768 px is the phone layout; from 768 px a 76 px rail of coloured area icons opens each area's pages in a flyout. From 1024 px the full sidebar shows, and collapsing it gives the same rail.
+- **More on a phone opens a bottom sheet** (Radix Dialog, new free dependency `@radix-ui/react-dialog`) with the same accordion as the desktop sidebar, plus Help and Privacy, instead of a long dropdown.
+- **Motion** follows DRD 5.5 tokens: groups open by animating height, pages fade in one after another, the chevron turns, the active tab's pill and the rail's bar grow in, and the sheet slides up. The global reduced-motion rule flattens all of it.

@@ -120,6 +120,11 @@ describe("Planning Center sign-in (FR-01a)", () => {
       accessStatus: "pending_department",
     });
     expect(await loadViewer(db, user.id)).toEqual({ ok: false, reason: "waiting" });
+    // The annual form's first step lets them in to pick a department (FR-03, FR-38).
+    expect(await loadViewer(db, user.id, { allowWaiting: true })).toMatchObject({
+      ok: true,
+      viewer: { roles: ["requester"], departments: [] },
+    });
     expect(await lastAudit(user.id, "access.leader_granted")).toBeDefined();
     expect(await lastAudit(user.id, "access.sign_in_succeeded")).toMatchObject({
       details: { method: "planningcenter" },

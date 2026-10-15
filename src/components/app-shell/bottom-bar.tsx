@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import * as Menu from "@radix-ui/react-dropdown-menu";
-import { Ellipsis, Eye } from "lucide-react";
+import { useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Ellipsis, X } from "lucide-react";
 import { copy } from "@/copy/en-CA";
 import {
   areaForPath,
@@ -13,15 +14,16 @@ import {
   type NavArea,
 } from "@/domain/navigation";
 import { cn } from "@/lib/cn";
-import { AreaIcon } from "./area-icon";
+import { AREA_STYLE, AreaIcon } from "./area-icon";
+import { NavTree } from "./nav-tree";
 
 /** The areas that get their own bottom-bar button (DRD 6.0); everything else is under More. */
 const BAR_AREAS: readonly AreaId[] = ["home", "annual", "expenses", "spending"];
 
 const tabClass =
-  "flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-center text-xs leading-tight text-fg-muted transition-colors duration-fast";
+  "group flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-center text-xs leading-tight text-fg-muted transition-colors duration-fast";
 
-/** Mobile and tablet navigation, below the lg breakpoint where the sidebar takes over. */
+/** Phone navigation, below the md breakpoint where the side rail takes over. */
 export function BottomBar({ areas }: { areas: NavArea[] }) {
   const pathname = usePathname();
   const activeArea = areaForPath(pathname);
@@ -30,107 +32,99 @@ export function BottomBar({ areas }: { areas: NavArea[] }) {
   return (
     <nav
       aria-label={copy.nav.mobileNavigation}
-      className="fixed inset-x-0 bottom-0 z-(--z-nav) border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-(--z-nav) border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <ul className="flex">
         {barAreas.map((area) => {
           const active = activeArea === area.id;
+          const s = AREA_STYLE[area.id];
           return (
             <li key={area.id} className="flex min-w-0 flex-1">
               <Link
                 href={area.href}
                 aria-current={active ? "page" : undefined}
-                className={cn(tabClass, active && "font-medium text-accent")}
+                className={cn(tabClass, active && cn("font-medium", s.text))}
               >
-                <AreaIcon area={area.id} className="size-5" />
+                {/* The active tab's icon sits in a pill of its area's colour that grows in. */}
+                <span className="relative grid h-6 w-12 place-items-center">
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "absolute inset-0 rounded-full transition-[transform,opacity] duration-standard ease-standard",
+                      s.soft,
+                      active ? "scale-100 opacity-100" : "scale-50 opacity-0",
+                    )}
+                  />
+                  <AreaIcon area={area.id} className="relative size-5" />
+                </span>
                 <span>{area.label}</span>
               </Link>
             </li>
           );
         })}
         <li className="flex min-w-0 flex-1">
-          <MoreMenu areas={areas} pathname={pathname} />
+          <MoreSheet areas={areas} pathname={pathname} />
         </li>
       </ul>
     </nav>
   );
 }
 
-function MoreMenu({ areas, pathname }: { areas: NavArea[]; pathname: string }) {
-  return (
-    // Non-modal: a modal menu aria-hides the page while its links stay focusable (axe aria-hidden-focus).
-    <Menu.Root modal={false}>
-      <Menu.Trigger className={tabClass}>
-        <Ellipsis className="size-5" aria-hidden="true" />
-        <span>{copy.nav.more}</span>
-      </Menu.Trigger>
-      <Menu.Portal>
-        <Menu.Content
-          side="top"
-          align="end"
-          sideOffset={8}
-          collisionPadding={16}
-          className="z-(--z-overlay) max-h-[calc(100dvh-6rem)] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-card border border-border bg-surface p-2 text-fg shadow-overlay"
-        >
-          {areas.map((area, index) => (
-            <Menu.Group key={area.id}>
-              {index > 0 && <Menu.Separator className="my-1 h-px bg-border" />}
-              <Menu.Label className="flex items-center gap-2 px-3 pt-2 pb-1 text-xs font-medium text-fg-muted">
-                <AreaIcon area={area.id} className="size-4" />
-                {area.label}
-              </Menu.Label>
-              {area.items.map((item) => (
-                <MenuLink
-                  key={item.href}
-                  href={item.href}
-                  active={isActiveHref(pathname, item.href)}
-                >
-                  <span className="flex-1 truncate">{item.label}</span>
-                  {item.viewOnly && (
-                    <span className="flex items-center gap-1 text-xs text-fg-muted">
-                      <Eye className="size-3.5" aria-hidden="true" />
-                      {copy.nav.viewOnly}
-                    </span>
-                  )}
-                </MenuLink>
-              ))}
-            </Menu.Group>
-          ))}
-          <Menu.Separator className="my-1 h-px bg-border" />
-          <Menu.Group>
-            {FOOTER_LINKS.map((link) => (
-              <MenuLink key={link.href} href={link.href} active={isActiveHref(pathname, link.href)}>
-                {link.label}
-              </MenuLink>
-            ))}
-          </Menu.Group>
-        </Menu.Content>
-      </Menu.Portal>
-    </Menu.Root>
-  );
-}
+/** Every page, as the same coloured accordion as the desktop sidebar, in a bottom sheet. */
+function MoreSheet({ areas, pathname }: { areas: NavArea[]; pathname: string }) {
+  const [open, setOpen] = useState(false);
+  // Any link closes the sheet, including one to the page already open.
+  const closeOnLink = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("a")) setOpen(false);
+  };
 
-function MenuLink({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active: boolean;
-  children: React.ReactNode;
-}) {
   return (
-    <Menu.Item asChild>
-      <Link
-        href={href}
-        aria-current={active ? "page" : undefined}
-        className={cn(
-          "flex min-h-11 items-center gap-2 rounded-control px-3 text-sm outline-none data-[highlighted]:bg-surface-hover",
-          active && "bg-accent-soft font-medium text-accent",
-        )}
-      >
-        {children}
-      </Link>
-    </Menu.Item>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger className={tabClass}>
+        <span className="grid h-6 w-12 place-items-center">
+          <Ellipsis className="size-5" aria-hidden="true" />
+        </span>
+        <span>{copy.nav.more}</span>
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-(--z-overlay) bg-black/40 data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-(--z-overlay) flex max-h-[85dvh] flex-col rounded-t-dialog border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] text-fg shadow-overlay data-[state=closed]:animate-sheet-out data-[state=open]:animate-sheet-in">
+          <span
+            aria-hidden="true"
+            className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-border-strong/50"
+          />
+          <div className="flex items-start justify-between gap-3 px-4 pt-2 pb-3">
+            <div>
+              <Dialog.Title className="text-base font-semibold">{copy.nav.allPages}</Dialog.Title>
+              <Dialog.Description className="text-sm text-fg-muted">
+                {copy.nav.allPagesHint}
+              </Dialog.Description>
+            </div>
+            <Dialog.Close
+              aria-label={copy.nav.closeMenu}
+              className="grid size-11 shrink-0 place-items-center rounded-full text-fg-muted transition-colors duration-fast hover:bg-surface-hover hover:text-fg"
+            >
+              <X className="size-5" aria-hidden="true" />
+            </Dialog.Close>
+          </div>
+          <div className="overflow-y-auto px-3 pb-4" onClick={closeOnLink}>
+            <NavTree areas={areas} pathname={pathname} />
+            <ul className="mt-3 flex gap-2 border-t border-border px-2 pt-3">
+              {FOOTER_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    aria-current={isActiveHref(pathname, link.href) ? "page" : undefined}
+                    className="flex min-h-11 items-center rounded-full bg-surface-2 px-4 text-sm text-fg transition-colors duration-fast hover:bg-surface-hover"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
