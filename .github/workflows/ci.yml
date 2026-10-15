@@ -29,6 +29,42 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:unit
 
+  integration:
+    name: Integration (Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Each test file creates and drops its own database on this server.
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Migrations match the schema
+        run: |
+          npx drizzle-kit check
+          npx drizzle-kit generate --name ci_drift_check
+          git status --porcelain drizzle
+          test -z "$(git status --porcelain drizzle)" || (echo "src/db/schema.ts changed without a migration: run npm run db:generate" && exit 1)
+      - run: npm run test:integration
+
   e2e:
     name: End-to-end and accessibility (Chromium)
     runs-on: ubuntu-latest
