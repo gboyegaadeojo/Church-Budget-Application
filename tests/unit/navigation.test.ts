@@ -178,8 +178,8 @@ describe("roleChips", () => {
       roleChips({
         roles: ["accountant", "requester"],
         departments: [
-          { id: "media", name: "Media" },
-          { id: "youth", name: "Youth" },
+          { id: "media", name: "Media", representativeType: "primary" },
+          { id: "youth", name: "Youth", representativeType: "backup" },
         ],
       }),
     ).toEqual(["Accountant", "Requester: Media", "Requester: Youth"]);

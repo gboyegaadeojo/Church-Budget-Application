@@ -21,7 +21,7 @@ export const getViewer = cache(async (): Promise<Viewer> => {
     name: "Preview User",
     email: "preview@example.org",
     roles: fromEnv && fromEnv.length > 0 ? fromEnv : ROLES,
-    departments: [{ id: "media", name: "Media" }],
+    departments: [{ id: "media", name: "Media", representativeType: "primary" }],
   };
 });
 

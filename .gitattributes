@@ -1,0 +1,2 @@
+# LF everywhere, matching Prettier, so Windows checkouts don't show every file as changed.
+* text=auto eol=lf

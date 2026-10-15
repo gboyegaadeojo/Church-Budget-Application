@@ -7,7 +7,7 @@ const viewer: Viewer = {
   name: "Sam Lee",
   email: "sam@example.org",
   roles: ["accountant", "requester"],
-  departments: [{ id: "media", name: "Media" }],
+  departments: [{ id: "media", name: "Media", representativeType: "primary" }],
 };
 
 function task(id: string, waitingSince: string, overrides: Partial<Task> = {}): Task {

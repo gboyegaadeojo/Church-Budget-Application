@@ -15,7 +15,11 @@ export function isRole(value: string): value is Role {
   return (ROLES as readonly string[]).includes(value);
 }
 
-export type Department = { id: string; name: string };
+/** How a person represents a department (FR-38). */
+export const REPRESENTATIVE_TYPES = ["primary", "backup", "representative"] as const;
+export type RepresentativeType = (typeof REPRESENTATIVE_TYPES)[number];
+
+export type Department = { id: string; name: string; representativeType: RepresentativeType };
 
 /** The signed-in person, as the app sees them. */
 export type Viewer = {
