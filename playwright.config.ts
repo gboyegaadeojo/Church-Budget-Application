@@ -15,7 +15,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     locale: "en-CA",
-    timezoneId: "America/Vancouver",
+    timezoneId: "America/Winnipeg",
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

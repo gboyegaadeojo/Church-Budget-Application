@@ -1077,7 +1077,7 @@ The email must clearly state that the approved total (including tax) is the amou
 The accountant chooses, per budget cycle, how requesters hear about annual budget decisions:
 
 - **Send immediately** (default): each approval or decline email goes out when the accountant confirms the decision.
-- **Hold and release on a schedule:** the accountant reviews and decides all departments first, then all decision emails go out together at a chosen **date and time** (church time zone, America/Vancouver by default, set in Settings).
+- **Hold and release on a schedule:** the accountant reviews and decides all departments first, then all decision emails go out together at a chosen **date and time** (church time zone, America/Winnipeg by default, set in Settings).
 
 Rules for Hold mode:
 
@@ -2505,7 +2505,7 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 - **AC-15** The accountant cannot approve a submission whose department is still proposed.
 - **AC-16** Merging a proposed department moves the submission and emails the requester.
 - **AC-17** In Send immediately mode, the requester gets the approval email when the accountant confirms.
-- **AC-18** In Hold mode with a release of Dec 1, 2026 at 9:00 a.m., requesters see In Review until then, and all decided departments receive their emails by 9:15 a.m. Pacific.
+- **AC-18** In Hold mode with a release of Dec 1, 2026 at 9:00 a.m., requesters see In Review until then, and all decided departments receive their emails by 9:15 a.m. church time (Central, Winnipeg).
 - **AC-19** Release now sends all held decision emails at once; decisions after release go immediately.
 
 ## Request Creation

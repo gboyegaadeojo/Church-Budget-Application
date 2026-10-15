@@ -4,7 +4,7 @@ name: Scheduled jobs
 # their features; see docs/go-live-checklist.md about GitHub Actions minutes.
 on:
   schedule:
-    - cron: "15 10 * * *" # 03:15 Pacific (10:15 UTC; 02:15 during standard time)
+    - cron: "15 8 * * *" # 03:15 Winnipeg time in summer (08:15 UTC); 02:15 in winter
   workflow_dispatch:
 
 permissions:

@@ -116,7 +116,7 @@ Open one PR per numbered step or per feature. Keep PRs small.
 - **Links:** accept only http/https, render with `rel="noopener noreferrer"` and `target="_blank"`, and show the domain.
 - **Emails:** one shared layout. Each template has a subject, a plain-text version and an HTML version. Show the Subtotal / Sales tax / Total block whenever amounts appear. Links are authenticated app URLs with no data in query strings.
 - **Planning Center:** cache the verification result on the user. Re-verify at sign-in and in the nightly job, and allow a 72-hour grace period if Planning Center is down (FR-01a).
-- **Time zone:** store UTC and display in the church time zone setting (default `America/Vancouver`).
+- **Time zone:** store UTC and display in the church time zone setting (`church_timezone` in Settings, default `America/Winnipeg`; `APP_TIMEZONE` is the fallback).
 - **Accessibility:** follow DRD section 9. Run axe in Playwright on every page, with no violations allowed.
 - **Motion:** use CSS transitions with the DRD 5.2 tokens and respect `prefers-reduced-motion`.
 
@@ -140,7 +140,7 @@ GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN, GMAIL_SENDER
 BREVO_SMTP_USER, BREVO_SMTP_KEY           # fallback, optional
 R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
 JOBS_SECRET
-APP_TIMEZONE=America/Vancouver
+APP_TIMEZONE=America/Winnipeg
 # GitHub Actions only (backup.yml)
 BACKUP_AGE_RECIPIENT, GDRIVE_FOLDER_ID, GDRIVE_REFRESH_TOKEN
 ```

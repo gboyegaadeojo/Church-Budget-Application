@@ -46,12 +46,13 @@ Record any choice the specs leave open, and any deviation from them.
 - **One cycle per budget year.**
 - **Reference numbers:** the counter is a row updated inside the submitting transaction, so a rollback gives the number back and numbers have no gaps. (The format changed after this step; see below.)
 
+- **Department names** are unique regardless of case among non-rejected departments. A merged proposal becomes `rejected` with `merged_into_department_id` set.
+- **Settings** are text key/value rows so rates stay exact. The migration seeds the 9.6 and 20.2 defaults. The time zone stays in `APP_TIMEZONE`, not in settings. *(Superseded: see "Church time zone" below.)*
+- **Not in this step:** `email_outbox` (step 7), idempotency keys (step 5, with the first submit action), messages and preferences (Stage 2), Part B and spending tables (Stages 3 and 4), and Auth.js tables (step 3).
+
 ## Reference number format (2026-10-15)
 
 - **Annual budgets use `IFC-{year}-{0001}`** (e.g. `IFC-2027-0007`), with no department code. The church asked for this. The earlier `IFC-{year}-MEDIA-{0001}` came from when the app was for the Media team only, and was misleading on other departments' budgets. Expenses keep `EXP-{year}-{0001}`. Updated in the code, tests, CLAUDE.md, the requirements, the DRD and the user manual. Nothing had been issued yet, so no data changes.
-- **Department names** are unique regardless of case among non-rejected departments. A merged proposal becomes `rejected` with `merged_into_department_id` set.
-- **Settings** are text key/value rows so rates stay exact. The migration seeds the 9.6 and 20.2 defaults. The time zone stays in `APP_TIMEZONE`, not in settings.
-- **Not in this step:** `email_outbox` (step 7), idempotency keys (step 5, with the first submit action), messages and preferences (Stage 2), Part B and spending tables (Stages 3 and 4), and Auth.js tables (step 3).
 
 ## Stage 1, step 3
 
@@ -84,4 +85,15 @@ Record any choice the specs leave open, and any deviation from them.
 
 - **Fake sign-in** is an Auth.js credentials provider that signs in as preset Google or Planning Center identities (`tests/fixtures/fake-identities.json`), with a fake Planning Center directory (`tests/fixtures/pco-directory.json`). It runs through the same `resolveSignIn` as real sign-in. It turns on only with `AUTH_FAKE_PROVIDERS=1` and an `AUTH_URL` on localhost, and never on Netlify (`NETLIFY` or `CONTEXT` set). Unit tests cover that guard.
 - **`scripts/fake-server.mjs`** runs the app against an in-process PGlite database served over the Postgres protocol (`@electric-sql/pglite-socket`), migrated and seeded with the 18 departments and the test people. Playwright uses it in CI and locally, and `npm run dev:fake` uses it for trying the app. It runs with one database connection, because PGlite is single-connection.
-- **The nightly job** (`POST /api/jobs/pco-verify`, `.github/workflows/jobs.yml` at 03:15 Pacific) does nothing until `APP_URL` and `JOBS_SECRET` are set as GitHub secrets.
+- **The nightly job** (`POST /api/jobs/pco-verify`, `.github/workflows/jobs.yml` at 03:15 Winnipeg time) does nothing until `APP_URL` and `JOBS_SECRET` are set as GitHub secrets.
+
+## Church time zone: America/Winnipeg (2026-10-15)
+
+- **The church is in Winnipeg, so the default time zone is `America/Winnipeg`** (Central: UTC−6 in winter, UTC−5 in summer). It replaces the specs' `America/Vancouver` in CLAUDE.md, `.env.example`, the requirements (FR-19a, AC-18 is now "9:15 a.m. church time"), the go-live checklist and the Playwright tests.
+- **It is now a real setting, as the requirements intend** (Settings lists the time zone). The `church_timezone` row is seeded with `America/Winnipeg` by migration `0003`, and the administrator can change it in Admin → Settings (step 4). `getChurchTimeZone()` reads it. If the stored value isn't a valid zone, it falls back to `APP_TIMEZONE`, then to `America/Winnipeg`, so dates always render. Times are still stored in UTC.
+- **The nightly Planning Center check runs at 08:15 UTC.** That is 03:15 in Winnipeg in summer and 02:15 in winter, because GitHub's cron is UTC only.
+
+## Neon setup (2026-10-15)
+
+- **Region: AWS US East (Ohio)**, to match Netlify's default server region, so the database sits next to the app rather than next to the church. Every page queries the database, so this matters more than distance to users.
+- **Compute autoscaling maximum: 0.25 CU**, so the free plan's monthly compute hours aren't used up by a larger compute size. Both are in the go-live checklist.

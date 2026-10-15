@@ -22,6 +22,13 @@
       "when": 1792073427122,
       "tag": "0002_signin_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792075208708,
+      "tag": "0003_church_timezone",
+      "breakpoints": true
     }
   ]
 }

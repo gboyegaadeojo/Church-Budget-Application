@@ -1,6 +1,7 @@
 import { inArray } from "drizzle-orm";
 import { appSettings } from "@/db/schema";
 import type { Tx } from "@/db/types";
+import { CHURCH_TIME_ZONE_DEFAULT, fallbackTimeZone, isValidTimeZone } from "@/lib/time-zone";
 
 /**
  * Application settings (Requirements 9.6). Rows live in `app_settings` and the
@@ -14,6 +15,8 @@ export const SETTING_DEFAULTS = {
   weekly_audit_summary: "false",
   church_name: "Immanuel Fellowship Church",
   app_name: "Church Budget",
+  /** IANA zone for showing and scheduling times (CLAUDE.md "Time zone"). */
+  church_timezone: CHURCH_TIME_ZONE_DEFAULT,
   /** FR-01a: the People custom field that marks a Group Leader, and the values that count. */
   pco_leader_field_name: "Ministry Leader",
   pco_leader_accepted_values: JSON.stringify(["Yes"]),
@@ -91,4 +94,14 @@ export async function getSignInSettings(tx: Tx): Promise<SignInSettings> {
     planningCenterEnabled: bool(s.signin_planning_center_enabled),
     adminContactEmail: s.admin_contact_email.trim(),
   };
+}
+
+/**
+ * The church time zone from Settings (default America/Winnipeg). An invalid value falls
+ * back to APP_TIMEZONE, then America/Winnipeg, so times always render.
+ */
+export async function getChurchTimeZone(tx: Tx): Promise<string> {
+  const { church_timezone } = await readSettings(tx, ["church_timezone"]);
+  const zone = church_timezone.trim();
+  return isValidTimeZone(zone) ? zone : fallbackTimeZone();
 }
