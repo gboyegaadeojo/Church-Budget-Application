@@ -217,21 +217,29 @@ describe("departments and representatives (FR-03, FR-38)", () => {
     await insertDepartment(db, { name: "Prayer Team" });
   });
 
-  it("allows one Primary and one Backup per department, any number of Representatives", async () => {
+  it("allows one Primary, Backups 1 and 2, and any number of Representatives (AC-116)", async () => {
     const department = await insertDepartment(db);
-    const [a, b, c, d] = await Promise.all([1, 2, 3, 4].map(() => insertUser(db)));
-    const link = (u: string, representativeType: "primary" | "backup" | "representative") =>
+    const [a, b, b2, c, d] = await Promise.all([1, 2, 3, 4, 5].map(() => insertUser(db)));
+    const link = (
+      u: string,
+      representativeType: "primary" | "backup" | "representative",
+      backupRank: number | null = null,
+    ) =>
       db
         .insert(userDepartments)
-        .values({ userId: u, departmentId: department.id, representativeType });
+        .values({ userId: u, departmentId: department.id, representativeType, backupRank });
 
     await link(a.id, "primary");
-    await link(b.id, "backup");
+    await link(b.id, "backup", 1);
+    await link(b2.id, "backup", 2);
     await link(c.id, "representative");
     await link(d.id, "representative");
     const other = await insertUser(db);
     await expectRejected(link(other.id, "primary"), "user_departments_one_primary");
-    await expectRejected(link(other.id, "backup"), "user_departments_one_backup");
+    await expectRejected(link(other.id, "backup", 1), "user_departments_backup_rank");
+    await expectRejected(link(other.id, "backup", 3), "user_departments_backup_rank_valid");
+    await expectRejected(link(other.id, "backup"), "user_departments_backup_rank_valid");
+    await expectRejected(link(other.id, "representative", 1), "user_departments_backup_rank_valid");
     await expectRejected(link(a.id, "representative"), "user_departments_user_department_key");
   });
 
@@ -243,6 +251,7 @@ describe("departments and representatives (FR-03, FR-38)", () => {
         userId: person.id,
         departmentId: department.id,
         representativeType: "backup",
+        backupRank: 1,
         awayFrom: new Date(),
       }),
       "user_departments_away_primary_only",

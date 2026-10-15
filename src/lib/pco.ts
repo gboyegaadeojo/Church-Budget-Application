@@ -30,6 +30,10 @@ export interface PlanningCenterDirectory {
   findPeopleByEmail(email: string): Promise<PcoPerson[]>;
   getPerson(personId: string): Promise<PcoPerson | null>;
   findFieldDefinition(name: string): Promise<PcoFieldDefinition | null>;
+  /** Every People custom field, for the picker in Settings → Planning Center. */
+  listFieldDefinitions(): Promise<PcoFieldDefinition[]>;
+  /** People whose name or email matches, for "Test a person" (at most 10). */
+  searchPeople(query: string): Promise<PcoPerson[]>;
   /** The raw values stored for one person and field (several for checkboxes). */
   getFieldValues(personId: string, fieldDefinitionId: string): Promise<string[]>;
 }
@@ -189,15 +193,27 @@ export class HttpPlanningCenterDirectory implements PlanningCenterDirectory {
     return people.filter((p): p is PcoPerson => p !== null);
   }
 
+  async listFieldDefinitions(): Promise<PcoFieldDefinition[]> {
+    const defs = await this.getList("/people/v2/field_definitions?per_page=100");
+    return defs.data
+      .filter((d) => !d.attributes.deleted_at)
+      .map((d) => ({ id: d.id, name: text(d, "name"), dataType: text(d, "data_type") }));
+  }
+
   async findFieldDefinition(name: string): Promise<PcoFieldDefinition | null> {
     const wanted = name.trim().toLowerCase();
-    const defs = await this.getList("/people/v2/field_definitions?per_page=100");
-    const match = defs.data.find(
-      (d) => text(d, "name").trim().toLowerCase() === wanted && !d.attributes.deleted_at,
+    const defs = await this.listFieldDefinitions();
+    return defs.find((d) => d.name.trim().toLowerCase() === wanted) ?? null;
+  }
+
+  async searchPeople(query: string): Promise<PcoPerson[]> {
+    const q = query.trim();
+    if (q.length < 2) return [];
+    const people = await this.getList(
+      `/people/v2/people?where[search_name_or_email]=${encodeURIComponent(q)}&include=emails&per_page=10`,
+      1,
     );
-    return match
-      ? { id: match.id, name: text(match, "name"), dataType: text(match, "data_type") }
-      : null;
+    return people.data.map((p) => toPerson(p, people.included));
   }
 
   async getFieldValues(personId: string, fieldDefinitionId: string): Promise<string[]> {
@@ -245,6 +261,20 @@ export class FakePlanningCenterDirectory implements PlanningCenterDirectory {
     this.check();
     const wanted = name.trim().toLowerCase();
     return this.data.fields.find((f) => f.name.toLowerCase() === wanted) ?? null;
+  }
+
+  async listFieldDefinitions() {
+    this.check();
+    return this.data.fields;
+  }
+
+  async searchPeople(query: string) {
+    this.check();
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return this.data.people
+      .filter((p) => p.name.toLowerCase().includes(q) || p.emails.some((e) => e.includes(q)))
+      .slice(0, 10);
   }
 
   async getFieldValues(personId: string, fieldDefinitionId: string) {

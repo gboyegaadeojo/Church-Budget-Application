@@ -12,6 +12,7 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   unique,
@@ -194,6 +195,8 @@ export const userDepartments = pgTable(
     representativeType: representativeTypeEnum("representative_type")
       .notNull()
       .default("representative"),
+    /** 1 or 2 for a Backup (Backup 1 takes over first), null otherwise (FR-38). */
+    backupRank: smallint("backup_rank"),
     source: representativeSourceEnum("source").notNull().default("manual"),
     pcoStatus: pcoMatchStatusEnum("pco_status"),
     pcoLastSeenAt: timestamp("pco_last_seen_at", { withTimezone: true }),
@@ -208,9 +211,15 @@ export const userDepartments = pgTable(
     uniqueIndex("user_departments_one_primary")
       .on(t.departmentId)
       .where(sql`${t.representativeType} = 'primary'`),
-    uniqueIndex("user_departments_one_backup")
-      .on(t.departmentId)
+    // Up to two Backups per department, ranked 1 and 2.
+    uniqueIndex("user_departments_backup_rank")
+      .on(t.departmentId, t.backupRank)
       .where(sql`${t.representativeType} = 'backup'`),
+    check(
+      "user_departments_backup_rank_valid",
+      sql`(${t.representativeType} = 'backup') = (${t.backupRank} is not null)
+        and (${t.backupRank} is null or ${t.backupRank} in (1, 2))`,
+    ),
     index("user_departments_department_idx").on(t.departmentId),
     check(
       "user_departments_away_primary_only",

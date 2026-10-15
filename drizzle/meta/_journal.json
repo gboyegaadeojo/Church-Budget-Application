@@ -29,6 +29,13 @@
       "when": 1792075208708,
       "tag": "0003_church_timezone",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792089548869,
+      "tag": "0004_backup_ranks",
+      "breakpoints": true
     }
   ]
 }

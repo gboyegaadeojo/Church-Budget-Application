@@ -1,0 +1,94 @@
+"use server";
+
+import { adminCopy } from "@/copy/admin";
+import { RuleError } from "@/domain/errors";
+import {
+  testPerson,
+  updateSignInSettings,
+  updateTaxRate,
+  updateTimeZone,
+  type TestPersonResult,
+} from "@/domain/settings/service";
+import type { ActionState } from "@/lib/action-state";
+import { form, runAction } from "@/lib/admin-server";
+import { PlanningCenterUnavailableError } from "@/lib/pco";
+import { getPlanningCenterDirectory } from "@/lib/pco-directory";
+
+const s = adminCopy.settings;
+const PAGE = "/admin/settings";
+
+export async function taxRateAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await updateTaxRate(tx, viewer, {
+        percent: form.text(data, "percent"),
+        versions: form.json(data, "versions"),
+      });
+      return s.taxSaved;
+    },
+    { paths: [PAGE] },
+  );
+}
+
+export async function timeZoneAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await updateTimeZone(tx, viewer, {
+        timeZone: form.text(data, "timeZone"),
+        versions: form.json(data, "versions"),
+      });
+      return s.timeZoneSaved;
+    },
+    { paths: [PAGE] },
+  );
+}
+
+export async function signInSettingsAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await updateSignInSettings(tx, viewer, {
+        adminContactEmail: form.text(data, "adminContactEmail"),
+        fieldName: form.text(data, "fieldName"),
+        acceptedValues: form.text(data, "acceptedValues"),
+        requireForRequesters: form.checked(data, "requireForRequesters"),
+        requireForStaff: form.checked(data, "requireForStaff"),
+        googleEnabled: form.checked(data, "googleEnabled"),
+        planningCenterEnabled: form.checked(data, "planningCenterEnabled"),
+        versions: form.json(data, "versions"),
+      });
+      return s.pcoSaved;
+    },
+    { paths: [PAGE] },
+  );
+}
+
+export type TestPersonState = ActionState & { results?: TestPersonResult[] };
+
+/** "Test a person" with the field and values currently typed on the form (AC-11). */
+export async function testPersonAction(
+  _: TestPersonState,
+  data: FormData,
+): Promise<TestPersonState> {
+  let results: TestPersonResult[] = [];
+  const state = await runAction(
+    async (tx, viewer) => {
+      const directory = getPlanningCenterDirectory();
+      if (!directory) throw new RuleError(s.notConfigured);
+      try {
+        results = await testPerson(tx, viewer, directory, {
+          query: form.text(data, "query"),
+          fieldName: form.text(data, "fieldName"),
+          acceptedValues: form.text(data, "acceptedValues"),
+        });
+      } catch (error) {
+        if (error instanceof PlanningCenterUnavailableError) {
+          throw new RuleError(s.testUnavailable(error.message));
+        }
+        throw error;
+      }
+      return results.length === 0 ? s.testNoMatch : "";
+    },
+    { paths: [] },
+  );
+  return state.status === "success" ? { ...state, results } : state;
+}

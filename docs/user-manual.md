@@ -25,11 +25,11 @@ This manual explains how to use the app, by role. It is written from the specifi
 ### Signing in
 
 1. Open the app's web address on a computer or phone.
-2. Choose **Continue with Google**, **Continue with Planning Center**, or **Continue with email** (we email you a 6-digit code). They all reach the same account if your email matches. Staff can use any email address, such as a work or personal one; staff signing in by email code also enter a code from an authenticator app.
+2. Choose **Continue with Google**, **Continue with Planning Center**, or **Continue with email** (we email you a 6-digit code). They all reach the same account if your email matches. Staff can use any email address, such as a work or personal one.
 3. Department leaders must be marked as a **Group Leader** in Planning Center: **Ministry Leader** set to **Yes** on their Planning Center profile. If you see "Your Group Leader status in Planning Center could not be confirmed", ask your ministry's Planning Center administrator.
 4. If you see "Waiting for department assignment", the System Administrator has been told and will add you.
 
-Staff (accountant, Board Chair, Vice-Chair, Church Administrator, System Administrator) must have 2-Step Verification on their Google account.
+Two-step verification isn't required for any role. Turning it on for your own Google or Planning Center account is still a good idea.
 
 ### Home and My tasks
 
@@ -110,13 +110,13 @@ The accountant approves first, then the Board Chair (or Vice-Chair). After final
 
 ## 4. Primary and Backup requesters
 
-Each department has a **Primary requester** (accountable for the department's budget) and can have a **Backup requester** who covers.
+Each department has a **Primary requester** (accountable for the department's budget) and can have up to two **Backup requesters** who cover: **Backup 1** and **Backup 2**. Two Backups help a department that runs at two locations.
 
-- Both can do everything for the department: submit and edit the annual budget, answer questions, send messages, and submit expenses.
-- Both see the department's tasks in My tasks. Reminders go to the Primary first; if a task is still open after 3 days, the Backup is reminded too.
-- **Primary: choose your backup.** On your department page, choose **Nominate a backup** and pick a verified Group Leader. The System Administrator is told.
-- **Primary: going away?** Turn on **Away** with dates. Your Backup gets the reminders and the department shows who is covering.
-- If the Primary leaves the role, the Backup becomes Primary automatically and the System Administrator is asked to pick a new Backup.
+- All of them can do everything for the department: submit and edit the annual budget, answer questions, send messages, and submit expenses.
+- All of them see the department's tasks in My tasks. Reminders go to the Primary first; if a task is still open after 3 days, both Backups are reminded too.
+- **Primary: choose your backups.** On your department page, choose **Make Backup 1** or **Make Backup 2** for a verified Group Leader. The System Administrator is told.
+- **Primary: going away?** Turn on **Away** with dates. Your Backups get the reminders and the department shows who is covering.
+- If the Primary leaves the role, Backup 1 becomes Primary automatically, Backup 2 moves up to Backup 1, and the System Administrator is asked to fill the empty Backup place.
 
 ---
 
@@ -197,7 +197,7 @@ You can **see everything** but cannot approve or pay unless you are also given t
 **Admin → Departments**:
 
 - Add departments (or paste a list), rename, deactivate. At setup, paste the church's 18 departments; nobody needs to be assigned in advance, because leaders join by picking their department.
-- Set each department's **Primary** and **Backup** requester. Use the **No backup** filter to find gaps.
+- Set each department's **Primary** and up to two **Backup** requesters (**Backup 1** takes over first). Giving someone a place that's taken makes its holder a Representative; moving a leader into another leader's place swaps them. Use the **No backup** filter to find gaps.
 - **Proposed** tab: departments people typed under **Other**. Choose **Add to list**, **Merge into…**, or **Reject** with a reason.
 - **Planning Center mapping**: link a department to a Planning Center Services team (for example the Media team that runs ProPresenter), a group, a group tag, or a custom field value. In **Suggest** mode, leaders found there appear as suggestions you **Add** or **Ignore**; in **Automatic** mode they are added and removed for you. Use **Sync now** to check straight away.
 
@@ -211,6 +211,10 @@ You can **see everything** but cannot approve or pay unless you are also given t
 ### Settings
 
 Tax rate (applies to new submissions only), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), email settings, sign-in options (Google, Planning Center, email), backup reminder delay, and the weekly audit summary email.
+
+- **Sales tax**: type the new rate (for example 12 or 12.5) and confirm. Requests already submitted keep the rate they were submitted with.
+- **Church time zone**: deadlines, release times and emails use it (default America/Winnipeg).
+- **Sign-in and Planning Center**: the contact email shown to people who can't sign in, which sign-in buttons appear, the custom field and the values that count as a Group Leader, and which roles need the check. Use **Test a person** to try the field and values on someone before you save. The **Requesters failing verification** list shows who is suspended or not yet verified.
 
 **Signing authorities**: **Add signer** when someone can sign cheques; **Remove** when they no longer can. Removed signers stay on past payments. Keep at least two active.
 
@@ -226,7 +230,7 @@ Check **Admin → Notifications & Audit** for failed emails, and **Reports → A
 
 - **Overview:** headline numbers (approved, committed, spent, remaining, waiting approvals) and charts. Use the filter bar (cycle, department, area, dates). Click a bar to see the items behind it, then click an item to open it. **Chart / Table** switches to a table; **Export** downloads Excel.
 - **Activity:** every action on the platform: who did it, in which role, when, on what, and why. Use the quick views (Today, Decisions this week, Money changes, Sign-ins and access, Settings and roles, Failed emails), search, or filters. Click a row to see before and after values.
-- **Access** (System Administrator): failed sign-ins, access denied attempts, Planning Center problems, staff without 2-Step Verification, and departments without a Backup, each with a link to fix it.
+- **Access** (System Administrator): failed sign-ins, access denied attempts, Planning Center problems, and departments without a Backup, each with a link to fix it.
 
 The address keeps your filters, so you can bookmark a view or send the link to a colleague who has the same access.
 

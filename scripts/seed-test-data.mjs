@@ -94,8 +94,9 @@ export async function seedTestData(client) {
     }
     for (const [department, type] of p.departments) {
       await client.query(
-        `insert into user_departments (user_id, department_id, representative_type)
-         select $1, id, $3 from departments where name = $2`,
+        `insert into user_departments (user_id, department_id, representative_type, backup_rank)
+         select $1, id, $3::text::representative_type, case when $3::text = 'backup' then 1 end
+         from departments where name = $2`,
         [userId, department, type],
       );
     }
