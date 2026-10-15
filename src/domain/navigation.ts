@@ -143,6 +143,16 @@ export function navigationFor(roles: readonly Role[]): NavArea[] {
   });
 }
 
+/**
+ * An area with one page is shown as a single link, not a group with one child.
+ * Home keeps its area name ("Home"); any other area shows the page's own name.
+ */
+export function singlePage(area: NavArea): NavItem | undefined {
+  if (area.items.length !== 1) return undefined;
+  const item = area.items[0];
+  return area.id === "home" ? { ...item, label: area.label } : item;
+}
+
 /** Every page the navigation can link to, for routes that are not built yet. */
 export function allNavHrefs(): string[] {
   const hrefs = AREAS.flatMap((a) => a.items.map((i) => i.href)).concat(

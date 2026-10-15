@@ -12,7 +12,7 @@ import {
 import { copy } from "@/copy/en-CA";
 
 /**
- * One application for every role (DRD 6.0, FR-37): sidebar on desktop, bottom bar
+ * One application for every role (DRD 6.0, FR-37): side rail on tablets, sidebar on desktop, bottom bar
  * plus More on mobile, header with the account menu, footer with Help and Privacy.
  * Everything that reads the viewer streams in behind its own Suspense boundary, so
  * the rest of the shell is part of the static prerender.
@@ -31,9 +31,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <ViewerSidebar />
         </Suspense>
 
-        <div className="flex min-w-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0">
-          <header className="sticky top-0 z-(--z-sticky) flex h-16 items-center justify-between gap-4 border-b border-border bg-bg/90 px-4 backdrop-blur lg:justify-end lg:px-8">
-            <Link href="/" className="rounded-control lg:hidden">
+        <div className="flex min-w-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
+          <header className="sticky top-0 z-(--z-sticky) flex h-16 items-center justify-between gap-4 border-b border-border bg-bg/90 px-4 backdrop-blur md:justify-end lg:px-8">
+            <Link href="/" className="rounded-control md:hidden">
               <Brand />
             </Link>
             <Suspense fallback={<AccountMenuFallback />}>

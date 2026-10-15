@@ -161,3 +161,13 @@ Record any choice the specs leave open, and any deviation from them.
 - **Emails come from the church domain.** Resend needs a verified domain, so the From address is something like `budget@<church-domain>`.
 - **The backup job gets its own Google OAuth client** (`GDRIVE_CLIENT_ID`, `GDRIVE_CLIENT_SECRET`) instead of reusing the Gmail one.
 - **Step 7 calls Resend's REST API with `fetch`**, adding no dependency. It sends the outbox row id as the `Idempotency-Key`, so a retry never sends an email twice.
+
+## Navigation: calmer sidebar, area colours, tablet rail (2026-10-15)
+
+After user feedback that the sidebar was busy (a person with several roles saw about 20 links in six identical grey groups):
+
+- **Areas open one at a time.** On desktop each area with several pages is a button that opens its pages (an accordion); the area of the current page opens by itself, and opening another closes it. A closed area that holds the current page shows a dot. Areas with one page (Home, and Reports for most people) are a single link. Every page is still reachable, and `navigationFor(roles)` is unchanged; the server still checks every route.
+- **Each area has a colour** (Home violet, Annual Budget blue, Expenses teal, Spending amber, Reports pink, Admin slate), added to the DRD 3.2 palette as `--area-*` tokens in light and dark. The colour marks the area's icon tile, its open panel, the guide line down its pages and the active page. `tests/unit/area-colours.test.ts` keeps every pairing at 4.5:1 or more in both themes. Colour is never the only signal: the current page also has `aria-current`, weight and a dot.
+- **Tablets (768–1023 px) get an icon rail, not the bottom bar.** DRD 6.0 names only desktop (sidebar) and mobile (bottom bar). Below 768 px is the phone layout; from 768 px a 76 px rail of coloured area icons opens each area's pages in a flyout. From 1024 px the full sidebar shows, and collapsing it gives the same rail.
+- **More on a phone opens a bottom sheet** (Radix Dialog, new free dependency `@radix-ui/react-dialog`) with the same accordion as the desktop sidebar, plus Help and Privacy, instead of a long dropdown.
+- **Motion** follows DRD 5.5 tokens: groups open by animating height, pages fade in one after another, the chevron turns, the active tab's pill and the rail's bar grow in, and the sheet slides up. The global reduced-motion rule flattens all of it.

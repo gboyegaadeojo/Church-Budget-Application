@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page } from "@playwright/test";
 
 export const MOBILE = { width: 360, height: 780 };
+export const TABLET = { width: 820, height: 1180 };
 export const DESKTOP = { width: 1440, height: 900 };
 
 /** People in tests/fixtures/fake-identities.json, by the start of their label. */
@@ -49,6 +50,10 @@ export async function expectNoHorizontalScroll(page: Page) {
 }
 
 export async function expectAxeClean(page: Page) {
+  // Measure settled colours, not text halfway through a fade-in.
+  await page.waitForFunction(() =>
+    document.getAnimations().every((a) => a.playState !== "running"),
+  );
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
