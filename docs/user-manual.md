@@ -25,7 +25,7 @@ This manual explains how to use the app, by role. It is written from the specifi
 ### Signing in
 
 1. Open the app's web address on a computer or phone.
-2. Choose **Continue with Google** or **Continue with Planning Center**. Both reach the same account if your email matches.
+2. Choose **Continue with Google**, **Continue with Planning Center**, or **Continue with email** (we email you a 6-digit code). They all reach the same account if your email matches. Staff can use any email address, such as a work or personal one; staff signing in by email code also enter a code from an authenticator app.
 3. Department leaders must be marked as a **Group Leader** in Planning Center. If you see "Your Group Leader status in Planning Center could not be confirmed", ask your ministry's Planning Center administrator.
 4. If you see "Waiting for department assignment", the System Administrator has been told and will add you.
 
@@ -196,18 +196,23 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 **Admin → Departments**:
 
-- Add departments (or paste a list), rename, deactivate.
+- Add departments (or paste a list), rename, deactivate. At setup, paste the church's 18 departments; nobody needs to be assigned in advance, because leaders join by picking their department.
 - Set each department's **Primary** and **Backup** requester. Use the **No backup** filter to find gaps.
 - **Proposed** tab: departments people typed under **Other**. Choose **Add to list**, **Merge into…**, or **Reject** with a reason.
 - **Planning Center mapping**: link a department to a Planning Center Services team (for example the Media team that runs ProPresenter), a group, a group tag, or a custom field value. In **Suggest** mode, leaders found there appear as suggestions you **Add** or **Ignore**; in **Automatic** mode they are added and removed for you. Use **Sync now** to check straight away.
 
 ### Budget cycles
 
-**Admin → Budget Cycles**: create the year, set the deadline and board-approved church total, open and close it, and choose whether decision emails go out immediately or at a scheduled time.
+**Admin → Budget Cycles**: create the year (the first is FY2027), set the deadline and board-approved church total, open and close it, and choose whether decision emails go out immediately or at a scheduled time.
+
+- **Change deadline**: pick the new date and give a reason; departments that haven't submitted are emailed.
+- **Give extension**: a later date for one department only, with a reason.
 
 ### Settings
 
-Tax rate (applies to new submissions only), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), email settings, cheque signing authorities, backup reminder delay, and the weekly audit summary email.
+Tax rate (applies to new submissions only), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), email settings, sign-in options (Google, Planning Center, email), backup reminder delay, and the weekly audit summary email.
+
+**Signing authorities**: **Add signer** when someone can sign cheques; **Remove** when they no longer can. Removed signers stay on past payments. Keep at least two active.
 
 ### Keeping it healthy
 

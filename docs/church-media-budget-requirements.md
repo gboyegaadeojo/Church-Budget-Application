@@ -19,7 +19,7 @@
 |---|---|---|
 | 1.0 | — | Initial baseline from the church. |
 | 1.1–2.5 | 2026-10-15 | 12% sales tax; spending tracking; branding; complete email notifications; shared department requests and backup approver; Part A (annual budget, approved amount incl. tax) vs Part B (expense submissions); Planning Center sign-in and Group Leader check; scheduled decision release and "Other" department; free-tier stack; two-level expense approval with Board Chair and Church Administrator payment processing. |
-| 3.3 | 2026-10-15 | Primary and backup requester per department (FR-38); Planning Center team mapping for departments (FR-39); Activity, audit and analytics dashboard with a complete activity log (FR-52, FR-22 extended); AC-116 to AC-130; go-live checklist (Section 21) and user manual (Section 22). |
+| 3.3 | 2026-10-15 | Starting department list (FR-03); sign-in with any email address for staff (FR-01b); cheque signing authorities list (FR-53); flexible submission deadline with per-department extensions (4.3); first cycle is FY2027; branding editable by the administrator (FR-30); AC-131 to AC-138. Also: primary and backup requester per department (FR-38); Planning Center team mapping for departments (FR-39); Activity, audit and analytics dashboard with a complete activity log (FR-52, FR-22 extended); AC-116 to AC-130; go-live checklist (Section 21) and user manual (Section 22). |
 | 3.2 | 2026-10-15 | Completeness check: added reopen workflow (FR-18a), board-approved church total per cycle (4.2), "how will this be bought" on purchase requests (FR-40), privacy requests (FR-36), two-step verification for staff (10.1); refreshed page list (Section 8) and requester navigation (7.2) to match the one-app design. |
 | 3.1 | 2026-10-15 | One application for all roles with a single sign-in and a combined "My tasks" home (FR-37); Vice-Chair named as the backup board approver; System Administrator can see everything, read-only. |
 | 3.0 | 2026-10-15 | Consolidated for build: roles reordered, authorization matrix includes all roles, FR index added, acceptance criteria renumbered AC-1 onward in one section, delivery plan rewritten as stages, decisions log merged. No requirement changes. |
@@ -381,7 +381,7 @@ Examples:
 - FY2028 Media Budget
 - FY2029 Media Budget
 
-The system administrator will create each cycle, set its submission deadline, and open or close it.
+The system administrator will create each cycle, set its submission deadline, and open or close it. **The first cycle is FY2027** (budget year 2027), set up from Settings, never hard-coded.
 
 ## 4.2 Cycle Attributes
 
@@ -410,6 +410,16 @@ Each cycle must contain:
 - Each department's submission status is evaluated independently for each cycle.
 - Each department should have one primary annual request per cycle.
 - Revisions update the existing request history rather than creating duplicate primary submissions.
+
+### Changing the submission deadline
+
+The deadline is flexible:
+
+- The administrator can change the deadline of a Draft or Open cycle at any time: move it later, or earlier as long as the new date is still in the future. A reason is required.
+- The administrator or accountant can give **one department an extension** (new date and reason) without changing everyone's deadline. The department's page and the accountant dashboard show "Extended to {date}".
+- A Closed cycle can be reopened with a new deadline (4.3 above).
+- Changing a deadline emails every department representative who has not yet submitted (or only that department, for an extension), recalculates the reminder emails (FR-21), and is audited with the old and new dates.
+- The server checks the deadline that applies to the department (its extension, if any, otherwise the cycle's).
 
 If a department needs a second independent request in the same year, that should be an explicitly supported exception rather than an accidental duplicate.
 
@@ -590,6 +600,8 @@ Refunds and returns follow the same steps with the entry type **Refund**, which 
 | FR-37 | One application, "My tasks" home | Core | 1 (tasks for Part B and spending added in Stages 3–4) |
 | FR-38 | Primary and backup requester per department | Core | 1 |
 | FR-39 | Planning Center team mapping for departments | Access | 2 |
+| FR-01b | Sign-in with any email address (email code + authenticator for staff) | Access | 1 |
+| FR-53 | Cheque signing authorities list | Part B | 3 |
 | FR-40 to FR-51 | Expense submissions, two-level approval, payment | Part B | 3 |
 | FR-52 | Activity, audit and analytics dashboard | Core | 1 (activity log), 2 (annual analytics), 4 (expense and spending analytics) |
 
@@ -640,6 +652,20 @@ Purpose: confirm that the person submitting budgets or expenses is a recognized 
 - Toggles: "Require for requesters" (on), "Require for accountant and Church Administrator roles" (off), "Allow Google sign-in" (on), "Allow Planning Center sign-in" (on).
 - A list of current requesters who fail verification, with the reason.
 
+## FR-01b: Sign-In with Any Email Address (staff)
+
+Staff (accountant, backup approver, Board Chair, Vice-Chair, Church Administrator, System Administrator) can use an email address that is not Gmail or a church address, such as their work or personal email.
+
+- A staff account is identified by the email address the administrator enters when assigning the role. It can be any address.
+- They can sign in with any of:
+  - **Continue with Google** using a Google Account registered to that address. Anyone can create a free Google Account for an existing email address without getting Gmail (the help page links to Google's "Use my current email address instead" sign-up).
+  - **Continue with Planning Center**, if that address is on their Planning Center profile.
+  - **Continue with email** (new): the app emails a 6-digit code, valid 10 minutes, single use, to an address already on the allowlist. Unknown addresses get the same "check your email" message and no code, so the app does not reveal who has access. Codes go through the outbox (CLAUDE.md rule 7) but are sent straight after commit, not held for the 15-minute job.
+- Two-step verification for staff (10.1): Google and Planning Center sign-ins rely on that account's two-step verification. Email-code sign-in for a staff role also requires a code from an authenticator app (TOTP), set up at first sign-in, with 10 single-use recovery codes. The administrator can reset it, which is audited.
+- Rate limits: 5 code requests per address per hour and 5 wrong codes per code; then a 15-minute wait. Attempts appear in the Access tab (FR-52).
+- Requesters can use email-code sign-in too, but they still need to pass the Group Leader check (FR-01a), matched by that email in Planning Center.
+- Administrator setting "Allow email sign-in" (on by default), next to the Google and Planning Center toggles.
+
 ## FR-02: User and Role Management
 
 - Each user must have an active/inactive status.
@@ -656,6 +682,23 @@ Purpose: confirm that the person submitting budgets or expenses is a recognized 
 
 - The administrator adds every church department (name, optional description, optional default representative) and can rename, deactivate, or reactivate them.
 - Bulk add: paste a list of names, one per line.
+
+### Starting department list (confirmed by G, 2026-10-15)
+
+The administrator loads these 18 departments when the app is set up (Admin → Departments → paste a list). They are data, not code, and can be renamed, added to, or deactivated later.
+
+| | | |
+|---|---|---|
+| Adult Sunday School | Choir Team | Children Sunday School |
+| Drama Team | Decoration Team | Evangelism Team |
+| Media Team | Men's Fellowship | Prime Adult/Young Adult Ministry |
+| Prayer Warrior Team | Quality Control Team | Sanctuary Keepers Team |
+| Social Media Team | Transportation Team | Ushering Team |
+| Visitation Team | Women's Fellowship Team | Young Couples Ministry |
+
+"Others" in the church's list is the **Other (type your department)** option below, not a department.
+
+**Representatives are not pre-loaded.** Leaders change, so nobody is assigned in advance. A department's representatives come from: a verified Group Leader picking the department on the form (they become Primary if there is none, FR-38), Planning Center team mapping (FR-39), or the administrator. Only verified leaders can use the app as requesters (FR-01a), so sharing the app's link more widely gives nobody else access.
 
 ### Department selector (annual budget form)
 
@@ -1328,6 +1371,7 @@ The Church Administrator and accountant see, for the selected cycle:
 - The accent color is rejected if it fails the contrast rules in the Design Requirements Document (section 3.2); the app suggests the nearest passing shade. A reset restores the default.
 - Logo upload is the only file upload in the application, is limited to administrators, and does not change the no-attachments rule for requests and spending (FR-23).
 - Branding changes are audited.
+- The church's own System Administrator (G at launch) makes these changes from Admin → Settings → Branding; no developer is needed.
 - The interface is English (Canada) only, with `en-CA` date and currency formatting.
 
 ## FR-31: Request Messages
@@ -1428,6 +1472,15 @@ Assumption: "ProPresenter tag" in the original ask means the Planning Center tea
 - If Planning Center is unavailable, the last known mapping stays in force; the 72-hour rule of FR-01a applies to verification.
 - Every mapping change, sync result (added, flagged, removed), and administrator decision on a suggestion is audited.
 - Unmapped departments work exactly as before (assigned in the app).
+
+## FR-53: Cheque Signing Authorities
+
+- The administrator keeps the list of people who can sign church cheques on Admin → Settings → **Signing authorities**: name, optional email, and active from and to dates.
+- **Add** a signer at any time. **Remove** marks them inactive from a date (with an optional reason); they disappear from the Record payment dialog but stay on every past payment they signed. Signers are never deleted (CLAUDE.md rule 6).
+- A signer can be edited (for example a name spelling); past payments keep the name as it was when recorded.
+- Record payment (6B.5) offers only active signers and requires two different people for a cheque.
+- The page warns when fewer than two active signers remain, since cheques cannot be recorded.
+- Every change is audited.
 
 ## FR-52: Activity, Audit and Analytics Dashboard
 
@@ -1555,7 +1608,7 @@ After both approvals, the Church Administrator carries out the next step outside
 | Date paid | Required |
 | Amount paid (incl. tax) | Required; defaults to the approved amount; a difference needs a note |
 | Reference | Cheque number, card last 4 digits and transaction reference, e-transfer reference, or invoice number |
-| Cheque signers | For cheques: the two signing authorities who signed (names, chosen from a list the administrator maintains) |
+| Cheque signers | For cheques: the two signing authorities who signed (chosen from the active signers list the administrator maintains, FR-53) |
 | Purchased by | For church-card or supplier purchases: who made the purchase |
 | Cash received by | For cash: who received it (and a "receipt signed" checkbox) |
 | Notes | Optional |
@@ -2209,6 +2262,20 @@ BudgetCycle also gains `decision_email_mode` (`immediate` or `scheduled`), `deci
 
 AppSetting gains `second_approval_threshold` (nullable, off by default). ApprovalDecision gains `decision_stage` (`first` or `second`).
 
+## 9.18a SigningAuthority (FR-53)
+
+- `id`, `name`, `email` (nullable), `active_from`, `active_until` (nullable), `removed_reason` (nullable), `version`, `created_at`, `updated_at`
+- Payments store the signer's `id` and a `name_snapshot`.
+
+## 9.18b DeadlineExtension (4.3)
+
+- `id`, `cycle_id`, `department_id`, `new_deadline`, `reason`, `granted_by_user_id`, `created_at`. One active extension per department and cycle; changes are new rows.
+
+## 9.18c Email sign-in (FR-01b)
+
+- `EmailLoginCode`: `id`, `email`, `code_hash`, `expires_at`, `attempts`, `used_at`, `created_at`.
+- User gains `totp_secret_encrypted` (nullable), `totp_enabled_at`, and `recovery_codes_hashed`.
+
 ## 9.19 Data Integrity Requirements
 
 - Generate identifiers on the server.
@@ -2597,6 +2664,17 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 - **AC-129** Clicking a chart bar opens the list of items behind it, and each chart has an accessible table view.
 - **AC-130** No user, including the administrator, can edit or delete an audit event through the app or its API.
 
+## Added with v3.3 (church details)
+
+- **AC-131** A fresh install can load the 18 starting departments by pasting the list; "Others" maps to the Other option, not a department.
+- **AC-132** An accountant whose address is `name@outlook.com` can sign in with an emailed code plus an authenticator code; a wrong code 5 times blocks further tries for 15 minutes.
+- **AC-133** Requesting a code for an address that is not on the allowlist shows the same message and sends no email.
+- **AC-134** The administrator can add and remove a cheque signer; a removed signer is not offered in Record payment but still shows on past payments.
+- **AC-135** Recording a cheque payment is blocked with a clear message when fewer than two active signers exist.
+- **AC-136** The administrator can move the FY2027 deadline later with a reason; representatives who have not submitted are emailed and reminders use the new date.
+- **AC-137** A one-department extension lets that department submit after the cycle deadline, while others are blocked.
+- **AC-138** The administrator can change the logo and accent colour without a redeploy (see also AC-99).
+
 ---
 
 # 15. Delivery Stages
@@ -2612,20 +2690,22 @@ Build and release in stages. Each stage is usable on its own and ends with its a
 - Accountant dashboard and review: approve as requested, approve a different amount (incl. tax, board reference), line changes, clarification, decline, reopen (FR-13 to FR-18a).
 - Approval emails sent immediately; all Part A emails in FR-21; audit; Excel export; no attachments; help and privacy (FR-19, FR-20 to FR-23, FR-36).
 - One application with role-based navigation and the My tasks home; administrator read-only access to everything (FR-37, 3.5).
+- Sign-in with any email address for staff (FR-01b); flexible deadline and per-department extensions (4.3).
 - Primary and Backup requester per department (FR-38) and the full activity log with the Activity tab of the Analytics & Audit dashboard (FR-22, FR-52).
-- Acceptance: Authentication, Planning Center, Departments (except scheduled release), Request Creation, Sales Tax, Submission, Accountant Review, Export and Audit, Usability, Primary and Backup Requester, AC-125, AC-126, AC-130.
+- Acceptance: Authentication, Planning Center, Departments (except scheduled release), Request Creation, Sales Tax, Submission, Accountant Review, Export and Audit, Usability, Primary and Backup Requester, AC-125, AC-126, AC-130 to AC-133, AC-136, AC-137.
 
 ## Stage 2: Annual Budget polish
 
 - Scheduled decision release (FR-19a), request messages (FR-31), backup approver and Away (FR-33), optional large-amount second approval (FR-34), copy last year (FR-35), branding (FR-30), email preferences and digest.
 - Planning Center team mapping (FR-39). Overview and Access tabs of the Analytics & Audit dashboard for annual budgets (FR-52).
-- Acceptance: Departments and Decision Release (release items), Notifications/Sharing, Branding, Planning Center Team Mapping, AC-128, AC-129.
+- Acceptance: Departments and Decision Release (release items), Notifications/Sharing, Branding, Planning Center Team Mapping, AC-128, AC-129, AC-138.
 
 ## Stage 3: Expense Submissions (Part B)
 
 - Purchase requests and expense claims, receipts on claims, budget strip with Committed, two-level approval (accountant, Board Chair), Ready to process queue and Record payment, expense emails and exports (Section 6B, FR-40 to FR-51).
 - Minimal spending ledger so approved claims create spending entries (FR-24, FR-42).
-- Acceptance: Expenses (Part B).
+- Cheque signing authorities list (FR-53).
+- Acceptance: Expenses (Part B), AC-134, AC-135.
 
 ## Stage 4: Spending tracking and amendments
 
@@ -2765,6 +2845,11 @@ Every item from the original request is covered:
 - Each department has a Primary requester and an optional Backup requester (FR-38).
 - Departments can be mapped to Planning Center teams so leaders stay in step (FR-39). Assumed: the "ProPresenter tag" is the Planning Center team or tag, since ProPresenter itself holds no people data.
 - An Analytics & Audit dashboard covers everything done on the platform (FR-52).
+- Starting department list: the 18 departments in FR-03; representatives are not pre-loaded because leaders change.
+- Staff may use any email address (FR-01b).
+- Cheque signers are a list the administrator edits (FR-53).
+- The administrator can change the submission deadline, and extend it for one department (4.3). The first cycle is FY2027.
+- The administrator (G) edits the logo and brand colour (FR-30).
 
 ## 20.2 Defaults in place (change in Settings or by revising this document)
 
@@ -2785,7 +2870,7 @@ Every item from the original request is covered:
 | Large-amount second approval for annual budgets (FR-34) | Off. |
 | Confetti | On successful annual budget submission only; off with reduced motion. |
 
-Before Stage 1 starts, the church provides: the department list and representatives; the exact Planning Center custom field; the accountant, Board Chair, backup board approver, and Church Administrator accounts; cheque signing authorities; logo and brand colour; budget year dates.
+Before Stage 1 starts, the church provides: the department list (received, FR-03; representatives come from sign-in and Planning Center); the exact Planning Center custom field; the accountant, Board Chair, backup board approver, and Church Administrator accounts; cheque signing authorities; logo and brand colour; budget year dates.
 
 ## 20.3 Recommended technology stack: free tier only
 

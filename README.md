@@ -53,13 +53,13 @@ It is **one application** for everyone: one web address, one sign-in, and a Home
 
 ## What the church needs to provide before building starts
 
-- [ ] Department list and each department's Primary and Backup requester, and the Planning Center team each maps to (if any)
-- [ ] Planning Center: an admin to register the app and create an API key, plus the exact custom field and value for Group Leader
-- [ ] Google accounts for the accountant, Board Chair, Vice-Chair, backup approver, church administrator, and two system administrators
-- [ ] A church-owned Google account to own hosting, database, email and code (not a personal account)
-- [ ] Cheque signing authorities
-- [ ] Logo and brand colour
-- [ ] Budget year dates and submission deadline
+- [x] Department list (18 departments, Req FR-03). Representatives aren't pre-loaded because leaders change; they join by signing in or through Planning Center mapping
+- [ ] Planning Center: G creates the OAuth app and API key, and confirms the custom field and value for Group Leader
+- [ ] Email addresses for the accountant, Board Chair, Vice-Chair, backup approver, church administrator, and two system administrators; any address works (Req FR-01b)
+- [ ] A church-owned Google account to own hosting, database, email and code (explained in the [go-live checklist](docs/go-live-checklist.md))
+- [ ] Cheque signing authorities' names; editable later in the app (Req FR-53)
+- [ ] Logo and brand colour; editable later by the administrator (Req FR-30)
+- [ ] FY2027 budget year dates and submission deadline; the deadline can be changed or extended per department (Req 4.3)
 
 ## Going live
 
