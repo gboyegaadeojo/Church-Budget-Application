@@ -116,6 +116,17 @@ Record any choice the specs leave open, and any deviation from them.
 - **Idempotency keys** (`idempotency_keys`, migration `0006`) belong to one person and one action. A repeat returns the stored first result; a key reused by someone else, or for another action, is refused.
 - **Emails are deferred to step 7.** The receipt, the accountant notice, the revision notice and the administrator's "someone joined" or "new department proposed" emails are marked `TODO(step 7)` where the outbox row will be written.
 
+## Stage 1, step 5b: annual form screens (2026-10-15)
+
+- **Department step on its own page.** DRD 6.3 puts the department in step 1 with the title and justification. Choosing the department creates or opens the request (FR-03, FR-32), so it comes first at `/annual/new`; the editor's step 1 holds the title and justification, under the same progress indicator.
+- **Preview is a step in the editor, not a separate page.** Values stay in the form between steps (DRD 6.3 "Preserve entered values"). For a draft, the preview first saves, then shows the server's totals; submitting sends only the id, version and idempotency key, so what is submitted is exactly what was saved. For a revision or a clarification response, the preview shows the figures calculated with the same `money.ts` code at the request's snapshotted rate, and the server recalculates on confirm.
+- **One idempotency key per preview.** A double click or a retry from the same preview sends the same key (FR-10, AC-38); going back and previewing again makes a new one.
+- **Reorder with Move up / Move down only.** DRD 6.3 asks for a drag handle as well; buttons cover keyboard and touch without a drag-and-drop library. A drag handle can be added later.
+- **Drafts are shared with the department's other representatives.** DRD 7.1 says a draft is "Only you can see it", but FR-32 makes the request the department's; the status text reads "Your department's leaders can see it".
+- **Leaders waiting for a department may open the form.** FR-01a's waiting screen stays for every other page; while a cycle is open it links to `/annual/new`, where picking a department makes them its representative (FR-38). The app shell loads the viewer once per request either way.
+- **Unsaved values on this device.** Every change is kept in `localStorage` with the version it was based on; it is offered back only if the request hasn't changed since, and removed once saved (DRD 11.1). Leaving with unsaved changes asks first.
+- **Not yet:** the Undo toast after removing an item (DRD 5.6; removing a populated item already asks first), the session-expiry warning (DRD 11.1), **Start from last year's budget** (FR-35, Stage 2), the My department budget panel (6.2a, Stage 4) and recent activity (step 8). The confirmation says "We'll email your receipt shortly" until the outbox exists (step 7).
+
 ## Up to two ranked Backups per department (2026-10-15)
 
 - **A department can have a Primary, Backup 1 and Backup 2** (FR-38, AC-116, AC-120 updated). Some departments run at two locations and have three people who request on their behalf. Representatives were already unlimited and can already request (FR-32); the second Backup adds a second person who covers and takes over.

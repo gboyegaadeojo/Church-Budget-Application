@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { annualCopy } from "@/copy/annual";
-import { MAX_QUANTITY, MAX_UNIT_PRICE_CENTS, parseCAD } from "@/lib/money";
+import {
+  lineTotal,
+  MAX_QUANTITY,
+  MAX_UNIT_PRICE_CENTS,
+  parseCAD,
+  sumCents,
+  totalForward,
+  type TaxBreakdown,
+} from "@/lib/money";
 
 /**
  * The annual budget form's input (FR-04 to FR-09), shared by the browser and the server.
@@ -43,14 +51,14 @@ const lineSchema = z
     notes: z.string().trim().max(LIMITS.notes, e.notesTooLong).default(""),
   })
   .transform((line, ctx) => {
-    const qtyText = String(line.quantity).trim().replaceAll(",", "");
-    const quantity = qtyText === "" ? 1 : /^\d+$/.test(qtyText) ? Number(qtyText) : Number.NaN;
-    if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > MAX_QUANTITY) {
+    const qtyText = String(line.quantity).trim();
+    const quantity = parseQuantity(qtyText);
+    if (quantity === null) {
       ctx.addIssue({ code: "custom", path: ["quantity"], message: e.quantityInvalid });
     }
     const priceText = String(line.unitPrice).trim();
-    const unitPriceCents = priceText === "" ? 0 : parseCAD(priceText);
-    if (unitPriceCents === null || unitPriceCents > MAX_UNIT_PRICE_CENTS) {
+    const unitPriceCents = parsePrice(priceText);
+    if (unitPriceCents === null) {
       ctx.addIssue({ code: "custom", path: ["unitPrice"], message: e.unitPriceInvalid });
     }
     if (line.link !== "" && !isHttpUrl(line.link)) {
@@ -58,7 +66,7 @@ const lineSchema = z
     }
     return {
       name: line.name,
-      quantity,
+      quantity: quantity ?? 1,
       unitPriceCents: unitPriceCents ?? 0,
       link: line.link === "" ? null : line.link,
       notes: line.notes === "" ? null : line.notes,
@@ -122,4 +130,56 @@ export function submissionErrors(content: RequestContent): Record<string, string
     if (line.unitPriceCents === 0 && !line.notes) errors[`lines.${i}.notes`] = e.zeroPriceNeedsNote;
   });
   return errors;
+}
+
+/** Subtotal, tax once on the subtotal, and total (FR-07). The server's figures always win. */
+export function totalsOf(lines: readonly LineContent[], rate: string): TaxBreakdown {
+  return totalForward(sumCents(lines.map((l) => lineTotal(l.quantity, l.unitPriceCents))), rate);
+}
+
+/** A typed quantity: blank counts as 1; otherwise a whole number from 1 to 10,000. */
+function parseQuantity(text: string): number | null {
+  const t = text.trim().replaceAll(",", "");
+  if (t === "") return 1;
+  if (!/^\d+$/.test(t)) return null;
+  const n = Number(t);
+  return Number.isSafeInteger(n) && n >= 1 && n <= MAX_QUANTITY ? n : null;
+}
+
+/** A typed unit price before tax: blank counts as $0.00; at most $1,000,000.00. */
+function parsePrice(text: string): number | null {
+  const cents = text.trim() === "" ? 0 : parseCAD(text);
+  return cents !== null && cents <= MAX_UNIT_PRICE_CENTS ? cents : null;
+}
+
+/** A line total as the form shows it while typing: null until quantity and price are valid. */
+export function lineTotalOf(quantity: string, unitPrice: string): number | null {
+  const qty = parseQuantity(quantity);
+  const price = parsePrice(unitPrice);
+  return qty === null || price === null ? null : lineTotal(qty, price);
+}
+
+/**
+ * Every problem with the form as typed, keyed like the form ("lines.2.name"): format
+ * first, then, when `forSubmission`, what submitting needs. The browser shows these
+ * early; the server runs the same checks and is the one that counts.
+ */
+export function formErrors(
+  input: RequestContentInput,
+  forSubmission: boolean,
+): Record<string, string> {
+  const parsed = requestContentSchema.safeParse(input);
+  if (!parsed.success) {
+    const errors: Record<string, string> = {};
+    for (const issue of parsed.error.issues)
+      errors[issue.path.join(".") || "form"] ??= issue.message;
+    return errors;
+  }
+  return forSubmission ? submissionErrors(parsed.data) : {};
+}
+
+/** Cents as the form's price field shows them: 102500 → "1025.00" (no float). */
+export function centsToInput(cents: number): string {
+  const digits = String(cents).padStart(3, "0");
+  return `${digits.slice(0, -2)}.${digits.slice(-2)}`;
 }

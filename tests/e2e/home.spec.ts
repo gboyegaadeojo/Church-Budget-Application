@@ -8,11 +8,15 @@ import {
   signInAs,
 } from "./helpers";
 
-/** Signs in as a person with every role; Home has streamed in once My tasks is empty. */
+/**
+ * Signs in as a person with every role; Home has streamed in once My tasks shows. Other
+ * tests give this person drafts, so the list may or may not be empty.
+ */
 async function gotoHome(page: Page) {
   await signInAs(page, PEOPLE.gina);
   await page.goto("/");
-  await expect(page.getByText("You're all caught up.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "My tasks" })).toBeVisible();
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
 }
 
 test.describe("Home and app shell", () => {
@@ -145,4 +149,10 @@ test.describe("Home and app shell", () => {
       });
     }
   }
+
+  test("FR-37 nothing waiting shows the all-caught-up state", async ({ page }) => {
+    await signInAs(page, PEOPLE.pat);
+    await page.goto("/");
+    await expect(page.getByText("You're all caught up.")).toBeVisible();
+  });
 });

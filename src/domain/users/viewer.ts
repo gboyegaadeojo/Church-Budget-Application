@@ -13,7 +13,11 @@ export type ViewerResult = { ok: true; viewer: Viewer } | { ok: false; reason: A
  * deactivation, role change or Planning Center suspension applies at once (FR-02).
  * Only effective roles are returned: a suspended requester loses the requester role.
  */
-export async function loadViewer(tx: Tx, userId: string): Promise<ViewerResult> {
+export async function loadViewer(
+  tx: Tx,
+  userId: string,
+  options: { allowWaiting?: boolean } = {},
+): Promise<ViewerResult> {
   const [user] = await tx.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!user || !user.active || user.accessStatus === "inactive") {
     return { ok: false, reason: "not-allowed" };
@@ -42,8 +46,9 @@ export async function loadViewer(tx: Tx, userId: string): Promise<ViewerResult> 
   if (roles.length === 0) {
     return { ok: false, reason: suspended ? "suspended" : "not-allowed" };
   }
-  // A verified leader with no department yet waits for the administrator (FR-01a).
-  if (roles.length === 1 && roles[0] === "requester" && represented.length === 0) {
+  // A verified leader with no department yet waits for the administrator (FR-01a),
+  // except on the annual form's first step, where they may pick one (FR-03, FR-38).
+  if (isWaitingForDepartment({ roles, departments: represented }) && !options.allowWaiting) {
     return { ok: false, reason: "waiting" };
   }
 
@@ -57,4 +62,11 @@ export async function loadViewer(tx: Tx, userId: string): Promise<ViewerResult> 
       departments: roles.includes("requester") ? represented : [],
     },
   };
+}
+
+/** A requester and nothing else, representing no department yet (FR-01a "waiting"). */
+export function isWaitingForDepartment(viewer: Pick<Viewer, "roles" | "departments">): boolean {
+  return (
+    viewer.roles.length === 1 && viewer.roles[0] === "requester" && viewer.departments.length === 0
+  );
 }
