@@ -300,7 +300,7 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: updatedAt(),
 });
 
-/** Per-year counters for IFC-{year}-MEDIA-0001 and EXP-{year}-0001 (CLAUDE.md conventions). */
+/** Per-year counters for IFC-{year}-0001 and EXP-{year}-0001 (CLAUDE.md conventions). */
 export const referenceSequences = pgTable(
   "reference_sequences",
   {

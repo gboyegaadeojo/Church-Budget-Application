@@ -75,7 +75,7 @@ export async function insertDraft(
 /** The submitted amounts for one $1,025.00 line at 12% (AC-31). */
 export const SUBMITTED_1025 = {
   status: "submitted" as const,
-  referenceNumber: "IFC-2027-MEDIA-0001",
+  referenceNumber: "IFC-2027-0001",
   taxRate: "0.1200",
   requestedSubtotalCents: 102_500,
   requestedTaxCents: 12_300,
