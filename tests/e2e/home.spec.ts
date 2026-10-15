@@ -48,7 +48,8 @@ test.describe("Home and app shell", () => {
     await page.getByRole("button", { name: "Open account menu" }).click();
     const menu = page.getByRole("menu");
     await expect(menu.getByText("Accountant", { exact: true })).toBeVisible();
-    await expect(menu.getByText("Requester: Media Team")).toBeVisible();
+    // Other tests add departments, so which ones are listed first varies.
+    await expect(menu.getByText(/^Requester: /).first()).toBeVisible();
     await expect(menu.getByRole("menuitemradio", { name: "System" })).toBeVisible();
     await expect(menu.getByRole("menuitem", { name: /Sign out/ })).toBeVisible();
   });

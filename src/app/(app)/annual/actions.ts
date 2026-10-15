@@ -23,6 +23,9 @@ import { form, runAction, runForResult, type ResultState } from "@/lib/admin-ser
 const m = annualCopy.messages;
 const DASHBOARD = "/annual";
 const view = (id: string) => `/annual/${id}`;
+const edit = (id: string) => `/annual/${id}/edit`;
+/** Every page that shows a request, so none is served from a stale client cache. */
+const pagesOf = (id: string) => [DASHBOARD, view(id), edit(id)];
 
 /** Step 1: pick a department (or Other), then open the request it leads to. */
 export async function startAction(_: ActionState, data: FormData): Promise<ActionState> {
@@ -49,7 +52,9 @@ export type DraftInput = { id: string; version: number } & RequestContentInput;
 export async function saveDraftAction(input: DraftInput): Promise<ResultState<DraftSaved>> {
   return runForResult(
     async (tx, viewer) => ({ message: m.saved, data: await saveDraft(tx, viewer, input) }),
-    { paths: [], latestHref: `${view(input.id)}/edit` },
+    // No refresh here: re-rendering the open editor on every autosave races with typing.
+    // Leaving the editor (Save and exit, submit, delete) refreshes the pages instead.
+    { paths: [], latestHref: edit(input.id) },
   );
 }
 
@@ -62,7 +67,7 @@ export async function deleteDraftAction(_: ActionState, data: FormData): Promise
       });
       return m.deleted;
     },
-    { paths: [DASHBOARD] },
+    { paths: pagesOf(form.text(data, "id")) },
   );
   if (result.status !== "success") return result;
   redirect(DASHBOARD);
@@ -76,7 +81,7 @@ export async function submitAction(input: {
 }): Promise<ActionState> {
   const result = await runForResult(
     async (tx, viewer) => ({ message: m.submitted, data: await submitRequest(tx, viewer, input) }),
-    { paths: [DASHBOARD, view(input.id)], latestHref: `${view(input.id)}/edit` },
+    { paths: pagesOf(input.id), latestHref: edit(input.id) },
   );
   if (result.status !== "success") return result;
   redirect(`${view(input.id)}?done=submitted`);
@@ -91,7 +96,7 @@ export async function reviseAction(
       const data = await reviseRequest(tx, viewer, input);
       return { message: data.usedEdit ? m.revised : m.responded, data };
     },
-    { paths: [DASHBOARD, view(input.id)], latestHref: view(input.id) },
+    { paths: pagesOf(input.id), latestHref: view(input.id) },
   );
   if (result.status !== "success") return result;
   redirect(`${view(input.id)}?done=${result.data.usedEdit ? "revised" : "responded"}`);

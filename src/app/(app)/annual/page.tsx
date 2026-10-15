@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarClock, MessageCircleQuestion } from "lucide-react";
+import { CalendarClock, CheckCircle2, MessageCircleQuestion } from "lucide-react";
 import {
   AdminSkeleton,
   EmptyState,
@@ -13,6 +13,7 @@ import { buttonClass, cardClass, linkClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
 import { getDb } from "@/db";
 import { daysUntil, getOpenCycle, listMyRequests, type MyRequest } from "@/domain/annual/queries";
+import { canTransition } from "@/domain/annual/status";
 import { effectiveDeadline } from "@/domain/cycles/service";
 import { getChurchTimeZone, getSignInSettings } from "@/domain/settings";
 import { viewerAllowedTo } from "@/lib/admin-server";
@@ -26,17 +27,35 @@ const d = annualCopy.dashboard;
 export const metadata: Metadata = { title: d.title };
 
 /** Requester dashboard (DRD 6.2): the open cycle, what's next, and every request. */
-export default function AnnualDashboardPage() {
+export default function AnnualDashboardPage({ searchParams }: PageProps<"/annual">) {
   return (
     <div className="space-y-6">
       <Suspense fallback={<AdminSkeleton />}>
-        <DashboardContent />
+        <DashboardContent searchParams={searchParams} />
       </Suspense>
     </div>
   );
 }
 
-async function DashboardContent() {
+/** The one action that fits a request's state (a department has one budget a year). */
+function openAction(r: MyRequest): { href: string; label: string; primary: boolean } {
+  const o = d.openBudget;
+  if (r.status === "draft") return { href: `/annual/${r.id}/edit`, label: o.draft, primary: true };
+  if (r.status === "returned") {
+    return { href: `/annual/${r.id}/edit`, label: o.respond, primary: true };
+  }
+  if (canTransition(r.status, "revise") && r.editsRemaining > 0) {
+    return { href: `/annual/${r.id}/edit`, label: o.edit, primary: false };
+  }
+  return { href: `/annual/${r.id}`, label: o.view, primary: false };
+}
+
+async function DashboardContent({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { saved } = await searchParams;
   const viewer = await viewerAllowedTo("annual.start", "/annual");
   if (!viewer) return <PermissionDenied body={annualCopy.deniedBody} />;
   const db = getDb();
@@ -47,7 +66,12 @@ async function DashboardContent() {
     getSignInSettings(db),
   ]);
   const firstName = viewer.name.split(" ")[0] ?? viewer.name;
-  const draft = cycle && requests.find((r) => r.cycleId === cycle.id && r.status === "draft");
+  // This year's budgets, one per department; Submit only where a department has none.
+  const thisYear = cycle ? requests.filter((r) => r.cycleId === cycle.id) : [];
+  const withoutBudget = viewer.departments.filter(
+    (dep) => !thisYear.some((r) => r.departmentId === dep.id),
+  );
+  const canStart = viewer.departments.length === 0 || withoutBudget.length > 0;
   // With one department, its extension (if any) is the deadline that matters (4.3).
   const deadline =
     cycle && viewer.departments.length === 1
@@ -60,6 +84,16 @@ async function DashboardContent() {
   return (
     <>
       <PageHeader title={d.title} intro={d.greeting(firstName)} />
+
+      {saved === "draft" && (
+        <div
+          role="status"
+          className="flex items-start gap-2 rounded-control border border-success p-3 text-sm text-success"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          {d.draftSaved}
+        </div>
+      )}
 
       {cycle && deadline ? (
         <section aria-labelledby="cycle-heading" className={cn(cardClass, "space-y-4")}>
@@ -76,12 +110,55 @@ async function DashboardContent() {
               </p>
             </div>
           </div>
-          <Link
-            href={draft ? `/annual/${draft.id}/edit` : "/annual/new"}
-            className={buttonClass("primary", "w-full sm:w-auto")}
-          >
-            {draft ? d.continueDraft : d.start}
-          </Link>
+          {thisYear.length > 0 && (
+            <ul className="divide-y divide-border rounded-control border border-border">
+              {thisYear.map((r) => {
+                const action = openAction(r);
+                return (
+                  <li
+                    key={r.id}
+                    className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <p className="font-medium">
+                        {r.departmentName}
+                        {r.title && <span className="font-normal text-fg-muted"> · {r.title}</span>}
+                      </p>
+                      <p className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
+                        <AnnualStatusBadge status={r.status} />
+                        {r.totalCents !== null && (
+                          <span className="tabular font-medium text-fg">
+                            {formatCAD(r.totalCents)}
+                          </span>
+                        )}
+                        {r.status !== "draft" && <span>{d.editsLeft(r.editsRemaining)}</span>}
+                      </p>
+                    </div>
+                    <Link
+                      href={action.href}
+                      className={buttonClass(
+                        action.primary ? "primary" : "secondary",
+                        "w-full shrink-0 sm:w-auto",
+                      )}
+                    >
+                      {action.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {canStart && (
+            <Link
+              href="/annual/new"
+              className={buttonClass(
+                thisYear.length === 0 ? "primary" : "ghost",
+                "w-full sm:w-auto",
+              )}
+            >
+              {thisYear.length === 0 ? d.start : d.startAnother}
+            </Link>
+          )}
         </section>
       ) : (
         <section aria-labelledby="cycle-heading" className={cn(cardClass, "space-y-1")}>

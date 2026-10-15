@@ -141,6 +141,23 @@ describe("starting a request (FR-03, FR-38)", () => {
     });
   });
 
+  it("rule 1 a department has one budget a cycle: after submitting, starting again opens it", async () => {
+    const { me, dept, requestId, version } = await readyDraft();
+    await submit(me, requestId, version);
+    const again = await run((tx) => startRequest(tx, me, { cycleId, departmentId: dept.id }));
+    expect(again).toEqual({ requestId, departmentId: dept.id, existing: true });
+    // The database refuses a second request for the same department and cycle too.
+    await expect(
+      db.insert(budgetRequests).values({
+        budgetCycleId: cycleId,
+        departmentId: dept.id,
+        requesterUserId: me.id,
+        departmentNameSnapshot: dept.name,
+        title: "",
+      }),
+    ).rejects.toThrow();
+  });
+
   it("AC-14 typing a new name creates a Proposed department; a known name reuses it", async () => {
     const leader = await newLeader();
     const result = await run((tx) =>
