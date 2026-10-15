@@ -111,7 +111,7 @@ Open one PR per numbered step or per feature. Keep PRs small.
 - **Server actions or route handlers** call domain services. Services take a `tx` and do this in order: authz check → validate (Zod) → state-machine check → write → audit → outbox. Everything happens in one transaction.
 - **Idempotency:** every submit, approve and pay action takes an idempotency key (from the form) and is stored, so duplicate clicks are no-ops (FR-10).
 - **Optimistic concurrency:** each editable row has a `version` column. Updates use `WHERE version = $expected`, and a conflict returns the DRD 11.2 message.
-- **Reference numbers:** annual budgets use `IFC-{year}-MEDIA-{0001}` and expenses use `EXP-{year}-{0001}`, from a per-year sequence table.
+- **Reference numbers:** annual budgets use `IFC-{year}-{0001}` and expenses use `EXP-{year}-{0001}`, from a per-year sequence table.
 - **Excel:** prefix cell text starting with `= + - @ \t \r` with `'`. Write numbers as numbers in CAD format.
 - **Links:** accept only http/https, render with `rel="noopener noreferrer"` and `target="_blank"`, and show the domain.
 - **Emails:** one shared layout. Each template has a subject, a plain-text version and an HTML version. Show the Subtotal / Sales tax / Total block whenever amounts appear. Links are authenticated app URLs with no data in query strings.

@@ -62,7 +62,7 @@ describe("money columns", () => {
     const big = totalForward(1_000_000_000_000, "0.1200"); // $10 billion subtotal
     const request = await newRequest({
       ...SUBMITTED_1025,
-      referenceNumber: "IFC-2027-MEDIA-0900",
+      referenceNumber: "IFC-2027-0900",
       requestedSubtotalCents: big.subtotal,
       requestedTaxCents: big.tax,
       requestedTotalCents: big.total,
@@ -92,7 +92,7 @@ describe("budget_requests", () => {
     await expectRejected(
       newRequest({
         ...SUBMITTED_1025,
-        referenceNumber: "IFC-2027-MEDIA-0901",
+        referenceNumber: "IFC-2027-0901",
         requestedTotalCents: 114_801,
       }),
       "budget_requests_requested_reconciles",
@@ -104,7 +104,7 @@ describe("budget_requests", () => {
     await expectRejected(
       newRequest({
         ...SUBMITTED_1025,
-        referenceNumber: "IFC-2027-MEDIA-0902",
+        referenceNumber: "IFC-2027-0902",
         approvedSubtotalCents: split.subtotal,
         approvedTaxCents: split.tax + 1,
         approvedTotalCents: split.total,
@@ -115,7 +115,7 @@ describe("budget_requests", () => {
 
   it("rejects an approved status without approved amounts", async () => {
     await expectRejected(
-      newRequest({ ...SUBMITTED_1025, referenceNumber: "IFC-2027-MEDIA-0903", status: "approved" }),
+      newRequest({ ...SUBMITTED_1025, referenceNumber: "IFC-2027-0903", status: "approved" }),
       "budget_requests_approved_has_amounts",
     );
   });
@@ -143,9 +143,9 @@ describe("budget_requests", () => {
   });
 
   it("keeps reference numbers unique", async () => {
-    await newRequest({ ...SUBMITTED_1025, referenceNumber: "IFC-2027-MEDIA-0950" });
+    await newRequest({ ...SUBMITTED_1025, referenceNumber: "IFC-2027-0950" });
     await expectRejected(
-      newRequest({ ...SUBMITTED_1025, referenceNumber: "IFC-2027-MEDIA-0950" }),
+      newRequest({ ...SUBMITTED_1025, referenceNumber: "IFC-2027-0950" }),
       "budget_requests_reference_number_unique",
     );
   });
@@ -247,7 +247,7 @@ describe("decisions and history are append-only", () => {
   }
 
   it("blocks changing or deleting a submitted version", async () => {
-    const { revision } = await submittedWithRevision("IFC-2027-MEDIA-0960");
+    const { revision } = await submittedWithRevision("IFC-2027-0960");
     await expectRejected(
       db
         .update(requestRevisions)
@@ -263,7 +263,7 @@ describe("decisions and history are append-only", () => {
   });
 
   it("stores AC-35: approve a different amount of $30,000.00 incl. tax", async () => {
-    const { request, revision } = await submittedWithRevision("IFC-2027-MEDIA-0961");
+    const { request, revision } = await submittedWithRevision("IFC-2027-0961");
     const split = splitInclusive(3_000_000, "0.1200");
     const [decision] = await db
       .insert(approvalDecisions)
@@ -289,7 +289,7 @@ describe("decisions and history are append-only", () => {
   });
 
   it("requires a note when approving a different amount, returning or declining", async () => {
-    const { request, revision } = await submittedWithRevision("IFC-2027-MEDIA-0962");
+    const { request, revision } = await submittedWithRevision("IFC-2027-0962");
     const base = {
       budgetRequestId: request.id,
       requestRevisionId: revision.id,
@@ -317,7 +317,7 @@ describe("decisions and history are append-only", () => {
   });
 
   it("requires amounts and a method on approval, and none on a decline", async () => {
-    const { request, revision } = await submittedWithRevision("IFC-2027-MEDIA-0963");
+    const { request, revision } = await submittedWithRevision("IFC-2027-0963");
     const base = {
       budgetRequestId: request.id,
       requestRevisionId: revision.id,
@@ -344,7 +344,7 @@ describe("decisions and history are append-only", () => {
   });
 
   it("allows setting a held decision's release time once, and nothing else (FR-19a)", async () => {
-    const { request, revision } = await submittedWithRevision("IFC-2027-MEDIA-0964");
+    const { request, revision } = await submittedWithRevision("IFC-2027-0964");
     const [decision] = await db
       .insert(approvalDecisions)
       .values({
@@ -374,7 +374,7 @@ describe("decisions and history are append-only", () => {
   });
 
   it("keeps approved lines and the overall adjustment append-only", async () => {
-    const { request, revision } = await submittedWithRevision("IFC-2027-MEDIA-0965");
+    const { request, revision } = await submittedWithRevision("IFC-2027-0965");
     const line = await insertLine(db, request.id);
     const split = splitInclusive(100_000, "0.1200");
     const [decision] = await db
@@ -427,7 +427,7 @@ describe("decisions and history are append-only", () => {
   });
 
   it("rejects an approved line whose total is not quantity × price", async () => {
-    const { request, revision } = await submittedWithRevision("IFC-2027-MEDIA-0966");
+    const { request, revision } = await submittedWithRevision("IFC-2027-0966");
     const line = await insertLine(db, request.id);
     const [decision] = await db
       .insert(approvalDecisions)

@@ -5,12 +5,12 @@ import type { Tx } from "./types";
 export type ReferenceKind = "annual" | "expense";
 
 const FORMAT: Record<ReferenceKind, (year: number, n: string) => string> = {
-  annual: (year, n) => `IFC-${year}-MEDIA-${n}`,
+  annual: (year, n) => `IFC-${year}-${n}`,
   expense: (year, n) => `EXP-${year}-${n}`,
 };
 
 /**
- * The next reference number for the year, e.g. IFC-2027-MEDIA-0007 or EXP-2027-0042
+ * The next reference number for the year, e.g. IFC-2027-0007 or EXP-2027-0042
  * (CLAUDE.md conventions). The counter row is locked by the upsert until the
  * transaction ends, so concurrent submissions never share a number, and a rolled-back
  * submission gives its number back.

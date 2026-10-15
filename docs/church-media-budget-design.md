@@ -1091,7 +1091,7 @@ Email templates should share the application's visual identity.
 
 Use:
 
-- Clear subject lines, e.g. "Budget received: Youth Media FY2027 (IFC-2027-MEDIA-0007)".
+- Clear subject lines, e.g. "Budget received: Youth Media FY2027 (IFC-2027-0007)".
 - Church and application identity.
 - Request reference number.
 - Relevant financial summary (same Subtotal / Sales tax / Total layout).
