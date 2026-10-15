@@ -1455,7 +1455,7 @@ Purpose: every department has a named person accountable for its budget and a se
 
 Purpose: the church already organizes its ministries in Planning Center (for example the Media team that runs ProPresenter is a team in Planning Center Services, with its team leaders). Mapping each department to that team keeps the app's department leaders in step with Planning Center instead of entering them twice.
 
-Assumption: "ProPresenter tag" in the original ask means the Planning Center team or tag that ProPresenter reads its plans from. ProPresenter itself has no people or permissions data, so the app maps to Planning Center, which the app already uses for sign-in (decision logged in 20.1).
+Confirmed by G (2026-10-15): departments are tagged in Planning Center the same way ministry leaders are, and the app maps to that team, group, tag or field.
 
 - On Admin → Departments → **Planning Center mapping**, the administrator links each department to **one** source:
   - a **Services team** (for example "Media / Production"): its **team leaders** are the department's leaders;
@@ -2814,7 +2814,7 @@ Every item from the original request is covered:
 | Expense submission form during the year | Section 6B (FR-40 to FR-51), AC-65–81 |
 | Admin assistant records what each department spent and what remains | 3.4, 5.7, FR-24 to FR-29, AC-82–91 |
 | A second requester for each department | FR-38, AC-116–120 |
-| Team mapping: department tagged like the ministry leader in Planning Center (ProPresenter) | FR-39, AC-121–124 |
+| Team mapping: department tagged like the ministry leader in Planning Center | FR-39, AC-121–124 |
 | Dashboard, reports and analytics auditing everything done on the platform, easy to navigate | FR-22, FR-52, DRD 6.13, AC-125–130 |
 | Instruction manual on how to use the platform | Section 22, [user-manual.md](user-manual.md) |
 | Every tool and integration needed to go live | Section 21, [go-live-checklist.md](go-live-checklist.md) |
@@ -2843,7 +2843,7 @@ Every item from the original request is covered:
 - Everything runs on free tiers; email via Gmail from a church Google account, Brevo as fallback.
 - Requirements and design stay as separate documents, linked by a README. Claude Code will develop the application.
 - Each department has a Primary requester and an optional Backup requester (FR-38).
-- Departments can be mapped to Planning Center teams so leaders stay in step (FR-39). Assumed: the "ProPresenter tag" is the Planning Center team or tag, since ProPresenter itself holds no people data.
+- Departments can be mapped to Planning Center teams, groups, tags or a custom field so leaders stay in step (FR-39).
 - An Analytics & Audit dashboard covers everything done on the platform (FR-52).
 - Starting department list: the 18 departments in FR-03; representatives are not pre-loaded because leaders change.
 - Staff may use any email address (FR-01b).
