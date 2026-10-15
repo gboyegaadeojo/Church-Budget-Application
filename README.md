@@ -12,8 +12,10 @@ Sign-in is with Google or Planning Center. Only verified Group Leaders can submi
 
 | Document | What it covers | Who it's for |
 |---|---|---|
-| [Requirements (PRD/SRS) v3.2](docs/church-media-budget-requirements.md) | What the app must do: roles, workflows, functional requirements (FR-xx), data model, security, business rules, acceptance criteria (AC-xx), delivery stages, decisions | Developer (Claude Code), testers, church leadership |
-| [Design Requirements (DRD) v3.2](docs/church-media-budget-design.md) | How it looks and behaves: colours, typography, motion, screens, statuses, emails, accessibility | Designer, developer |
+| [Requirements (PRD/SRS) v3.3](docs/church-media-budget-requirements.md) | What the app must do: roles, workflows, functional requirements (FR-xx), data model, security, business rules, acceptance criteria (AC-xx), delivery stages, decisions | Developer (Claude Code), testers, church leadership |
+| [Design Requirements (DRD) v3.3](docs/church-media-budget-design.md) | How it looks and behaves: colours, typography, motion, screens, statuses, emails, accessibility | Designer, developer |
+| [User manual](docs/user-manual.md) | How to use the app, by role; source for the in-app Help page | Everyone using the app |
+| [Go-live checklist](docs/go-live-checklist.md) | Every account, tool and integration needed to launch, on free tiers | Church leadership, administrators, developer |
 | [Build guide for Claude Code](CLAUDE.md) | How to build it: stack, structure, conventions, build order, testing, setup | Claude Code |
 
 If the two documents disagree about **behaviour**, the requirements win. If they disagree about **look or interaction**, the design document wins.
@@ -30,6 +32,9 @@ If the two documents disagree about **behaviour**, the requirements win. If they
 | Emails | Every update emails the people involved; annual decisions can be held for a scheduled release | Req FR-21, FR-19a, FR-49 |
 | Sign-in | Google or Planning Center; requesters need the Group Leader custom field | Req FR-01, FR-01a |
 | Cost | Free tiers only (Gmail, Netlify, Neon, GitHub Actions, Cloudflare R2) | Req 20.3 |
+| Department leaders | One Primary and an optional Backup requester per department | Req FR-38 |
+| Planning Center teams | Departments can be mapped to a Planning Center team, group or tag to keep leaders in step | Req FR-39 |
+| Audit and analytics | Reports → Analytics & Audit: charts, full activity log, access checks | Req FR-52 |
 | Build order | Stage 1 Annual Budget → 2 Polish → 3 Expenses → 4 Spending → 5 Launch | Req Section 15 |
 
 ## Roles
@@ -48,13 +53,17 @@ It is **one application** for everyone: one web address, one sign-in, and a Home
 
 ## What the church needs to provide before building starts
 
-- [ ] Department list and each department's representatives
+- [ ] Department list and each department's Primary and Backup requester, and the Planning Center team each maps to (if any)
 - [ ] Planning Center: an admin to register the app and create an API key, plus the exact custom field and value for Group Leader
 - [ ] Google accounts for the accountant, Board Chair, Vice-Chair, backup approver, church administrator, and two system administrators
 - [ ] A church-owned Google account to own hosting, database, email and code (not a personal account)
 - [ ] Cheque signing authorities
 - [ ] Logo and brand colour
 - [ ] Budget year dates and submission deadline
+
+## Going live
+
+Every account, tool and integration needed to launch is listed in the [go-live checklist](docs/go-live-checklist.md).
 
 ## Status
 

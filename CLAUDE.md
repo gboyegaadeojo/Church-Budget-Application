@@ -4,6 +4,8 @@ Build guide for Claude Code. The two specifications live in `docs/`.
 
 - `docs/church-media-budget-requirements.md`: **what** to build (FR-xx, AC-xx, data model, rules). It wins on behaviour.
 - `docs/church-media-budget-design.md`: **how** it looks and behaves (tokens, screens, motion, accessibility). It wins on look and interaction.
+- `docs/user-manual.md`: how people use it, by role. Keep it in step with the app; it feeds the Help page (FR-36).
+- `docs/go-live-checklist.md`: every account and integration needed to launch.
 
 Read the relevant FRs and the DRD screen section before starting any feature. If something in the specs is ambiguous, choose the option that keeps money correct and auditable, note it in `docs/decisions.md`, and continue.
 
@@ -51,13 +53,14 @@ src/
     expenses/           # Part B: service, status machine, two-level approval, payments
     spending/           # budget vs actual, entries, amendments
     tasks/              # My tasks: aggregates pending actions across roles (FR-37)
+    analytics/          # Analytics & Audit dashboard queries, role-scoped (FR-52)
     departments/ users/ cycles/ settings/
   lib/
     money.ts            # cents math, tax forward & inclusive, formatting (en-CA CAD)
     authz.ts            # role and department checks, used by every action
     audit.ts            # writeAudit(tx, event)
     email/              # outbox, templates (shared layout), senders (gmail, brevo)
-    pco.ts              # Planning Center client + leader verification
+    pco.ts              # Planning Center client: leader verification + team mapping (FR-39), read-only
     excel/              # workbook builders + formula-injection guard
     storage.ts          # R2 signed upload/download
   db/schema.ts          # Drizzle schema = Requirements section 9 + 6B.10
@@ -91,13 +94,14 @@ Work stage by stage. A stage is done when its ACs pass in CI.
    1. Repo, CI, design tokens, one-app layout shell with area navigation and the Home/My tasks page (DRD 6.0, FR-37), light/dark/system theme.
    2. `money.ts`, `authz.ts`, `audit.ts` and the DB schema for Part A.
    3. Auth: Google and Planning Center, account linking, Group Leader check, access-denied variants (FR-01, FR-01a, DRD 6.1a).
-   4. Admin: users and roles, departments (with Proposed), cycles, settings (tax, Planning Center).
+   4. Admin: users and roles, departments (with Proposed, Primary and Backup requester, FR-38), cycles, settings (tax, Planning Center).
    5. Annual budget form: details → items with sticky summary → preview → confirm; drafts and autosave; 2 edits; shared department requests (FR-03 to FR-12, FR-32).
    6. Accountant dashboard and review: approve as requested, approve a different amount (inclusive), line changes, clarification, decline (FR-13 to FR-18).
    7. Email outbox + Gmail sender + Part A templates (FR-19, FR-21). Excel exports (FR-20). Help and privacy pages (FR-36).
-2. **Stage 2:** scheduled decision release (FR-19a), messages (FR-31), backup approver and Away (FR-33), FR-34, copy last year (FR-35), branding (FR-30), email preferences.
+   8. Full activity log (FR-22 as extended) and the Activity tab of Analytics & Audit (FR-52); global search and breadcrumbs (DRD 6.0).
+2. **Stage 2:** scheduled decision release (FR-19a), messages (FR-31), backup approver and Away (FR-33), FR-34, copy last year (FR-35), branding (FR-30), email preferences, Planning Center team mapping (FR-39), Analytics & Audit Overview and Access tabs (FR-52).
 3. **Stage 3: Expenses** (6B, FR-40 to FR-51): purchase requests, claims and receipts (R2), budget strip, accountant → Board Chair approval, Ready to process, Record payment, expense emails and exports, auto spending entries.
-4. **Stage 4: Spending** (FR-24 to FR-29): ledger, refunds and voids, budget vs actual dashboard, amendments (inclusive), alerts, requester panel, year-end lock.
+4. **Stage 4: Spending** (FR-24 to FR-29): ledger, refunds and voids, budget vs actual dashboard, amendments (inclusive), alerts, requester panel, year-end lock, expense and spending analytics (FR-52).
 5. **Stage 5:** hardening per Requirements section 15 Stage 5.
 
 Open one PR per numbered step or per feature. Keep PRs small.
@@ -137,14 +141,18 @@ BREVO_SMTP_USER, BREVO_SMTP_KEY           # fallback, optional
 R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
 JOBS_SECRET
 APP_TIMEZONE=America/Vancouver
+# GitHub Actions only (backup.yml)
+BACKUP_AGE_RECIPIENT, GDRIVE_FOLDER_ID, GDRIVE_REFRESH_TOKEN
 ```
+
+See `docs/go-live-checklist.md` for where each value comes from. Note its warning on GitHub Actions minutes for the 15-minute jobs.
 
 ## Scheduled jobs (`.github/workflows/jobs.yml`, every 15 min unless noted)
 
 - `send-outbox`: retries pending or failed emails with backoff.
 - `release-decisions`: sends held annual decisions whose release time has passed (FR-19a).
 - `reminders` (daily): deadline, unclaimed purchase, unprocessed payment and Board Chair reminders.
-- `pco-verify` (nightly): re-checks requesters' Group Leader status.
+- `pco-verify` (nightly): re-checks requesters' Group Leader status and syncs Planning Center team mappings (FR-39).
 - `backup` (nightly, `backup.yml`): database dump to Drive.
 
 ## Definition of done (every PR)

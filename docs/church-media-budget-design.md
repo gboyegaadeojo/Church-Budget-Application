@@ -3,9 +3,9 @@
 
 **Organization:** Immanuel Fellowship Church (IFC)
 **Document:** Design Requirements Document (DRD)
-**Version:** 3.2
+**Version:** 3.3
 **Status:** Final design requirements for build
-**Companion documents:** [Requirements (PRD/SRS) v3.2](church-media-budget-requirements.md) · [README](../README.md) · [Build guide for Claude Code](../CLAUDE.md). Where the two documents differ on behavior, the requirements win; this document governs look, feel, and interaction.
+**Companion documents:** [Requirements (PRD/SRS) v3.3](church-media-budget-requirements.md) · [User manual](user-manual.md) · [README](../README.md) · [Build guide for Claude Code](../CLAUDE.md). Where the two documents differ on behavior, the requirements win; this document governs look, feel, and interaction.
 **Audience:** Designers, Claude Code (developer), testers, and the church's product owner.
 
 ### Version history
@@ -14,6 +14,7 @@
 |---|---|---|
 | 1.0 | — | Initial design baseline from the church. |
 | 1.1–2.3 | 2026-10-15 | Contrast fixes; 3-step form with sticky totals; full status vocabulary; role navigation; money formatting; branding; English only; email set; messages; Annual Budget vs Expenses areas; Planning Center sign-in states; "Other" department; scheduled decision release; two-level expense approval; Ready to process and Record payment. Appendix A lists the v1.0 → v1.1 review changes. |
+| 3.3 | 2026-10-15 | Primary and Backup requester chips and cover banner; Planning Center mapping on Departments; Analytics & Audit dashboard (6.13); global search and breadcrumbs for easier navigation. |
 | 3.2 | 2026-10-15 | Reopen action, board total vs allocated indicator, "How will this be bought" on purchase requests. |
 | 3.1 | 2026-10-15 | One application: Home with My tasks across roles, navigation grouped by area, Vice-Chair, administrator read-only views of everything. |
 | 3.0 | 2026-10-15 | Consolidated for build: "(new)" markers removed, navigation cleaned, open questions resolved into decisions. No design changes. |
@@ -516,8 +517,8 @@ Navigation is grouped by **area**, not by role, and shows only what the person's
 | Annual Budget | Submit / my department's budget (requester); Review dashboard, Departments, Decision release (accountant); All budgets (administrator, read-only) |
 | Expenses | New expense, My expenses (requester); Review queue (accountant); Awaiting my approval (Board Chair, Vice-Chair); Ready to process (Church Administrator, accountant); All expenses (administrator, read-only) |
 | Spending | My department budget (requester); Spending dashboard, Record spending, Ledger (Church Administrator, accountant); Budget vs actual (Board Chair, Vice-Chair, administrator: read-only) |
-| Reports | Exports allowed by the person's roles (administrator: all) |
-| Admin | Users & Roles, Departments (incl. Proposed), Budget Cycles, Settings (tax, Planning Center, branding, email), Notifications & Audit (administrator only) |
+| Reports | Exports allowed by the person's roles (administrator: all); **Analytics & Audit** (6.13), scoped to the person's roles |
+| Admin | Users & Roles, Departments (incl. Primary and Backup, Planning Center mapping, Proposed), Budget Cycles, Settings (tax, Planning Center, branding, email), Notifications & Audit (administrator only) |
 
 Account menu (all): theme, email preferences, Away (accountant, Board Chair, Vice-Chair), sign out. Footer: Help, Privacy.
 
@@ -526,6 +527,14 @@ The person's roles appear as small chips in the account menu ("Accountant · Req
 **Administrator read-only views:** every screen the administrator can see but not act on shows the same layout as for the acting role, with decision and payment controls replaced by a muted "View only" label, so nothing looks actionable that isn't.
 
 Desktop uses a collapsible sidebar; mobile uses a bottom bar (Home, Annual Budget, Expenses, Spending) plus a "More" menu.
+
+**Finding things quickly (easy navigation):**
+
+- **Global search** in the top bar (keyboard: `/` or `Ctrl/Cmd + K`): type a reference number (`EXP-2027-0042`), department, person, or item name and jump straight to it. Results are grouped (Annual budgets, Expenses, Departments, People, Pages) and only include what the person's roles allow.
+- **Breadcrumbs** on every page below the top level ("Expenses / Review queue / EXP-2027-0042").
+- Every list remembers its filters and sorting in the address, so the Back button and shared links return to the same view.
+- Every reference number, department name and person name in tables, the activity log and charts is a link to that item.
+- Empty states always offer the next action ("No expenses yet. **New expense**").
 
 ## 6.1 Sign-in screen
 
@@ -937,12 +946,14 @@ Export controls must remain unavailable to unauthorized users; the Church Admini
 ## 6.11 Administration screens
 
 - **Users & Roles:** searchable table, role chips, department assignments, active toggle; confirmation for deactivation.
-- **Departments:** list with active toggle and rename (history note: "Past requests keep the old name"); **Add departments** dialog with a paste-a-list option; a **Proposed** tab with a badge count, each row showing the typed name, who proposed it, the linked submission, close matches, and actions **Add to list**, **Merge into…**, **Reject** (reason required).
+- **Departments:** list with active toggle, rename, and a **Leaders** column showing the Primary and Backup requester as chips ("Primary · Sam Lee", "Backup · Ada Obi") or a warning-tone "No backup" badge, with a filter for it. A department's page has **Set Primary**, **Set Backup** and **Make Primary** actions (confirmation dialog), and a **Planning Center** panel: source picker (Services team, Groups group or tag, custom field value) loaded from Planning Center, mode (Suggest / Automatic), "Team leaders count as Group Leaders" toggle, last sync time, **Sync now**, and the suggestions list with **Add as Primary / Backup / Representative** and **Ignore**. People no longer leaders in Planning Center show a "No longer a team leader" badge. Rename shows a history note: "Past requests keep the old name"; **Add departments** dialog with a paste-a-list option; a **Proposed** tab with a badge count, each row showing the typed name, who proposed it, the linked submission, close matches, and actions **Add to list**, **Merge into…**, **Reject** (reason required).
 - **Budget cycles:** status (Draft / Open / Closed), deadline, spending period end, lock state.
 - **Planning Center:** connection status and last sync; custom field picker and accepted values; **Test a person** search showing pass/fail with the reason; toggles for which roles require verification and which sign-in buttons appear; list of requesters failing verification.
 - **Branding:** logo, church name, application name, accent color with live preview and contrast check (see 3.8).
 - **Settings:** sales tax rate (with warning: "Changes apply to new submissions only"), near-limit threshold, accountant notification email, sender address, monthly summary toggle.
 - **Notifications & Audit:** failed emails with retry, audit log with filters.
+
+**Requester side (FR-38):** the department page shows "Primary: Sam Lee · Backup: Ada Obi". The Primary sees **Nominate a backup** (searchable list of verified Group Leaders) and an Away toggle; while Away, a neutral banner reads "Ada Obi is covering Media until Nov 3". Tasks that escalated show a small "Backup reminded" tag in My tasks.
 
 ## 6.11a Request messages panel
 
@@ -955,6 +966,38 @@ Theme; email preferences (reminders, copies, accountant digest: instant or daily
 ## 6.11c Help and privacy
 
 Help page with short role guides and an FAQ (edits, tax, approvals, spending). Contextual "How is this calculated?" links open a side panel, not a new page. Privacy notice as a plain readable page.
+
+## 6.13 Analytics & Audit dashboard (FR-52)
+
+One page under **Reports → Analytics & Audit**, with three tabs: **Overview**, **Activity**, **Access** (administrator only). Desktop-first, fully usable on mobile.
+
+**Layout**
+
+- A sticky filter bar under the page title: Cycle, Department, Area, Date range, and **Reset**. Active filters show as removable chips. Filters live in the address (shareable, Back-button safe).
+- Overview: a row of headline cards (4 per row on desktop, 2 on tablet, 1 on mobile) using the FinancialSummary styling for money (subtotal, tax, total rules from 3.7), each with a small trend indicator versus last year when available. Below, charts in cards on a 2-column grid (1 column on mobile).
+- Each chart card has a title that states the takeaway ("Media has used 82% of its budget"), a **Chart / Table** toggle, **Export**, and a "Updated at" note when pre-computed.
+- Clicking a bar, point or table row opens a side panel listing the items behind it; each item links to its page. **Esc** closes the panel and returns focus to the chart.
+
+**Activity tab**
+
+- A dense, readable table (date and time, person with role chip, action in plain language, item reference link, department, reason). Rows expand inline to a before/after comparison (two columns, changed values highlighted with both colour and a "changed" label).
+- Quick view chips above the table: Today, Decisions this week, Money changes, Sign-ins and access, Settings and roles, Failed emails.
+- Free-text search, event-group filter, person filter, and **Export to Excel**. Infinite scroll is not used; pages of 50 with page numbers so positions are stable.
+- Area icons from 4.1 at the start of each row; status words use the 7.1 vocabulary.
+
+**Access tab**
+
+- Cards for failed sign-ins (24 h, 7 days), access denied attempts, suspended verifications, staff without two-step verification, departments with no backup, mapping sync problems. Each card opens a filtered list with a fix-it link.
+
+**Charts**
+
+- One accessible chart style across the app: the categorical palette derived from the design tokens (3.2) with at least 3:1 contrast against the card, direct labels instead of legends where possible, patterns or labels so meaning never depends on colour alone, and a visible focus state on every data point reachable by keyboard (arrow keys move between points, Enter drills down).
+- Money axes use en-CA CAD formatting; overspend is shown with the danger token and the word "over".
+- Charts animate in once with the 5.2 Standard token and are static under reduced motion.
+
+**States (11):** loading skeletons per card; empty state "No activity for these filters" with **Reset filters**; error state per card with **Retry**, so one failed chart does not blank the page; permission-denied view for tabs a role cannot see.
+
+**Requester view:** the same page limited to their department: budget, committed, spent, remaining, their requests' timelines and activity. Payment details are hidden.
 
 ## 6.12 Print styles
 
@@ -1339,6 +1382,10 @@ High-fidelity designs for:
 43. Department selector with Other and duplicate suggestions.
 44. Proposed departments admin queue.
 45. Decision release card, schedule, and preview.
+46. Department Leaders column, Primary/Backup actions, and nominate-a-backup dialog.
+47. Planning Center mapping panel with suggestions.
+48. Analytics & Audit: Overview, Activity (with expanded row), Access, and the drill-down side panel (desktop and mobile).
+49. Global search results and breadcrumbs.
 
 ## 14.4 Interaction prototypes
 
@@ -1448,6 +1495,9 @@ Make the application feel alive without making it noisy.
 | Areas | One application. Annual Budget, Expenses, Spending, Reports, and Admin are areas in the same navigation; Home shows My tasks across all roles. |
 | Vice-Chair | Same screens as the Board Chair, labelled "Acting for the Board Chair" when covering. |
 | Administrator | Sees everything; actions not permitted show "View only". |
+| Department leaders | Primary and Backup requester shown as chips; "No backup" is a warning, not an error. |
+| Analytics | One dashboard with Overview, Activity and Access tabs; every chart has a table view and drill-down. |
+| Navigation | Global search, breadcrumbs, and filters kept in the address. |
 
 ---
 
