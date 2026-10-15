@@ -545,7 +545,7 @@ Include:
 - Church application identity.
 - Clear product name.
 - Short description of the application.
-- **Continue with Planning Center** and **Continue with Google** buttons, equal size, stacked, each following its brand guidelines, then a quieter **Continue with email** text button (FR-01b) that opens an email field, then a 6-digit code field (one input with `autocomplete="one-time-code"`, paste-friendly), then for staff an authenticator code step. A line underneath: "Department leaders: your Group Leader status in Planning Center is checked when you sign in."
+- **Continue with Planning Center** and **Continue with Google** buttons, equal size, stacked, each following its brand guidelines, then a quieter **Continue with email** text button (FR-01b) that opens an email field, then a 6-digit code field (one input with `autocomplete="one-time-code"`, paste-friendly). There is no authenticator step. A line underneath: "Department leaders: your Group Leader status in Planning Center is checked when you sign in."
 - Access restriction explanation where appropriate.
 - Helpful access-request instructions.
 - Short privacy note (what is stored: name, email, budget data).
@@ -946,7 +946,7 @@ Export controls must remain unavailable to unauthorized users; the Church Admini
 ## 6.11 Administration screens
 
 - **Users & Roles:** searchable table, role chips, department assignments, active toggle; confirmation for deactivation.
-- **Departments:** list with active toggle, rename, and a **Leaders** column showing the Primary and Backup requester as chips ("Primary · Sam Lee", "Backup · Ada Obi") or a warning-tone "No backup" badge, with a filter for it. A department's page has **Set Primary**, **Set Backup** and **Make Primary** actions (confirmation dialog), and a **Planning Center** panel: source picker (Services team, Groups group or tag, custom field value) loaded from Planning Center, mode (Suggest / Automatic), "Team leaders count as Group Leaders" toggle, last sync time, **Sync now**, and the suggestions list with **Add as Primary / Backup / Representative** and **Ignore**. People no longer leaders in Planning Center show a "No longer a team leader" badge. Rename shows a history note: "Past requests keep the old name"; **Add departments** dialog with a paste-a-list option; a **Proposed** tab with a badge count, each row showing the typed name, who proposed it, the linked submission, close matches, and actions **Add to list**, **Merge into…**, **Reject** (reason required).
+- **Departments:** list with active toggle, rename, and a **Leaders** column showing the Primary and up to two Backup requesters as chips ("Primary · Sam Lee", "Backup 1 · Ada Obi", "Backup 2 · Jo Lim") or a warning-tone "No backup" badge, with a filter for it. A department's page has **Make Primary**, **Make Backup 1**, **Make Backup 2** and **Make Representative** actions, and a **Planning Center** panel: source picker (Services team, Groups group or tag, custom field value) loaded from Planning Center, mode (Suggest / Automatic), "Team leaders count as Group Leaders" toggle, last sync time, **Sync now**, and the suggestions list with **Add as Primary / Backup 1 / Backup 2 / Representative** and **Ignore**. People no longer leaders in Planning Center show a "No longer a team leader" badge. Rename shows a history note: "Past requests keep the old name"; **Add departments** dialog with a paste-a-list option; a **Proposed** tab with a badge count, each row showing the typed name, who proposed it, the linked submission, close matches, and actions **Add to list**, **Merge into…**, **Reject** (reason required).
 - **Budget cycles:** status (Draft / Open / Closed), deadline with **Change deadline** (date, reason, preview of who will be emailed), per-department **Extensions** list with **Give extension**, spending period end, lock state.
 - **Signing authorities** (FR-53): table of name, email, active from, status; **Add signer**; **Remove** (date and optional reason, confirmation); warning banner when fewer than two are active.
 - **Planning Center:** connection status and last sync; custom field picker and accepted values; **Test a person** search showing pass/fail with the reason; toggles for which roles require verification and which sign-in buttons appear; list of requesters failing verification.
@@ -988,7 +988,7 @@ One page under **Reports → Analytics & Audit**, with three tabs: **Overview**,
 
 **Access tab**
 
-- Cards for failed sign-ins (24 h, 7 days), access denied attempts, suspended verifications, staff without two-step verification, departments with no backup, mapping sync problems. Each card opens a filtered list with a fix-it link.
+- Cards for failed sign-ins (24 h, 7 days), access denied attempts, suspended verifications, departments with no backup, mapping sync problems. Each card opens a filtered list with a fix-it link.
 
 **Charts**
 
@@ -1496,7 +1496,7 @@ Make the application feel alive without making it noisy.
 | Areas | One application. Annual Budget, Expenses, Spending, Reports, and Admin are areas in the same navigation; Home shows My tasks across all roles. |
 | Vice-Chair | Same screens as the Board Chair, labelled "Acting for the Board Chair" when covering. |
 | Administrator | Sees everything; actions not permitted show "View only". |
-| Department leaders | Primary and Backup requester shown as chips; "No backup" is a warning, not an error. |
+| Department leaders | Primary and Backup 1 / Backup 2 requesters shown as chips; "No backup" is a warning, not an error. |
 | Analytics | One dashboard with Overview, Activity and Access tabs; every chart has a table view and drill-down. |
 | Navigation | Global search, breadcrumbs, and filters kept in the address. |
 

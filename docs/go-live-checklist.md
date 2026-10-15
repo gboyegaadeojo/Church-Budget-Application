@@ -50,7 +50,7 @@ Record the choice in `docs/decisions.md`.
 - [x] Department list (18 departments, Requirements FR-03). Representatives are **not** pre-loaded; leaders join by signing in and picking their department, or through Planning Center mapping
 - [ ] For each department, the Planning Center team, group or tag it maps to, if any (FR-39)
 - [x] The Planning Center custom field and accepted value for Group Leader: **"Ministry Leader" = "Yes"** (confirmed by G, 2026-10-15)
-- [ ] Email addresses for the accountant, backup approver, Board Chair, Vice-Chair, Church Administrator, and two System Administrators. **Any email address works** (FR-01b); they sign in with Google, Planning Center, or an emailed code plus an authenticator app
+- [ ] Email addresses for the accountant, backup approver, Board Chair, Vice-Chair, Church Administrator, and two System Administrators. **Any email address works** (FR-01b); they sign in with Google, Planning Center, or an emailed code
 - [ ] Cheque signing authorities' names (G). They are entered in Admin → Settings → Signing authorities and can be added or removed later (FR-53)
 - [ ] Logo (PNG or SVG) and brand colour. G can change them any time in Admin → Settings → Branding (FR-30)
 - [ ] FY2027 budget year dates, the first submission deadline, and the board-approved church total. The deadline can be changed later or extended for one department (Requirements 4.3)

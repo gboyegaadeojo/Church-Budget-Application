@@ -224,7 +224,7 @@ A department representative is an authorized church user responsible for prepari
 
 A user assigned to multiple departments may submit for each assigned department.
 
-Each department has one **Primary requester** and can have a **Backup requester** (FR-38). Both have every permission above for that department; the Primary is the person accountable for the department's budget, and the Backup covers when the Primary is Away or does not respond.
+Each department has one **Primary requester** and can have up to two **Backup requesters**, ranked Backup 1 and Backup 2 (FR-38), for example when a department runs at two locations. All of them have every permission above for that department; the Primary is the person accountable for the department's budget, and the Backups cover when the Primary is Away or does not respond.
 
 ## 3.2 Accountant
 
@@ -359,7 +359,7 @@ The system administrator ("Administrator" in this document) maintains applicatio
 | Process and record expense payment (Part B) | No | Yes | No | Yes | No |
 | View all expenses, receipts, and payments | Own department | Yes | Those sent to them, and their department budgets | Yes | Yes (read-only) |
 | See the "My tasks" home (FR-37) | Yes | Yes | Yes | Yes | Yes |
-| Set Primary and Backup requester (FR-38) | Primary can nominate a Backup | No | No | No | Yes |
+| Set Primary and Backup requesters (FR-38) | Primary can nominate Backups | No | No | No | Yes |
 | Map departments to Planning Center (FR-39) | No | No | No | No | Yes |
 | Activity, audit and analytics dashboard (FR-52) | Own department's activity | Annual budget, expense and spending analytics; financial audit log | Analytics for expenses they decided; read-only | Spending and payment analytics; spending audit log | Everything, including sign-ins, settings and access changes |
 
@@ -600,7 +600,7 @@ Refunds and returns follow the same steps with the entry type **Refund**, which 
 | FR-37 | One application, "My tasks" home | Core | 1 (tasks for Part B and spending added in Stages 3–4) |
 | FR-38 | Primary and backup requester per department | Core | 1 |
 | FR-39 | Planning Center team mapping for departments | Access | 2 |
-| FR-01b | Sign-in with any email address (email code + authenticator for staff) | Access | 1 |
+| FR-01b | Sign-in with any email address (emailed code) | Access | 1 |
 | FR-53 | Cheque signing authorities list | Part B | 3 |
 | FR-40 to FR-51 | Expense submissions, two-level approval, payment | Part B | 3 |
 | FR-52 | Activity, audit and analytics dashboard | Core | 1 (activity log), 2 (annual analytics), 4 (expense and spending analytics) |
@@ -661,7 +661,7 @@ Staff (accountant, backup approver, Board Chair, Vice-Chair, Church Administrato
   - **Continue with Google** using a Google Account registered to that address. Anyone can create a free Google Account for an existing email address without getting Gmail (the help page links to Google's "Use my current email address instead" sign-up).
   - **Continue with Planning Center**, if that address is on their Planning Center profile.
   - **Continue with email** (new): the app emails a 6-digit code, valid 10 minutes, single use, to an address already on the allowlist. Unknown addresses get the same "check your email" message and no code, so the app does not reveal who has access. Codes go through the outbox (CLAUDE.md rule 7) but are sent straight after commit, not held for the 15-minute job.
-- Two-step verification for staff (10.1): Google and Planning Center sign-ins rely on that account's two-step verification. Email-code sign-in for a staff role also requires a code from an authenticator app (TOTP), set up at first sign-in, with 10 single-use recovery codes. The administrator can reset it, which is audited.
+- No two-step verification is required for any role (10.1). Google and Planning Center sign-ins use whatever protection that account has; email-code sign-in uses the emailed code only, with no authenticator-app step.
 - Rate limits: 5 code requests per address per hour and 5 wrong codes per code; then a 15-minute wait. Attempts appear in the Access tab (FR-52).
 - Requesters can use email-code sign-in too, but they still need to pass the Group Leader check (FR-01a), matched by that email in Planning Center.
 - Administrator setting "Allow email sign-in" (on by default), next to the Google and Planning Center toggles.
@@ -1437,17 +1437,17 @@ The Church Administrator and accountant see, for the selected cycle:
 
 Purpose: every department has a named person accountable for its budget and a second person who can step in, so a budget or expense is never stuck because one leader is busy or away.
 
-- Each active department has one **Primary requester** and, optionally, one **Backup requester**. Both must be verified Group Leaders (FR-01a). Other representatives (FR-32) remain allowed and keep their access; they show as "Representative".
+- Each active department has one **Primary requester** and, optionally, up to two **Backup requesters**, ranked **Backup 1** and **Backup 2** (for example, a department with two locations). All must be verified Group Leaders (FR-01a). A lone Backup is always Backup 1. Other representatives (FR-32) remain allowed and keep their access; they show as "Representative".
 - Who sets them:
-  - The administrator sets or changes the Primary and Backup on Admin → Departments.
-  - The Primary can nominate a Backup from verified Group Leaders on their department page. The nomination takes effect at once, is audited, and the administrator is emailed and can undo it.
+  - The administrator sets or changes the Primary and Backups on Admin → Departments. Giving a taken place to someone else makes its holder a Representative; moving a leader into another leader's place swaps them.
+  - The Primary can nominate Backup 1 and Backup 2 from verified Group Leaders on their department page. The nomination takes effect at once, is audited, and the administrator is emailed and can undo it.
   - The first person to pick a department on the form (FR-03) becomes its Primary if it has none; anyone after that becomes a Representative until the administrator or Primary changes it.
 - Both the Primary and the Backup can do everything a representative can: create, edit, preview and submit the annual budget, answer clarifications, send messages, and submit expenses for the department. Edits still belong to the request (FR-32): together they cannot exceed 2.
 - Emails: every representative receives the department's request emails (FR-21). The Primary is shown as the contact on the accountant dashboard, Excel exports, and emails to approvers.
-- My tasks (FR-37): department tasks (for example "Respond to clarification") appear for both the Primary and the Backup. Reminder emails go to the Primary first; if the task is still open after the **escalation delay** (administrator setting, default 3 days), the Backup is reminded too and the task shows "Backup reminded".
-- Away: the Primary can set Away with dates (as in FR-33). While Away, reminders and new-task emails go to the Backup, and the department page shows "Covered by {Backup} until {date}".
-- If the Primary is suspended (FR-01a), deactivated, or removed, the Backup becomes Primary automatically, the administrator is emailed, and the department shows "No backup" until a new Backup is set. If neither remains, FR-32's "No representative" rule applies.
-- The accountant dashboard and Admin → Departments show a "No backup" badge for departments without one. The administrator can filter on it.
+- My tasks (FR-37): department tasks (for example "Respond to clarification") appear for the Primary and both Backups. Reminder emails go to the Primary first; if the task is still open after the **escalation delay** (administrator setting, default 3 days), both Backups are reminded too and the task shows "Backup reminded".
+- Away: the Primary can set Away with dates (as in FR-33). While Away, reminders and new-task emails go to both Backups, and the department page shows "Covered by {Backup 1} until {date}" (and Backup 2 when there is one).
+- If the Primary is suspended (FR-01a), deactivated, or removed, Backup 1 becomes Primary automatically, Backup 2 (if any) moves up to Backup 1, and the administrator is emailed. If Backup 1 is removed, Backup 2 moves up. With no Backup left, the department shows "No backup" until one is set. If nobody remains, FR-32's "No representative" rule applies.
+- The accountant dashboard and Admin → Departments show a "No backup" badge for departments with no Backup at all. The administrator can filter on it.
 - Conflict of interest (FR-33, 3.3) applies to the Primary and the Backup in the same way as to any representative.
 - Every change of Primary or Backup is audited with who made it and why (reason optional for administrator changes, automatic text for system promotions).
 
@@ -1511,7 +1511,7 @@ Location: **Reports → Analytics & Audit** in the one app (FR-37). What each pe
 
 ### Access tab (administrator only)
 
-- Sign-ins per day and by method, failed sign-ins, access denied attempts, suspended Planning Center verifications, users without two-step verification on staff roles, departments without a Backup requester (FR-38), mapping sync problems (FR-39).
+- Sign-ins per day and by method, failed sign-ins, access denied attempts, suspended Planning Center verifications, departments without a Backup requester (FR-38), mapping sync problems (FR-39).
 - Each row links to the user or department to fix it.
 
 ### Alerts
@@ -1982,7 +1982,7 @@ One application; pages appear according to the person's roles (FR-37). Full scre
 
 **Reports:** Excel exports (annual budgets, line items, budget vs actual, spending ledger, amendments, expenses, expense lines, payments) · Analytics & Audit dashboard: Overview, Activity, Access (FR-52).
 
-**Admin:** Users and roles (incl. two-step confirmation for staff roles) · Departments, Primary and Backup requesters, Planning Center mapping, and Proposed departments · Budget cycles · Settings (tax rate, thresholds, Planning Center, branding, email, signing authorities, time zone) · Notifications and audit · Read-only views of everything.
+**Admin:** Users and roles · Departments, Primary and Backup requesters, Planning Center mapping, and Proposed departments · Budget cycles · Settings (tax rate, thresholds, Planning Center, branding, email, signing authorities, time zone) · Notifications and audit · Read-only views of everything.
 
 Navigation must be role-aware and must not expose actions to unauthorized users.
 
@@ -2302,7 +2302,7 @@ AppSetting gains `second_approval_threshold` (nullable, off by default). Approva
 - Enforce authorization on every protected endpoint.
 - Restrict requests, reports, and exports to authorized roles.
 - Require sign-in before showing request details from email links.
-- The accountant, Board Chair, Vice-Chair, Church Administrator, and System Administrator must turn on two-step verification on their Google or Planning Center account. The app cannot enforce this; the administrator confirms it when assigning these roles (a checkbox recorded in the audit log).
+- Two-step verification is not required for any role, including the accountant, Board Chair, Vice-Chair, Church Administrator, and System Administrator (decided 2026-10-15; see `docs/decisions.md`). Staff are encouraged, but not required, to turn it on for their own Google or Planning Center account.
 
 ## 10.2 Application Security
 
@@ -2642,11 +2642,11 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 
 ## Primary and Backup Requester (FR-38)
 
-- **AC-116** The administrator can set one Primary and one Backup requester per department; a second Primary is rejected by the server.
+- **AC-116** The administrator can set one Primary and up to two ranked Backup requesters (Backup 1, Backup 2) per department; a second Primary or a third Backup is rejected by the server.
 - **AC-117** A Primary can nominate a verified Group Leader as Backup; the administrator is emailed and the change is audited.
 - **AC-118** A clarification task left open for 3 days reminds the Backup requester, and the task shows "Backup reminded".
 - **AC-119** While the Primary is Away, new-task emails go to the Backup, and the department shows "Covered by" the Backup.
-- **AC-120** When the Primary is deactivated, the Backup becomes Primary automatically, the administrator is emailed, and the department shows "No backup".
+- **AC-120** When the Primary is deactivated, Backup 1 becomes Primary automatically, Backup 2 moves up to Backup 1, and the administrator is emailed; with no Backup left, the department shows "No backup".
 
 ## Planning Center Team Mapping (FR-39)
 
@@ -2667,7 +2667,7 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 ## Added with v3.3 (church details)
 
 - **AC-131** A fresh install can load the 18 starting departments by pasting the list; "Others" maps to the Other option, not a department.
-- **AC-132** An accountant whose address is `name@outlook.com` can sign in with an emailed code plus an authenticator code; a wrong code 5 times blocks further tries for 15 minutes.
+- **AC-132** An accountant whose address is `name@outlook.com` can sign in with an emailed code; a wrong code 5 times blocks further tries for 15 minutes.
 - **AC-133** Requesting a code for an address that is not on the allowlist shows the same message and sends no email.
 - **AC-134** The administrator can add and remove a cheque signer; a removed signer is not offered in Record payment but still shows on past payments.
 - **AC-135** Recording a cheque payment is blocked with a clear message when fewer than two active signers exist.
@@ -2842,7 +2842,7 @@ Every item from the original request is covered:
 - Receipt files are allowed on expense claims only.
 - Everything runs on free tiers; email via Resend (the church's existing account) from a church-domain address.
 - Requirements and design stay as separate documents, linked by a README. Claude Code will develop the application.
-- Each department has a Primary requester and an optional Backup requester (FR-38).
+- Each department has a Primary requester and up to two optional, ranked Backup requesters (FR-38).
 - Departments can be mapped to Planning Center teams, groups, tags or a custom field so leaders stay in step (FR-39).
 - An Analytics & Audit dashboard covers everything done on the platform (FR-52).
 - Starting department list: the 18 departments in FR-03; representatives are not pre-loaded because leaders change.

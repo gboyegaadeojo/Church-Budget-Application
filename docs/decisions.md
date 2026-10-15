@@ -64,7 +64,7 @@ Record any choice the specs leave open, and any deviation from them.
 
 ### Email sign-in (FR-01b): moved to step 7
 
-- **Not built in this step.** A development sender that prints codes to the terminal would be throwaway code. FR-01b also needs the outbox (CLAUDE.md rule 7: codes go through it, sent straight after commit), an authenticator-app (TOTP) step with recovery codes for staff, and rate limits. All of those belong with real email in step 7. Fake Google and Planning Center sign-in already cover local testing. Until step 7, staff sign in with Google (any address can be a Google account) or Planning Center. The sign-in screen doesn't show "Continue with email" yet.
+- **Not built in this step.** A development sender that prints codes to the terminal would be throwaway code. FR-01b also needs the outbox (CLAUDE.md rule 7: codes go through it, sent straight after commit) and rate limits. (The authenticator-app step for staff was later dropped; see "No two-step verification requirement".) All of those belong with real email in step 7. Fake Google and Planning Center sign-in already cover local testing. Until step 7, staff sign in with Google (any address can be a Google account) or Planning Center. The sign-in screen doesn't show "Continue with email" yet.
 
 ### Sign-in and accounts
 
@@ -103,6 +103,21 @@ Record any choice the specs leave open, and any deviation from them.
 - **Settings → Planning Center shows the connection status, not a "last sync" time.** The page checks the connection live with the church's token. A last-sync time comes when the nightly `pco-verify` job records one. Planning Center team mapping (FR-39) is Stage 2.
 - **The custom-field picker** lists Planning Center's People fields when it can reach Planning Center. Otherwise it falls back to a text box, so the setting can still be changed during an outage.
 - **"Test a person"** sends the Save form's current values to a separate action, so it tests the field and values as typed, before they're saved (AC-11). It runs outside a form submission, because React 19 resets a form after a form action and would wipe the unsaved changes. It looks up personal information, so every test is audited.
+
+## Up to two ranked Backups per department (2026-10-15)
+
+- **A department can have a Primary, Backup 1 and Backup 2** (FR-38, AC-116, AC-120 updated). Some departments run at two locations and have three people who request on their behalf. Representatives were already unlimited and can already request (FR-32); the second Backup adds a second person who covers and takes over.
+- **Ranked, not equal.** If the Primary leaves, Backup 1 becomes Primary and Backup 2 moves up to Backup 1, so the order of takeover is always visible. Removing Backup 1 also moves Backup 2 up, and a lone Backup is always Backup 1.
+- **Stored as `user_departments.backup_rank`** (1 or 2, only on Backup rows), with a unique index per department and rank and a check that ties rank to type (migration `0004_backup_ranks`, which makes existing Backups Backup 1). In code a leader's place is one "slot" (`src/domain/departments/slots.ts`).
+- **Changing places:** giving someone a place that's taken makes its holder a Representative. When a leader moves into another leader's place, the two swap (for example, Make Backup 1 on Backup 2).
+- **Escalations and Away (Stage 2, FR-33, FR-38)** go to both Backups.
+
+## No two-step verification requirement (2026-10-15)
+
+- **No role requires two-step verification.** This covers the accountant, backup approver, Board Chair, Vice-Chair, Church Administrator and System Administrator, at the church's request. It replaces Requirements 10.1's rule and the "I confirm this person has two-step verification" checkbox that Add staff and Roles required for staff roles.
+- **What's left.** Google and Planning Center sign-ins use whatever protection those accounts have. Email-code sign-in (FR-01b, step 7) uses the emailed code only, with no authenticator-app (TOTP) step or recovery codes. AC-132 is updated to match. The "staff without two-step verification" card is removed from the Access dashboard.
+- **The tradeoff.** A staff member's app access is only as strong as their own Google or Planning Center account, or their email inbox. Staff are encouraged, not required, to turn on two-step verification themselves. Money actions still need the matching role and are audited, and Planning Center leader checks are unchanged.
+- **The church-owned Google account keeps its 2-Step Verification** (go-live checklist, item 1). It owns the hosting, database and backups, not app sign-in.
 
 ## Email: Resend only (2026-10-15)
 
