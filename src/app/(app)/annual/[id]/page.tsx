@@ -4,12 +4,14 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { EmailHistory } from "@/components/email-history";
 import { RequestActivityLink } from "@/components/request-activity";
+import { RequestMessages } from "@/components/request-messages";
 import { ComparisonSummary, FinancialSummary } from "@/components/financial-summary";
 import { AdminSkeleton, PageHeader } from "@/components/ui/display";
 import { buttonClass, cardClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
 import { copy } from "@/copy/en-CA";
 import { getDb } from "@/db";
+import { getThread, unreadCounts } from "@/domain/annual/messages";
 import { getRequestView, type RequestView } from "@/domain/annual/queries";
 import { formatCAD, lineTotal } from "@/lib/money";
 import { canTransition } from "@/domain/annual/status";
@@ -62,6 +64,11 @@ async function RequestContent({
   const emails = request.referenceNumber
     ? await requestEmails(db, request.id, ["requester"])
     : null;
+  // FR-31: the thread starts once the request is submitted.
+  const [thread, unread] = await Promise.all([
+    getThread(db, viewer, request.id),
+    unreadCounts(db, viewer, [request.id]),
+  ]);
 
   return (
     <>
@@ -136,6 +143,14 @@ async function RequestContent({
         </aside>
       </div>
 
+      {thread && !thread.draft && (
+        <RequestMessages
+          requestId={request.id}
+          thread={thread}
+          zone={zone}
+          unread={unread.get(request.id) ?? 0}
+        />
+      )}
       {emails && <EmailHistory emails={emails} zone={zone} />}
       <RequestActivityLink requestId={request.id} />
     </>

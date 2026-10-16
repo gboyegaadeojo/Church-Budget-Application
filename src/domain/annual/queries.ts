@@ -14,6 +14,7 @@ import { departmentPolicy } from "@/domain/users/ministry-departments";
 import { authorize, type Subject } from "@/lib/authz";
 import type { TaxBreakdown } from "@/lib/money";
 import type { LineContent } from "./schema";
+import { unreadCounts } from "./messages";
 import { hiddenDecisions } from "./release";
 import { currentTaxRate, editsRemaining, linesOf, totalsOf } from "./service";
 import type { AnnualStatus } from "./status";
@@ -234,6 +235,8 @@ export type MyRequest = {
   totalCents: number | null;
   editsRemaining: number;
   updatedAt: Date;
+  /** Messages from the accountant not read yet (FR-31, DRD 6.11a). */
+  unreadMessages: number;
 };
 
 /** Requests of every department the person represents, newest cycle first (DRD 6.2). */
@@ -251,11 +254,11 @@ export async function listMyRequests(tx: Tx, actor: Subject): Promise<MyRequest[
     .innerJoin(budgetCycles, eq(budgetCycles.id, budgetRequests.budgetCycleId))
     .where(and(inArray(budgetRequests.departmentId, ids)))
     .orderBy(desc(budgetCycles.budgetYear), asc(departments.name));
-  const hidden = await hiddenDecisions(
-    tx,
-    actor,
-    rows.map((r) => r.request.id),
-  );
+  const requestIds = rows.map((r) => r.request.id);
+  const [hidden, unread] = await Promise.all([
+    hiddenDecisions(tx, actor, requestIds),
+    unreadCounts(tx, actor, requestIds),
+  ]);
   return rows.map(({ request, departmentName, cycleName }) => ({
     id: request.id,
     // A held decision reads In Review to the department until it's released (FR-19a).
@@ -269,6 +272,7 @@ export async function listMyRequests(tx: Tx, actor: Subject): Promise<MyRequest[
     totalCents: request.requestedTotalCents,
     editsRemaining: editsRemaining(request),
     updatedAt: request.updatedAt,
+    unreadMessages: unread.get(request.id) ?? 0,
   }));
 }
 

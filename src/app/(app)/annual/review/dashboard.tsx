@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UnreadMessages } from "@/components/request-messages";
 import { CalendarClock, Eye } from "lucide-react";
 import { BoardAllocationBar } from "@/components/board-allocation";
 import { DownloadButton } from "@/components/download-button";
@@ -318,6 +319,11 @@ function QueueTable({
                 <td className="py-3 pr-4">
                   {row.departmentName}
                   {row.title && <span className="block text-xs text-fg-muted">{row.title}</span>}
+                  {row.unreadMessages > 0 && (
+                    <span className="mt-1 block">
+                      <UnreadMessages count={row.unreadMessages} />
+                    </span>
+                  )}
                 </td>
                 <td className="py-3 pr-4">{row.requesterName}</td>
                 <td className="py-3 pr-4 whitespace-nowrap">

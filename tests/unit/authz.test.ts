@@ -205,6 +205,18 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     {},
     ["no", "act", "act", "read", "read", "read", "read"],
   ],
+  [
+    "read the messages on another department's request (FR-31)",
+    "annual.messages_view",
+    { ...YOUTH, annualStatus: "submitted" },
+    ["no", "act", "act", "no", "no", "no", "read"],
+  ],
+  [
+    "send a message on another department's request (FR-31)",
+    "annual.message_send",
+    { ...YOUTH, annualStatus: "submitted" },
+    ["no", "act", "act", "no", "no", "no", "no"],
+  ],
   ["see My tasks", "home.view", {}, ["act", "act", "act", "act", "act", "act", "act"]],
   [
     // Staff only (docs/decisions.md, 2026-10-16).

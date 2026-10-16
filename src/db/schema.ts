@@ -655,6 +655,52 @@ export const approvalAdjustments = pgTable(
   (t) => [check("approval_adjustments_reason_required", sql`btrim(${t.reason}) <> ''`)],
 );
 
+// ---------------------------------------------------------------- messages (9.17, FR-31)
+
+/**
+ * A plain-text message between a department and the accountant on a request (FR-31).
+ * Append-only: messages can't be edited or deleted after sending.
+ */
+export const requestMessages = pgTable(
+  "request_messages",
+  {
+    id: id(),
+    budgetRequestId: uuid("budget_request_id")
+      .notNull()
+      .references(() => budgetRequests.id),
+    authorUserId: uuid("author_user_id")
+      .notNull()
+      .references(() => users.id),
+    /** Which side wrote it: the department (requester) or the accountant's side. */
+    actingRole: roleEnum("acting_role").notNull(),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("request_messages_request_idx").on(t.budgetRequestId, t.createdAt),
+    index("request_messages_author_idx").on(t.authorUserId, t.createdAt),
+    check(
+      "request_messages_body_length",
+      sql`btrim(${t.body}) <> '' and char_length(${t.body}) <= 2000`,
+    ),
+  ],
+);
+
+/** When each person last read a request's messages, for unread counts (DRD 6.11a). */
+export const requestMessageReads = pgTable(
+  "request_message_reads",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    budgetRequestId: uuid("budget_request_id")
+      .notNull()
+      .references(() => budgetRequests.id),
+    lastReadAt: timestamp("last_read_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.budgetRequestId] })],
+);
+
 // ---------------------------------------------------------------- audit (9.13, FR-22)
 
 /** Append-only: the migration blocks UPDATE and DELETE with a trigger. */

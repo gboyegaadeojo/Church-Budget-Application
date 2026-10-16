@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { UnreadMessages } from "@/components/request-messages";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarClock, CheckCircle2, MessageCircleQuestion } from "lucide-react";
@@ -144,6 +145,7 @@ async function DashboardContent({
                       </p>
                       <p className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
                         <AnnualStatusBadge status={r.status} />
+                        <UnreadMessages count={r.unreadMessages} />
                         {r.totalCents !== null && (
                           <span className="tabular font-medium text-fg">
                             {formatCAD(r.totalCents)}
@@ -256,7 +258,10 @@ function RequestTable({ requests, caption }: { requests: MyRequest[]; caption: s
                 </p>
               </td>
               <td className="py-3 pr-4">
-                <AnnualStatusBadge status={r.status} />
+                <span className="flex flex-wrap gap-2">
+                  <AnnualStatusBadge status={r.status} />
+                  <UnreadMessages count={r.unreadMessages} />
+                </span>
               </td>
               <td className="tabular py-3 pr-4 text-right">
                 {r.totalCents === null ? d.notSubmitted : formatCAD(r.totalCents)}
