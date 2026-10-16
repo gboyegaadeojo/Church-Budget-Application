@@ -6,10 +6,11 @@ import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
 import { centsToInput } from "@/domain/annual/schema";
 import { getExpenseView } from "@/domain/expenses/queries";
-import { receiptCount } from "@/domain/expenses/service";
+import { listReceipts } from "@/domain/expenses/receipts";
 import { getViewer } from "@/lib/viewer";
 import { ExpenseNotFound } from "../not-found-state";
 import { ExpenseEditor, type ExpenseEditorMode } from "./expense-editor";
+import { ReceiptUploader } from "./receipt-uploader";
 
 export const metadata: Metadata = { title: expensesCopy.start.title };
 
@@ -37,6 +38,8 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
   const mode: ExpenseEditorMode =
     expense.status === "draft" ? "draft" : expense.status === "returned" ? "respond" : "edit";
   const c = expense.content;
+  const receipts =
+    expense.type === "expense_claim" ? await listReceipts(db, viewer, expense.id) : [];
 
   return (
     <ExpenseEditor
@@ -54,9 +57,23 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
         annualLines: expense.annualLines,
         today: expense.today,
         claimDeadlineDays: expense.claimDeadlineDays,
-        receiptCount: await receiptCount(db, expense.id),
+        receiptCount: receipts.length,
         question: expense.question,
       }}
+      receipts={
+        expense.type === "expense_claim" ? (
+          <ReceiptUploader
+            expenseId={expense.id}
+            receipts={receipts.map((r) => ({
+              id: r.id,
+              fileName: r.fileName,
+              contentType: r.contentType,
+              sizeBytes: r.sizeBytes,
+              duplicate: r.duplicateOf !== null,
+            }))}
+          />
+        ) : undefined
+      }
       initial={{
         title: c.title,
         justification: c.justification,

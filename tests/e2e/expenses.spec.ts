@@ -129,7 +129,7 @@ test.describe("Expense submissions (Stage 3)", () => {
     await page.getByLabel("Over-budget explanation").fill("The old desk failed; the board agreed.");
     await preview(page);
     await confirm(page);
-    await expect(page.getByText(/This takes Media Team over budget by \$/)).toBeVisible();
+    await expect(page.getByText(/This takes Media Team over budget by \$/).first()).toBeVisible();
     await expect(page.getByText("The old desk failed; the board agreed.")).toBeVisible();
   });
 
@@ -148,5 +148,45 @@ test.describe("Expense submissions (Stage 3)", () => {
     await page.getByRole("alertdialog").getByRole("button", { name: "Withdraw" }).click();
     await page.waitForURL(/\?done=withdrawn$/);
     await expect(page.getByRole("heading", { name: "Expense withdrawn" })).toBeVisible();
+  });
+
+  test("AC-81 receipts: upload a photo, refuse other types, view it", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.sam);
+    await startExpense(page, "Expense claim");
+    await fillDetails(page, "Batteries");
+    const line = page.getByRole("group", { name: "Receipt line 1" });
+    await line.getByLabel("Date").fill("2026-10-05");
+    await line.getByLabel("Vendor").fill("Costco");
+    await line.getByLabel("Description").fill("AA batteries");
+    await line.getByLabel("Amount paid (incl. tax)").fill("22.40");
+    await page.getByLabel("Cheque", { exact: true }).check();
+
+    // A file that isn't a JPG, PNG, HEIC or PDF is refused before upload.
+    await page.getByLabel("Choose file").setInputFiles({
+      name: "notes.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("not a receipt"),
+    });
+    await expect(page.getByText("Add a JPG, PNG, HEIC photo or a PDF.")).toBeVisible();
+
+    // A JPG uploads straight to storage and is checked by the server.
+    const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0]);
+    await page.getByLabel("Choose file").setInputFiles({
+      name: "costco.jpg",
+      mimeType: "image/jpeg",
+      buffer: jpeg,
+    });
+    await expect(page.getByText("costco.jpg added.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "View costco.jpg" })).toBeVisible();
+    await expectAxeClean(page);
+
+    await preview(page);
+    await confirm(page);
+    const link = page.getByRole("link", { name: "costco.jpg" });
+    await expect(link).toBeVisible();
+    const response = await page.request.get((await link.getAttribute("href"))!);
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toBe("image/jpeg");
   });
 });

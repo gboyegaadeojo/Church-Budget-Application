@@ -63,6 +63,18 @@ export const expensesCopy = {
     notCancellable: "Only an approved purchase request that hasn't been bought can be cancelled.",
     reasonRequired: "Give a reason.",
     reasonTooLong: "Keep the reason to 1,000 characters or fewer.",
+    receiptsClaimsOnly: "Receipts can only be added to expense claims.",
+    receiptFileName: "The file needs a name.",
+    receiptEmpty: "That file is empty.",
+    receiptTooLarge: "That file is over 10 MB. Take a smaller photo or scan, and try again.",
+    receiptType: "Add a JPG, PNG, HEIC photo or a PDF.",
+    receiptTooMany: "A claim can have up to 5 receipt files. Remove one to add another.",
+    receiptUploadExpired: "The upload took too long. Please add the file again.",
+    receiptNotFound: "That receipt isn't on this claim.",
+    receiptStorageMissing:
+      'Receipt uploads aren\'t set up yet. Tick "No receipt available" and hand the paper receipt to the office.',
+    receiptUploadFailed: "The file didn't upload. Check your connection and try again.",
+    receiptConvertFailed: "That photo couldn't be converted. Try a JPG or PDF instead.",
   },
 
   types: {
@@ -298,6 +310,21 @@ export const expensesCopy = {
   /** Receipts on claims (6B.9). */
   receipts: {
     heading: "Receipt files",
+    intro: "Up to 5 files, 10 MB each: JPG, PNG, HEIC photos or PDF.",
+    takePhoto: "Take photo",
+    chooseFile: "Choose file",
+    dropHere: "Or drop files here",
+    uploading: (name: string) => `Uploading ${name}…`,
+    converting: (name: string) => `Converting ${name}…`,
+    added: (name: string) => `${name} added.`,
+    removed: (name: string) => `${name} removed.`,
+    none: "No receipts added yet.",
+    view: (name: string) => `View ${name}`,
+    remove: (name: string) => `Remove ${name}`,
+    size: (kb: number) =>
+      kb >= 1024 ? `${(Math.round(kb / 102.4) / 10).toLocaleString("en-CA")} MB` : `${kb} KB`,
+    duplicate: "The same file is on another claim.",
+    uploadedBy: (name: string) => `Added by ${name}`,
     noReceipt: "No receipt available",
     noReceiptReason: "Why there's no receipt",
   },
