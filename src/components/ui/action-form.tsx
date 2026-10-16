@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useActionState, useContext, useEffect, useId, useRef } from "react";
+import { createContext, startTransition, useActionState, useContext, useId, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { adminCopy } from "@/copy/admin";
@@ -13,9 +13,15 @@ import { buttonClass, inputClass, textareaClass, type ButtonTone } from "./style
  * truth: success and errors come back from the action, never guessed by the browser
  * (DRD 11). Field errors appear under their fields; the summary is announced politely
  * for success and assertively for errors (DRD 7.3).
+ *
+ * The form submits through onSubmit rather than as a native form action, because React
+ * resets a form after a form action even when the server answers with an error, which
+ * would wipe what the person typed (DRD 11). It is reset only on success, when asked.
  */
 
 const FormErrors = createContext<Record<string, string>>({});
+/** Whether this form's action is running, for SubmitButton (useFormStatus only sees native form actions). */
+const FormPending = createContext(false);
 
 type Action = (state: ActionState, formData: FormData) => Promise<ActionState>;
 
@@ -34,25 +40,38 @@ export function ActionForm({
   resetOnSuccess?: boolean;
   "aria-label"?: string;
 }) {
-  const [state, formAction] = useActionState(action, { status: "idle" } as ActionState);
   const ref = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    if (state.status === "success" && resetOnSuccess) ref.current?.reset();
-  }, [state, resetOnSuccess]);
+  const [state, formAction, pending] = useActionState(
+    async (previous: ActionState, data: FormData) => {
+      const next = await action(previous, data);
+      // Cleared before the success message shows, so nothing typed after it is lost.
+      if (next.status === "success" && resetOnSuccess) ref.current?.reset();
+      return next;
+    },
+    { status: "idle" } as ActionState,
+  );
 
   return (
     <form
       ref={ref}
       id={id}
-      action={formAction}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (pending) return;
+        // Keeps the clicked button's name and value, as a normal submission would.
+        const submitter = (event.nativeEvent as SubmitEvent).submitter;
+        const data = new FormData(event.currentTarget, submitter);
+        startTransition(() => formAction(data));
+      }}
       className={cn("space-y-4", className)}
       aria-label={ariaLabel}
       noValidate
     >
-      <FormErrors.Provider value={state.status === "error" ? (state.fieldErrors ?? {}) : {}}>
-        {children}
-      </FormErrors.Provider>
+      <FormPending.Provider value={pending}>
+        <FormErrors.Provider value={state.status === "error" ? (state.fieldErrors ?? {}) : {}}>
+          {children}
+        </FormErrors.Provider>
+      </FormPending.Provider>
       <FormMessage state={state} />
     </form>
   );
@@ -103,7 +122,8 @@ export function SubmitButton({
   value?: string;
   formAction?: (formData: FormData) => void;
 }) {
-  const { pending } = useFormStatus();
+  const native = useFormStatus().pending;
+  const pending = useContext(FormPending) || native;
   return (
     <button
       type="submit"

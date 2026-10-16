@@ -278,6 +278,8 @@ The address keeps your filters, so you can bookmark a view or send the link to a
 
 **Someone else in my department started the budget.** That's fine: everyone in the department works on the same one.
 
-**How do I change my personal information?** Use the request link on the **Help** page. Financial records are kept for the retention period.
+**How do I change my personal information?** On the **Help** page, under **Your personal information**, choose **See my information** or **Correct my information**, add the details and send it (once a day). The System Administrators are emailed and reply within 30 days. Financial records are kept for the retention period and aren't deleted on request. The **Privacy** notice (in the footer, and on the sign-in screen) explains what's kept and why.
+
+**How is tax calculated?** Every price is before tax; tax is worked out once on the subtotal and rounded to the cent. On the budget form and the review screen, **How is tax calculated?** opens the explanation beside the page without losing what you typed.
 
 **Who do I contact?** The System Administrator for access; the accountant for budget and expense questions.

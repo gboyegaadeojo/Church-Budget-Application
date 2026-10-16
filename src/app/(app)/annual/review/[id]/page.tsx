@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { CheckCircle2, Eye, ShieldAlert } from "lucide-react";
 import { DownloadButton } from "@/components/download-button";
 import { EmailHistory } from "@/components/email-history";
+import { HelpPanel } from "@/components/help-panel";
 import { ComparisonSummary, FinancialSummary } from "@/components/financial-summary";
 import { AdminSkeleton, PageHeader } from "@/components/ui/display";
 import { cardClass, linkClass } from "@/components/ui/styles";
@@ -146,6 +147,7 @@ async function ReviewContent({
             ) : (
               <FinancialSummary totals={view.totals} rate={view.rate} heading={r.requested} />
             )}
+            <HelpPanel topic="tax" />
             {view.canReopen && <ReopenControl id={view.id} version={view.version} />}
           </section>
 
