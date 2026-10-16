@@ -163,6 +163,79 @@ describe("HttpPlanningCenterDirectory", () => {
     await expect(dir.getPerson("42")).rejects.toBeInstanceOf(PlanningCenterUnavailableError);
   });
 
+  it("FR-39 lists teams, groups and tags, leaving archived ones out", async () => {
+    const dir = new HttpPlanningCenterDirectory(
+      credentials,
+      fakeFetch({
+        "/services/v2/teams?per_page=100": {
+          data: [
+            {
+              type: "Team",
+              id: "5",
+              attributes: { name: "Media / Production", archived_at: null },
+            },
+            { type: "Team", id: "6", attributes: { name: "Old", archived_at: "2020-01-01" } },
+          ],
+        },
+        "/groups/v2/groups?per_page=100": {
+          data: [{ type: "Group", id: "8", attributes: { name: "Youth Leaders" } }],
+        },
+        "/groups/v2/tag_groups?include=tags&per_page=100": {
+          data: [
+            {
+              type: "TagGroup",
+              id: "1",
+              attributes: { name: "Ministry" },
+              relationships: { tags: { data: [{ type: "Tag", id: "70" }] } },
+            },
+          ],
+          included: [{ type: "Tag", id: "70", attributes: { name: "Youth" } }],
+        },
+      }) as typeof fetch,
+    );
+    expect(await dir.listSources("services_team")).toEqual([
+      { id: "5", name: "Media / Production" },
+    ]);
+    expect(await dir.listSources("groups_group")).toEqual([{ id: "8", name: "Youth Leaders" }]);
+    expect(await dir.listSources("groups_tag")).toEqual([{ id: "70", name: "Ministry: Youth" }]);
+  });
+
+  it("FR-39 reads team leaders, group leaders and the leaders of a tag's groups", async () => {
+    const person = (id: string) => ({ data: { type: "Person", id } });
+    const membership = (personId: string) => ({
+      type: "Membership",
+      id: `m${personId}`,
+      attributes: { role: "leader" },
+      relationships: { person: person(personId) },
+    });
+    const dir = new HttpPlanningCenterDirectory(
+      credentials,
+      fakeFetch({
+        "/services/v2/teams/5": { data: { type: "Team", id: "5", attributes: {} } },
+        "/services/v2/teams/5/team_leaders?per_page=100": {
+          data: [
+            { type: "TeamLeader", id: "1", relationships: { people: person("42") } },
+            { type: "TeamLeader", id: "2", relationships: { people: person("43") } },
+          ],
+        },
+        "/groups/v2/groups/8": { data: { type: "Group", id: "8", attributes: {} } },
+        "/groups/v2/groups/8/memberships?where[role]=leader&per_page=100": {
+          data: [membership("44")],
+        },
+        "/groups/v2/tags/70": { data: { type: "Tag", id: "70", attributes: {} } },
+        "/groups/v2/tags/70/groups?per_page=100": {
+          data: [{ type: "Group", id: "8", attributes: {} }],
+        },
+      }) as typeof fetch,
+    );
+    expect(await dir.sourceLeaderIds("services_team", "5")).toEqual(["42", "43"]);
+    expect(await dir.sourceLeaderIds("groups_group", "8")).toEqual(["44"]);
+    expect(await dir.sourceLeaderIds("groups_tag", "70")).toEqual(["44"]);
+    // Gone, or a bad id: null, so the last known mapping stays.
+    expect(await dir.sourceLeaderIds("services_team", "9")).toBeNull();
+    expect(await dir.sourceLeaderIds("groups_group", "../x")).toBeNull();
+  });
+
   it("follows pagination for field definitions", async () => {
     const dir = new HttpPlanningCenterDirectory(
       credentials,

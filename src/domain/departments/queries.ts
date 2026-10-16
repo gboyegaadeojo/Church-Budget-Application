@@ -30,6 +30,8 @@ export type DepartmentListItem = {
   /** Backup 1 then Backup 2 (FR-38). */
   backups: Leader[];
   representatives: number;
+  /** The Planning Center team, group or tag it's linked to (FR-39), if any. */
+  pcoSource: string | null;
 };
 
 async function leadersByDepartment(tx: Tx, ids: string[]): Promise<Map<string, Leader[]>> {
@@ -83,6 +85,8 @@ export async function listDepartments(
       primary: list.find((l) => l.type === "primary") ?? null,
       backups: list.filter((l) => l.type === "backup"),
       representatives: list.filter((l) => l.type === "representative").length,
+      pcoSource:
+        r.pcoSourceType && r.pcoSourceType !== "people_field_value" ? r.pcoSourceName : null,
     };
   });
 }

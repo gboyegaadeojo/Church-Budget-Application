@@ -70,7 +70,10 @@ export function matchDepartments(
   return candidates.filter((d) => wanted.has(key(d.pcoValue ?? d.name)));
 }
 
-/** Active departments with their match value. */
+/**
+ * Active departments with their match value. A department mapped to a Services team,
+ * group or tag takes its leaders from there instead (FR-39: one source per department).
+ */
 export async function matchableDepartments(tx: Tx): Promise<MatchableDepartment[]> {
   const rows = await tx
     .select({
@@ -81,11 +84,13 @@ export async function matchableDepartments(tx: Tx): Promise<MatchableDepartment[
     })
     .from(departments)
     .where(eq(departments.status, "active"));
-  return rows.map((r) => ({
-    id: r.id,
-    name: r.name,
-    pcoValue: r.sourceType === "people_field_value" ? r.sourceId : null,
-  }));
+  return rows
+    .filter((r) => r.sourceType === null || r.sourceType === "people_field_value")
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      pcoValue: r.sourceType === "people_field_value" ? r.sourceId : null,
+    }));
 }
 
 export type MinistrySync = { joined: string[]; noLongerListed: string[]; relisted: string[] };

@@ -60,6 +60,32 @@ export async function emailLeaderJoined(
   });
 }
 
+/** Planning Center suggests a leader for a mapped department in Suggest mode (FR-39). */
+export async function emailLeaderSuggested(
+  tx: Tx,
+  input: { userId: string; department: { id: string; name: string }; source: string },
+) {
+  const who = await nameOf(tx, input.userId);
+  await queueNotice(tx, {
+    template: "department.leader_suggested",
+    audience: "administrator",
+    to: await administrators(tx),
+    dedupeKey: `leader-suggested:${input.department.id}:${input.userId}`,
+    content: {
+      subject: m.leaderSuggested.subject(who, input.department.name),
+      heading: m.leaderSuggested.heading,
+      status: s.actionNeeded,
+      paragraphs: [m.leaderSuggested.intro(who, input.department.name, input.source)],
+      facts: [
+        { label: f.person, value: who },
+        { label: f.department, value: input.department.name },
+      ],
+      action: m.leaderSuggested.action,
+      button: departmentLink(input.department.id),
+    },
+  });
+}
+
 /** Someone typed a department that isn't listed (FR-03, AC-14). */
 export async function emailDepartmentProposed(
   tx: Tx,

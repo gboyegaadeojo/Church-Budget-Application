@@ -86,5 +86,26 @@
         "77": ["false"]
       }
     }
+  ],
+  "teams": [
+    {
+      "leaderIds": ["1001", "1003"],
+      "name": "Media / Production",
+      "id": "5000"
+    }
+  ],
+  "groups": [
+    {
+      "leaderIds": ["1002"],
+      "tagIds": ["7000"],
+      "name": "Youth Leaders",
+      "id": "6000"
+    }
+  ],
+  "tags": [
+    {
+      "id": "7000",
+      "name": "Ministry: Youth"
+    }
   ]
 }

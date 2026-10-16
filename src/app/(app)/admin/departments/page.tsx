@@ -133,6 +133,11 @@ function DepartmentsTable({
                 <Link href={`/admin/departments/${x.id}`} className={linkClass}>
                   {x.name}
                 </Link>
+                {x.pcoSource && (
+                  <span className="block text-xs text-fg-muted">
+                    {d.pco.listBadge(x.pcoSource)}
+                  </span>
+                )}
               </td>
               {showLeaders && (
                 <td className="py-3">

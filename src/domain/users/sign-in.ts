@@ -7,7 +7,8 @@ import { PlanningCenterUnavailableError, type PlanningCenterDirectory } from "@/
 import { EMAIL_SIGN_IN_ROLES, type Role } from "@/lib/roles";
 import { emailAccessRequest, emailNewLeaderWaiting } from "./emails";
 import type { AccessDeniedReason } from "./access";
-import { checkLeader, type LeaderCheck } from "./leader-check";
+import { checkLeaderOrTeamLeader, syncMappingsForPerson } from "@/domain/departments/pco-mapping";
+import type { LeaderCheck } from "./leader-check";
 import { refreshMinistryDepartments } from "./ministry-departments";
 import { applyVerification } from "./verification";
 
@@ -70,6 +71,8 @@ const unavailableDirectory: PlanningCenterDirectory = {
   listFieldDefinitions: notConfigured,
   searchPeople: notConfigured,
   getFieldValues: notConfigured,
+  listSources: notConfigured,
+  sourceLeaderIds: notConfigured,
 };
 
 export async function rolesOf(tx: Tx, userId: string): Promise<Role[]> {
@@ -197,7 +200,7 @@ export async function resolveSignIn(
       return succeed(user.id, "home");
     }
 
-    const check = await checkLeader(directory, settings.leader, {
+    const check = await checkLeaderOrTeamLeader(tx, directory, settings.leader, {
       pcoPersonId: user.pcoPersonId ?? (method === "planningcenter" ? identity.subject : null),
       email: user.pcoPersonId ? null : email,
     });
@@ -205,14 +208,12 @@ export async function resolveSignIn(
       now: deps.now,
       actor: { kind: "user", userId: user.id },
     });
-    // A verified leader's Ministry Department picks their departments (FR-39 field source).
+    // A verified leader's Ministry Department and mapped teams pick their departments (FR-39).
     if (requester && check.status === "leader") {
-      await refreshMinistryDepartments(
-        tx,
-        directory,
-        { id: user.id, pcoPersonId: check.person.id },
-        { now: deps.now, actor: { kind: "user", userId: user.id } },
-      );
+      const actor = { kind: "user" as const, userId: user.id };
+      const who = { id: user.id, pcoPersonId: check.person.id };
+      await refreshMinistryDepartments(tx, directory, who, { now: deps.now, actor });
+      await syncMappingsForPerson(tx, directory, who, { now: deps.now, actor });
     }
 
     // Staff who don't need the check still get in as staff; only the requester role stops.
@@ -254,7 +255,7 @@ export async function resolveSignIn(
   if (!settings.leader.requireForRequesters) {
     return denyNewPerson("not-allowed", "No account, and leaders do not join by Planning Center");
   }
-  const check = await checkLeader(directory, settings.leader, {
+  const check = await checkLeaderOrTeamLeader(tx, directory, settings.leader, {
     pcoPersonId: identity.subject,
     email: null,
   });
@@ -291,15 +292,17 @@ export async function resolveSignIn(
       newAccount: true,
     },
   });
-  // A Ministry Department that names a department takes them straight there.
-  const synced = await refreshMinistryDepartments(
-    tx,
-    directory,
-    { id: created.id, pcoPersonId: check.person.id },
-    { now: deps.now, actor: { kind: "user", userId: created.id } },
-  );
-  if (synced && synced.joined.length > 0) return succeed(created.id, "home");
-  await emailNewLeaderWaiting(tx, created.id);
+  // A Ministry Department that names a department, or a team mapped in Automatic mode,
+  // takes them straight there (FR-39). In Suggest mode the administrator has already been
+  // asked to confirm them, and the waiting screen says so.
+  const who = { id: created.id, pcoPersonId: check.person.id };
+  const actor = { kind: "user" as const, userId: created.id };
+  const synced = await refreshMinistryDepartments(tx, directory, who, { now: deps.now, actor });
+  const mapped = await syncMappingsForPerson(tx, directory, who, { now: deps.now, actor });
+  if ((synced && synced.joined.length > 0) || mapped.joined.length > 0) {
+    return succeed(created.id, "home");
+  }
+  if (mapped.suggested.length === 0) await emailNewLeaderWaiting(tx, created.id);
   return succeed(created.id, "waiting");
 }
 

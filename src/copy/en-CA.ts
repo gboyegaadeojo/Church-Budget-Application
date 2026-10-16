@@ -179,6 +179,9 @@ export const copy = {
     pickDepartment:
       "A budget cycle is open. If you lead a department, you can choose it now and start its budget.",
     pickDepartmentAction: "Choose your department",
+    /** FR-39 Suggest mode: Planning Center named the department; the administrator confirms. */
+    askedToConfirm: (departments: string) =>
+      `Your administrator has been asked to confirm you for ${departments}. You'll get an email when it's done.`,
     title: "Can't sign you in",
     signedInWith: (email: string) => `You signed in with ${email}.`,
     useDifferentAccount: "Use a different account",

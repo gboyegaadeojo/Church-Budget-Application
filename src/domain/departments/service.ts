@@ -472,6 +472,12 @@ export async function setRepresentative(
   tx: Tx,
   actor: Subject,
   input: { departmentId: string; userId: string; type: string },
+  options: {
+    /** "pco_mapping" when the administrator adds a Planning Center suggestion (FR-39). */
+    source?: "manual" | "pco_mapping";
+    /** The department's "Team leaders count as Group Leaders" is on (FR-39, AC-124). */
+    leaderCheckWaived?: boolean;
+  } = {},
 ): Promise<void> {
   const slot = parseInput(z.enum(LEADER_SLOTS), input.type);
   const { type } = slotParts(slot);
@@ -497,6 +503,7 @@ export async function setRepresentative(
   const { pco_require_for_requesters } = await readSettings(tx, ["pco_require_for_requesters"]);
   if (
     pco_require_for_requesters === "true" &&
+    !options.leaderCheckWaived &&
     (!person.pcoLeaderVerified || person.accessStatus === "suspended_not_leader")
   ) {
     throw new ValidationError({ userId: d.errors.notLeader });
@@ -537,7 +544,10 @@ export async function setRepresentative(
       departmentId: department.id,
       representativeType: newType,
       backupRank,
-      source: "manual",
+      source: options.source ?? "manual",
+      ...(options.source === "pco_mapping"
+        ? { pcoStatus: "confirmed" as const, pcoLastSeenAt: new Date() }
+        : {}),
       assignedByUserId: actor.id,
     });
   }
@@ -562,6 +572,7 @@ export async function setRepresentative(
       replaced: holder
         ? { userId: holder.userId, slot: slotOfRow(holder), now: swap ?? "representative" }
         : null,
+      ...(options.source === "pco_mapping" ? { source: "pco_mapping" } : {}),
     },
   });
   await emailAssigned(tx, { userId: person.id, department, slot });

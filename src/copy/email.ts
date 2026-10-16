@@ -294,6 +294,13 @@ export const emailCopy = {
       action:
         "Nothing, unless they shouldn't represent it. You can remove them on the department page.",
     },
+    leaderSuggested: {
+      subject: (person: string, department: string) => `Confirm ${person} for ${department}`,
+      heading: "Planning Center suggests a leader",
+      intro: (person: string, department: string, source: string) =>
+        `${person} leads ${source} in Planning Center, which is linked to ${department}. They can't act for the department until you add them.`,
+      action: "Open the department and choose Add or Ignore.",
+    },
     proposed: {
       subject: (name: string) => `New department proposed: ${name}`,
       heading: "A leader proposed a new department",

@@ -260,6 +260,43 @@ export const userDepartments = pgTable(
   ],
 );
 
+/**
+ * Leaders Planning Center suggests for a mapped department in Suggest mode (FR-39). Kept
+ * apart from user_departments on purpose: a suggestion gives no access and gets no email
+ * until the administrator adds the person. Only people who already have an account are
+ * suggested (FR-39 imports no other Planning Center data). Never deleted:
+ * - suggested: waiting for the administrator;
+ * - added: the administrator added them (they're now a user_departments row);
+ * - ignored: the administrator said no; later syncs leave it ignored;
+ * - withdrawn: no longer a leader in Planning Center before anyone decided.
+ */
+export const pcoLeaderSuggestions = pgTable(
+  "pco_leader_suggestions",
+  {
+    id: id(),
+    departmentId: uuid("department_id")
+      .notNull()
+      .references(() => departments.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    status: text("status").notNull().default("suggested"),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull(),
+    decidedByUserId: uuid("decided_by_user_id").references(() => users.id),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    version: version(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique("pco_leader_suggestions_department_user_key").on(t.departmentId, t.userId),
+    check(
+      "pco_leader_suggestions_status",
+      sql`${t.status} in ('suggested', 'added', 'ignored', 'withdrawn')`,
+    ),
+  ],
+);
+
 // ---------------------------------------------------------------- cycles and settings (9.5, 9.6, 9.18b)
 
 export const budgetCycles = pgTable(
