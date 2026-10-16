@@ -8,6 +8,7 @@ import { buttonClass, cardClass, linkClass } from "@/components/ui/styles";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
 import { getExpenseView, type ExpenseView } from "@/domain/expenses/queries";
+import { listReceipts } from "@/domain/expenses/receipts";
 import { getChurchTimeZone } from "@/domain/settings";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
@@ -15,6 +16,7 @@ import { formatDateTime } from "@/lib/time-zone";
 import { getViewer } from "@/lib/viewer";
 import { BudgetStrip, OverBudgetWarning } from "../budget-strip";
 import { ExpenseLines } from "../expense-lines";
+import { ReceiptList } from "../receipt-list";
 import { ExpenseStatusBadge } from "../status-badge";
 import { ApprovalTracker, trackerSteps } from "../tracker";
 import { ExpenseNotFound } from "./not-found-state";
@@ -54,6 +56,8 @@ async function ExpenseContent({
   ]);
   if (!expense) return <ExpenseNotFound />;
   const done = DONE.find((d) => d === query.done);
+  const receipts =
+    expense.type === "expense_claim" ? await listReceipts(db, viewer, expense.id) : null;
   const pending = ["draft", "submitted", "in_review", "returned", "awaiting_board"].includes(
     expense.status,
   );
@@ -114,6 +118,7 @@ async function ExpenseContent({
             </section>
           )}
           <ExpenseLines expense={expense} />
+          {receipts && <ReceiptList expenseId={expense.id} receipts={receipts} />}
           {expense.content.noReceiptReason && (
             <Note label={v.noReceipt}>{expense.content.noReceiptReason}</Note>
           )}

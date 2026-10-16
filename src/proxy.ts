@@ -37,7 +37,9 @@ export function isPublicPath(pathname: string): boolean {
  * multipart bodies, so multipart itself can't be refused; what's refused is any file in
  * it, and any multipart body to an API route. The allowed uploads are let through by
  * page path: the administrator's logo and icon on Settings → Branding (FR-30); the
- * service checks the role, size and file type again. Receipts (6B.9) join in Stage 3.
+ * service checks the role, size and file type again. Receipts on claims (6B.9) never pass
+ * through the app: the browser uploads them straight to private storage with a signed link
+ * (src/lib/storage), and the app only reads each one back to check it.
  */
 export const UPLOAD_PATHS = ["/admin/settings/branding"];
 

@@ -561,3 +561,23 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
   - Cancelling an approved purchase request needs a reason, and is refused while a claim linked to it is on its way.
 - **Not built:** the optional "Expense submitter" permission for someone who isn't a department representative (6B.2). Only representatives submit.
 - **Test data:** the fake server now seeds a closed **FY2026** cycle where Media Team's $30,000.00 budget is approved and released, so expenses can be tried locally and in end-to-end tests. Media's FY2027 request is still left to the annual form.
+
+## Stage 3 step 3: receipts on expense claims (6B.9) (2026-10-16)
+
+- **Storage:** Cloudflare R2, as the church chose: a private bucket, reached with signed links that last a few minutes. The links are signed with AWS Signature V4 using `node:crypto` (`src/lib/storage/sigv4.ts`, checked against AWS's published example), so no AWS SDK is added. With fake sign-in on (tests, local), files live in the server's memory behind a test-only route (`/api/test/storage`), which is a 404 anywhere else.
+- **Uploads go straight from the browser to R2.** Netlify functions accept at most 6 MB per request, and receipts may be 10 MB.
+  1. The browser asks the app for a link (`POST /api/expenses/{id}/receipts`, JSON). The app checks the person, the claim, its status, the count, the size and the type, and answers with a 15-minute upload link and a signed token.
+  2. The browser uploads the file to R2.
+  3. The browser confirms (`POST …/receipts/confirm`). The app reads the file back, checks its real type from its first bytes (JPG, PNG or PDF), checks its size, records it with its SHA-256, and audits it. A file that fails is deleted from R2.
+  - No multipart body ever reaches the app, so the no-uploads rule elsewhere (FR-23) is unchanged.
+  - R2 needs a CORS rule letting the app's address `PUT` with a `Content-Type` header (go-live checklist item 7).
+- **HEIC photos** (iPhones) are converted to JPG in the browser before upload with `heic2any` (free, MIT, loaded only when a HEIC file is picked). The app stores JPG, PNG and PDF only.
+- **No virus scanning.** No free scanner fits Netlify's functions, and the church agreed to go without (2026-10-16). Risk is limited:
+  - Files are never served from the app's own address.
+  - They open only through short-lived R2 links with the stored content type.
+  - Only JPG, PNG and PDF signatures are accepted.
+  - The `scan_status` column of 6B.10 isn't kept.
+- **Who sees receipts (AC-81):** the claim's department, the accountant and backup approvers, the Church Administrator, the Board Chair and Vice-Chair once the claim reaches them, and the System Administrator. A draft's receipts stay with the department. Every view goes through `/api/expenses/{id}/receipts/{fileId}`, which checks permission, then redirects to a 5-minute link. Refusals are audited.
+- **Removing a receipt** marks it removed and keeps the file for the retention period (6 years). It's allowed only while the department can still change the claim.
+- **The same file on two claims** (same SHA-256) is flagged to the department and the approvers (FR-47).
+- **Phones:** **Take photo** opens the camera. **Choose file** takes several files. On wider screens, files can be dropped on the box.

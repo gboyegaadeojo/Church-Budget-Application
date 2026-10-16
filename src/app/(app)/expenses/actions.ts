@@ -13,6 +13,7 @@ import {
   withdrawExpense,
   type ExpenseDraftSaved,
 } from "@/domain/expenses/service";
+import { removeReceipt } from "@/domain/expenses/receipts";
 import type { ActionState } from "@/lib/action-state";
 import { form, runAction, runForResult, type ResultState } from "@/lib/admin-server";
 
@@ -147,4 +148,19 @@ export async function cancelPurchaseRequestAction(
   );
   if (result.status !== "success") return result;
   redirect(`${view(id)}?done=cancelled`);
+}
+
+/** Takes a receipt off a claim while the department may still change it (6B.9). */
+export async function removeReceiptAction(input: {
+  expenseId: string;
+  fileId: string;
+  fileName: string;
+}): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await removeReceipt(tx, viewer, input);
+      return expensesCopy.receipts.removed(input.fileName);
+    },
+    { paths: [view(input.expenseId), edit(input.expenseId)] },
+  );
 }
