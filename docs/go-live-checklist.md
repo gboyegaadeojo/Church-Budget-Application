@@ -55,7 +55,8 @@ Private repositories get about 2,000 free Actions minutes a month, and every run
 - [ ] Cheque signing authorities' names (G). They are entered in Admin → Settings → Signing authorities and can be added or removed later (FR-53)
 - [ ] Logo (PNG or SVG) and brand colour. G can change them any time in Admin → Settings → Branding (FR-30)
 - [ ] FY2027 budget year dates, the first submission deadline, and the board-approved church total. The deadline can be changed later or extended for one department (Requirements 4.3)
-- [ ] Privacy contact person for the privacy notice (FR-36)
+- [ ] Privacy contact person for the privacy notice (FR-36). Their address goes in Admin → Settings → "Contact email on access screens", which the notice shows
+- [ ] **The church reviews the privacy notice** (`/privacy`, text in `src/copy/help.ts`) before launch: retention (at least six years, per CRA), the service providers named and where they store data, and the 30-day reply to access requests. It was written from what the app stores, not by a lawyer
 
 ## 3. Launch steps
 

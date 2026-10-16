@@ -13,7 +13,8 @@ import {
 import { roleChips } from "@/domain/users/role-chips";
 import { ROLES, type Role } from "@/lib/roles";
 
-const APP_DIR = path.resolve(__dirname, "../../src/app/(app)");
+/** Route groups that hold linked pages: the signed-in app, and public pages (privacy). */
+const PAGE_DIRS = ["(app)", "(public)"].map((g) => path.resolve(__dirname, "../../src/app", g));
 
 const hrefs = (areas: NavArea[]) => areas.flatMap((a) => a.items.map((i) => i.href));
 const item = (areas: NavArea[], href: string) =>
@@ -148,8 +149,13 @@ describe("helpers", () => {
 
   it("has a page for every link, so no navigation link is a 404", () => {
     for (const href of allNavHrefs()) {
-      const file = path.join(APP_DIR, ...href.split("/").filter(Boolean), "page.tsx");
-      expect(existsSync(file), `${href} has no page at ${file}`).toBe(true);
+      const files = PAGE_DIRS.map((dir) =>
+        path.join(dir, ...href.split("/").filter(Boolean), "page.tsx"),
+      );
+      expect(
+        files.some((f) => existsSync(f)),
+        `${href} has no page in ${files.join(" or ")}`,
+      ).toBe(true);
     }
   });
 

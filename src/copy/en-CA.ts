@@ -150,6 +150,7 @@ export const copy = {
     contact: (email: string) => `Questions? Email ${email}.`,
     privacyNote:
       "We store your name, email address and your budget activity, only to run the church's budgets.",
+    privacyLink: "Read the privacy notice",
     error: "Sign-in didn't finish. Please try again.",
     notConfigured:
       "Sign-in isn't set up yet. The administrator needs to add the Planning Center or email settings.",

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { AlertCircle, Users } from "lucide-react";
@@ -41,7 +42,12 @@ export default function SignInPage({ searchParams }: PageProps<"/sign-in">) {
       <Suspense fallback={<ButtonsSkeleton />}>
         <SignInOptions searchParams={searchParams} />
       </Suspense>
-      <p className="text-xs text-fg-muted">{s.privacyNote}</p>
+      <p className="text-xs text-fg-muted">
+        {s.privacyNote}{" "}
+        <Link href="/privacy" className="underline underline-offset-4 hover:text-fg">
+          {s.privacyLink}
+        </Link>
+      </p>
     </div>
   );
 }

@@ -362,6 +362,20 @@ export const emailCopy = {
       action:
         "If this happens again tomorrow, check the Planning Center settings and access token.",
     },
+    privacyRequest: {
+      subject: (person: string) => `Privacy request from ${person}`,
+      heading: "Someone asked about their personal information",
+      intro: {
+        see: (person: string) =>
+          `${person} asked to see the personal information the app holds about them.`,
+        correct: (person: string) => `${person} asked to correct their personal information.`,
+      },
+      kind: "Request",
+      kinds: { see: "See my information", correct: "Correct my information" },
+      details: "Their details",
+      action:
+        "Reply to them by email within 30 days. Correct what's wrong in Users & Roles; financial records are kept and aren't deleted on request.",
+    },
     accessRequest: {
       subject: (who: string) => `Access request: ${who}`,
       heading: "Someone tried to sign in without access",

@@ -30,6 +30,7 @@ describe("proxy public paths", () => {
   it.each([
     "/sign-in",
     "/access-denied/waiting",
+    "/privacy",
     "/api/auth/callback/planningcenter",
     "/api/jobs/pco-verify",
   ])("%s is open", (path) => expect(isPublicPath(path)).toBe(true));

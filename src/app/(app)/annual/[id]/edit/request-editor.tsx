@@ -23,6 +23,7 @@ import { FinancialSummary } from "@/components/financial-summary";
 import { FormMessage } from "@/components/ui/action-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge } from "@/components/ui/display";
+import { HelpPanel } from "@/components/help-panel";
 import {
   buttonClass,
   cardClass,
@@ -544,7 +545,10 @@ function ItemsStep({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-fg-muted">{f.itemsIntro(taxRateToPercent(rate))}</p>
+      <div className="flex flex-wrap items-center gap-x-3">
+        <p className="text-sm text-fg-muted">{f.itemsIntro(taxRateToPercent(rate))}</p>
+        <HelpPanel topic="tax" />
+      </div>
       {listError && (
         <p role="alert" className="text-sm text-danger">
           {listError}

@@ -140,6 +140,8 @@
   --animate-fade-out: fade-out var(--duration-fast) var(--ease-exit);
   --animate-pop-in: pop-in var(--duration-standard) var(--ease-enter);
   --animate-rise-in: rise-in var(--duration-standard) var(--ease-enter) both;
+  --animate-panel-in: panel-in var(--duration-emphasized) var(--ease-enter);
+  --animate-panel-out: panel-out var(--duration-standard) var(--ease-exit);
 
   @keyframes sheet-in {
     from {
@@ -149,6 +151,16 @@
   @keyframes sheet-out {
     to {
       transform: translateY(100%);
+    }
+  }
+  @keyframes panel-in {
+    from {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes panel-out {
+    to {
+      transform: translateX(100%);
     }
   }
   @keyframes fade-in {
