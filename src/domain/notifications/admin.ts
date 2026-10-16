@@ -31,10 +31,14 @@ export type EmailLogItem = {
   sentAt: Date | null;
   nextAttemptAt: Date;
   budgetRequestId: string | null;
+  /** A sign-in code email: its body is cleared and it is never sent again. */
+  sensitive: boolean;
 };
 
 export type EmailLog = {
   counts: Record<EmailStatus, number>;
+  /** Failed emails that Send again can queue (every failed one except sign-in codes). */
+  retryable: number;
   items: EmailLogItem[];
   truncated: boolean;
 };
@@ -49,6 +53,10 @@ export async function getEmailLog(
     .select({ status: emailOutbox.status, n: count() })
     .from(emailOutbox)
     .groupBy(emailOutbox.status);
+  const [{ retryable }] = await tx
+    .select({ retryable: count() })
+    .from(emailOutbox)
+    .where(and(eq(emailOutbox.status, "failed"), eq(emailOutbox.sensitive, false)));
   const counts = Object.fromEntries(EMAIL_STATUSES.map((s) => [s, 0])) as Record<
     EmailStatus,
     number
@@ -71,6 +79,7 @@ export async function getEmailLog(
       sentAt: emailOutbox.sentAt,
       nextAttemptAt: emailOutbox.nextAttemptAt,
       budgetRequestId: emailOutbox.budgetRequestId,
+      sensitive: emailOutbox.sensitive,
     })
     .from(emailOutbox)
     .leftJoin(users, eq(users.id, emailOutbox.toUserId))
@@ -90,6 +99,7 @@ export async function getEmailLog(
     .limit(PAGE_SIZE + 1);
   return {
     counts,
+    retryable,
     truncated: rows.length > PAGE_SIZE,
     items: rows.slice(0, PAGE_SIZE).map(({ toName, ...r }) => ({ ...r, to: toName ?? r.toEmail })),
   };
@@ -99,7 +109,8 @@ const idSchema = z.uuid();
 
 /**
  * Sends failed emails again with a fresh set of retries. Only failed ones: a pending
- * email is already queued, and a sent one must never go twice. Audited with the count.
+ * email is already queued, and a sent one must never go twice. Sign-in code emails are
+ * never sent again: the code has run out and the body is cleared. Audited with the count.
  */
 export async function retryFailedEmails(
   tx: Tx,
@@ -115,7 +126,13 @@ export async function retryFailedEmails(
   const retried = await tx
     .update(emailOutbox)
     .set({ status: "pending", attempts: 0, nextAttemptAt: now, updatedAt: now })
-    .where(and(eq(emailOutbox.status, "failed"), ids ? inArray(emailOutbox.id, ids) : undefined))
+    .where(
+      and(
+        eq(emailOutbox.status, "failed"),
+        eq(emailOutbox.sensitive, false),
+        ids ? inArray(emailOutbox.id, ids) : undefined,
+      ),
+    )
     .returning({ id: emailOutbox.id });
   if (retried.length === 0) throw new RuleError(emailCopy.admin.nothingToRetry);
   await writeAudit(tx, {

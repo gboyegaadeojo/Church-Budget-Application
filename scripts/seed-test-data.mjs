@@ -68,6 +68,14 @@ const PEOPLE = [
     departments: [],
     leader: false,
   },
+  {
+    // Not in Planning Center: signs in with an emailed code (FR-01b).
+    email: "carol.office@outlook.com",
+    name: "Carol Office",
+    roles: ["church_admin"],
+    departments: [],
+    leader: false,
+  },
 ];
 
 /** @param {{ query: (text: string, values?: unknown[]) => Promise<{ rows: any[] }> }} client */

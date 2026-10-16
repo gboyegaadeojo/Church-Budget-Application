@@ -20,6 +20,14 @@ describe("Auth.js logger", () => {
     expect(warn.mock.calls[0][0]).toContain("signed out");
   });
 
+  it("logs nothing for a wrong or expired emailed code (the form explains it)", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    authLogger.error(authError("CredentialsSignin"));
+    expect(error).not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
   it("logs every other error in full, with its cause", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const cause = new Error("callback failed");

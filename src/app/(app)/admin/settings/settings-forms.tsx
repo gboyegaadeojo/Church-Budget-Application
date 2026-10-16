@@ -77,6 +77,7 @@ export type SignInFormValues = {
   departmentMode: "off" | "suggest" | "restrict";
   googleEnabled: boolean;
   planningCenterEnabled: boolean;
+  emailEnabled: boolean;
 };
 
 /**
@@ -136,6 +137,12 @@ export function SignInSettingsForm({
           name="planningCenterEnabled"
           label={s.allowPlanningCenter}
           defaultChecked={values.planningCenterEnabled}
+        />
+        <CheckboxField
+          name="emailEnabled"
+          label={s.allowEmail}
+          hint={s.allowEmailHint}
+          defaultChecked={values.emailEnabled}
         />
       </fieldset>
 

@@ -377,6 +377,35 @@ export const idempotencyKeys = pgTable(
   (t) => [index("idempotency_keys_created_idx").on(t.createdAt)],
 );
 
+/**
+ * Emailed sign-in codes (FR-01b, 9.18c). Only a keyed hash of the code is stored. A row
+ * is written for every request, including addresses with no account (which get no
+ * email), so rate limits and answers are the same either way and reveal nothing.
+ */
+export const emailLoginCodes = pgTable(
+  "email_login_codes",
+  {
+    id: id(),
+    /** Lower case, as typed. */
+    email: text("email").notNull(),
+    /** The account the code was emailed to; null when no email went (unknown address). */
+    userId: uuid("user_id").references(() => users.id),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    /** Set on the 5th wrong code: no codes for this address are sent or accepted until then. */
+    lockedUntil: timestamp("locked_until", { withTimezone: true }),
+    requestIpHash: text("request_ip_hash"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("email_login_codes_email_idx").on(t.email, t.createdAt),
+    index("email_login_codes_ip_idx").on(t.requestIpHash, t.createdAt),
+    check("email_login_codes_attempts_non_negative", sql`${t.attempts} >= 0`),
+  ],
+);
+
 // ---------------------------------------------------------------- annual budget requests (9.7, 9.8)
 
 export const budgetRequests = pgTable(
@@ -705,6 +734,13 @@ export const emailOutbox = pgTable(
      * failure digest: a second row with the same key and address is skipped.
      */
     dedupeKey: text("dedupe_key"),
+    /** Not sent after this time (a sign-in code that has run out); marked failed instead. */
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    /**
+     * The body holds a secret (a sign-in code): it is cleared once the email is sent,
+     * fails or expires, and the email is never sent again.
+     */
+    sensitive: boolean("sensitive").notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

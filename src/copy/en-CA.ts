@@ -114,18 +114,46 @@ export const copy = {
       "Plan your department's annual budget, submit expenses and follow spending, all in one place.",
     continueWithPlanningCenter: "Continue with Planning Center",
     continueWithGoogle: "Continue with Google",
+    email: {
+      prompt: "Not in Planning Center?",
+      open: "Continue with email",
+      formLabel: "Sign in with an emailed code",
+      emailLabel: "Email address",
+      emailHint:
+        "For the Church Administrator and System Administrators. We'll email a 6-digit code to the address the church has for you.",
+      sendCode: "Email me a code",
+      // The same words whether or not the address has an account (AC-133).
+      sent: (email: string) =>
+        `If ${email} can sign in here, we've emailed it a 6-digit code. It works once, for 10 minutes. Check your junk folder if it doesn't arrive in a minute.`,
+      codeLabel: "6-digit code",
+      signIn: "Sign in",
+      sendNewCode: "Send a new code",
+      differentEmail: "Use a different email",
+      invalidEmail: "Enter an email address, like name@example.com.",
+      codeFormat: "Enter the 6 digits from the email.",
+      wrong: (triesLeft: number) =>
+        `That code isn't right. ${triesLeft === 1 ? "1 try" : `${triesLeft} tries`} left.`,
+      expired: "That code has run out or was already used. Send a new code.",
+      locked: (minutes: number) =>
+        `Too many wrong codes. Try again in ${minutes === 1 ? "1 minute" : `${minutes} minutes`}.`,
+      tooMany: (minutes: number) =>
+        `Too many codes asked for. Try again in ${minutes === 1 ? "1 minute" : `${minutes} minutes`}.`,
+      disabled: "Email sign-in is turned off. Use Google or Planning Center instead.",
+      unavailable: "Email sign-in isn't available right now. Please try again shortly.",
+    },
     leaderNote:
       "Department leaders: your Group Leader status in Planning Center is checked when you sign in.",
     accessHeading: "Need access?",
     accessLeaders:
       "Department leaders get access once Planning Center shows them as a Group Leader. Ask your Planning Center administrator if you're not marked yet.",
-    accessStaff: "Church staff: ask the administrator to add your email address.",
+    accessStaff:
+      "Church staff: ask the administrator to add your email address. The Church Administrator and System Administrators can also sign in with an emailed code.",
     contact: (email: string) => `Questions? Email ${email}.`,
     privacyNote:
       "We store your name, email address and your budget activity, only to run the church's budgets.",
     error: "Sign-in didn't finish. Please try again.",
     notConfigured:
-      "Sign-in isn't set up yet. The administrator needs to add the Google or Planning Center sign-in settings.",
+      "Sign-in isn't set up yet. The administrator needs to add the Google, Planning Center or email settings.",
     fakeHeading: "Test sign-in",
     fakeNote: "Local development only. These people come from tests/fixtures.",
     fakeAs: (label: string) => `Sign in as ${label}`,

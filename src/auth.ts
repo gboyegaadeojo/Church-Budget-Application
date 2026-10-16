@@ -1,8 +1,9 @@
-import NextAuth, { type NextAuthConfig } from "next-auth";
+import NextAuth, { CredentialsSignin, type NextAuthConfig } from "next-auth";
 import type { Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { getDb } from "@/db";
+import { checkEmailCode, type CodeCheckResult } from "@/domain/users/email-sign-in";
 import { resolveSignIn, type ExternalIdentity } from "@/domain/users/sign-in";
 import { authLogger } from "@/lib/auth-logger";
 import { sendOutboxAfterResponse } from "@/lib/email";
@@ -70,6 +71,33 @@ const FakeProvider = Credentials({
   },
 });
 
+/** Why an emailed code didn't sign the person in, for the sign-in form to explain. */
+export class EmailCodeError extends CredentialsSignin {
+  constructor(readonly result: Exclude<CodeCheckResult, { ok: true }>) {
+    super();
+    this.code = result.reason;
+  }
+}
+
+/**
+ * "Continue with email" (FR-01b). The code is checked, and a wrong try counted, in its
+ * own transaction; the signIn callback then treats the proved address like any sign-in.
+ */
+const EmailCodeProvider = Credentials({
+  id: "email-code",
+  name: "Email code",
+  credentials: { email: {}, code: {} },
+  authorize: async (c) => {
+    const secret = process.env.AUTH_SECRET;
+    if (!secret) return null;
+    const deps = { now: new Date(), secret, requestIpHash: await requestIpHash() };
+    const input = { email: String(c.email ?? ""), code: String(c.code ?? "") };
+    const result = await getDb().transaction((tx) => checkEmailCode(tx, deps, input));
+    if (!result.ok) throw new EmailCodeError(result);
+    return { id: `email:${result.email}`, email: result.email };
+  },
+});
+
 function providers(): Provider[] {
   const list: Provider[] = [];
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -83,6 +111,8 @@ function providers(): Provider[] {
   if (process.env.PCO_CLIENT_ID && process.env.PCO_CLIENT_SECRET) {
     list.push(PlanningCenter(process.env.PCO_CLIENT_ID, process.env.PCO_CLIENT_SECRET));
   }
+  // Always present; "Allow email sign-in" in Settings decides whether it's used.
+  list.push(EmailCodeProvider);
   if (fakeSignInEnabled()) list.push(FakeProvider);
   return list;
 }
@@ -92,8 +122,9 @@ function toIdentity(params: {
   account?: { provider: string; providerAccountId: string } | null;
   profile?: Record<string, unknown>;
   credentials?: Record<string, unknown>;
+  user?: { email?: string | null };
 }): ExternalIdentity | null {
-  const { account, profile, credentials } = params;
+  const { account, profile, credentials, user } = params;
   const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
   if (account?.provider === "google" && profile) {
@@ -114,6 +145,16 @@ function toIdentity(params: {
       emailVerified: false,
       name: str(profile.name),
       organizationId: profile.organization_id == null ? null : String(profile.organization_id),
+    };
+  }
+  // The address comes from authorize (the code was right), never from the posted form.
+  if (account?.provider === "email-code" && user?.email) {
+    return {
+      provider: "email",
+      subject: user.email,
+      email: user.email,
+      emailVerified: true,
+      name: null,
     };
   }
   if (account?.provider === "fake" && credentials && fakeSignInEnabled()) {
@@ -138,7 +179,7 @@ export const authConfig: NextAuthConfig = {
   logger: authLogger,
   callbacks: {
     async signIn({ user, account, profile, credentials }) {
-      const identity = toIdentity({ account, profile, credentials });
+      const identity = toIdentity({ account, profile, credentials, user });
       if (!identity?.subject) {
         await rememberDeniedEmail(null);
         return "/access-denied/not-allowed";

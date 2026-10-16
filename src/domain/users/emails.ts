@@ -7,7 +7,7 @@ import { emailBrand, queueNotice } from "@/domain/notifications/notice";
 import { accountantRecipients, administrators, person } from "@/domain/notifications/recipients";
 import { getChurchTimeZone } from "@/domain/settings";
 import { appUrl } from "@/lib/email/layout";
-import type { Role } from "@/lib/roles";
+import { EMAIL_SIGN_IN_ROLES, type Role } from "@/lib/roles";
 import { zonedDate } from "@/lib/time-zone";
 
 /**
@@ -47,7 +47,10 @@ export async function emailStaffAdded(tx: Tx, userId: string, roles: readonly Ro
       subject: m.staffAdded.subject(brand.appName),
       heading: m.staffAdded.heading,
       status: s.forYourRecords,
-      paragraphs: [m.staffAdded.intro(brand.appName, brand.churchName)],
+      paragraphs: [
+        m.staffAdded.intro(brand.appName, brand.churchName),
+        ...(roles.some((r) => EMAIL_SIGN_IN_ROLES.includes(r)) ? [m.staffAdded.emailCodeToo] : []),
+      ],
       facts: [{ label: f.roles, value: roleList(roles) }],
       action: emailCopy.noAction,
       button: { label: b.signIn, href: appUrl("/sign-in") },

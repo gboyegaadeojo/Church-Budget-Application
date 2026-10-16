@@ -118,6 +118,7 @@ export async function signInSettingsAction(_: ActionState, data: FormData): Prom
         departmentMode: form.text(data, "departmentMode"),
         googleEnabled: form.checked(data, "googleEnabled"),
         planningCenterEnabled: form.checked(data, "planningCenterEnabled"),
+        emailEnabled: form.checked(data, "emailEnabled"),
         versions: form.json(data, "versions"),
       });
       return s.pcoSaved;

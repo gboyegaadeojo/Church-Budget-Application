@@ -25,7 +25,8 @@ This manual explains how to use the app, by role. It is written from the specifi
 ### Signing in
 
 1. Open the app's web address on a computer or phone.
-2. Choose **Continue with Google**, **Continue with Planning Center**, or **Continue with email** (we email you a 6-digit code). They all reach the same account if your email matches. Staff can use any email address, such as a work or personal one. If your **Ministry Department** field in Planning Center names your department, you are added to it when you sign in.
+2. Choose **Continue with Planning Center** or **Continue with Google**. They reach the same account if your email matches. If your **Ministry Department** field in Planning Center names your department, you are added to it when you sign in.
+   - **Not in the church's Planning Center?** The Church Administrator and System Administrators can choose **Continue with email** instead: enter the address the church has for you, and type in the 6-digit code we email you. A code works once, for 10 minutes. After 5 wrong codes, wait 15 minutes. Everyone else signs in with Planning Center.
 3. Department leaders must be marked as a **Group Leader** in Planning Center: **Ministry Leader** set to **Yes** on their Planning Center profile. If you see "Your Group Leader status in Planning Center could not be confirmed", ask your ministry's Planning Center administrator.
 4. If you see "Waiting for department assignment", the System Administrator has been told and will add you.
 

@@ -322,6 +322,17 @@ export const emailCopy = {
       heading: "You have access",
       intro: (app: string, church: string) =>
         `An administrator gave you access to ${app} for ${church}. Sign in with Google or Planning Center using this email address.`,
+      emailCodeToo:
+        "You can also choose Continue with email on the sign-in page, and we'll send a 6-digit code to this address.",
+    },
+    signInCode: {
+      subject: (app: string) => `Your ${app} sign-in code`,
+      heading: "Your sign-in code",
+      intro: (app: string) => `Use this code to sign in to ${app}:`,
+      codeLabel: "Code",
+      expiresLabel: "Works until",
+      action:
+        "Enter the code on the sign-in page. It works once, for 10 minutes. If you didn't ask for it, ignore this email: nobody can sign in without the code.",
     },
     rolesChanged: {
       subject: "Your roles changed",

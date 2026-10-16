@@ -26,17 +26,27 @@ export type QueuedEmail = {
   cycleId?: string;
   /** For emails that must go once only: a repeat with this key skips addresses already queued. */
   dedupeKey?: string;
+  /** Not sent after this time (a sign-in code that has run out). */
+  expiresAt?: Date;
+  /** The body holds a secret: it's cleared once sent, failed or expired, and never resent. */
+  sensitive?: boolean;
   now?: Date;
 };
 
-/** Counts emails queued during one action, so the action knows to send after commit. */
-const queuedInAction = new AsyncLocalStorage<{ count: number }>();
+/** What a sensitive email's body becomes once it no longer needs to be sent. */
+export const CLEARED_BODY = "[Removed after sending: this email held a sign-in code.]";
+
+/** Collects emails queued during one action, so the action knows to send after commit. */
+const queuedInAction = new AsyncLocalStorage<{ ids: string[] }>();
 
 export function trackQueuedEmails<T>(
   work: () => Promise<T>,
-): Promise<{ result: T; queued: number }> {
-  const store = { count: 0 };
-  return queuedInAction.run(store, async () => ({ result: await work(), queued: store.count }));
+): Promise<{ result: T; queued: number; ids: string[] }> {
+  const store = { ids: [] as string[] };
+  return queuedInAction.run(store, async () => {
+    const result = await work();
+    return { result, queued: store.ids.length, ids: store.ids };
+  });
 }
 
 /**
@@ -68,6 +78,8 @@ export async function enqueueEmail(tx: Tx, email: QueuedEmail): Promise<number> 
         budgetRequestId: email.budgetRequestId ?? null,
         cycleId: email.cycleId ?? null,
         dedupeKey: email.dedupeKey ?? null,
+        expiresAt: email.expiresAt ?? null,
+        sensitive: email.sensitive ?? false,
         nextAttemptAt: now,
         createdAt: now,
         updatedAt: now,
@@ -76,11 +88,19 @@ export async function enqueueEmail(tx: Tx, email: QueuedEmail): Promise<number> 
     .onConflictDoNothing()
     .returning({ id: emailOutbox.id });
   const store = queuedInAction.getStore();
-  if (store) store.count += inserted.length;
+  if (store) store.ids.push(...inserted.map((r) => r.id));
   return inserted.length;
 }
 
 // ---------------------------------------------------------------- delivery
+
+const CLEARED = { textBody: CLEARED_BODY, htmlBody: CLEARED_BODY };
+
+/** Clears the body in SQL, only on rows marked sensitive. */
+const clearedIfSensitive = () => ({
+  textBody: sql`case when ${emailOutbox.sensitive} then ${CLEARED_BODY} else ${emailOutbox.textBody} end`,
+  htmlBody: sql`case when ${emailOutbox.sensitive} then ${CLEARED_BODY} else ${emailOutbox.htmlBody} end`,
+});
 
 /** After this many tries an email is marked failed and listed for the administrator. */
 export const MAX_ATTEMPTS = 10;
@@ -108,6 +128,25 @@ export async function deliverOutbox(
 ): Promise<DeliverySummary> {
   const now = options.now ?? new Date();
   const summary: DeliverySummary = { sent: 0, retrying: 0, failed: 0 };
+
+  // Emails that ran out before they could go (a sign-in code after 10 minutes) are failed.
+  const expired = await db
+    .update(emailOutbox)
+    .set({
+      status: "failed",
+      lastError: "Expired before it could be sent",
+      updatedAt: now,
+      ...clearedIfSensitive(),
+    })
+    .where(
+      and(
+        inArray(emailOutbox.status, ["pending", "sending"]),
+        lte(emailOutbox.expiresAt, now),
+        options.ids ? inArray(emailOutbox.id, options.ids) : undefined,
+      ),
+    )
+    .returning({ id: emailOutbox.id });
+  summary.failed += expired.length;
 
   const claimed = await db.transaction(async (tx) => {
     const due = await tx
@@ -171,6 +210,7 @@ export async function deliverOutbox(
           providerMessageId: result.providerMessageId,
           lastError: null,
           updatedAt: now,
+          ...(row.sensitive ? CLEARED : {}),
         })
         .where(eq(emailOutbox.id, row.id));
     } else if (result.kind === "retry" && row.attempts < MAX_ATTEMPTS) {
@@ -190,7 +230,12 @@ export async function deliverOutbox(
       summary.failed++;
       await db
         .update(emailOutbox)
-        .set({ status: "failed", lastError: result.error, updatedAt: now })
+        .set({
+          status: "failed",
+          lastError: result.error,
+          updatedAt: now,
+          ...(row.sensitive ? CLEARED : {}),
+        })
         .where(eq(emailOutbox.id, row.id));
     }
   }

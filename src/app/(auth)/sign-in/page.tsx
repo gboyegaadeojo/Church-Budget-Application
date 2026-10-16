@@ -11,6 +11,8 @@ import { copy } from "@/copy/en-CA";
 import { getDb } from "@/db";
 import { getSignInSettings } from "@/domain/settings";
 import { fakeSignInEnabled } from "@/lib/auth-mode";
+import { getEmailSender } from "@/lib/email";
+import { EmailSignIn } from "./email-sign-in";
 
 const s = copy.signIn;
 
@@ -25,7 +27,7 @@ type FakeIdentity = {
   organizationId?: string;
 };
 
-/** Sign-in (DRD 6.1): Planning Center and Google, equal size and stacked. */
+/** Sign-in (DRD 6.1): Planning Center and Google, equal size and stacked, then email. */
 export default function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   return (
     <div className="space-y-6">
@@ -53,6 +55,8 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/sign-in">, "sear
   const settings = await getSignInSettings(getDb());
   const showPco = settings.planningCenterEnabled && !!process.env.PCO_CLIENT_ID;
   const showGoogle = settings.googleEnabled && !!process.env.GOOGLE_CLIENT_ID;
+  // Codes need a working sender; without one they would wait unsent in the outbox.
+  const showEmail = settings.emailEnabled && getEmailSender() !== null;
   const fake = fakeSignInEnabled();
 
   return (
@@ -67,7 +71,7 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/sign-in">, "sear
         </p>
       )}
 
-      {showPco || showGoogle ? (
+      {showPco || showGoogle || showEmail ? (
         <div className="space-y-3">
           {showPco && (
             <ProviderButton provider="planningcenter" callbackUrl={callbackUrl}>
@@ -81,6 +85,7 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/sign-in">, "sear
               {s.continueWithGoogle}
             </ProviderButton>
           )}
+          {showEmail && <EmailSignIn callbackUrl={callbackUrl} />}
         </div>
       ) : (
         !fake && <p className="rounded-control bg-surface-2 p-3 text-sm">{s.notConfigured}</p>
