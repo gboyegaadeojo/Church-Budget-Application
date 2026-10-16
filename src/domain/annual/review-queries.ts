@@ -115,7 +115,8 @@ const EMPTY_COUNTS: DashboardCounts = {
   totalApprovedCents: 0,
 };
 
-function matchesFilter(status: AnnualStatus, filter: QueueFilter): boolean {
+/** Whether a request with this status belongs under a dashboard status filter. */
+export function matchesFilter(status: AnnualStatus, filter: QueueFilter): boolean {
   switch (filter) {
     case "all":
       return true;

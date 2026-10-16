@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Eye } from "lucide-react";
+import { DownloadButton } from "@/components/download-button";
 import { Badge, EmptyState, PageHeader, PermissionDenied, Section } from "@/components/ui/display";
 import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
+import { exportsCopy } from "@/copy/exports";
 import { getDb } from "@/db";
 import {
   AWAITING,
@@ -14,6 +16,7 @@ import {
 } from "@/domain/annual/review-queries";
 import { getChurchTimeZone } from "@/domain/settings";
 import { viewerAllowedTo } from "@/lib/admin-server";
+import { authorize } from "@/lib/authz";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
 import { formatDate, zonedDate } from "@/lib/time-zone";
@@ -57,6 +60,12 @@ export async function ReviewDashboardView({
   if (!dashboard) return <PermissionDenied />;
   const { cycle, counts, departments, queue, readOnly } = dashboard;
   const filtered = Boolean(filters.status || filters.departmentId || filters.q);
+  // FR-20: accountants, backup approvers and the administrator export (AC-4, AC-110).
+  const canExport = authorize(viewer, "annual.export_all").allowed;
+  const exportHref = (extra: Record<string, string | undefined>) =>
+    `/api/exports/annual?${new URLSearchParams(
+      Object.entries(extra).filter((e): e is [string, string] => Boolean(e[1])),
+    )}`;
 
   return (
     <>
@@ -126,6 +135,17 @@ export async function ReviewDashboardView({
                   {r.clear}
                 </Link>
               )}
+              {canExport && counts.submitted > 0 && (
+                <DownloadButton
+                  href={exportHref({
+                    cycle: cycle.id,
+                    status: filters.status,
+                    department: filters.departmentId,
+                  })}
+                  label={exportsCopy.download.view}
+                  className="sm:ml-auto"
+                />
+              )}
             </div>
           </form>
 
@@ -151,7 +171,13 @@ export async function ReviewDashboardView({
           </Section>
 
           <Section title={r.departmentsHeading} id="departments">
-            <DepartmentTable rows={departments} zone={zone} />
+            <DepartmentTable
+              rows={departments}
+              zone={zone}
+              downloadHref={
+                canExport ? (requestId) => exportHref({ request: requestId }) : undefined
+              }
+            />
           </Section>
         </>
       )}
@@ -300,7 +326,16 @@ function nextStep(progress: Progress): string {
   return r.nextStep.decided;
 }
 
-function DepartmentTable({ rows, zone }: { rows: DashboardDepartment[]; zone: string }) {
+function DepartmentTable({
+  rows,
+  zone,
+  downloadHref,
+}: {
+  rows: DashboardDepartment[];
+  zone: string;
+  /** Set when the person may export: the one-request download per row (DRD 6.6, AC-92). */
+  downloadHref?: (requestId: string) => string;
+}) {
   return (
     <div className={tableWrap} tabIndex={0} role="region" aria-label={r.departmentsCaption}>
       <table className="w-full min-w-[48rem] text-left text-sm">
@@ -325,9 +360,14 @@ function DepartmentTable({ rows, zone }: { rows: DashboardDepartment[]; zone: st
             <th scope="col" className={cn(th, "text-right")}>
               {r.columns.approved}
             </th>
-            <th scope="col" className={cn(th, "pr-0")}>
+            <th scope="col" className={cn(th, downloadHref ? undefined : "pr-0")}>
               {r.columns.action}
             </th>
+            {downloadHref && (
+              <th scope="col" className={cn(th, "pr-0")}>
+                {r.columns.download}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -355,7 +395,22 @@ function DepartmentTable({ rows, zone }: { rows: DashboardDepartment[]; zone: st
               <td className="tabular py-3 pr-4 text-right">
                 {row.approvedTotalCents === null ? "—" : formatCAD(row.approvedTotalCents)}
               </td>
-              <td className="py-3 text-fg-muted">{nextStep(row.progress)}</td>
+              <td className={cn("py-3 text-fg-muted", downloadHref && "pr-4")}>
+                {nextStep(row.progress)}
+              </td>
+              {downloadHref && (
+                <td className="py-3">
+                  {row.requestId ? (
+                    <DownloadButton
+                      href={downloadHref(row.requestId)}
+                      label={r.columns.download}
+                      ariaLabel={exportsCopy.download.rowLabel(row.departmentName)}
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
