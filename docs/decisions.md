@@ -431,3 +431,14 @@ This replaces Stage 2 step 7 (PR #34). The church decided that every email is en
   - Removed: `src/lib/email/preferences.ts`, the digest service and job step, the preferences service, and the `account.email_preferences` and `account.accountant_emails` actions.
 - **Data:** migration `0016_remove_email_preferences` drops the preference columns from `user_preferences` and the `email_digest_items` table. The app wasn't live, so only dev and test data held them. `user_preferences` stays for Away. Past `user.email_preferences_changed` audit rows stay in the log.
 - **Unchanged:** Away (FR-33) still decides who covers for the accountant, and the monthly spending summary (Stage 4) will always be sent.
+
+## Over-budget expenses: warn, allow, board decides, balance goes negative (FR-43, Stage 3) (2026-10-16)
+
+The church's rule for expenses (built in Stage 3):
+
+- **Requester:** when Remaining after a submission would be below zero, whether or not the department was already over, they see "This takes Media over budget by $X. You can still submit; the Board Chair must approve it." The over-budget explanation is required (FR-40), and submitting stays allowed.
+- **Approvers:** the accountant and the Board Chair (or Vice-Chair) both see the overage and the explanation above their decision buttons. The figure is worked out at the moment of each decision, so two pending submissions can't each hide an overage (AC-140).
+- **Balance:** the amount is charged at the Board Chair's final approval, matching AC-73. FR-43 had implied the accountant's approval, and that wording is corrected. Remaining then goes below zero, shown as "Over budget by $X" (never a bare minus), the status becomes Over budget, and the FR-28 alerts fire (AC-139).
+- **Unchanged:** every expense already needs Board Chair approval at any amount (6B.4), so "subject to board approval" needs no new step.
+
+Updated: requirements 6B.3, 6B.4, FR-43, AC-70, the new AC-139 and AC-140, DRD budget strip and Board Chair review, and the user manual.

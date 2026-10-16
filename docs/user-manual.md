@@ -113,7 +113,7 @@ Spend against your approved annual budget with two kinds of submission:
 2. Choose the department. The **budget strip** shows Available, Committed, Spent and Remaining.
 3. Enter the title and why it is needed.
 4. Purchase request: add items (before tax) and choose **How it will be bought**. Expense claim: add receipt lines (amount paid including tax), choose who is paid and how (cheque or e-transfer), and attach photos or PDFs of the receipts.
-5. If it would take the department over budget, explain why.
+5. If it would take the department over budget, you'll see a warning with the amount. You can still submit: explain why it's needed, and the accountant and the Board Chair decide. If it's approved, the department shows as over budget.
 6. Preview and **Confirm submission**.
 
 ### What happens next
@@ -164,7 +164,7 @@ Each department has a **Primary requester** (accountable for the department's bu
 
 ### Expenses (first approval)
 
-1. **Expenses → Review queue**. Open a submission to see items, receipts, and the budget before and after.
+1. **Expenses → Review queue**. Open a submission to see items, receipts, and the budget before and after. If it takes the department over budget, a warning shows by how much, with the requester's explanation.
 2. Choose **Approve and send to Board Chair**, **Approve a different amount**, **Return for clarification**, or **Decline**.
 
 ### Spending
@@ -190,7 +190,7 @@ Every workbook has a **Summary** sheet (one row per budget, requested and approv
 ## 6. Board Chair and Vice-Chair
 
 1. When the accountant approves an expense, you get an email and a task: **Final approval**.
-2. Open it from the email or **Expenses → Awaiting my approval**. You see the amount, the accountant's note, receipts, and the department's remaining budget.
+2. Open it from the email or **Expenses → Awaiting my approval**. You see the amount, the accountant's note, receipts, and the department's remaining budget. If it takes the department over budget, a warning shows by how much, with the requester's explanation; your final approval is what charges it, and the department then shows as over budget.
 3. Choose **Give final approval**, **Approve a smaller amount** (including tax, with a reason), **Return to accountant** with a question, or **Decline** with a reason.
 4. The Chair can turn on **Away**; the Vice-Chair then gets the tasks. The Vice-Chair also decides when the Chair represents the department or is the payee. Decisions show who made them.
 

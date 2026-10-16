@@ -1570,7 +1570,7 @@ The administrator can optionally give the **Expense submitter** permission to a 
 6. Expense claim only: enter who should be paid (**Payee**: self or another named person, or "Church card, nothing owed") and their preferred payment method (cheque or e-transfer, with e-transfer email). No bank account numbers are collected.
 7. Expense claim only: attach receipt images or PDFs (see 6B.9).
 8. Review the totals: Subtotal, Sales tax (12%), Total (purchase request) or Total paid (claim); plus Remaining after this submission.
-9. If the submission would take the department over budget, a warning appears and an **Over-budget explanation** is required.
+9. If Remaining after this submission would be below zero (whether or not the department was already over), a warning appears: "This takes Media over budget by $X. You can still submit; the Board Chair must approve it." An **Over-budget explanation** is required, and the requester can still submit (FR-43).
 10. Preview, then **Confirm submission**.
 11. Receipt email to the requester (and payee if different); notice email to the accountant.
 
@@ -1587,7 +1587,7 @@ Every expense submission (purchase request and expense claim, any amount) needs 
 
 **Level 2: Board Chair**
 
-5. The Board Chair opens their queue (email link or dashboard) and sees the submission, the accountant's approved amount and note, the budget impact, and receipts.
+5. The Board Chair opens their queue (email link or dashboard) and sees the submission, the accountant's approved amount and note, the budget impact, and receipts. An over-budget submission shows the same over-budget warning and explanation the accountant saw (FR-43).
 6. Choose: **Give final approval**, **Approve a smaller amount** (incl. tax, with reason), **Return to accountant** with a question (status back to In Review; the accountant can then ask the requester), or **Decline** (reason required).
 7. On final approval, the status becomes **Approved**, and:
    - the requester (and payee, if different) receives **"Your expense has been approved"** with the final amount;
@@ -1658,8 +1658,12 @@ Claims already paid on the church card by the requester are recorded by the Chur
 
 ## FR-43: Over-Budget Submissions
 
-- Allowed, but the requester must give an over-budget explanation, and the accountant's review screen shows "This takes Media over budget by $X".
-- The accountant may approve (the department becomes Over budget and alerts fire as in FR-28), approve a smaller amount, return, or decline, or first create a budget amendment (FR-27).
+- **Allowed, never blocked.** When Remaining after a submission would be below zero, whether or not the department was already over budget, the requester sees: "This takes Media over budget by $X. You can still submit; the Board Chair must approve it." They must give an over-budget explanation, and can then submit as usual.
+- **Both approvers see it.** The accountant's review screen and the Board Chair's (or Vice-Chair's) decision screen show "This takes Media over budget by $X" and the requester's explanation above the decision buttons, so each decides knowing the overage.
+- **Worked out live.** Remaining before and after is calculated at each decision from the department's current Available, Committed and Spent, not from the figure at submission, so two pending submissions can't each hide an overage.
+- The accountant may approve and send to the Board Chair, approve a smaller amount, return, or decline, or first create a budget amendment (FR-27). The Board Chair may give final approval, approve a smaller amount, return to the accountant, or decline.
+- **The balance goes negative at final approval.** On the Board Chair's final approval the amount is charged (FR-42), Remaining goes below zero and is shown as "Over budget by $X" (never a bare minus sign), the department's status becomes Over budget, and the alerts of FR-28 fire. Before final approval the budget is not charged (AC-73).
+- Decided by the church 2026-10-16 (docs/decisions.md).
 
 ## FR-44: Editing and Withdrawing
 
@@ -2575,7 +2579,9 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 - **AC-67** An expense claim of $985.60 linked to it, once approved, releases the $1,008.00 commitment and adds $985.60 to Spent.
 - **AC-68** An unlinked claim with receipts of $112.00 and $56.00 totals $168.00 and adds no tax.
 - **AC-69** Approving a different amount of $500.00 (incl. tax) stores $446.43 + $53.57 tax.
-- **AC-70** A submission that exceeds Remaining requires an over-budget explanation and shows the overage to the accountant.
+- **AC-70** A submission that exceeds Remaining shows the requester the over-budget warning, requires an over-budget explanation, can still be submitted, and shows the overage and explanation to the accountant and to the Board Chair (or Vice-Chair) when they decide.
+- **AC-139** After the Board Chair gives final approval to an expense that exceeds Remaining, the department's Remaining is below zero, shown as "Over budget by $X", and its status is Over budget.
+- **AC-140** The over-budget figure an approver sees is worked out at the time of their decision, including expenses approved since the submission.
 - **AC-71** A requester can edit a submission until review starts, and cannot after.
 - **AC-72** An approver cannot approve their own claim or one for their own department.
 - **AC-73** After the accountant approves, the status is Awaiting Board Chair, the Board Chair is emailed, and the budget is not yet charged.
