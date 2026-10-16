@@ -52,15 +52,16 @@ describe("navigationFor", () => {
       "/expenses/new",
       "/expenses/mine",
       "/spending/my-department",
-      "/reports/analytics",
     ]);
     expect(nav.map((a) => a.id)).not.toContain("admin");
+    expect(nav.map((a) => a.id)).not.toContain("reports");
   });
 
-  it("gives every role Analytics & Audit, read-only for the board (FR-52)", () => {
-    for (const role of ROLES) {
+  it("gives every staff role Analytics & Audit, read-only for the board (FR-52)", () => {
+    for (const role of ROLES.filter((r) => r !== "requester")) {
       expect(item(navigationFor([role]), "/reports/analytics")).toBeDefined();
     }
+    expect(item(navigationFor(["requester"]), "/reports/analytics")).toBeUndefined();
     expect(item(navigationFor(["board_chair"]), "/reports/analytics")).toMatchObject({
       viewOnly: true,
     });
