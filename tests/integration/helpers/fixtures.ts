@@ -1,4 +1,6 @@
+import { splitInclusive } from "@/lib/money";
 import {
+  approvalDecisions,
   budgetCycles,
   budgetLineItems,
   budgetRequests,
@@ -114,4 +116,62 @@ export async function insertRevision(db: Db, budgetRequestId: string, editedByUs
     })
     .returning();
   return row;
+}
+
+/**
+ * An approved annual budget whose decision has reached the department (FR-19a), so the
+ * department can submit expenses against it (AC-78). One line, approved as the total.
+ */
+export async function insertApprovedBudget(
+  db: Db,
+  ids: { cycleId: string; departmentId: string; userId: string; approverUserId?: string },
+  totalCents: number,
+  options: { released?: boolean } = {},
+) {
+  const { subtotal, tax, total } = splitInclusive(totalCents, "0.1200");
+  const request = await insertDraft(
+    db,
+    { cycleId: ids.cycleId, departmentId: ids.departmentId, userId: ids.userId },
+    {
+      status: "approved",
+      referenceNumber: `IFC-2027-${String(++counter).padStart(4, "0")}`,
+      taxRate: "0.1200",
+      requestedSubtotalCents: subtotal,
+      requestedTaxCents: tax,
+      requestedTotalCents: total,
+      approvedSubtotalCents: subtotal,
+      approvedTaxCents: tax,
+      approvedTotalCents: total,
+      submittedAt: new Date("2026-10-20T17:00:00Z"),
+      approvedAt: new Date("2026-11-20T17:00:00Z"),
+      versionNumber: 1,
+    },
+  );
+  const [revision] = await db
+    .insert(requestRevisions)
+    .values({
+      budgetRequestId: request.id,
+      revisionNumber: 1,
+      kind: "submission",
+      editedByUserId: ids.userId,
+      taxRate: "0.1200",
+      subtotalCents: subtotal,
+      taxCents: tax,
+      totalCents: total,
+      requestSnapshot: { title: request.title, lines: [] },
+    })
+    .returning();
+  await db.insert(approvalDecisions).values({
+    budgetRequestId: request.id,
+    requestRevisionId: revision.id,
+    decision: "approved",
+    method: "as_requested",
+    approvedSubtotalCents: subtotal,
+    approvedTaxCents: tax,
+    approvedTotalCents: total,
+    approverUserId: ids.approverUserId ?? ids.userId,
+    actingRole: "accountant",
+    releasedAt: options.released === false ? null : new Date("2026-11-20T17:00:00Z"),
+  });
+  return request;
 }

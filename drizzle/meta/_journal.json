@@ -127,6 +127,13 @@
       "when": 1792175957659,
       "tag": "0017_pco_leader_suggestions",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792190926555,
+      "tag": "0018_expenses",
+      "breakpoints": true
     }
   ]
 }

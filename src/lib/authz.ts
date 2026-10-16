@@ -44,10 +44,21 @@ export type Action =
   | "annual.message_send"
   // Expenses (Part B)
   | "expense.view"
+  /** Every department's expenses (All expenses), not just one's own. */
+  | "expense.view_all"
   | "expense.submit"
+  /** The accountant's review queue (6B.4 level 1). */
+  | "expense.review_queue"
   | "expense.first_approve"
+  /** The Board Chair's queue, "Awaiting my approval" (6B.4 level 2). */
+  | "expense.board_queue"
   | "expense.final_approve"
+  /** The Ready to process queue (6B.5). */
+  | "expense.process_queue"
   | "expense.pay"
+  /** Cancel an approved purchase request that won't go ahead (FR-44). */
+  | "expense.cancel"
+  | "expense.export"
   // Spending
   | "spending.view"
   | "spending.record"
@@ -88,6 +99,8 @@ export type AuthzContext = {
   payeeUserId?: string;
   /** An expense has reached the Board Chair (they read only what is sent to them). */
   sentToBoard?: boolean;
+  /** Who submitted the expense: nobody approves their own claim (FR-47). */
+  requesterUserId?: string;
 };
 
 export type DenyReason =
@@ -139,9 +152,10 @@ const primaryOfDepartment: Check = (s, ctx) =>
 const notOwnDepartment: Check = (s, ctx) =>
   ctx.departmentId === undefined || represents(s, ctx.departmentId) ? "conflict_of_interest" : null;
 
-/** 3.3: the board also never approves an expense that pays themselves. */
+/** 3.3, FR-47: nobody approves an expense that pays themselves or that they submitted. */
 const notOwnDepartmentOrPayee: Check = (s, ctx) =>
-  notOwnDepartment(s, ctx) ?? (ctx.payeeUserId === s.id ? "conflict_of_interest" : null);
+  notOwnDepartment(s, ctx) ??
+  (ctx.payeeUserId === s.id || ctx.requesterUserId === s.id ? "conflict_of_interest" : null);
 
 const notPayee: Check = (s, ctx) => (ctx.payeeUserId === s.id ? "conflict_of_interest" : null);
 
@@ -203,10 +217,23 @@ const RULES: Record<Action, readonly Rule[]> = {
     { roles: BOARD, check: sentToBoard, readOnly: true },
     { roles: ["system_admin"], readOnly: true },
   ],
+  "expense.view_all": [
+    { roles: [...ACCOUNTANTS, "church_admin"] },
+    { roles: ["system_admin"], readOnly: true },
+  ],
   "expense.submit": [{ roles: ["requester"], check: ownDepartment }],
+  "expense.review_queue": [{ roles: ACCOUNTANTS }, { roles: ["system_admin"], readOnly: true }],
   "expense.first_approve": [{ roles: ACCOUNTANTS, check: notOwnDepartmentOrPayee }],
+  "expense.board_queue": [{ roles: BOARD }, { roles: ["system_admin"], readOnly: true }],
+  // The service also lets the Vice-Chair act only while the Chair is Away or conflicted.
   "expense.final_approve": [{ roles: BOARD, check: notOwnDepartmentOrPayee }],
+  "expense.process_queue": [
+    { roles: [...ACCOUNTANTS, "church_admin"] },
+    { roles: ["system_admin"], readOnly: true },
+  ],
   "expense.pay": [{ roles: [...ACCOUNTANTS, "church_admin"], check: notPayee }],
+  "expense.cancel": [{ roles: ["requester"], check: ownDepartment }, { roles: ACCOUNTANTS }],
+  "expense.export": [{ roles: [...ACCOUNTANTS, "church_admin", "system_admin"] }],
 
   "spending.view": [
     { roles: [...ACCOUNTANTS, "church_admin"] },

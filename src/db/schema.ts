@@ -22,11 +22,12 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { ANNUAL_STATUSES } from "@/domain/annual/status";
+import { EXPENSE_STATUSES, EXPENSE_TYPES } from "@/domain/expenses/status";
 import { REPRESENTATIVE_TYPES, ROLES } from "@/lib/roles";
 
 /*
- * Database schema for Part A (Requirements section 9). Part B tables (6B.10) and
- * spending (9.15, 9.16) arrive with their stages.
+ * Database schema (Requirements section 9, and 6B.10 for Part B expenses). Budget
+ * amendments (9.16) arrive with Stage 4.
  *
  * Rules carried by every table:
  * - Money is integer cents in BIGINT (`*_cents`); tax rates are NUMERIC(5,4).
@@ -809,6 +810,8 @@ export const emailAudienceEnum = pgEnum("email_audience", [
   "church_admin",
   "administrator",
   "person",
+  /** The Board Chair or Vice-Chair (expense final approval, 6B.4). */
+  "board",
 ]);
 
 /**
@@ -830,6 +833,9 @@ export const emailOutbox = pgTable(
     textBody: text("text_body").notNull(),
     htmlBody: text("html_body").notNull(),
     budgetRequestId: uuid("budget_request_id").references(() => budgetRequests.id),
+    expenseSubmissionId: uuid("expense_submission_id").references(
+      (): AnyPgColumn => expenseSubmissions.id,
+    ),
     cycleId: uuid("cycle_id").references(() => budgetCycles.id),
     status: emailStatusEnum("status").notNull().default("pending"),
     attempts: integer("attempts").notNull().default(0),
@@ -859,6 +865,7 @@ export const emailOutbox = pgTable(
       .where(sql`${t.dedupeKey} is not null`),
     index("email_outbox_due_idx").on(t.status, t.nextAttemptAt),
     index("email_outbox_request_idx").on(t.budgetRequestId, t.createdAt),
+    index("email_outbox_expense_idx").on(t.expenseSubmissionId, t.createdAt),
     check("email_outbox_sent_has_time", sql`(${t.status} = 'sent') = (${t.sentAt} is not null)`),
     check("email_outbox_attempts_non_negative", sql`${t.attempts} >= 0`),
   ],
@@ -898,5 +905,388 @@ export const brandAssets = pgTable(
       sql`${t.contentType} in ('image/png', 'image/jpeg', 'image/svg+xml')`,
     ),
     check("brand_assets_size", sql`${t.byteSize} > 0 and ${t.byteSize} <= 1048576`),
+  ],
+);
+
+// ---------------------------------------------------------------- Part B: expenses (6B.10)
+
+export const expenseTypeEnum = pgEnum("expense_type", EXPENSE_TYPES);
+export const expenseStatusEnum = pgEnum("expense_status", EXPENSE_STATUSES);
+/** FR-40 "How it will be bought" (purchase requests). */
+export const howBoughtEnum = pgEnum("expense_how_bought", [
+  "church_account",
+  "requester_claims",
+  "supplier_invoice",
+]);
+/** Who is paid for a claim (6B.3 step 6). */
+export const payeeKindEnum = pgEnum("expense_payee_kind", ["self", "other", "church_card"]);
+export const paymentPreferenceEnum = pgEnum("expense_payment_preference", [
+  "cheque",
+  "e_transfer",
+  "none",
+]);
+export const expenseRevisionKindEnum = pgEnum("expense_revision_kind", [
+  "submission",
+  "edit",
+  "clarification_response",
+]);
+export const expenseDecisionLevelEnum = pgEnum("expense_decision_level", ["accountant", "board"]);
+export const expenseDecisionEnum = pgEnum("expense_decision", [
+  "approved",
+  "approved_different_amount",
+  "returned",
+  "declined",
+]);
+/** 6B.5 "How it was paid". */
+export const paymentMethodEnum = pgEnum("expense_payment_method", [
+  "cheque",
+  "church_card",
+  "cash",
+  "e_transfer",
+  "supplier_eft",
+  "other",
+]);
+
+/**
+ * A purchase request (before buying) or an expense claim (after buying), 6B.1. Amounts
+ * are integer cents. A purchase request adds tax to its items (FR-41); a claim's lines
+ * already include tax, so its subtotal equals its total and its tax is zero. The tax rate
+ * is snapshotted at submission.
+ */
+export const expenseSubmissions = pgTable(
+  "expense_submissions",
+  {
+    id: id(),
+    referenceNumber: text("reference_number").unique(),
+    type: expenseTypeEnum("type").notNull(),
+    budgetCycleId: uuid("budget_cycle_id")
+      .notNull()
+      .references(() => budgetCycles.id),
+    departmentId: uuid("department_id")
+      .notNull()
+      .references(() => departments.id),
+    departmentNameSnapshot: text("department_name_snapshot").notNull(),
+    requesterUserId: uuid("requester_user_id")
+      .notNull()
+      .references(() => users.id),
+    title: text("title").notNull().default(""),
+    justification: text("justification").notNull().default(""),
+    status: expenseStatusEnum("status").notNull().default("draft"),
+    taxRate: taxRate("tax_rate"),
+    subtotalCents: cents("subtotal_cents"),
+    taxCents: cents("tax_cents"),
+    totalCents: cents("total_cents"),
+    approvedSubtotalCents: cents("approved_subtotal_cents"),
+    approvedTaxCents: cents("approved_tax_cents"),
+    approvedTotalCents: cents("approved_total_cents"),
+    approvalNote: text("approval_note"),
+    overBudgetExplanation: text("over_budget_explanation"),
+    /** FR-46: a claim submitted long after the purchase explains why. */
+    lateClaimExplanation: text("late_claim_explanation"),
+    howBought: howBoughtEnum("how_bought"),
+    linkedPurchaseRequestId: uuid("linked_purchase_request_id").references(
+      (): AnyPgColumn => expenseSubmissions.id,
+    ),
+    payeeKind: payeeKindEnum("payee_kind"),
+    payeeName: text("payee_name"),
+    payeeEmail: text("payee_email"),
+    payeeUserId: uuid("payee_user_id").references(() => users.id),
+    paymentPreference: paymentPreferenceEnum("payment_preference"),
+    /** 6B.9: no receipt, and why (the accountant sees it). */
+    noReceiptReason: text("no_receipt_reason"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    version: version(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("expense_submissions_cycle_department_idx").on(t.budgetCycleId, t.departmentId),
+    index("expense_submissions_status_idx").on(t.status, t.submittedAt),
+    check(
+      "expense_submissions_amounts_reconcile",
+      sql`(${t.subtotalCents} is null and ${t.taxCents} is null and ${t.totalCents} is null)
+        or (${t.subtotalCents} >= 0 and ${t.taxCents} >= 0
+            and ${t.totalCents} = ${t.subtotalCents} + ${t.taxCents})`,
+    ),
+    check(
+      "expense_submissions_approved_reconcile",
+      sql`(${t.approvedSubtotalCents} is null and ${t.approvedTaxCents} is null and ${t.approvedTotalCents} is null)
+        or (${t.approvedSubtotalCents} >= 0 and ${t.approvedTaxCents} >= 0
+            and ${t.approvedTotalCents} = ${t.approvedSubtotalCents} + ${t.approvedTaxCents})`,
+    ),
+    check(
+      "expense_submissions_submitted_has_snapshot",
+      sql`${t.status} = 'draft' or (${t.totalCents} is not null
+        and ${t.referenceNumber} is not null and ${t.submittedAt} is not null)`,
+    ),
+    check(
+      "expense_submissions_claim_adds_no_tax",
+      sql`${t.type} <> 'expense_claim' or ${t.taxCents} is null or ${t.taxCents} = 0`,
+    ),
+    check(
+      "expense_submissions_charged_has_amount",
+      sql`${t.status} not in ('approved', 'processing', 'paid', 'purchased', 'closed', 'cancelled')
+        or ${t.approvedTotalCents} is not null`,
+    ),
+    check(
+      "expense_submissions_tax_rate_range",
+      sql`${t.taxRate} is null or (${t.taxRate} >= 0 and ${t.taxRate} <= 1)`,
+    ),
+  ],
+);
+
+/** A purchase request's items, before tax (FR-40). */
+export const expenseItems = pgTable(
+  "expense_items",
+  {
+    id: id(),
+    expenseSubmissionId: uuid("expense_submission_id")
+      .notNull()
+      .references(() => expenseSubmissions.id),
+    itemName: text("item_name").notNull(),
+    quantity: integer("quantity").notNull(),
+    unitPriceCents: cents("unit_price_cents").notNull(),
+    lineTotalCents: cents("line_total_cents").notNull(),
+    productUrl: text("product_url"),
+    annualLineItemId: uuid("annual_line_item_id").references(() => budgetLineItems.id),
+    sortOrder: integer("sort_order").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("expense_items_submission_idx").on(t.expenseSubmissionId, t.sortOrder),
+    check("expense_items_quantity_range", sql`${t.quantity} between 1 and 10000`),
+    check("expense_items_unit_price_range", sql`${t.unitPriceCents} between 0 and 100000000`),
+    check(
+      "expense_items_total_reconciles",
+      sql`${t.lineTotalCents} = ${t.quantity}::bigint * ${t.unitPriceCents}`,
+    ),
+    check(
+      "expense_items_url_http",
+      sql`${t.productUrl} is null or ${t.productUrl} ~* '^https?://'`,
+    ),
+  ],
+);
+
+/** An expense claim's receipt lines, as paid, including tax (FR-40). */
+export const expenseReceiptLines = pgTable(
+  "expense_receipt_lines",
+  {
+    id: id(),
+    expenseSubmissionId: uuid("expense_submission_id")
+      .notNull()
+      .references(() => expenseSubmissions.id),
+    purchaseDate: date("purchase_date").notNull(),
+    vendor: text("vendor").notNull(),
+    description: text("description").notNull(),
+    amountCents: cents("amount_cents").notNull(),
+    receiptNumber: text("receipt_number"),
+    sortOrder: integer("sort_order").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("expense_receipt_lines_submission_idx").on(t.expenseSubmissionId, t.sortOrder),
+    check("expense_receipt_lines_amount_range", sql`${t.amountCents} between 1 and 100000000`),
+  ],
+);
+
+/**
+ * Receipt photos and PDFs on claims (6B.9), stored privately in R2. Never deleted:
+ * removing one sets `removed_at`, and the file stays for the retention period.
+ */
+export const expenseReceiptFiles = pgTable(
+  "expense_receipt_files",
+  {
+    id: id(),
+    expenseSubmissionId: uuid("expense_submission_id")
+      .notNull()
+      .references(() => expenseSubmissions.id),
+    storageKey: text("storage_key").notNull().unique(),
+    fileName: text("file_name").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    sha256: char("sha256", { length: 64 }).notNull(),
+    uploadedByUserId: uuid("uploaded_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    uploadedAt: createdAt(),
+    removedAt: timestamp("removed_at", { withTimezone: true }),
+    removedByUserId: uuid("removed_by_user_id").references(() => users.id),
+  },
+  (t) => [
+    index("expense_receipt_files_submission_idx").on(t.expenseSubmissionId),
+    check(
+      "expense_receipt_files_type",
+      sql`${t.contentType} in ('image/jpeg', 'image/png', 'application/pdf')`,
+    ),
+    check("expense_receipt_files_size", sql`${t.sizeBytes} > 0 and ${t.sizeBytes} <= 10485760`),
+  ],
+);
+
+/** Every submitted version, frozen (FR-44 "every version is preserved"). Append-only. */
+export const expenseRevisions = pgTable(
+  "expense_revisions",
+  {
+    id: id(),
+    expenseSubmissionId: uuid("expense_submission_id")
+      .notNull()
+      .references(() => expenseSubmissions.id),
+    revisionNumber: integer("revision_number").notNull(),
+    kind: expenseRevisionKindEnum("kind").notNull(),
+    editedByUserId: uuid("edited_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    taxRate: taxRate("tax_rate"),
+    subtotalCents: cents("subtotal_cents").notNull(),
+    taxCents: cents("tax_cents").notNull(),
+    totalCents: cents("total_cents").notNull(),
+    /** Every field and line exactly as submitted. */
+    snapshot: jsonb("snapshot").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique("expense_revisions_submission_number_key").on(t.expenseSubmissionId, t.revisionNumber),
+    check(
+      "expense_revisions_reconciles",
+      sql`${t.subtotalCents} >= 0 and ${t.taxCents} >= 0 and ${t.totalCents} = ${t.subtotalCents} + ${t.taxCents}`,
+    ),
+  ],
+);
+
+/** Each decision at each level (6B.4), with the version decided on. Append-only. */
+export const expenseDecisions = pgTable(
+  "expense_decisions",
+  {
+    id: id(),
+    expenseSubmissionId: uuid("expense_submission_id")
+      .notNull()
+      .references(() => expenseSubmissions.id),
+    revisionId: uuid("revision_id")
+      .notNull()
+      .references(() => expenseRevisions.id),
+    level: expenseDecisionLevelEnum("level").notNull(),
+    decision: expenseDecisionEnum("decision").notNull(),
+    approvedSubtotalCents: cents("approved_subtotal_cents"),
+    approvedTaxCents: cents("approved_tax_cents"),
+    approvedTotalCents: cents("approved_total_cents"),
+    reason: text("reason"),
+    /** FR-43: the department's Remaining after this decision, worked out when it was made. */
+    remainingAfterCents: cents("remaining_after_cents"),
+    decidedByUserId: uuid("decided_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    actingRole: roleEnum("acting_role").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("expense_decisions_submission_idx").on(t.expenseSubmissionId, t.createdAt),
+    check(
+      "expense_decisions_amounts_reconcile",
+      sql`(${t.approvedSubtotalCents} is null and ${t.approvedTaxCents} is null and ${t.approvedTotalCents} is null)
+        or (${t.approvedSubtotalCents} >= 0 and ${t.approvedTaxCents} >= 0
+            and ${t.approvedTotalCents} = ${t.approvedSubtotalCents} + ${t.approvedTaxCents})`,
+    ),
+    check(
+      "expense_decisions_approval_has_amount",
+      sql`${t.decision} not in ('approved', 'approved_different_amount') or ${t.approvedTotalCents} is not null`,
+    ),
+  ],
+);
+
+/** How an approved expense was paid or bought (6B.5). Append-only. */
+export const expensePayments = pgTable(
+  "expense_payments",
+  {
+    id: id(),
+    expenseSubmissionId: uuid("expense_submission_id")
+      .notNull()
+      .unique()
+      .references(() => expenseSubmissions.id),
+    method: paymentMethodEnum("method").notNull(),
+    methodOther: text("method_other"),
+    paidOn: date("paid_on").notNull(),
+    amountCents: cents("amount_cents").notNull(),
+    differenceNote: text("difference_note"),
+    reference: text("reference"),
+    chequeSigner1Id: uuid("cheque_signer_1_id").references(() => signingAuthorities.id),
+    chequeSigner1Name: text("cheque_signer_1_name"),
+    chequeSigner2Id: uuid("cheque_signer_2_id").references(() => signingAuthorities.id),
+    chequeSigner2Name: text("cheque_signer_2_name"),
+    purchasedBy: text("purchased_by"),
+    cashReceivedBy: text("cash_received_by"),
+    receiptSigned: boolean("receipt_signed"),
+    notes: text("notes"),
+    recordedByUserId: uuid("recorded_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    recordedAt: createdAt(),
+  },
+  (t) => [
+    check("expense_payments_amount_positive", sql`${t.amountCents} > 0`),
+    check(
+      "expense_payments_cheque_signers",
+      sql`${t.method} <> 'cheque' or (${t.chequeSigner1Id} is not null and ${t.chequeSigner2Id} is not null
+        and ${t.chequeSigner1Id} <> ${t.chequeSigner2Id} and ${t.reference} is not null)`,
+    ),
+    check(
+      "expense_payments_other_named",
+      sql`${t.method} <> 'other' or ${t.methodOther} is not null`,
+    ),
+  ],
+);
+
+// ---------------------------------------------------------------- spending (9.15)
+
+export const spendingEntryTypeEnum = pgEnum("spending_entry_type", ["expense", "refund"]);
+export const spendingEntryStatusEnum = pgEnum("spending_entry_status", ["recorded", "voided"]);
+
+/**
+ * Money actually spent against a department's budget (FR-24), including tax. Stage 3
+ * creates entries from approved claims and purchases (FR-42); Stage 4 adds the ledger
+ * where they're entered, corrected and voided. Never deleted: voided with a reason.
+ */
+export const spendingEntries = pgTable(
+  "spending_entries",
+  {
+    id: id(),
+    budgetCycleId: uuid("budget_cycle_id")
+      .notNull()
+      .references(() => budgetCycles.id),
+    departmentId: uuid("department_id")
+      .notNull()
+      .references(() => departments.id),
+    budgetRequestId: uuid("budget_request_id").references(() => budgetRequests.id),
+    expenseSubmissionId: uuid("expense_submission_id").references(() => expenseSubmissions.id),
+    entryType: spendingEntryTypeEnum("entry_type").notNull(),
+    spentOn: date("spent_on").notNull(),
+    payee: text("payee").notNull(),
+    description: text("description").notNull(),
+    amountCents: cents("amount_cents").notNull(),
+    paymentMethod: text("payment_method"),
+    referenceNumber: text("reference_number"),
+    notes: text("notes"),
+    overspendNote: text("overspend_note"),
+    status: spendingEntryStatusEnum("status").notNull().default("recorded"),
+    voidReason: text("void_reason"),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    updatedByUserId: uuid("updated_by_user_id").references(() => users.id),
+    version: version(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("spending_entries_cycle_department_idx").on(t.budgetCycleId, t.departmentId),
+    // One automatic entry per approved claim or purchase (FR-42).
+    uniqueIndex("spending_entries_one_per_expense")
+      .on(t.expenseSubmissionId)
+      .where(sql`${t.expenseSubmissionId} is not null and ${t.status} = 'recorded'`),
+    check("spending_entries_amount_positive", sql`${t.amountCents} > 0`),
+    check(
+      "spending_entries_void_has_reason",
+      sql`${t.status} <> 'voided' or ${t.voidReason} is not null`,
+    ),
   ],
 );
