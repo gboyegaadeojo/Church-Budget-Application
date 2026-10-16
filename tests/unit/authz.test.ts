@@ -193,6 +193,18 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     { ...YOUTH, sentToBoard: true },
     ["no", "act", "act", "read", "read", "act", "read"],
   ],
+  [
+    "change how decisions are released (FR-19a)",
+    "annual.release",
+    {},
+    ["no", "act", "act", "no", "no", "no", "no"],
+  ],
+  [
+    "see a decision before it's released (FR-19a)",
+    "annual.view_held",
+    {},
+    ["no", "act", "act", "read", "read", "read", "read"],
+  ],
   ["see My tasks", "home.view", {}, ["act", "act", "act", "act", "act", "act", "act"]],
   [
     // Staff only (docs/decisions.md, 2026-10-16).

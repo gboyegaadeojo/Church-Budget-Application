@@ -4,6 +4,7 @@ import { budgetLineItems, budgetRequests, departments, users } from "@/db/schema
 import type { Tx } from "@/db/types";
 import { FOOTER_LINKS, navigationFor } from "@/domain/navigation";
 import { authorize, type Subject } from "@/lib/authz";
+import { hiddenDecisions } from "@/domain/annual/release";
 
 /**
  * Global search (DRD 6.0 "Finding things quickly"): a reference number, a department, a
@@ -60,13 +61,20 @@ export async function globalSearch(
     )
     .orderBy(desc(budgetRequests.updatedAt))
     .limit(40);
+  // A held decision reads In Review to the department until it's released (FR-19a).
+  const hidden = await hiddenDecisions(
+    tx,
+    viewer,
+    budgets.map((b) => b.id),
+  );
   for (const b of budgets) {
     const ctx = { departmentId: b.departmentId, annualStatus: b.status };
     if (!authorize(viewer, "annual.view", ctx).allowed) continue;
+    const status = hidden.has(b.id) ? "in_review" : b.status;
     results.push({
       group: "budgets",
       label: [b.reference, b.title].filter(Boolean).join(" · ") || annualCopy.dashboard.untitled,
-      detail: `${b.department} · ${annualCopy.status[b.status].label}`,
+      detail: `${b.department} · ${annualCopy.status[status].label}`,
       href: reviews && b.status !== "draft" ? `/annual/review/${b.id}` : `/annual/${b.id}`,
     });
     if (results.length >= PER_GROUP) break;

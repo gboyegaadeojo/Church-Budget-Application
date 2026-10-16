@@ -143,6 +143,8 @@ export const emailCopy = {
       subject: (d: string, c: string, r: string) => `Copy: approved ${about(d, c, r)}`,
       heading: "You approved a budget request",
       intro: (department: string) => `${department}'s representatives were sent the approval.`,
+      heldIntro: (department: string, release: string) =>
+        `Decisions are held: ${department}'s representatives will be sent the approval on ${release}.`,
     },
     budgetAvailable: {
       subject: (d: string, c: string) => `New budget available: ${d} ${c}`,
@@ -160,6 +162,35 @@ export const emailCopy = {
       subject: (d: string, c: string, r: string) => `Copy: declined ${about(d, c, r)}`,
       heading: "You declined a budget request",
       intro: (department: string) => `${department}'s representatives were sent the reason.`,
+      heldIntro: (department: string, release: string) =>
+        `Decisions are held: ${department}'s representatives will be sent the reason on ${release}.`,
+    },
+    /** The shared message the accountant adds to every release email (FR-19a). */
+    releaseMessage: "A message from the accountant",
+    /** Scheduled release (FR-19a): warnings and the summary for the accountant. */
+    releaseWarning: {
+      subject: (cycle: string, release: string) =>
+        `${cycle} decisions go out ${release}: some departments aren't decided`,
+      heading: "Some departments aren't decided yet",
+      intro: (cycle: string, release: string) =>
+        `${cycle} decisions are scheduled to go out on ${release}.`,
+      undecided: "Submitted, not decided yet",
+      notSubmitted: "Not submitted",
+      action:
+        "Decide the rest before then, or change the schedule. Decided budgets go out at the scheduled time; budgets decided later are sent straight away.",
+      button: "Open Decision release",
+    },
+    released: {
+      subject: (cycle: string, count: number) =>
+        `${cycle} decisions released: ${count} ${plural(count, "email", "emails")} sent`,
+      heading: "Budget decisions were released",
+      intro: (cycle: string, time: string) =>
+        `${cycle} decisions were released to the departments on ${time}.`,
+      released: "Released",
+      undecided: "Still to decide (sent as soon as you decide)",
+      notSubmitted: "Not submitted",
+      action: noAction,
+      button: "Open Decision release",
     },
     reopened: {
       subject: (d: string, c: string, r: string) => `Budget reopened: ${about(d, c, r)}`,

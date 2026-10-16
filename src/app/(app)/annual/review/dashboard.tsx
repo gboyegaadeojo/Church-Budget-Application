@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { CalendarClock, Eye } from "lucide-react";
 import { BoardAllocationBar } from "@/components/board-allocation";
 import { DownloadButton } from "@/components/download-button";
 import { Badge, EmptyState, PageHeader, PermissionDenied, Section } from "@/components/ui/display";
@@ -20,7 +20,7 @@ import { viewerAllowedTo } from "@/lib/admin-server";
 import { authorize } from "@/lib/authz";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
-import { formatDate, zonedDate } from "@/lib/time-zone";
+import { formatDate, formatDateTime, zonedDate } from "@/lib/time-zone";
 import { AnnualStatusBadge } from "../status-badge";
 
 const r = annualCopy.review;
@@ -164,6 +164,40 @@ export async function ReviewDashboardView({
           </section>
 
           {dashboard.board && <BoardAllocationBar board={dashboard.board} />}
+
+          {dashboard.release && (
+            // DRD 6.7b: the Decision emails card, with the full plan on Decision release.
+            <section
+              aria-labelledby="decision-emails-heading"
+              className={cn(
+                "flex flex-wrap items-center gap-3 rounded-card border bg-surface p-4 shadow-card",
+                dashboard.release.holding ? "border-warning" : "border-border",
+              )}
+            >
+              <CalendarClock
+                aria-hidden="true"
+                className={cn(
+                  "size-5 shrink-0",
+                  dashboard.release.holding ? "text-warning" : "text-fg-muted",
+                )}
+              />
+              <div className="min-w-0 flex-1">
+                <h2 id="decision-emails-heading" className="text-sm font-semibold">
+                  {annualCopy.release.cardHeading}
+                </h2>
+                <p className="text-sm text-fg-muted">
+                  {dashboard.release.holding && dashboard.release.releaseAt
+                    ? annualCopy.release.current.holding(
+                        formatDateTime(dashboard.release.releaseAt, zone),
+                      )
+                    : annualCopy.release.current.immediate}
+                </p>
+              </div>
+              <Link href={`/annual/release?cycle=${dashboard.cycle!.id}`} className={linkClass}>
+                {annualCopy.release.manage}
+              </Link>
+            </section>
+          )}
 
           <Section title={r.queueHeading} id="queue">
             {queue.length === 0 ? (
