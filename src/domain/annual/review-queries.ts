@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { z } from "zod";
+import { cycleRelease, type CycleRelease } from "./release";
 import {
   approvalAdjustments,
   approvalDecisions,
@@ -129,6 +130,8 @@ export type ReviewDashboard = {
   cycles: CycleOption[];
   cycle: CycleOption | null;
   board: BoardAllocation | null;
+  /** Hold mode for the cycle (FR-19a, DRD 6.7b). */
+  release: CycleRelease | null;
   counts: DashboardCounts;
   departments: DashboardDepartment[];
   queue: QueueRow[];
@@ -206,7 +209,15 @@ export async function getReviewDashboard(
     cycles.find((c) => c.status === "open") ??
     cycles[0] ??
     null;
-  const empty = { cycles, cycle, counts: EMPTY_COUNTS, departments: [], queue: [], board: null };
+  const empty = {
+    cycles,
+    cycle,
+    counts: EMPTY_COUNTS,
+    departments: [],
+    queue: [],
+    board: null,
+    release: null,
+  };
   if (!cycle) return { ...empty, readOnly: access.readOnly };
 
   const requests = await tx
@@ -332,6 +343,7 @@ export async function getReviewDashboard(
     departments: departmentRows,
     queue,
     board: await boardAllocation(tx, cycle.id),
+    release: await cycleRelease(tx, cycle.id),
     readOnly: access.readOnly,
   };
 }
@@ -402,6 +414,8 @@ export type ReviewView = Omit<RequestView, "lines"> & {
   approval: CurrentApproval | null;
   /** The cycle's board total and what other departments have been approved (4.2). */
   board: BoardAllocation | null;
+  /** Hold mode for the cycle: decisions made now wait for the release (FR-19a). */
+  release: CycleRelease;
   /** The person may decide now; otherwise why not (DRD 6.7 conflict-of-interest text). */
   canDecide: boolean;
   canReopen: boolean;
@@ -518,6 +532,7 @@ export async function getReviewView(
     decisions,
     approval,
     board: await boardAllocation(tx, base.cycle.id, base.id),
+    release: await cycleRelease(tx, base.cycle.id),
     canDecide: decide.allowed && decidable,
     canReopen: reopen.allowed && canTransition(base.status, "reopen"),
     blockedReason: decide.allowed ? null : decide.reason,

@@ -42,6 +42,13 @@ export const annualCopy = {
     proposedDepartment:
       "This department is still proposed. Ask the administrator to add it to the list or merge it into an existing department, then approve. You can still return or decline it.",
     notReopenable: "Only approved or declined requests can be reopened.",
+    // Scheduled release (FR-19a)
+    releaseAtRequired: "Choose the date and time the decisions go out.",
+    releaseAtInvalid: "Enter a date and time, like 2026-12-01 09:00.",
+    releaseAtFuture: "Choose a time in the future, or use Release now.",
+    releaseMessageTooLong: "Keep the message under 1,000 characters.",
+    notHolding: "Decisions for this cycle aren't being held.",
+    releaseCycleNotOpen: "Decisions can only be held for an open cycle.",
     staleVersion:
       "The department changed this request since you opened it. Review the latest version, then decide.",
     approvedTotalInvalid: "Enter the approved total including tax, like 30,000.00.",
@@ -59,6 +66,85 @@ export const annualCopy = {
     linesMismatch: "The items changed since you opened this request. Reload it and try again.",
     noLineChanges:
       "No item was changed. Use Approve as requested, or change an approved quantity or price.",
+  },
+  /** Scheduled release of decisions (FR-19a, DRD 6.7b). */
+  release: {
+    sharedOn: (date: string) => `Decisions will be shared on ${date}.`,
+    title: "Decision release",
+    intro:
+      "Choose whether departments hear about approvals and declines as you decide, or all together at a set time.",
+    cycle: "Budget cycle",
+    noCycle: "There's no budget cycle yet.",
+    show: "Show",
+    cardHeading: "Decision emails",
+    modeLabel: "How departments hear",
+    modes: {
+      immediate: "Send immediately",
+      scheduled: "Hold and release on a date",
+    },
+    modeHints: {
+      immediate: "Each approval or decline is emailed when you confirm it.",
+      scheduled:
+        "Decide every department first; all the decisions go out together at the time you choose. Questions (Return for clarification) are never held.",
+    },
+    current: {
+      immediate: "Decisions are sent as soon as you confirm them.",
+      holding: (when: string) =>
+        `Decisions are held until ${when}. Departments won't see them before then.`,
+      released: (when: string) =>
+        `Decisions were released on ${when}. Decisions made now are sent straight away.`,
+    },
+    releaseAt: "Release date and time",
+    releaseAtHint: (zone: string) => `Church time (${zone}). Emails go within 15 minutes of it.`,
+    message: "Message for every release email",
+    messageHint:
+      "Optional, for example: Thank you for your work this year. The board approved the 2027 budget on Nov 12.",
+    save: "Save",
+    saved: "Saved.",
+    switchedBack: (sent: number) =>
+      sent === 0
+        ? "Decisions are sent immediately again."
+        : `Decisions are sent immediately again. ${sent === 1 ? "1 held decision was" : `${sent} held decisions were`} sent now.`,
+    released: (sent: number) =>
+      sent === 1 ? "1 decision email was sent." : `${sent} decision emails were sent.`,
+    progress: {
+      heading: "Where the cycle stands",
+      approved: "Approved",
+      declined: "Declined",
+      undecided: "Undecided",
+      notSubmitted: "Not submitted",
+    },
+    preview: {
+      heading: "Who gets which email at release",
+      none: "No decisions are waiting to be released.",
+      department: "Department",
+      email: "Email",
+      approved: "Budget approved",
+      declined: "Budget declined",
+      to: "Sent to",
+      leaders: "The department's leaders",
+    },
+    outstanding: {
+      undecided: "Not decided yet",
+      notSubmitted: "Not submitted yet",
+      note: "Budgets decided after the release time are sent as soon as you decide them.",
+    },
+    releaseNow: "Release now",
+    releaseNowTitle: (n: number) =>
+      n === 1 ? "Send 1 decision email now?" : `Send ${n} decision emails now?`,
+    releaseNowBody:
+      "Every held decision goes to its department now, with your message. Decisions made after this are sent straight away. This can't be undone.",
+    cancel: "Cancel schedule",
+    cancelTitle: "Go back to sending immediately?",
+    cancelBody: (n: number) =>
+      n === 0
+        ? "Nothing is held yet. Decisions will be emailed as you confirm them."
+        : `The ${n === 1 ? "held decision is" : `${n} held decisions are`} sent to the departments now, and later decisions are emailed as you confirm them.`,
+    readOnly: "You can see the release plan; the accountant or backup approver changes it.",
+    banner: (when: string) =>
+      `Decisions are held until ${when}. Departments won't see them before then.`,
+    manage: "Decision release",
+    heldDone: (when: string) => `The department will see it on ${when}.`,
   },
   tasks: {
     backupReminded: "Backup reminded",
@@ -454,7 +540,7 @@ export const annualCopy = {
       declined: "Budget declined",
       reopened: "Budget reopened",
     } as Record<string, string>,
-    emailLater: "The department will be emailed once email sending is set up.",
+    emailLater: "The department has been emailed.",
     reopen: "Reopen",
     reopenTitle: "Reopen this budget?",
     reopenBody:

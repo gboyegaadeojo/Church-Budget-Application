@@ -39,6 +39,7 @@ export const helpCopy = {
         "Approve as requested; Approve a different amount (type the one approved total including tax, and the app works out the tax inside it); Adjust individual items (quantity 0 leaves an item out); Return for clarification with a question; or Decline with a reason.",
         "Check the summary and confirm. The department sees the decision straight away and is emailed. If an approval takes the year past the board-approved total, you're warned but can still approve.",
         "Reopen an approved or declined budget with a reason if the board reconsiders.",
+        "To share every decision at once, use Decision release: choose a date and time and decide every department first. Departments see In Review until then; Release now sends everything held straight away.",
         "Download Excel from a budget, from the dashboard, or from Reports for the whole cycle.",
         "You can't decide a budget for a department you lead; another accountant or the backup approver does.",
       ],

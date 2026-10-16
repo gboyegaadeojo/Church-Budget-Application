@@ -20,7 +20,14 @@ import {
   MONEY_EVENT_TYPES,
   type ActivityGroup,
 } from "@/copy/activity";
-import { auditEvents, budgetCycles, budgetRequests, departments, users } from "@/db/schema";
+import {
+  approvalDecisions,
+  auditEvents,
+  budgetCycles,
+  budgetRequests,
+  departments,
+  users,
+} from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { getChurchTimeZone } from "@/domain/settings";
 import type { Subject } from "@/lib/authz";
@@ -100,6 +107,8 @@ export type ActivityPage = {
 
 const FINANCIAL_AREAS: AuditAreaName[] = ["annual", "expenses", "spending"];
 const ACCOUNTANT_ROLES: Role[] = ["accountant", "backup_approver"];
+/** Decision events a department sees only once the decision is released (FR-19a). */
+const HELD_EVENTS = ["annual.approved", "annual.declined"];
 /** Internal events a department doesn't see about its own budget. */
 const NOT_FOR_DEPARTMENTS = ["annual.exported"];
 const FAILED_ACCESS = [
@@ -156,6 +165,12 @@ export function activityScope(actor: Subject): SQL | null {
         inArray(departmentId, mine),
         inArray(auditEvents.area, FINANCIAL_AREAS),
         notInArray(auditEvents.eventType, NOT_FOR_DEPARTMENTS),
+        // A decision held for scheduled release isn't the department's news yet (FR-19a).
+        sql`not (${inArray(auditEvents.eventType, HELD_EVENTS)} and exists (
+          select 1 from ${approvalDecisions}
+          where ${approvalDecisions.budgetRequestId} = ${request.id}
+            and ${approvalDecisions.releasedAt} is null
+            and ${approvalDecisions.decision} in ('approved', 'declined')))`,
       )!,
     );
   }

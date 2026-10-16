@@ -5,6 +5,7 @@ import {
   approvalAdjustments,
   approvalDecisions,
   approvedLineItems,
+  budgetCycles,
   budgetRequests,
   departments,
   idempotencyKeys,
@@ -17,6 +18,7 @@ import { assertCan, authorize, type Subject } from "@/lib/authz";
 import type { TaxBreakdown } from "@/lib/money";
 import { approvedFigures, decisionSchema, DECISION_LIMITS, type DecisionKind } from "./decision";
 import { queueAnnualEmails, type AnnualEmailEvent } from "./emails";
+import { isHolding } from "./release";
 import {
   actorOf,
   lineRowsOf,
@@ -104,6 +106,8 @@ export type DecideResult = {
   status: AnnualStatus;
   approved: TaxBreakdown | null;
   decidedAt: string;
+  /** Held for scheduled release: when the department hears (FR-19a). */
+  heldUntil: string | null;
 };
 
 const EVENT: Record<DecisionKind, AnnualEvent> = {
@@ -166,13 +170,21 @@ export async function decideRequest(
     : row.status;
   const next = nextOrRefuse(from, EVENT[decision.kind], e.notDecidable);
   const requestRevisionId = await latestRevisionId(tx, row);
+  // FR-19a: in Hold mode an approval or decline waits for the release; a question never does.
+  const [cycle] = await tx
+    .select({
+      decisionEmailMode: budgetCycles.decisionEmailMode,
+      decisionReleaseAt: budgetCycles.decisionReleaseAt,
+    })
+    .from(budgetCycles)
+    .where(eq(budgetCycles.id, row.budgetCycleId));
+  const held = decision.kind !== "return" && isHolding(cycle, now);
   const base = {
     budgetRequestId: row.id,
     requestRevisionId,
     approverUserId: actor.id,
     actingRole,
-    // Decisions go out at once until scheduled release arrives (FR-19a, Stage 2).
-    releasedAt: now,
+    releasedAt: held ? null : now,
   };
 
   let approved: TaxBreakdown | null = null;
@@ -268,9 +280,13 @@ export async function decideRequest(
       requestedTotalCents: row.requestedTotalCents,
       versionNumber: row.versionNumber,
       ...auditDetails,
+      ...(held ? { heldUntil: cycle.decisionReleaseAt!.toISOString() } : {}),
     },
   });
-  await queueAnnualEmails(tx, row.id, actor.id, emailEvent(decision), { now });
+  await queueAnnualEmails(tx, row.id, actor.id, emailEvent(decision), {
+    now,
+    ...(held ? { hold: { releaseAt: cycle.decisionReleaseAt! } } : {}),
+  });
 
   const result: DecideResult = {
     requestId: row.id,
@@ -278,6 +294,7 @@ export async function decideRequest(
     status: next,
     approved,
     decidedAt: now.toISOString(),
+    heldUntil: held ? cycle.decisionReleaseAt!.toISOString() : null,
   };
   await tx.insert(idempotencyKeys).values({
     key,

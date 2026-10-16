@@ -33,15 +33,17 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
   const request = await getRequestView(getDb(), viewer, id);
   if (!request) return <RequestNotFound />;
 
-  const mode: EditorMode | null = request.readOnly
-    ? null
-    : request.status === "draft"
-      ? "draft"
-      : request.status === "returned"
-        ? "respond"
-        : canTransition(request.status, "revise") && request.editsRemaining > 0
-          ? "revise"
-          : null;
+  // A held decision (FR-19a) has locked the request, though it still reads In Review.
+  const mode: EditorMode | null =
+    request.readOnly || request.heldUntil
+      ? null
+      : request.status === "draft"
+        ? "draft"
+        : request.status === "returned"
+          ? "respond"
+          : canTransition(request.status, "revise") && request.editsRemaining > 0
+            ? "revise"
+            : null;
   if (!mode) redirect(`/annual/${id}`);
 
   return (

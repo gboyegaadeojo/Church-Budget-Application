@@ -161,12 +161,25 @@ type Outgoing = {
   content: EmailContent;
 };
 
+/**
+ * Scheduled release (FR-19a): `hold` queues a decision's staff emails now and keeps the
+ * department's email back; at release, `only: "requester"` sends just that email, with
+ * the accountant's shared message and the time the decision was made.
+ */
+export type AnnualEmailOptions = {
+  now?: Date;
+  hold?: { releaseAt: Date };
+  only?: "requester";
+  releaseMessage?: string | null;
+  decidedAt?: Date;
+};
+
 export async function queueAnnualEmails(
   tx: Tx,
   requestId: string,
   actorId: string,
   event: AnnualEmailEvent,
-  options: { now?: Date } = {},
+  options: AnnualEmailOptions = {},
 ): Promise<void> {
   const now = options.now ?? new Date();
   const ctx = await loadContext(tx, requestId, actorId);
@@ -180,6 +193,10 @@ export async function queueAnnualEmails(
   const left = editsRemaining(r);
   const summary = { kind: "single" as const, totals: requested(r), rate: r.taxRate! };
   const out: Outgoing[] = [];
+  const release = options.hold ? formatDateTime(options.hold.releaseAt, ctx.zone) : null;
+  const shared = options.releaseMessage?.trim()
+    ? [`${a.releaseMessage}: ${options.releaseMessage.trim()}`]
+    : [];
 
   switch (event.kind) {
     case "submitted": {
@@ -352,7 +369,7 @@ export async function queueAnnualEmails(
             subject: a.approved.subject(...subjectArgs),
             heading: a.approved.heading,
             status: a.statuses.approved,
-            paragraphs: [a.approved.authorized],
+            paragraphs: [a.approved.authorized, ...shared],
             facts: decidedFacts,
             summary: comparison,
             lines: { heading: a.approvedItems, items: lines },
@@ -369,7 +386,11 @@ export async function queueAnnualEmails(
             subject: a.approvedCopy.subject(...subjectArgs),
             heading: a.approvedCopy.heading,
             status: a.statuses.approved,
-            paragraphs: [a.approvedCopy.intro(r.departmentNameSnapshot)],
+            paragraphs: [
+              release
+                ? a.approvedCopy.heldIntro(r.departmentNameSnapshot, release)
+                : a.approvedCopy.intro(r.departmentNameSnapshot),
+            ],
             facts: decidedFacts,
             summary: comparison,
             note,
@@ -403,7 +424,8 @@ export async function queueAnnualEmails(
 
     case "declined": {
       const note = { label: a.declined.reason, text: event.reason };
-      const decidedFacts = facts(ctx, [{ label: a.facts.decidedOn, value: time }]);
+      const decidedOn = options.decidedAt ? formatDateTime(options.decidedAt, ctx.zone) : time;
+      const decidedFacts = facts(ctx, [{ label: a.facts.decidedOn, value: decidedOn }]);
       out.push(
         {
           template: "annual.declined",
@@ -413,6 +435,7 @@ export async function queueAnnualEmails(
             subject: a.declined.subject(...subjectArgs),
             heading: a.declined.heading,
             status: a.statuses.declined,
+            ...(shared.length > 0 ? { paragraphs: shared } : {}),
             facts: decidedFacts,
             note,
             summary,
@@ -428,7 +451,11 @@ export async function queueAnnualEmails(
             subject: a.declinedCopy.subject(...subjectArgs),
             heading: a.declinedCopy.heading,
             status: a.statuses.declined,
-            paragraphs: [a.declinedCopy.intro(r.departmentNameSnapshot)],
+            paragraphs: [
+              release
+                ? a.declinedCopy.heldIntro(r.departmentNameSnapshot, release)
+                : a.declinedCopy.intro(r.departmentNameSnapshot),
+            ],
             facts: decidedFacts,
             note,
             action: emailCopy.noAction,
@@ -478,7 +505,13 @@ export async function queueAnnualEmails(
     }
   }
 
-  for (const email of out) {
+  // Held: the department hears at release. At release: only the department's email.
+  const sending = out.filter((email) =>
+    options.only
+      ? email.audience === options.only
+      : !(options.hold && email.audience === "requester"),
+  );
+  for (const email of sending) {
     await enqueueEmail(tx, {
       ...email,
       brand: ctx.brand,

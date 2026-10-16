@@ -29,6 +29,13 @@ export type Action =
   | "annual.decide"
   | "annual.reopen"
   | "annual.export_all"
+  /** Choose how decisions reach departments, and release held ones (FR-19a). */
+  | "annual.release"
+  /**
+   * See a decision before it's released (FR-19a): the staff roles see it as soon as it's
+   * made; a department sees In Review until release.
+   */
+  | "annual.view_held"
   // Expenses (Part B)
   | "expense.view"
   | "expense.submit"
@@ -153,6 +160,12 @@ const RULES: Record<Action, readonly Rule[]> = {
   "annual.decide": [{ roles: ACCOUNTANTS, check: notOwnDepartment }],
   "annual.reopen": [{ roles: ACCOUNTANTS, check: notOwnDepartment }],
   "annual.export_all": [{ roles: [...ACCOUNTANTS, "system_admin"] }],
+  // Reading the release overview is "annual.review"; this is for changing it.
+  "annual.release": [{ roles: ACCOUNTANTS }],
+  "annual.view_held": [
+    { roles: ACCOUNTANTS },
+    { roles: ["church_admin", ...BOARD, "system_admin"], readOnly: true },
+  ],
 
   "expense.view": [
     { roles: ["requester"], check: ownDepartment },

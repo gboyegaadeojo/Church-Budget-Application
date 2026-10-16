@@ -16,7 +16,7 @@ import { canTransition } from "@/domain/annual/status";
 import { requestEmails } from "@/domain/notifications/history";
 import { getChurchTimeZone } from "@/domain/settings";
 import { cn } from "@/lib/cn";
-import { formatDateTime } from "@/lib/time-zone";
+import { formatDate, formatDateTime, zonedDate } from "@/lib/time-zone";
 import { getViewer } from "@/lib/viewer";
 import { LinesTable } from "../lines-table";
 import { AnnualStatusBadge, statusExplanation } from "../status-badge";
@@ -76,9 +76,16 @@ async function RequestContent({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <article className={cn(cardClass, "min-w-0 space-y-6")}>
-          <p className="text-sm text-fg-muted">
-            {statusExplanation(request.status, request.editsRemaining)}
-          </p>
+          {request.heldUntil ? (
+            // FR-19a: the decision is made but held; the department hears at release.
+            <p className="text-sm font-medium">
+              {annualCopy.release.sharedOn(formatDate(zonedDate(request.heldUntil, zone)))}
+            </p>
+          ) : (
+            <p className="text-sm text-fg-muted">
+              {statusExplanation(request.status, request.editsRemaining)}
+            </p>
+          )}
           {request.decision && <DecisionNote request={request} />}
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <Item label={f.department}>
@@ -199,6 +206,7 @@ function Item({ label, children }: { label: string; children: React.ReactNode })
 /** What the department can do next, if anything (FR-05, FR-12, FR-17). */
 function Actions({ request }: { request: RequestView }) {
   if (request.readOnly) return <p className="text-sm text-fg-muted">{v.readOnly}</p>;
+  if (request.heldUntil) return null;
   const edit = `/annual/${request.id}/edit`;
   if (request.status === "draft") {
     return (

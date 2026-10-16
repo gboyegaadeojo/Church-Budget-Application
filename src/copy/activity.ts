@@ -34,6 +34,13 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "annual.returned": { label: "Returned the budget with a question", group: "decisions" },
   "annual.declined": { label: "Declined the budget", group: "decisions" },
   "annual.reopened": { label: "Reopened the decision", group: "decisions" },
+  "annual.decision_released": {
+    label: "Released the decision to the department",
+    group: "decisions",
+  },
+  "annual.release_scheduled": { label: "Scheduled the release of decisions", group: "decisions" },
+  "annual.release_cancelled": { label: "Cancelled the scheduled release", group: "decisions" },
+  "annual.released_now": { label: "Released the held decisions now", group: "decisions" },
   "annual.exported": { label: "Exported annual budgets to Excel", group: "exports" },
   // Sign-in and access
   "access.sign_in_succeeded": { label: "Signed in", group: "access" },

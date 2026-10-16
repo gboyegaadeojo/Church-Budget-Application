@@ -14,6 +14,7 @@ import { departmentPolicy } from "@/domain/users/ministry-departments";
 import { authorize, type Subject } from "@/lib/authz";
 import type { TaxBreakdown } from "@/lib/money";
 import type { LineContent } from "./schema";
+import { hiddenDecisions } from "./release";
 import { currentTaxRate, editsRemaining, linesOf, totalsOf } from "./service";
 import type { AnnualStatus } from "./status";
 
@@ -145,6 +146,12 @@ export type RequestView = {
    * question on a returned request, the reason for a decline, or the approved amounts.
    */
   decision: LatestDecision | null;
+  /**
+   * The decision is held for scheduled release (FR-19a) and the viewer is the department:
+   * the status reads In Review, no decision is shown, nothing can be changed, and this is
+   * when the decision will be shared.
+   */
+  heldUntil: Date | null;
 };
 
 /** One request as its department sees it, or null if missing or not allowed (AC-3). */
@@ -188,10 +195,12 @@ export async function getRequestView(
     .where(and(eq(userDepartments.departmentId, request.departmentId), eq(users.active, true)))
     .orderBy(asc(users.displayName));
   const rate = request.taxRate ?? (await currentTaxRate(tx));
+  const hidden = await hiddenDecisions(tx, actor, [request.id]);
+  const held = hidden.has(request.id);
   return {
     id: request.id,
     version: request.version,
-    status: request.status,
+    status: held ? "in_review" : request.status,
     referenceNumber: request.referenceNumber,
     title: request.title,
     justification: request.justification,
@@ -208,7 +217,8 @@ export async function getRequestView(
     editsRemaining: editsRemaining(request),
     versionNumber: request.versionNumber,
     readOnly: decision.readOnly || decision.actingRole !== "requester",
-    decision: await latestDecision(tx, request),
+    decision: held ? null : await latestDecision(tx, request),
+    heldUntil: held ? (hidden.get(request.id) ?? new Date()) : null,
   };
 }
 
@@ -241,9 +251,15 @@ export async function listMyRequests(tx: Tx, actor: Subject): Promise<MyRequest[
     .innerJoin(budgetCycles, eq(budgetCycles.id, budgetRequests.budgetCycleId))
     .where(and(inArray(budgetRequests.departmentId, ids)))
     .orderBy(desc(budgetCycles.budgetYear), asc(departments.name));
+  const hidden = await hiddenDecisions(
+    tx,
+    actor,
+    rows.map((r) => r.request.id),
+  );
   return rows.map(({ request, departmentName, cycleName }) => ({
     id: request.id,
-    status: request.status,
+    // A held decision reads In Review to the department until it's released (FR-19a).
+    status: hidden.has(request.id) ? ("in_review" as const) : request.status,
     title: request.title,
     referenceNumber: request.referenceNumber,
     departmentId: request.departmentId,

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { CheckCircle2, Eye, ShieldAlert } from "lucide-react";
+import Link from "next/link";
+import { CalendarClock, CheckCircle2, Eye, ShieldAlert } from "lucide-react";
 import { DownloadButton } from "@/components/download-button";
 import { EmailHistory } from "@/components/email-history";
 import { HelpPanel } from "@/components/help-panel";
@@ -88,6 +89,20 @@ async function ReviewContent({
         )}
       </PageHeader>
 
+      {view.release.holding && view.release.releaseAt && (
+        // DRD 6.7b: a banner on every review screen while decisions are held.
+        <p
+          role="note"
+          className="flex flex-wrap items-center gap-2 rounded-control border border-warning bg-warning/10 p-3 text-sm"
+        >
+          <CalendarClock className="size-4 shrink-0 text-warning" aria-hidden="true" />
+          <span>{annualCopy.release.banner(formatDateTime(view.release.releaseAt, zone))}</span>
+          <Link href="/annual/release" className={cn(linkClass, "ml-auto")}>
+            {annualCopy.release.manage}
+          </Link>
+        </p>
+      )}
+
       {done && (
         <section
           aria-labelledby="done-heading"
@@ -98,7 +113,13 @@ async function ReviewContent({
             <h2 id="done-heading" className="text-lg font-semibold">
               {done}
             </h2>
-            <p className="text-fg-muted">{r.emailLater}</p>
+            <p className="text-fg-muted">
+              {view.release.holding &&
+              view.release.releaseAt &&
+              (query.done === "approved" || query.done === "declined")
+                ? annualCopy.release.heldDone(formatDateTime(view.release.releaseAt, zone))
+                : r.emailLater}
+            </p>
           </div>
         </section>
       )}
