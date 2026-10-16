@@ -125,6 +125,17 @@ export const adminCopy = {
   },
   departments: {
     title: "Departments",
+    nominate: {
+      heading: (department: string) => `${department}: leaders`,
+      intro:
+        "As the Primary, you can name up to two Backups. They can do everything you can for the department. The administrator is told and can change it.",
+      person: "Group Leader",
+      choose: "Choose a Group Leader",
+      slot: "As",
+      save: "Make Backup",
+      saved: (slot: string) => `${slot} saved. The administrator has been told.`,
+      none: "No other verified Group Leaders yet.",
+    },
     tabs: { active: "Active", inactive: "Inactive", proposed: "Proposed" },
     noBackupFilter: "Only departments with no backup",
     showAll: "Show all",
@@ -142,11 +153,13 @@ export const adminCopy = {
     },
     addHeading: "Add departments",
     addLabel: "Department names, one per line",
-    addHint: "Paste the whole list at once. Names that already exist are skipped.",
+    addHint:
+      "Paste the whole list at once. Names that already exist are skipped, and “Others” is the form's Other option, not a department.",
     add: "Add departments",
-    addResult: (added: number, skipped: number) =>
+    addResult: (added: number, skipped: number, other = false) =>
       `${added === 1 ? "1 department" : `${added} departments`} added` +
-      (skipped ? `, ${skipped} skipped (already on the list).` : "."),
+      (skipped ? `, ${skipped} skipped (already on the list)` : "") +
+      (other ? ". “Others” is the Other option on the form, so it wasn't added." : "."),
     renameHeading: "Name",
     rename: "Rename",
     renameNote: "Past requests keep the old name.",
@@ -226,6 +239,8 @@ export const adminCopy = {
       notRequester: "This person doesn't have the Requester role.",
       inactiveUser: "This person's account isn't active.",
       inactiveDepartment: "Leaders can only be changed on an active or proposed department.",
+      primaryOnlyBackups:
+        "As the Primary you can name Backups. To change the Primary, ask the administrator.",
       mergeTarget: "Choose an active department to merge into.",
       notAllowed: (status: string) => `This can't be done while the department is ${status}.`,
       mergeConflict: (department: string, cycle: string) =>

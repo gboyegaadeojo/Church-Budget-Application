@@ -39,6 +39,8 @@ export const annualCopy = {
       "Your Ministry Department in Planning Center doesn't include this department. Ask the administrator to add it.",
     // Accountant review (FR-15 to FR-18a)
     notDecidable: "This request isn't waiting for a decision.",
+    proposedDepartment:
+      "This department is still proposed. Ask the administrator to add it to the list or merge it into an existing department, then approve. You can still return or decline it.",
     notReopenable: "Only approved or declined requests can be reopened.",
     staleVersion:
       "The department changed this request since you opened it. Review the latest version, then decide.",
@@ -59,6 +61,7 @@ export const annualCopy = {
       "No item was changed. Use Approve as requested, or change an approved quantity or price.",
   },
   tasks: {
+    backupReminded: "Backup reminded",
     continueDraft: "Finish and submit your budget",
     respond: "Respond to the accountant's question",
     open: "Open",
@@ -289,6 +292,16 @@ export const annualCopy = {
 
   /** Accountant dashboard and review (FR-13 to FR-18a, DRD 6.6 and 6.7). */
   review: {
+    board: {
+      heading: "Board-approved church total",
+      allocated: (allocated: string, total: string) =>
+        `Allocated ${allocated} of ${total} board total`,
+      left: (left: string) => `${left} left to allocate`,
+      over: (over: string) => `${over} over the board total`,
+      reference: (ref: string) => `Board reference: ${ref}`,
+      warning: (after: string, over: string, total: string) =>
+        `Approving this brings the year's approved budgets to ${after}, ${over} over the board total of ${total}. You can still approve it.`,
+    },
     title: "Review dashboard",
     intro: "Every department's budget for the cycle, and what's waiting for you.",
     allTitle: "All budgets",

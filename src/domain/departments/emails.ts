@@ -235,3 +235,34 @@ export async function emailBackupPromoted(
   });
   await emailAssigned(tx, { userId: input.userId, department: input.department, slot: "primary" });
 }
+
+/** A Primary named a Backup (FR-38, AC-117): the administrators can undo it. */
+export async function emailBackupNominated(
+  tx: Tx,
+  input: {
+    primaryId: string;
+    userId: string;
+    department: { id: string; name: string };
+    slot: Slot;
+  },
+) {
+  const [primary, who] = [await nameOf(tx, input.primaryId), await nameOf(tx, input.userId)];
+  await queueNotice(tx, {
+    template: "department.backup_nominated",
+    audience: "administrator",
+    to: await administrators(tx),
+    content: {
+      subject: m.backupNominated.subject(who, input.department.name),
+      heading: m.backupNominated.heading,
+      status: s.forYourRecords,
+      paragraphs: [m.backupNominated.intro(primary, who, input.department.name, slots[input.slot])],
+      facts: [
+        { label: f.department, value: input.department.name },
+        { label: f.person, value: who },
+        { label: f.slot, value: slots[input.slot] },
+      ],
+      action: m.backupNominated.action,
+      button: departmentLink(input.department.id),
+    },
+  });
+}

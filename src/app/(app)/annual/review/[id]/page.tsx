@@ -152,13 +152,23 @@ async function ReviewContent({
             {view.canReopen && <ReopenControl id={view.id} version={view.version} />}
           </section>
 
-          <div className={cardClass}>
+          <div className={cn(cardClass, "space-y-4")}>
+            {view.canDecide && view.department.status === "proposed" && (
+              <p
+                role="note"
+                className="flex items-start gap-2 rounded-control border border-warning p-3 text-sm"
+              >
+                <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
+                {annualCopy.errors.proposedDepartment}
+              </p>
+            )}
             {view.canDecide ? (
               <DecisionPanel
                 id={view.id}
                 version={view.version}
                 rate={view.rate}
                 requested={view.totals}
+                board={view.board}
                 lines={view.lines.map((l) => ({
                   id: l.id,
                   name: l.name,

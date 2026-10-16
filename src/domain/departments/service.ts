@@ -21,6 +21,7 @@ import { assertCan, type Subject } from "@/lib/authz";
 import type { RepresentativeType, Role } from "@/lib/roles";
 import {
   emailAssigned,
+  emailBackupNominated,
   emailBackupPromoted,
   emailProposalAccepted,
   emailProposalMerged,
@@ -105,13 +106,24 @@ const versionSchema = z.coerce.number().int().positive();
 // ---------------------------------------------------------------- the list
 
 /** Adds one or many departments, one name per line (FR-03 "paste a list"). */
+/**
+ * "Others" in the church's list is the form's **Other (type your department)** option,
+ * not a department (FR-03, AC-131).
+ */
+export function isOtherOption(name: string): boolean {
+  return /^(others?|other (type your department))$/i.test(name.trim());
+}
+
 export async function addDepartments(
   tx: Tx,
   actor: Subject,
   input: { names: string },
-): Promise<{ added: string[]; skipped: string[] }> {
+): Promise<{ added: string[]; skipped: string[]; other: boolean }> {
   const { actingRole } = assertCan(actor, "admin.departments");
-  const names = parseNameList(input.names ?? "");
+  const listed = parseNameList(input.names ?? "");
+  const other = listed.some(isOtherOption);
+  const names = listed.filter((n) => !isOtherOption(n));
+  if (names.length === 0 && other) return { added: [], skipped: [], other };
   if (names.length === 0) throw new ValidationError({ names: d.errors.nothingToAdd });
   if (names.length > MAX_BULK) throw new ValidationError({ names: d.errors.tooMany });
   const tooLong = names.find((n) => n.length > MAX_NAME);
@@ -136,7 +148,7 @@ export async function addDepartments(
     });
     added.push(name);
   }
-  return { added, skipped };
+  return { added, skipped, other };
 }
 
 export async function renameDepartment(
@@ -494,6 +506,11 @@ export async function setRepresentative(
   const mine = leaders.find((l) => l.userId === person.id);
   const mySlot = mine ? slotOfRow(mine) : null;
   if (mySlot === slot) return;
+  // A Primary names Backups (FR-38); moving themselves or the Primary is the administrator's.
+  const byPrimary = actingRole === "requester";
+  if (byPrimary && (person.id === actor.id || mySlot === "primary" || type !== "backup")) {
+    throw new RuleError(d.errors.primaryOnlyBackups);
+  }
 
   // Representatives are unlimited; the other slots hold one person each.
   const holder =
@@ -554,6 +571,9 @@ export async function setRepresentative(
       department,
       slot: swap ?? "representative",
     });
+  }
+  if (byPrimary) {
+    await emailBackupNominated(tx, { primaryId: actor.id, userId: person.id, department, slot });
   }
 }
 

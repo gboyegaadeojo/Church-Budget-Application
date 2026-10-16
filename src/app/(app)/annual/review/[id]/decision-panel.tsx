@@ -4,6 +4,7 @@ import { useEffect, useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { boardWarning } from "@/components/board-allocation";
 import { ComparisonSummary } from "@/components/financial-summary";
 import { buttonClass, inputClass } from "@/components/ui/styles";
 import { adminCopy } from "@/copy/admin";
@@ -66,12 +67,15 @@ export function DecisionPanel({
   rate,
   requested,
   lines,
+  board,
 }: {
   id: string;
   version: number;
   rate: string;
   requested: TaxBreakdown;
   lines: Line[];
+  /** The cycle's board total and what's approved elsewhere, when one is set (4.2). */
+  board?: { totalCents: number; allocatedCents: number } | null;
 }) {
   const ids = useId();
   const [kind, setKind] = useState<DecisionKind>("approve_as_requested");
@@ -99,6 +103,7 @@ export function DecisionPanel({
     ? approvedFigures(lines, rate, amounts.data as Parameters<typeof approvedFigures>[2])
     : null;
   const approved = figures && "totals" in figures ? figures.totals : null;
+  const overBoard = isApproval(kind) ? boardWarning(board, approved?.total) : null;
   const fieldId = (name: string) => `${ids}-${name.replaceAll(".", "-")}`;
 
   function review() {
@@ -267,6 +272,7 @@ export function DecisionPanel({
           labels={comparisonLabels}
         />
       )}
+      {overBoard && <BoardWarning text={overBoard} />}
 
       {formError && (
         <p role="alert" className="flex items-start gap-2 text-sm text-danger">
@@ -308,6 +314,7 @@ export function DecisionPanel({
                 labels={comparisonLabels}
               />
             )}
+            {overBoard && <BoardWarning text={overBoard} />}
             {note.trim() && (
               <blockquote className="border-l-2 border-border pl-3 text-sm whitespace-pre-line">
                 {note.trim()}
@@ -597,5 +604,18 @@ export function ReopenControl({ id, version }: { id: string; version: number }) 
         </AlertDialog.Content>
       </AlertDialog.Portal>
     </AlertDialog.Root>
+  );
+}
+
+/** DRD 6.7a: Warning style, and the approval still allowed. */
+function BoardWarning({ text }: { text: string }) {
+  return (
+    <p
+      role="note"
+      className="flex items-start gap-2 rounded-control border border-warning p-3 text-sm"
+    >
+      <AlertCircle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
+      {text}
+    </p>
   );
 }

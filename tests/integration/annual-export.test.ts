@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import ExcelJS from "exceljs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { auditEvents, budgetRequests, userRoles } from "@/db/schema";
+import { auditEvents, budgetCycles, budgetRequests, userRoles } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
 import type { DecisionInput } from "@/domain/annual/decision";
 import { buildAnnualExport } from "@/domain/annual/export";
 import { decideRequest } from "@/domain/annual/review";
-import { getReviewView } from "@/domain/annual/review-queries";
+import { boardAllocation, getReviewView } from "@/domain/annual/review-queries";
 import type { RequestContentInput } from "@/domain/annual/schema";
 import { saveDraft, startRequest, submitRequest } from "@/domain/annual/service";
 import { loadViewer } from "@/domain/users/viewer";
@@ -298,5 +298,23 @@ describe("annual budget export (FR-20)", () => {
 
   it("refuses to export a draft on its own", async () => {
     await expect(exportAs(accountant, { requestId: draftId })).rejects.toThrow();
+  });
+});
+
+describe("board-approved church total (4.2, AC-114)", () => {
+  it("adds up approved budgets against the board total, leaving out the one being decided", async () => {
+    expect(await run((tx) => boardAllocation(tx, cycleId))).toBeNull();
+    await db
+      .update(budgetCycles)
+      .set({ boardTotalCents: 3_000_000, boardReference: "Board minutes, Nov 12" })
+      .where(eq(budgetCycles.id, cycleId));
+    // $30,000.00 and $56.22 are approved.
+    expect(await run((tx) => boardAllocation(tx, cycleId))).toEqual({
+      totalCents: 3_000_000,
+      allocatedCents: 3_005_622,
+      reference: "Board minutes, Nov 12",
+    });
+    const view = await run((tx) => getReviewView(tx, accountant, different.requestId));
+    expect(view!.board).toMatchObject({ allocatedCents: 5_622 });
   });
 });

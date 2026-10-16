@@ -8,6 +8,7 @@ import {
   budgetRequests,
   deadlineExtensions,
   departments,
+  emailOutbox,
   userDepartments,
   userRoles,
   users,
@@ -483,7 +484,16 @@ Young Couples Ministry
     const again = await run((tx) =>
       addDepartments(tx, admin, { names: "Choir Team\nYouth Ministry" }),
     );
-    expect(again).toEqual({ added: ["Youth Ministry"], skipped: ["Choir Team"] });
+    expect(again).toEqual({ added: ["Youth Ministry"], skipped: ["Choir Team"], other: false });
+  });
+
+  it('AC-131 "Others" in a pasted list is the form\'s Other option, not a department', async () => {
+    const result = await run((tx) =>
+      addDepartments(tx, admin, { names: "Others\nHospitality Ministry\nother" }),
+    );
+    expect(result).toEqual({ added: ["Hospitality Ministry"], skipped: [], other: true });
+    const named = await db.select().from(departments).where(eq(departments.name, "Others"));
+    expect(named).toEqual([]);
   });
 
   it("refuses an empty list and over-long names", async () => {
@@ -717,6 +727,32 @@ Young Couples Ministry
       await set(primary, dept.id, b2.id, "backup_2");
       expect(await leadersOf(dept.id)).toEqual({ [p.id]: "primary", [b2.id]: "backup_1" });
       await expect(set(primary, dept.id, b2.id, "primary")).rejects.toBeInstanceOf(ForbiddenError);
+    });
+
+    it("AC-117 a Primary names a Backup, the administrators are told, and the Primary stays put", async () => {
+      const dept = await insertDepartment(db);
+      const [p, b, other] = [await leader(), await leader(), await leader()];
+      await set(admin, dept.id, p.id, "primary");
+      const primary: Subject = {
+        id: p.id,
+        roles: ["requester"],
+        departments: [{ id: dept.id, name: dept.name, representativeType: "primary" }],
+      };
+      await set(primary, dept.id, b.id, "backup_1");
+      expect(await leadersOf(dept.id)).toEqual({ [p.id]: "primary", [b.id]: "backup_1" });
+      const told = (
+        await db
+          .select()
+          .from(emailOutbox)
+          .where(eq(emailOutbox.template, "department.backup_nominated"))
+      ).filter((e) => e.subject.endsWith(`Backup for ${dept.name}`));
+      expect(told.map((e) => e.toUserId)).toContain(admin.id);
+      expect(told.every((e) => e.status === "pending")).toBe(true);
+
+      // Moving themselves, or someone already Primary, is the administrator's.
+      await expect(set(primary, dept.id, p.id, "backup_2")).rejects.toBeInstanceOf(RuleError);
+      await expect(set(primary, dept.id, other.id, "representative")).rejects.toThrow();
+      expect(await leadersOf(dept.id)).toEqual({ [p.id]: "primary", [b.id]: "backup_1" });
     });
 
     it("AC-120 Backup 1 becomes Primary and Backup 2 moves up when the Primary leaves", async () => {

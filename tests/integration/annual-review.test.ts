@@ -8,9 +8,11 @@ import {
   auditEvents,
   budgetLineItems,
   budgetRequests,
+  emailOutbox,
   userDepartments,
   userRoles,
 } from "@/db/schema";
+import { runClarificationReminders } from "@/domain/annual/clarification-reminders";
 import type { Db, Tx } from "@/db/types";
 import type { DecisionInput } from "@/domain/annual/decision";
 import { decideRequest, reopenRequest, startReview } from "@/domain/annual/review";
@@ -18,9 +20,10 @@ import { getReviewDashboard, getReviewView } from "@/domain/annual/review-querie
 import type { RequestContentInput } from "@/domain/annual/schema";
 import { reviseRequest, saveDraft, startRequest, submitRequest } from "@/domain/annual/service";
 import { ConflictError, RuleError, ValidationError } from "@/domain/errors";
-import { annualReviewTasks } from "@/domain/tasks/annual";
+import { annualRequesterTasks, annualReviewTasks } from "@/domain/tasks/annual";
 import { loadViewer } from "@/domain/users/viewer";
 import { ForbiddenError, type Subject } from "@/lib/authz";
+import type { Viewer } from "@/lib/roles";
 import { createTestDb, type TestDb } from "./helpers/db";
 import { insertCycle, insertDepartment, insertUser } from "./helpers/fixtures";
 
@@ -574,5 +577,82 @@ describe("accountant tasks (FR-37)", () => {
     await decide(requestId, { kind: "approve_as_requested" });
     const after = await run((tx) => annualReviewTasks(tx, me.viewer));
     expect(after.some((t) => t.href === `/annual/review/${requestId}`)).toBe(false);
+  });
+});
+
+describe("proposed departments (FR-03)", () => {
+  it("AC-15 a budget for a department still proposed can't be approved, but can be returned", async () => {
+    const leader = await person("requester");
+    const { requestId } = await run((tx) =>
+      startRequest(tx, leader, {
+        cycleId,
+        otherName: `Proposed Choir ${randomUUID().slice(0, 6)}`,
+      }),
+    );
+    const me = await fresh(leader);
+    const saved = await run((tx) => saveDraft(tx, me, { id: requestId, version: 1, ...BIG }));
+    await run((tx) =>
+      submitRequest(
+        tx,
+        me,
+        { id: requestId, version: saved.version, idempotencyKey: randomUUID() },
+        { now: NOW },
+      ),
+    );
+    await expect(decide(requestId, { kind: "approve_as_requested" })).rejects.toThrow(
+      /still proposed/,
+    );
+    expect(await decide(requestId, { kind: "return", note: "Which choir is this?" })).toMatchObject(
+      {
+        status: "returned",
+      },
+    );
+  });
+});
+
+describe("clarification reminders (FR-38)", () => {
+  it("AC-118 reminds the Primary after a day, then the Backups after the escalation delay, once each", async () => {
+    const { me, dept, requestId } = await submitted();
+    const backup = await insertUser(db, { accessStatus: "active", pcoLeaderVerified: true });
+    await db.insert(userRoles).values({ userId: backup.id, role: "requester" });
+    await db.insert(userDepartments).values({
+      userId: backup.id,
+      departmentId: dept.id,
+      representativeType: "backup",
+      backupRank: 1,
+    });
+    await decide(requestId, { kind: "return", note: "Which microphones?" });
+    const [question] = await db
+      .select({ at: approvalDecisions.createdAt })
+      .from(approvalDecisions)
+      .where(eq(approvalDecisions.budgetRequestId, requestId));
+    const after = (days: number) => new Date(question.at.getTime() + days * 86_400_000 + 60_000);
+    const sent = async () =>
+      (await db.select().from(emailOutbox).where(eq(emailOutbox.budgetRequestId, requestId)))
+        .filter((e) => e.template.startsWith("annual.clarification"))
+        .map((e) => `${e.template}:${e.toUserId}`)
+        .sort();
+    const tasks = async () => annualRequesterTasks(db, (await fresh(me)) as Viewer);
+
+    await runClarificationReminders(db, after(0));
+    expect(await sent()).toEqual([]);
+
+    await runClarificationReminders(db, after(1));
+    await runClarificationReminders(db, after(2));
+    expect(await sent()).toEqual([`annual.clarification_reminder:${me.id}`]);
+    expect((await tasks()).find((x) => x.href === `/annual/${requestId}`)?.note).toBeUndefined();
+
+    // The escalation delay defaults to 3 days.
+    await runClarificationReminders(db, after(3));
+    await runClarificationReminders(db, after(4));
+    expect(await sent()).toEqual(
+      [
+        `annual.clarification_reminder:${me.id}`,
+        `annual.clarification_backup_reminder:${backup.id}`,
+      ].sort(),
+    );
+    expect((await tasks()).find((x) => x.href === `/annual/${requestId}`)?.note).toBe(
+      "Backup reminded",
+    );
   });
 });

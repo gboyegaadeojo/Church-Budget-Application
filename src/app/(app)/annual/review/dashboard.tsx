@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Eye } from "lucide-react";
+import { BoardAllocationBar } from "@/components/board-allocation";
 import { DownloadButton } from "@/components/download-button";
 import { Badge, EmptyState, PageHeader, PermissionDenied, Section } from "@/components/ui/display";
 import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
@@ -161,6 +162,8 @@ export async function ReviewDashboardView({
               {r.cards.declined} {counts.declined}
             </p>
           </section>
+
+          {dashboard.board && <BoardAllocationBar board={dashboard.board} />}
 
           <Section title={r.queueHeading} id="queue">
             {queue.length === 0 ? (

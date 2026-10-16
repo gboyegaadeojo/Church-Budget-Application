@@ -1,7 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { adminCopy } from "@/copy/admin";
 import { annualCopy } from "@/copy/annual";
+import { setRepresentative } from "@/domain/departments/service";
 import type { RequestContentInput } from "@/domain/annual/schema";
 import {
   deleteDraft,
@@ -100,4 +102,21 @@ export async function reviseAction(
   );
   if (result.status !== "success") return result;
   redirect(`${view(input.id)}?done=${result.data.usedEdit ? "revised" : "responded"}`);
+}
+
+/** A Primary names a Backup for their department (FR-38, AC-117). */
+export async function nominateBackupAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      const slot = form.text(data, "slot");
+      await setRepresentative(tx, viewer, {
+        departmentId: form.text(data, "departmentId"),
+        userId: form.text(data, "userId"),
+        type: slot,
+      });
+      const label = adminCopy.departments.slotLabels[slot as "backup_1" | "backup_2"] ?? slot;
+      return adminCopy.departments.nominate.saved(label);
+    },
+    { paths: ["/annual"] },
+  );
 }

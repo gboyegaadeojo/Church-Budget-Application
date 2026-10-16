@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { isAccessDeniedReason } from "@/domain/users/access";
 import { fakeSignInEnabled } from "@/lib/auth-mode";
 import { isAuthorizedJobRequest } from "@/lib/jobs";
-import { isPublicPath } from "@/proxy";
+import { isPublicPath, refusesFiles } from "@/proxy";
 
 describe("fake sign-in can never reach a real site", () => {
   const local = { AUTH_FAKE_PROVIDERS: "1", AUTH_URL: "http://localhost:3100" };
@@ -68,5 +68,40 @@ describe("access-denied reasons", () => {
   it("knows the DRD 6.1a variants only", () => {
     expect(isAccessDeniedReason("waiting")).toBe(true);
     expect(isAccessDeniedReason("../admin")).toBe(false);
+  });
+});
+
+describe("no file uploads (FR-23, AC-25)", () => {
+  const multipart = (path: string, parts: (form: FormData) => void) => {
+    const form = new FormData();
+    parts(form);
+    return new Request(`http://localhost${path}`, { method: "POST", body: form });
+  };
+
+  it("AC-25 refuses a file in a form post, and any multipart body to an API route", async () => {
+    expect(
+      await refusesFiles(
+        multipart("/annual/new", (f) => f.append("receipt", new Blob(["x"]), "receipt.pdf")),
+      ),
+    ).toBe(true);
+    expect(await refusesFiles(multipart("/api/exports/annual", (f) => f.append("a", "b")))).toBe(
+      true,
+    );
+  });
+
+  it("lets ordinary forms and reads through", async () => {
+    expect(await refusesFiles(multipart("/annual/new", (f) => f.append("title", "Mics")))).toBe(
+      false,
+    );
+    expect(await refusesFiles(new Request("http://localhost/api/exports/annual"))).toBe(false);
+    expect(
+      await refusesFiles(
+        new Request("http://localhost/x", {
+          method: "POST",
+          headers: { "content-type": "application/x-www-form-urlencoded" },
+          body: "a=b",
+        }),
+      ),
+    ).toBe(false);
   });
 });
