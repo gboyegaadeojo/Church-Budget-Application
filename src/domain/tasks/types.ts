@@ -15,6 +15,8 @@ export type Task = {
   waitingSince: Date;
   href: string;
   buttonLabel: string;
+  /** A short extra fact, e.g. "Backup reminded" (FR-38). */
+  note?: string;
 };
 
 /**

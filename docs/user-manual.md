@@ -123,8 +123,8 @@ The accountant approves first, then the Board Chair (or Vice-Chair). After final
 Each department has a **Primary requester** (accountable for the department's budget) and can have up to two **Backup requesters** who cover: **Backup 1** and **Backup 2**. Two Backups help a department that runs at two locations.
 
 - All of them can do everything for the department: submit and edit the annual budget, answer questions, send messages, and submit expenses.
-- All of them see the department's tasks in My tasks. Reminders go to the Primary first; if a task is still open after 3 days, both Backups are reminded too.
-- **Primary: choose your backups.** On your department page, choose **Make Backup 1** or **Make Backup 2** for a verified Group Leader. The System Administrator is told.
+- All of them see the department's tasks in My tasks. Reminders go to the Primary first. If the accountant's question is still unanswered a day later, the Primary is reminded; after 3 days (the administrator can change this), both Backups are reminded too and the task shows **Backup reminded**.
+- **Primary: choose your backups.** On **Annual Budget**, under **{Department}: leaders**, choose a verified Group Leader and **Backup 1** or **Backup 2**, then **Make Backup**. The System Administrator is told and can change it. Changing the Primary is the administrator's job.
 - **Primary: going away?** Turn on **Away** with dates. Your Backups get the reminders and the department shows who is covering.
 - If the Primary leaves the role, Backup 1 becomes Primary automatically, Backup 2 moves up to Backup 1, and the System Administrator is asked to fill the empty Backup place.
 
@@ -138,12 +138,15 @@ Each department has a **Primary requester** (accountable for the department's bu
    - **Review queue**: every submitted budget, changed ones (**Updated**) first. Drafts never appear here.
    - **Department completion**: every department with its representative, status (**Not submitted**, **Draft exists**, or the budget's status), totals and next step.
    - Budgets waiting for you also appear in **My tasks** on Home.
+   - When the cycle has a board-approved church total, a bar shows how much is allocated so far, for example "Allocated $140,000.00 of $150,000.00 board total · $10,000.00 left to allocate".
 2. Open a budget with **Review**. Opening it marks it **In Review**. You see the details, the items, the revision history (what changed in each version) and earlier decisions. Then choose:
    - **Approve as requested**;
    - **Approve a different amount**: type the one approved total **including tax**, a note, and optionally the board reference. The app shows the tax inside it as you type (for example $30,000.00 includes $3,214.29 sales tax on $26,785.71) and how it compares with what was asked;
    - **Adjust individual items**: change approved quantities or prices before tax (quantity 0 leaves an item out) and add a note; the app adds tax;
    - **Return for clarification** with your question;
    - **Decline** with a reason.
+   If approving would take the year's approved budgets past the board total, the app warns you by how much. You can still approve.
+   A budget for a department that's still **proposed** (typed under **Other**) can't be approved until the System Administrator adds it to the list or merges it. You can still return or decline it.
 3. **Review decision**, check the summary (requested, approved and the difference, all including tax), and confirm. The department sees the decision on its budget straight away and is emailed; you get a copy for your records.
 4. **Reopen** an approved or declined budget with a reason if the board reconsiders. It goes back to the department as Returned for Clarification, without using one of its edits, and the earlier decision stays in the history.
 5. You're emailed when a budget is submitted, changed or answered if you are the Primary accountant (every accountant is, until one is chosen in Settings). **Emails** at the bottom of the review screen lists every email sent about the budget, copies included.
@@ -218,7 +221,7 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 **Admin → Departments**:
 
-- Add departments (or paste a list), rename, deactivate. At setup, paste the church's 18 departments; nobody needs to be assigned in advance, because leaders join by picking their department.
+- Add departments (or paste a list), rename, deactivate. At setup, paste the church's 18 departments; nobody needs to be assigned in advance, because leaders join by picking their department. **Others** in the list is skipped: it's the form's **Other** option, not a department.
 - Set each department's **Primary** and up to two **Backup** requesters (**Backup 1** takes over first). Giving someone a place that's taken makes its holder a Representative; moving a leader into another leader's place swaps them. Use the **No backup** filter to find gaps.
 - **Proposed** tab: departments people typed under **Other**. Choose **Add to list**, **Merge into…**, or **Reject** with a reason.
 - **Planning Center value**: leaders whose **Ministry Department** field in Planning Center holds the department's name are linked to it automatically (marked **From Planning Center**). If Planning Center uses a different name, type it in **Planning Center value**. A leader whose field no longer lists the department is marked **No longer listed in Planning Center**; nobody is removed automatically, so use **Remove** if they have left.

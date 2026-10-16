@@ -288,9 +288,27 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "My department budget" }),
     ).toBeVisible();
+    // Gina is Ushering Team's Primary, so its leaders panel stays; the draft is gone.
     await expect(
-      page.getByRole("main").getByText("Ushering Team").filter({ visible: true }),
+      page
+        .getByRole("region", { name: "My budget requests" })
+        .getByText("Ushering Team")
+        .filter({ visible: true }),
     ).toHaveCount(0);
+  });
+
+  test("AC-117 the Primary names a Backup from the dashboard, axe clean", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.gina);
+    await page.goto("/annual");
+    // Gina is Media Team's seeded Primary, with Sam Lee as Backup 1. The nomination
+    // itself is covered by the integration tests, so seeded leaders stay as they are.
+    const panel = page.getByRole("region", { name: "Media Team: leaders" });
+    await expect(panel.getByText("Primary · Gina Admin")).toBeVisible();
+    await expect(panel.getByText("Backup 1 · Sam Lee")).toBeVisible();
+    await expect(panel.getByRole("combobox", { name: "Group Leader" })).toBeVisible();
+    await expect(panel.getByRole("button", { name: "Make Backup" })).toBeVisible();
+    await expectAxeClean(page);
   });
 
   test("Save and exit keeps the draft and returns to the dashboard", async ({ page }) => {

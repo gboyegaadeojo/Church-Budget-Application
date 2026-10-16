@@ -22,10 +22,10 @@ const page = (id: string) => `/admin/departments/${id}`;
 export async function addDepartmentsAction(_: ActionState, data: FormData): Promise<ActionState> {
   return runAction(
     async (tx, viewer) => {
-      const { added, skipped } = await addDepartments(tx, viewer, {
+      const { added, skipped, other } = await addDepartments(tx, viewer, {
         names: form.text(data, "names"),
       });
-      return d.addResult(added.length, skipped.length);
+      return d.addResult(added.length, skipped.length, other);
     },
     { paths: [LIST] },
   );

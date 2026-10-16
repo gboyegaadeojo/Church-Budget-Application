@@ -87,9 +87,48 @@ export const QUEUE_FILTERS: readonly QueueFilter[] = [
   "declined",
 ];
 
+/** The board-approved church total for a cycle and what's approved so far (4.2, DRD 6.7a). */
+export type BoardAllocation = {
+  totalCents: number;
+  allocatedCents: number;
+  reference: string | null;
+};
+
+/**
+ * The cycle's board total and the sum of approved department totals, leaving out
+ * `exceptRequestId` (the budget being decided, so re-approving it isn't counted twice).
+ * Null when the cycle has no board total.
+ */
+export async function boardAllocation(
+  tx: Tx,
+  cycleId: string,
+  exceptRequestId?: string,
+): Promise<BoardAllocation | null> {
+  const [cycle] = await tx
+    .select({ total: budgetCycles.boardTotalCents, reference: budgetCycles.boardReference })
+    .from(budgetCycles)
+    .where(eq(budgetCycles.id, cycleId));
+  if (!cycle || cycle.total === null) return null;
+  const approved = await tx
+    .select({
+      id: budgetRequests.id,
+      status: budgetRequests.status,
+      total: budgetRequests.approvedTotalCents,
+    })
+    .from(budgetRequests)
+    .where(eq(budgetRequests.budgetCycleId, cycleId));
+  const allocatedCents = sumCents(
+    approved
+      .filter((r) => r.id !== exceptRequestId && isApproved(r.status))
+      .map((r) => r.total ?? 0),
+  );
+  return { totalCents: cycle.total, allocatedCents, reference: cycle.reference };
+}
+
 export type ReviewDashboard = {
   cycles: CycleOption[];
   cycle: CycleOption | null;
+  board: BoardAllocation | null;
   counts: DashboardCounts;
   departments: DashboardDepartment[];
   queue: QueueRow[];
@@ -167,7 +206,7 @@ export async function getReviewDashboard(
     cycles.find((c) => c.status === "open") ??
     cycles[0] ??
     null;
-  const empty = { cycles, cycle, counts: EMPTY_COUNTS, departments: [], queue: [] };
+  const empty = { cycles, cycle, counts: EMPTY_COUNTS, departments: [], queue: [], board: null };
   if (!cycle) return { ...empty, readOnly: access.readOnly };
 
   const requests = await tx
@@ -286,7 +325,15 @@ export async function getReviewDashboard(
         a.submittedAt.getTime() - b.submittedAt.getTime(),
     );
 
-  return { cycles, cycle, counts, departments: departmentRows, queue, readOnly: access.readOnly };
+  return {
+    cycles,
+    cycle,
+    counts,
+    departments: departmentRows,
+    queue,
+    board: await boardAllocation(tx, cycle.id),
+    readOnly: access.readOnly,
+  };
 }
 
 // ---------------------------------------------------------------- one request
@@ -353,6 +400,8 @@ export type ReviewView = Omit<RequestView, "lines"> & {
   revisions: ReviewRevision[];
   decisions: ReviewDecision[];
   approval: CurrentApproval | null;
+  /** The cycle's board total and what other departments have been approved (4.2). */
+  board: BoardAllocation | null;
   /** The person may decide now; otherwise why not (DRD 6.7 conflict-of-interest text). */
   canDecide: boolean;
   canReopen: boolean;
@@ -468,6 +517,7 @@ export async function getReviewView(
     revisions,
     decisions,
     approval,
+    board: await boardAllocation(tx, base.cycle.id, base.id),
     canDecide: decide.allowed && decidable,
     canReopen: reopen.allowed && canTransition(base.status, "reopen"),
     blockedReason: decide.allowed ? null : decide.reason,

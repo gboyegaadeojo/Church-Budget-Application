@@ -6,6 +6,7 @@ import {
   approvalDecisions,
   approvedLineItems,
   budgetRequests,
+  departments,
   idempotencyKeys,
   requestRevisions,
 } from "@/db/schema";
@@ -188,6 +189,12 @@ export async function decideRequest(
       ...(decision.kind === "decline" ? { declinedAt: now } : {}),
     });
   } else {
+    // AC-15: a budget is approved only for a department on the list (FR-03).
+    const [{ status: departmentStatus }] = await tx
+      .select({ status: departments.status })
+      .from(departments)
+      .where(eq(departments.id, row.departmentId));
+    if (departmentStatus === "proposed") throw new RuleError(e.proposedDepartment);
     const lines = await lineRowsOf(tx, row.id);
     const figures = approvedFigures(lines, row.taxRate!, decision);
     if ("error" in figures) {

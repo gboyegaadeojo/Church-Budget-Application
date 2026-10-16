@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { boardWarning } from "@/components/board-allocation";
 import {
   approvedFigures,
   approvedLineTotal,
@@ -189,5 +190,20 @@ describe("approvedFigures (FR-16)", () => {
   it("approvedLineTotal treats quantity 0 as excluded", () => {
     expect(approvedLineTotal(0, 99_999)).toBe(0);
     expect(approvedLineTotal(3, 1_004)).toBe(3_012);
+  });
+});
+
+describe("board total warning (4.2, AC-114)", () => {
+  it("AC-114 warns when approving $15,000.00 with $140,000.00 of $150,000.00 already approved", () => {
+    expect(boardWarning({ totalCents: 15_000_000, allocatedCents: 14_000_000 }, 1_500_000)).toBe(
+      "Approving this brings the year's approved budgets to $155,000.00, $5,000.00 over the board total of $150,000.00. You can still approve it.",
+    );
+  });
+
+  it("says nothing within the total, or without one", () => {
+    expect(
+      boardWarning({ totalCents: 15_000_000, allocatedCents: 14_000_000 }, 1_000_000),
+    ).toBeNull();
+    expect(boardWarning(null, 1_000_000)).toBeNull();
   });
 });

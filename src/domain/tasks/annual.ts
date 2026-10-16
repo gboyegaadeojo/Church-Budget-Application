@@ -3,6 +3,7 @@ import { annualCopy } from "@/copy/annual";
 import { budgetCycles, budgetRequests } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import type { Viewer } from "@/lib/roles";
+import { backupsReminded } from "@/domain/annual/clarification-reminders";
 import type { Task } from "./types";
 
 const t = annualCopy.tasks;
@@ -38,6 +39,10 @@ export async function annualRequesterTasks(tx: Tx, viewer: Viewer): Promise<Task
         eq(budgetCycles.status, "open"),
       ),
     );
+  const reminded = await backupsReminded(
+    tx,
+    rows.filter((r) => r.status === "returned").map((r) => r.id),
+  );
   return rows.map((r) => {
     const draft = r.status === "draft";
     return {
@@ -48,6 +53,7 @@ export async function annualRequesterTasks(tx: Tx, viewer: Viewer): Promise<Task
       waitingSince: draft ? r.createdAt : r.updatedAt,
       href: draft ? `/annual/${r.id}/edit` : `/annual/${r.id}`,
       buttonLabel: t.open,
+      ...(reminded.has(r.id) ? { note: t.backupReminded } : {}),
     } satisfies Task;
   });
 }

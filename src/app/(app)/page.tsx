@@ -102,6 +102,7 @@ function TaskRow({ task, now }: { task: Task; now: Date }) {
           )}
           {" · "}
           {h.waiting(daysWaiting(task.waitingSince, now))}
+          {task.note && <span className="ml-2 font-medium text-warning">· {task.note}</span>}
         </p>
       </div>
       <Link

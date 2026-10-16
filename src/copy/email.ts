@@ -117,6 +117,16 @@ export const emailCopy = {
       action: "Answer the question and resubmit. This doesn't use one of your changes.",
       button: "Answer the question",
     },
+    clarifyReminder: {
+      subject: (d: string, c: string, r: string) =>
+        `Reminder: a question is waiting: ${about(d, c, r)}`,
+      heading: "The accountant is waiting for your answer",
+      intro: (days: number) =>
+        `The accountant asked a question about your budget ${days === 1 ? "a day" : `${days} days`} ago.`,
+      backupIntro: (days: number) =>
+        `The accountant asked a question about your department's budget ${days} days ago and it hasn't been answered yet. As a Backup, you can answer it too.`,
+      action: "Answer the question and resubmit. This doesn't use one of your changes.",
+    },
     returnedCopy: {
       subject: (d: string, c: string, r: string) => `Copy: question sent about ${about(d, c, r)}`,
       heading: "You returned a request for clarification",
@@ -251,6 +261,14 @@ export const emailCopy = {
       heading: "You were removed from a department",
       intro: (department: string) =>
         `The administrator removed you from ${department}. Its budgets stay with the department.`,
+    },
+    backupNominated: {
+      subject: (person: string, department: string) =>
+        `${person} was made a Backup for ${department}`,
+      heading: "A Primary named a Backup",
+      intro: (primary: string, person: string, department: string, slot: string) =>
+        `${primary}, the Primary for ${department}, made ${person} its ${slot}.`,
+      action: "Nothing, unless it's a mistake: then change it on the department's page.",
     },
     backupPromoted: {
       subject: (person: string, department: string) => `${person} is now Primary for ${department}`,

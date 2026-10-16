@@ -17,6 +17,10 @@ import { canTransition } from "@/domain/annual/status";
 import { effectiveDeadline } from "@/domain/cycles/service";
 import { getChurchTimeZone, getSignInSettings } from "@/domain/settings";
 import { viewerAllowedTo } from "@/lib/admin-server";
+import { getDepartmentDetail } from "@/domain/departments/queries";
+import { readSettings } from "@/domain/settings";
+import { leaderCandidates } from "@/domain/users/admin-queries";
+import { LeadersPanel } from "./leaders-panel";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
 import { formatDateTime } from "@/lib/time-zone";
@@ -79,6 +83,20 @@ async function DashboardContent({
       : cycle?.submissionDeadline;
   const daysLeft = deadline ? daysUntil(deadline) : 0;
   const returned = requests.filter((r) => r.status === "returned");
+  // FR-38: the Primary names the department's Backups here.
+  const primaryOf = viewer.departments.filter((dep) => dep.representativeType === "primary");
+  const leaderPanels = await Promise.all(
+    primaryOf.map(async (dep) => {
+      const detail = await getDepartmentDetail(db, dep.id);
+      const leaders = detail?.leaders ?? [];
+      const { pco_require_for_requesters } = await readSettings(db, ["pco_require_for_requesters"]);
+      const candidates = (await leaderCandidates(db, pco_require_for_requesters === "true")).filter(
+        (c) =>
+          c.id !== viewer.id && !leaders.some((l) => l.userId === c.id && l.slot === "primary"),
+      );
+      return { department: { id: dep.id, name: dep.name }, leaders, candidates };
+    }),
+  );
   const others = requests.filter((r) => r.status !== "returned");
 
   return (
@@ -181,6 +199,15 @@ async function DashboardContent({
           <RequestTable requests={returned} caption={d.needsAction} />
         </section>
       )}
+
+      {leaderPanels.map((panel) => (
+        <LeadersPanel
+          key={panel.department.id}
+          department={panel.department}
+          leaders={panel.leaders.map((l) => ({ userId: l.userId, name: l.name, slot: l.slot }))}
+          candidates={panel.candidates.map((c) => ({ id: c.id, name: c.name }))}
+        />
+      ))}
 
       <Section title={d.myRequests} id="my-requests">
         {others.length === 0 && returned.length === 0 ? (
