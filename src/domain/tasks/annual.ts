@@ -9,8 +9,7 @@ const t = annualCopy.tasks;
 
 /**
  * Annual budget tasks for requesters (FR-37): drafts in the open cycle still to submit,
- * and requests the accountant returned with a question. Accountant review tasks come
- * with step 6.
+ * and requests the accountant returned with a question.
  */
 export function canHaveAnnualRequesterTasks(viewer: Viewer): boolean {
   return viewer.roles.includes("requester") && viewer.departments.length > 0;
@@ -51,4 +50,53 @@ export async function annualRequesterTasks(tx: Tx, viewer: Viewer): Promise<Task
       buttonLabel: t.open,
     } satisfies Task;
   });
+}
+
+/** Accountants (and backup approvers) review submitted budgets (FR-13, FR-37). */
+export function canHaveAnnualReviewTasks(viewer: Viewer): boolean {
+  return viewer.roles.includes("accountant") || viewer.roles.includes("backup_approver");
+}
+
+/**
+ * Submitted, changed and in-review requests in the open cycle, for accountants. A
+ * department the person represents is left out: someone else decides it (FR-33).
+ */
+export async function annualReviewTasks(tx: Tx, viewer: Viewer): Promise<Task[]> {
+  if (!canHaveAnnualReviewTasks(viewer)) return [];
+  const rows = await tx
+    .select({
+      id: budgetRequests.id,
+      status: budgetRequests.status,
+      title: budgetRequests.title,
+      reference: budgetRequests.referenceNumber,
+      departmentId: budgetRequests.departmentId,
+      department: budgetRequests.departmentNameSnapshot,
+      totalCents: budgetRequests.requestedTotalCents,
+      updatedAt: budgetRequests.updatedAt,
+      submittedAt: budgetRequests.submittedAt,
+    })
+    .from(budgetRequests)
+    .innerJoin(budgetCycles, eq(budgetCycles.id, budgetRequests.budgetCycleId))
+    .where(
+      and(
+        inArray(budgetRequests.status, ["submitted", "updated", "in_review"]),
+        eq(budgetCycles.status, "open"),
+      ),
+    );
+  const mine = new Set(viewer.departments.map((d) => d.id));
+  return rows
+    .filter((r) => !mine.has(r.departmentId))
+    .map(
+      (r) =>
+        ({
+          id: `annual:${r.id}:review`,
+          area: "annual",
+          action: r.status === "updated" ? t.reviewUpdated : t.review,
+          item: [r.reference, r.department, r.title].filter(Boolean).join(" · "),
+          amountCents: r.totalCents ?? undefined,
+          waitingSince: r.status === "updated" ? r.updatedAt : (r.submittedAt ?? r.updatedAt),
+          href: `/annual/review/${r.id}`,
+          buttonLabel: t.reviewButton,
+        }) satisfies Task,
+    );
 }

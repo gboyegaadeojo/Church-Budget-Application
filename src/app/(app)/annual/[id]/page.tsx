@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { FinancialSummary } from "@/components/financial-summary";
+import { ComparisonSummary, FinancialSummary } from "@/components/financial-summary";
 import { AdminSkeleton, PageHeader } from "@/components/ui/display";
 import { buttonClass, cardClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
@@ -72,6 +72,7 @@ async function RequestContent({
           <p className="text-sm text-fg-muted">
             {statusExplanation(request.status, request.editsRemaining)}
           </p>
+          {request.decision && <DecisionNote request={request} />}
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <Item label={f.department}>
               {request.department.name}
@@ -121,6 +122,58 @@ async function RequestContent({
         </aside>
       </div>
     </>
+  );
+}
+
+/**
+ * What the accountant decided, for the department (FR-17, FR-18, FR-19): the question,
+ * the decline reason, or the approved amounts beside what was asked.
+ */
+function DecisionNote({ request }: { request: RequestView }) {
+  const decision = request.decision!;
+  const r = annualCopy.review;
+  return (
+    <section
+      aria-labelledby="decision-heading"
+      className={cn(
+        "space-y-2 rounded-control border p-4",
+        decision.kind === "returned" && "border-warning",
+        decision.kind === "declined" && "border-danger",
+        decision.kind === "approved" && "border-success",
+      )}
+    >
+      <h2 id="decision-heading" className="text-sm font-semibold">
+        {v.decisionHeading[decision.kind]}
+      </h2>
+      {decision.kind === "approved" && decision.approved && (
+        <ComparisonSummary
+          requested={request.totals}
+          approved={decision.approved}
+          rate={request.rate}
+          labels={{
+            requested: r.requested,
+            approved: r.approved,
+            difference: r.difference,
+            less: r.differenceLess,
+            more: r.differenceMore,
+            none: r.differenceNone,
+          }}
+        />
+      )}
+      {decision.reason && (
+        <p className="text-sm whitespace-pre-line">
+          {decision.kind === "approved" && (
+            <span className="text-fg-muted">{v.accountantNote}: </span>
+          )}
+          {decision.reason}
+        </p>
+      )}
+      {decision.boardReference && (
+        <p className="text-sm text-fg-muted">
+          {r.boardReference}: {decision.boardReference}
+        </p>
+      )}
+    </section>
   );
 }
 

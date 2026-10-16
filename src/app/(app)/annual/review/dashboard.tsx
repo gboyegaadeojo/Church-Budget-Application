@@ -1,0 +1,365 @@
+import Link from "next/link";
+import { Eye } from "lucide-react";
+import { Badge, EmptyState, PageHeader, PermissionDenied, Section } from "@/components/ui/display";
+import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
+import { annualCopy } from "@/copy/annual";
+import { getDb } from "@/db";
+import {
+  AWAITING,
+  getReviewDashboard,
+  QUEUE_FILTERS,
+  type DashboardDepartment,
+  type Progress,
+  type QueueRow,
+} from "@/domain/annual/review-queries";
+import { getChurchTimeZone } from "@/domain/settings";
+import { viewerAllowedTo } from "@/lib/admin-server";
+import { cn } from "@/lib/cn";
+import { formatCAD } from "@/lib/money";
+import { formatDate, zonedDate } from "@/lib/time-zone";
+import { AnnualStatusBadge } from "../status-badge";
+
+const r = annualCopy.review;
+
+type Search = Record<string, string | string[] | undefined>;
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+
+/**
+ * The accountant dashboard (FR-13, FR-14, DRD 6.6): summary cards, department completion
+ * and the review queue. Filters live in the address (DRD 6.0), so Back and shared links
+ * return to the same view. The administrator sees the same page read-only.
+ */
+export async function ReviewDashboardView({
+  searchParams,
+  path,
+  title,
+  intro,
+}: {
+  searchParams: Promise<Search>;
+  path: "/annual/review" | "/annual/all";
+  title: string;
+  intro: string;
+}) {
+  const viewer = await viewerAllowedTo("annual.review", path);
+  if (!viewer) return <PermissionDenied />;
+  const query = await searchParams;
+  const filters = {
+    cycleId: one(query.cycle) || undefined,
+    status: one(query.status) || undefined,
+    departmentId: one(query.department) || undefined,
+    q: one(query.q) || undefined,
+  };
+  const db = getDb();
+  const [dashboard, zone] = await Promise.all([
+    getReviewDashboard(db, viewer, filters),
+    getChurchTimeZone(db),
+  ]);
+  if (!dashboard) return <PermissionDenied />;
+  const { cycle, counts, departments, queue, readOnly } = dashboard;
+  const filtered = Boolean(filters.status || filters.departmentId || filters.q);
+
+  return (
+    <>
+      <PageHeader title={title} intro={intro}>
+        {readOnly && (
+          <Badge>
+            <Eye className="mr-1 size-3.5" aria-hidden="true" />
+            {r.viewOnly}
+          </Badge>
+        )}
+      </PageHeader>
+
+      {!cycle ? (
+        <EmptyState>{r.noCycles}</EmptyState>
+      ) : (
+        <>
+          <form method="get" action={path} className={cn(cardClass, "space-y-4")}>
+            <h2 className="sr-only">{r.filters}</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Select
+                name="cycle"
+                label={r.cycle}
+                value={cycle.id}
+                options={dashboard.cycles.map((c) => ({
+                  value: c.id,
+                  label: `${c.name} (${r.cycleStatus[c.status] ?? c.status})`,
+                }))}
+              />
+              <Select
+                name="status"
+                label={r.status}
+                value={filters.status ?? "all"}
+                options={QUEUE_FILTERS.map((f) => ({ value: f, label: r.queueFilters[f] }))}
+              />
+              <Select
+                name="department"
+                label={r.department}
+                value={filters.departmentId ?? ""}
+                options={[
+                  { value: "", label: r.allDepartments },
+                  ...departments.map((d) => ({ value: d.departmentId, label: d.departmentName })),
+                ]}
+              />
+              <div className="space-y-1.5">
+                <label htmlFor="review-q" className="block text-sm font-medium">
+                  {r.search}
+                </label>
+                <input
+                  id="review-q"
+                  name="q"
+                  type="search"
+                  defaultValue={filters.q ?? ""}
+                  aria-describedby="review-q-hint"
+                  className={inputClass}
+                />
+                <p id="review-q-hint" className="text-xs text-fg-muted">
+                  {r.searchHint}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="submit" className={buttonClass("secondary")}>
+                {r.apply}
+              </button>
+              {filtered && (
+                <Link href={`${path}?cycle=${cycle.id}`} className={linkClass}>
+                  {r.clear}
+                </Link>
+              )}
+            </div>
+          </form>
+
+          <section aria-label={r.cards.expected} className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+            <Stat label={r.cards.expected} value={counts.expected} />
+            <Stat label={r.cards.submitted} value={counts.submitted} />
+            <Stat label={r.cards.outstanding} value={counts.outstanding} />
+            <Stat label={r.cards.awaiting} value={counts.awaitingReview} strong />
+            <Stat label={r.cards.totalRequested} value={formatCAD(counts.totalRequestedCents)} />
+            <Stat label={r.cards.totalApproved} value={formatCAD(counts.totalApprovedCents)} />
+            <p className="col-span-2 text-sm text-fg-muted lg:col-span-3">
+              {r.cards.returned} {counts.returned} · {r.cards.approved} {counts.approved} ·{" "}
+              {r.cards.declined} {counts.declined}
+            </p>
+          </section>
+
+          <Section title={r.queueHeading} id="queue">
+            {queue.length === 0 ? (
+              <EmptyState>{counts.submitted === 0 ? r.queueNone : r.queueEmpty}</EmptyState>
+            ) : (
+              <QueueTable rows={queue} zone={zone} readOnly={readOnly} />
+            )}
+          </Section>
+
+          <Section title={r.departmentsHeading} id="departments">
+            <DepartmentTable rows={departments} zone={zone} />
+          </Section>
+        </>
+      )}
+    </>
+  );
+}
+
+function Select({
+  name,
+  label,
+  value,
+  options,
+}: {
+  name: string;
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+}) {
+  const id = `review-${name}`;
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={id} className="block text-sm font-medium">
+        {label}
+      </label>
+      <select id={id} name={name} defaultValue={value} className={inputClass}>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  strong,
+}: {
+  label: string;
+  value: string | number;
+  strong?: boolean;
+}) {
+  return (
+    <div className={cn(cardClass, "space-y-1 p-4 sm:p-4", strong && "border-accent")}>
+      <p className="text-xs font-medium text-fg-muted">{label}</p>
+      <p className="tabular text-xl font-semibold sm:text-2xl">{value}</p>
+    </div>
+  );
+}
+
+// relative: keeps visually hidden header text inside the scrolling region.
+const tableWrap = "relative -mx-1 overflow-x-auto px-1";
+const th = "py-2 pr-4 text-xs font-medium text-fg-muted";
+
+function QueueTable({
+  rows,
+  zone,
+  readOnly,
+}: {
+  rows: QueueRow[];
+  zone: string;
+  readOnly: boolean;
+}) {
+  return (
+    <div className={tableWrap} tabIndex={0} role="region" aria-label={r.queueCaption}>
+      <table className="w-full min-w-[44rem] text-left text-sm">
+        <caption className="sr-only">{r.queueCaption}</caption>
+        <thead className="border-b border-border">
+          <tr>
+            <th scope="col" className={th}>
+              {r.columns.reference}
+            </th>
+            <th scope="col" className={th}>
+              {r.columns.department}
+            </th>
+            <th scope="col" className={th}>
+              {r.columns.requester}
+            </th>
+            <th scope="col" className={th}>
+              {r.columns.submitted}
+            </th>
+            <th scope="col" className={cn(th, "text-right")}>
+              {r.columns.requested}
+            </th>
+            <th scope="col" className={th}>
+              {r.columns.status}
+            </th>
+            <th scope="col" className={cn(th, "pr-0")}>
+              <span className="sr-only">{r.open}</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {rows.map((row) => {
+            const awaiting = AWAITING.includes(row.status);
+            return (
+              <tr key={row.requestId}>
+                <td className="py-3 pr-4 font-medium whitespace-nowrap">{row.referenceNumber}</td>
+                <td className="py-3 pr-4">
+                  {row.departmentName}
+                  {row.title && <span className="block text-xs text-fg-muted">{row.title}</span>}
+                </td>
+                <td className="py-3 pr-4">{row.requesterName}</td>
+                <td className="py-3 pr-4 whitespace-nowrap">
+                  {formatDate(zonedDate(row.submittedAt, zone))}
+                </td>
+                <td className="tabular py-3 pr-4 text-right">
+                  {formatCAD(row.requestedTotalCents)}
+                </td>
+                <td className="py-3 pr-4">
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <AnnualStatusBadge status={row.status} />
+                  </span>
+                </td>
+                <td className="py-3 text-right">
+                  <Link
+                    href={`/annual/review/${row.requestId}`}
+                    className={buttonClass(awaiting && !readOnly ? "primary" : "secondary")}
+                    aria-label={`${awaiting && !readOnly ? r.review : r.open} ${row.referenceNumber}`}
+                  >
+                    {awaiting && !readOnly ? r.review : r.open}
+                  </Link>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function progressLabel(progress: Progress) {
+  if (progress === "not_submitted" || progress === "draft_exists") {
+    return <Badge>{r.progress[progress]}</Badge>;
+  }
+  return <AnnualStatusBadge status={progress} />;
+}
+
+function nextStep(progress: Progress): string {
+  if (progress === "not_submitted" || progress === "draft_exists") return r.nextStep[progress];
+  if (AWAITING.includes(progress)) return r.nextStep.awaiting;
+  if (progress === "returned") return r.nextStep.returned;
+  return r.nextStep.decided;
+}
+
+function DepartmentTable({ rows, zone }: { rows: DashboardDepartment[]; zone: string }) {
+  return (
+    <div className={tableWrap} tabIndex={0} role="region" aria-label={r.departmentsCaption}>
+      <table className="w-full min-w-[48rem] text-left text-sm">
+        <caption className="sr-only">{r.departmentsCaption}</caption>
+        <thead className="border-b border-border">
+          <tr>
+            <th scope="col" className={th}>
+              {r.columns.department}
+            </th>
+            <th scope="col" className={th}>
+              {r.columns.representative}
+            </th>
+            <th scope="col" className={th}>
+              {r.columns.status}
+            </th>
+            <th scope="col" className={th}>
+              {r.columns.submitted}
+            </th>
+            <th scope="col" className={cn(th, "text-right")}>
+              {r.columns.requested}
+            </th>
+            <th scope="col" className={cn(th, "text-right")}>
+              {r.columns.approved}
+            </th>
+            <th scope="col" className={cn(th, "pr-0")}>
+              {r.columns.action}
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {rows.map((row) => (
+            <tr key={row.departmentId}>
+              <td className="py-3 pr-4 font-medium">
+                {row.requestId ? (
+                  <Link href={`/annual/review/${row.requestId}`} className={linkClass}>
+                    {row.departmentName}
+                  </Link>
+                ) : (
+                  row.departmentName
+                )}
+              </td>
+              <td className="py-3 pr-4">
+                {row.representative ?? <span className="text-fg-muted">{r.noRepresentative}</span>}
+              </td>
+              <td className="py-3 pr-4">{progressLabel(row.progress)}</td>
+              <td className="py-3 pr-4 whitespace-nowrap">
+                {row.submittedAt ? formatDate(zonedDate(row.submittedAt, zone)) : "—"}
+              </td>
+              <td className="tabular py-3 pr-4 text-right">
+                {row.requestedTotalCents === null ? "—" : formatCAD(row.requestedTotalCents)}
+              </td>
+              <td className="tabular py-3 pr-4 text-right">
+                {row.approvedTotalCents === null ? "—" : formatCAD(row.approvedTotalCents)}
+              </td>
+              <td className="py-3 text-fg-muted">{nextStep(row.progress)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

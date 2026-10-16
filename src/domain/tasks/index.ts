@@ -1,6 +1,11 @@
 import { getDb } from "@/db";
 import type { Viewer } from "@/lib/roles";
-import { annualRequesterTasks, canHaveAnnualRequesterTasks } from "./annual";
+import {
+  annualRequesterTasks,
+  annualReviewTasks,
+  canHaveAnnualRequesterTasks,
+  canHaveAnnualReviewTasks,
+} from "./annual";
 import type { Task, TaskProvider } from "./types";
 
 export type { Task, TaskProvider } from "./types";
@@ -13,6 +18,7 @@ export type { Task, TaskProvider } from "./types";
 export const taskProviders: TaskProvider[] = [
   async (viewer) =>
     canHaveAnnualRequesterTasks(viewer) ? annualRequesterTasks(getDb(), viewer) : [],
+  async (viewer) => (canHaveAnnualReviewTasks(viewer) ? annualReviewTasks(getDb(), viewer) : []),
 ];
 
 /**
