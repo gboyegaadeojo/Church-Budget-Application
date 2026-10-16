@@ -2,7 +2,7 @@ import Link from "next/link";
 import { activityCopy as a } from "@/copy/activity";
 import { cn } from "@/lib/cn";
 
-type Tab = "activity" | "access";
+type Tab = "overview" | "activity" | "access";
 
 /**
  * The Analytics & Audit tabs (DRD 6.13). Access is the System Administrator's only, so
@@ -10,6 +10,7 @@ type Tab = "activity" | "access";
  */
 export function AnalyticsTabs({ current, showAccess }: { current: Tab; showAccess: boolean }) {
   const tabs: { id: Tab; href: string; label: string }[] = [
+    { id: "overview", href: "/reports/analytics/overview", label: a.tabs.overview },
     { id: "activity", href: "/reports/analytics", label: a.tabs.activity },
     ...(showAccess
       ? [{ id: "access" as const, href: "/reports/analytics/access", label: a.tabs.access }]

@@ -161,6 +161,43 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
     });
   }
 
+  for (const [name, size, scheme] of [
+    ["360 px, light", MOBILE, "light"],
+    ["1440 px, dark", DESKTOP, "dark"],
+  ] as const) {
+    test(`FR-52 the Overview shows the year's figures with charts and tables, axe clean at ${name}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(size);
+      await page.emulateMedia({ colorScheme: scheme });
+      await signInAs(page, PEOPLE.pat);
+      await page.goto("/reports/analytics");
+      await page
+        .getByRole("navigation", { name: "Analytics & Audit tabs" })
+        .getByRole("link", { name: "Overview" })
+        .click();
+      await expect(page).toHaveURL(/\/reports\/analytics\/overview/);
+      await expect(page.getByText("Requested (incl. tax)")).toBeVisible();
+      await expect(
+        page.getByRole("list", { name: "Departments by where their budget is" }),
+      ).toBeVisible();
+      await page.getByText("Show as a table").first().click();
+      await expect(
+        page.getByRole("table", { name: "Departments by where their budget is" }),
+      ).toBeVisible();
+      await expectAxeClean(page);
+      await expectNoHorizontalScroll(page);
+    });
+  }
+
+  test("FR-52 the Overview exports to Excel", async ({ page }) => {
+    await signInAs(page, PEOPLE.pat);
+    await page.goto("/reports/analytics/overview");
+    const download = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Export to Excel" }).click();
+    expect((await download).suggestedFilename()).toMatch(/_Overview\.xlsx$/);
+  });
+
   test("FR-52 staff don't see the Access tab, and can't open it", async ({ page }) => {
     await signInAs(page, PEOPLE.pat);
     await page.goto("/reports/analytics");

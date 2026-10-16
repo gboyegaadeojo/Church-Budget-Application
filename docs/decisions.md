@@ -470,3 +470,24 @@ Updated: requirements 6B.3, 6B.4, FR-43, AC-70, the new AC-139 and AC-140, DRD b
   - Planning Center mapping problems (FR-39), listed until a later sync succeeds or the department is unlinked (link to its mapping).
 - **Tables instead of charts:** each figure is a small count, and a table reads well with a screen reader and on a phone. Tables that scroll sideways on a phone can be focused by keyboard (WCAG 2.1.1).
 - **Tabs:** Activity and Access share one tab bar. The Overview tab joins it next.
+
+## Stage 2: the Overview tab of Analytics & Audit (FR-52) (2026-10-16)
+
+- **Where:** Reports → Analytics & Audit → **Overview** (`/reports/analytics/overview`), the first tab. Activity stays at `/reports/analytics`, so existing links and bookmarks keep working.
+- **Annual budget figures only, for the people who review them** (`annual.review`: accountant, backup approver, and the System Administrator read-only). Requirements 3.6 gives the Church Administrator spending and payment analytics and the board the expenses they decided, which arrive with Stages 4 and 3. Until then they see a short note instead of figures that aren't theirs.
+- **Figures** (one cycle, chosen in the filter bar; the open one by default):
+  - Board-approved total against what's approved, with a meter, flagged in the danger colour with "Over…" when exceeded.
+  - Requested and approved totals including tax.
+  - Average days from submission to the decision.
+  - Departments by stage (Not started, Draft, Submitted, In review, Returned, Approved, Declined), each bar linking to the review dashboard filtered to it.
+  - Requested against approved by department.
+  - The five budgets waiting longest.
+- **Same numbers as the dashboard:** the Overview is built on `getReviewDashboard`, so its totals match the review dashboard and the exports to the cent.
+- **Charts** follow the dataviz method:
+  - Departments by stage is one series of horizontal bars.
+  - Requested against approved is a dumbbell with one hue, told apart by shape (ring for requested, filled dot for approved) and a legend.
+  - Every chart has a "Show as a table" view, a title that states the takeaway, and a hover title on each mark. Each row is a keyboard-reachable link.
+  - They're built in HTML and CSS rather than SVG, so they reflow at 360 px.
+  - A new `--chart-1` token (`#2860c0` light, `#3987e5` dark) passes the palette validator on both surfaces. The dark annual blue `#7fb0ff` is right for text but too light for a mark.
+- **Export:** "Export to Excel" downloads Summary, By stage and By department sheets, with amounts as numbers in CAD format. It's audited as `annual.overview_exported`.
+- **Not yet:** budget vs actual, spending over time, the expense pipeline and payment turnaround. They need Stage 3 and 4 data and will join this tab then. The department, area and date filters come with them.

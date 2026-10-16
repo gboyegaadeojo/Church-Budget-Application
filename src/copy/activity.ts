@@ -51,6 +51,7 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "annual.release_cancelled": { label: "Cancelled the scheduled release", group: "decisions" },
   "annual.released_now": { label: "Released the held decisions now", group: "decisions" },
   "annual.exported": { label: "Exported annual budgets to Excel", group: "exports" },
+  "annual.overview_exported": { label: "Exported the Overview to Excel", group: "exports" },
   // Sign-in and access
   "access.sign_in_succeeded": { label: "Signed in", group: "access" },
   "access.sign_in_failed": { label: "Sign-in refused", group: "access" },
@@ -193,6 +194,64 @@ export const activityCopy = {
     overview: "Overview",
     access: "Access",
     label: "Analytics & Audit tabs",
+  },
+  /** The Overview tab (FR-52): the annual budget at a glance. */
+  overview: {
+    intro: "How the budget year is going: what's requested, approved and still waiting.",
+    notForYou:
+      "The Overview shows annual budget figures for the accountant, backup approvers and the System Administrator. Spending and expense figures arrive with those parts of the app.",
+    cycle: "Budget cycle",
+    show: "Show",
+    noCycle: "No budget cycle yet.",
+    export: "Export to Excel",
+    board: "Board-approved total",
+    boardAllocated: (approved: string, percent: number) =>
+      `${approved} approved so far (${percent}%).`,
+    boardNone: "No board-approved total set for this cycle.",
+    boardMeter: "Share of the board total approved",
+    over: (amount: string) => `Over the board total by ${amount}.`,
+    requested: "Requested (incl. tax)",
+    requestedFrom: (n: number) =>
+      n === 1 ? "From 1 submitted budget." : `From ${n} submitted budgets.`,
+    approved: "Approved (incl. tax)",
+    approvedFrom: (n: number) => (n === 1 ? "1 budget approved." : `${n} budgets approved.`),
+    turnaround: "Average time to a decision",
+    days: (n: number) => (n === 1 ? "1 day" : `${n} days`),
+    turnaroundFrom: (n: number) =>
+      n === 1 ? "Across 1 decided budget." : `Across ${n} decided budgets.`,
+    noDecisions: "No decisions yet.",
+    stagesTitle: (approved: number, expected: number) =>
+      `${approved} of ${expected} departments approved`,
+    stagesCaption: "Departments by where their budget is",
+    stages: {
+      not_started: "Not started",
+      draft: "Draft",
+      submitted: "Submitted",
+      in_review: "In review",
+      returned: "Returned for clarification",
+      approved: "Approved",
+      declined: "Declined",
+    },
+    stageCount: (n: number) => (n === 1 ? "1 department" : `${n} departments`),
+    amountsTitle: (approved: string, requested: string) =>
+      `${approved} approved of ${requested} requested`,
+    amountsCaption: "Requested and approved totals by department, including tax",
+    legendRequested: "Requested",
+    legendApproved: "Approved",
+    notDecided: "Not decided",
+    noAmounts: "No budgets submitted yet.",
+    asTable: "Show as a table",
+    columns: {
+      stage: "Where it is",
+      departments: "Departments",
+      department: "Department",
+      reference: "Reference",
+      requested: "Requested",
+      approved: "Approved",
+      waiting: "Waiting",
+    },
+    waitingTitle: "Waiting longest for a decision",
+    waitingNone: "Nothing is waiting for a decision.",
   },
   /** The Access tab (FR-52), for the System Administrator. */
   access: {
