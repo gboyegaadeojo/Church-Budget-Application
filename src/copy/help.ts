@@ -44,7 +44,6 @@ export const helpCopy = {
         "To share every decision at once, use Decision release: choose a date and time and decide every department first. Departments see In Review until then; Release now sends everything held straight away.",
         "Download Excel from a budget, from the dashboard, or from Reports for the whole cycle.",
         "You can't decide a budget for a department you lead; another accountant or the backup approver does.",
-        "Account menu → Email preferences: get new submissions and revisions in one daily email, or turn off reminders and copies of your own decisions.",
         "Going away? Choose Away in the account menu: accountant emails go to the backup approvers until the day you're back.",
       ],
     },

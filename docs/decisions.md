@@ -420,3 +420,14 @@ The church asked that staff other than the System Administrator not see sign-ins
 - **Budget links in the log** open the review screen for an accountant, but the budget page itself when the person leads that department. A leader's draft can't be opened on the review screen.
 - **Accessibility:** "Show the details" in the log is now 24 px tall (WCAG 2.5.8 target size). The accountant's new axe check found it.
 - **Dev note:** a local `dev:fake` server started before the live-migration watcher must have new migrations applied by hand. The FY2027 submission error seen on 2026-10-16 was migrations 0014 and 0015 missing there, not a code fault.
+
+## Emails can't be turned off (2026-10-16)
+
+This replaces Stage 2 step 7 (PR #34). The church decided that every email is enforced. If people can turn emails off, they miss ones they need, and the church ends up chasing them.
+
+- **Removed:** Account settings → Email preferences (turning off reminders and copies), the accountant's daily digest, and the account menu item. Every email goes to everyone it's meant for, straight away. This departs from FR-21 "Email rules", which allowed opting out, and the requirements and the DRD now say so.
+- **Code:**
+  - `enqueueEmail` queues every distinct recipient again.
+  - Removed: `src/lib/email/preferences.ts`, the digest service and job step, the preferences service, and the `account.email_preferences` and `account.accountant_emails` actions.
+- **Data:** migration `0016_remove_email_preferences` drops the preference columns from `user_preferences` and the `email_digest_items` table. The app wasn't live, so only dev and test data held them. `user_preferences` stays for Away. Past `user.email_preferences_changed` audit rows stay in the log.
+- **Unchanged:** Away (FR-33) still decides who covers for the accountant, and the monthly spending summary (Stage 4) will always be sent.

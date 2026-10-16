@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import * as Menu from "@radix-ui/react-dropdown-menu";
 import { useTheme } from "next-themes";
-import { Check, LogOut, Mail, Monitor, Moon, Plane, Sun } from "lucide-react";
+import { Check, LogOut, Monitor, Moon, Plane, Sun } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
 import { copy } from "@/copy/en-CA";
 
@@ -38,8 +38,8 @@ const itemClass =
   "flex min-h-11 cursor-default select-none items-center gap-3 rounded-control px-3 text-sm outline-none data-[disabled]:text-fg-muted data-[highlighted]:bg-surface-hover lg:min-h-9";
 
 /**
- * Account menu (DRD 6.0): roles as chips, theme choice, email preferences, Away, and sign
- * out. No role switcher.
+ * Account menu (DRD 6.0): roles as chips, theme choice, Away, and sign out. No role
+ * switcher. There are no email preferences: every email always goes (docs/decisions.md).
  */
 export function AccountMenu({ name, email, roleChips, canBeAway }: AccountMenuProps) {
   const { theme, setTheme } = useTheme();
@@ -108,12 +108,6 @@ export function AccountMenu({ name, email, roleChips, canBeAway }: AccountMenuPr
 
             <Menu.Separator className="my-1 h-px bg-border" />
 
-            <Menu.Item asChild className={itemClass}>
-              <Link href="/account#email">
-                <Mail className="size-4" aria-hidden="true" />
-                <span className="flex-1">{a.emailPreferences}</span>
-              </Link>
-            </Menu.Item>
             {canBeAway && (
               <Menu.Item asChild className={itemClass}>
                 <Link href="/account#away">
