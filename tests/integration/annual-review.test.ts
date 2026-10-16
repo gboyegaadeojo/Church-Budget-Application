@@ -18,6 +18,7 @@ import { getReviewDashboard, getReviewView } from "@/domain/annual/review-querie
 import type { RequestContentInput } from "@/domain/annual/schema";
 import { reviseRequest, saveDraft, startRequest, submitRequest } from "@/domain/annual/service";
 import { ConflictError, RuleError, ValidationError } from "@/domain/errors";
+import { annualReviewTasks } from "@/domain/tasks/annual";
 import { loadViewer } from "@/domain/users/viewer";
 import { ForbiddenError, type Subject } from "@/lib/authz";
 import { createTestDb, type TestDb } from "./helpers/db";
@@ -557,5 +558,21 @@ describe("who may decide (Requirements 3.6, FR-33)", () => {
     await expect(decide(requestId, { kind: "approve_as_requested" }, admin)).rejects.toBeInstanceOf(
       ForbiddenError,
     );
+  });
+});
+
+describe("accountant tasks (FR-37)", () => {
+  it("lists requests waiting for review, but not ones the accountant must not decide", async () => {
+    const { requestId } = await submitted();
+    const me = await loadViewer(db, accountant.id);
+    if (!me.ok) throw new Error(me.reason);
+    const tasks = await run((tx) => annualReviewTasks(tx, me.viewer));
+    expect(tasks.find((t) => t.href === `/annual/review/${requestId}`)).toMatchObject({
+      action: "Review budget request",
+      amountCents: 4_482_800,
+    });
+    await decide(requestId, { kind: "approve_as_requested" });
+    const after = await run((tx) => annualReviewTasks(tx, me.viewer));
+    expect(after.some((t) => t.href === `/annual/review/${requestId}`)).toBe(false);
   });
 });

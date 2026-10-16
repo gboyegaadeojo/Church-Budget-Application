@@ -81,7 +81,7 @@ Each department submits **one** annual budget for the year. Once it has one (a d
 - You can **edit** a submitted budget **twice** before it is decided. The app shows how many edits are left. Edits are shared by everyone in your department.
 - If the accountant asks a question (**Returned for clarification**), it appears in My tasks. Answer it and resubmit; this does **not** use an edit.
 - Use **Messages** on the budget to talk with the accountant; each message emails the other side.
-- When decided, you get an email. The approved amount may be different from what you asked for; it always includes tax.
+- The accountant's question, decline reason or approved amount appears on your budget's page (and by email once email sending is set up). The approved amount may be different from what you asked for; it always includes tax, and the page shows it beside what you asked for.
 
 ### See how much is left
 
@@ -129,16 +129,19 @@ Each department has a **Primary requester** (accountable for the department's bu
 
 ### Annual budgets
 
-1. **Annual Budget → Review dashboard** shows each department's status, totals, and the board total versus what is already allocated.
-2. Open a budget to review it, then choose:
+1. **Annual Budget → Review dashboard** shows the cycle at a glance: departments expected, submitted and outstanding, requests awaiting review, and the total requested and approved (including tax). Choose another cycle, a status, a department or search by reference, department, requester or title; the filters stay in the address, so Back and shared links keep them.
+   - **Review queue**: every submitted budget, changed ones (**Updated**) first. Drafts never appear here.
+   - **Department completion**: every department with its representative, status (**Not submitted**, **Draft exists**, or the budget's status), totals and next step.
+   - Budgets waiting for you also appear in **My tasks** on Home.
+2. Open a budget with **Review**. Opening it marks it **In Review**. You see the details, the items, the revision history (what changed in each version) and earlier decisions. Then choose:
    - **Approve as requested**;
-   - **Approve a different amount**: type the one approved total **including tax** and the board reference; the app works out the tax inside it (for example $30,000.00 = $26,785.71 + $3,214.29 tax);
-   - **Approve with line changes**;
+   - **Approve a different amount**: type the one approved total **including tax**, a note, and optionally the board reference. The app shows the tax inside it as you type (for example $30,000.00 includes $3,214.29 sales tax on $26,785.71) and how it compares with what was asked;
+   - **Adjust individual items**: change approved quantities or prices before tax (quantity 0 leaves an item out) and add a note; the app adds tax;
    - **Return for clarification** with your question;
    - **Decline** with a reason.
-3. Confirm. If decisions are set to **Hold**, emails go out together at the scheduled release time (**Decision release**); otherwise straight away.
-4. **Reopen** a declined budget with a reason if the department needs to try again.
-5. You cannot decide a budget for a department you represent; it goes to the backup approver.
+3. **Review decision**, check the summary (requested, approved and the difference, all including tax), and confirm. The department sees the decision on its budget straight away; emails follow once email sending is set up.
+4. **Reopen** an approved or declined budget with a reason if the board reconsiders. It goes back to the department as Returned for Clarification, without using one of its edits, and the earlier decision stays in the history.
+5. You cannot decide a budget for a department you represent; the page says so, and another accountant or the backup approver decides it.
 
 ### Expenses (first approval)
 

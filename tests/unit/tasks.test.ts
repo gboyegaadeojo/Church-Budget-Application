@@ -41,10 +41,11 @@ describe("getMyTasks", () => {
   });
 
   it("registered providers return nothing, without the database, for people they don't apply to", async () => {
-    // Annual requester tasks need a department; their queries are covered by integration tests.
-    const accountant: Viewer = { ...viewer, roles: ["accountant"], departments: [] };
-    expect(taskProviders).toHaveLength(1);
-    expect(await getMyTasks(accountant)).toEqual([]);
+    // Requester tasks need a department and review tasks an accountant role; their
+    // queries are covered by integration tests.
+    const churchAdmin: Viewer = { ...viewer, roles: ["church_admin"], departments: [] };
+    expect(taskProviders).toHaveLength(2);
+    expect(await getMyTasks(churchAdmin)).toEqual([]);
   });
 
   it("merges every provider and lists the oldest first", async () => {

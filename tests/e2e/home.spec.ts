@@ -240,7 +240,8 @@ test.describe("Home and app shell", () => {
   }
 
   test("FR-37 nothing waiting shows the all-caught-up state", async ({ page }) => {
-    await signInAs(page, PEOPLE.pat);
+    // Noah has no drafts and no review work; the accountant now has reviews waiting.
+    await signInAs(page, PEOPLE.noah);
     await page.goto("/");
     await expect(page.getByText("You're all caught up.")).toBeVisible();
   });

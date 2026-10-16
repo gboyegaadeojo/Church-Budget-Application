@@ -197,3 +197,13 @@ Requested by the user: a second People custom field, **Ministry Department**, de
 - **Outages:** the values last read are stored on the user (`pco_ministry_departments`, migration `0008`). If Planning Center is down or the field doesn't exist, nothing changes and the last known values stay in force (FR-01a).
 - **Restrict and earlier picks:** a department a leader picked on the form while the mode was Suggest stays allowed after switching to Restrict, because they already represent it; the administrator can remove the link.
 - **Not in e2e:** switching the shared mode to Restrict in a parallel browser test would affect every other test, so Restrict is covered by integration tests.
+
+## Stage 1, step 6b: accountant dashboard and review screens (2026-10-15)
+
+- **Routes:** `/annual/review` is the dashboard (FR-13, FR-14, DRD 6.6) and `/annual/review/[id]` the review screen (DRD 6.7). **All budgets** (`/annual/all`) is the same dashboard for the System Administrator, read-only (Requirements 3.5); the review screen shows "View only" instead of decision controls.
+- **Opening starts the review from the browser, not during rendering.** The screen calls a server action when it mounts, so a prefetch or crawler never changes a status.
+- **Decision controls are one choice list** in the DRD's order (approve as requested, a different amount, adjust items, return, decline), then **Review decision**, which validates in the browser with the shared Zod schema and opens a confirmation showing requested, approved and the difference. Each confirmation carries a fresh idempotency key. The live figures come from the same `approvedFigures` the server uses and update before a note is written.
+- **The right-hand column isn't sticky**, because it is often taller than the screen; only the decision button bar sticks to the bottom on desktop. On a phone the order is details, summary, decision, then history.
+- **The department sees decisions in the app now:** the request page shows the accountant's question, decline reason or approved amounts beside what was asked, and the edit form shows the question while they respond. Until the outbox (step 7) this is how they learn of a decision.
+- **My tasks** lists Submitted, Updated and In Review budgets in the open cycle for accountants and backup approvers, leaving out departments they represent (FR-33).
+- **Not yet:** Excel export buttons (FR-20, step 7), the link to the Spending dashboard (Stage 4), the board-total allocation bar (DRD 6.7a, with cycle board totals), the held-decisions banner (FR-19a, Stage 2), and the "Updated since you last viewed" marker per accountant (the queue lists Updated requests first instead).

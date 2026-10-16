@@ -58,6 +58,7 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
         editsRemaining: request.editsRemaining,
         rate: request.rate,
         totals: request.totals,
+        question: request.decision?.kind === "returned" ? request.decision.reason : null,
       }}
       initial={{
         title: request.title,

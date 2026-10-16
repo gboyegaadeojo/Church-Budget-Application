@@ -71,6 +71,8 @@ type RequestInfo = {
   editsRemaining: number;
   rate: string;
   totals: TaxBreakdown;
+  /** The accountant's question, while responding to a return for clarification (FR-17). */
+  question: string | null;
 };
 
 type SaveState =
@@ -288,7 +290,17 @@ export function RequestEditor({
       </header>
 
       {mode === "revise" && <Banner tone="info">{f.revisingBanner(request.editsRemaining)}</Banner>}
-      {mode === "respond" && <Banner tone="warning">{f.respondingBanner}</Banner>}
+      {mode === "respond" && (
+        <Banner tone="warning">
+          {f.respondingBanner}
+          {request.question && (
+            <span className="mt-1 block whitespace-pre-line">
+              <span className="font-medium">{annualCopy.view.decisionHeading.returned}: </span>
+              {request.question}
+            </span>
+          )}
+        </Banner>
+      )}
       {restored && (
         <Banner tone="info">
           {f.restored}{" "}

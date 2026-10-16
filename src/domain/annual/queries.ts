@@ -1,6 +1,13 @@
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { budgetCycles, budgetRequests, departments, userDepartments, users } from "@/db/schema";
+import {
+  approvalDecisions,
+  budgetCycles,
+  budgetRequests,
+  departments,
+  userDepartments,
+  users,
+} from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { effectiveDeadline } from "@/domain/cycles/service";
 import { departmentPolicy } from "@/domain/users/ministry-departments";
@@ -133,6 +140,11 @@ export type RequestView = {
   versionNumber: number;
   /** The viewer may look but not change it (System Administrator, accountant). */
   readOnly: boolean;
+  /**
+   * The accountant's latest decision, shown to the department while it applies: the
+   * question on a returned request, the reason for a decline, or the approved amounts.
+   */
+  decision: LatestDecision | null;
 };
 
 /** One request as its department sees it, or null if missing or not allowed (AC-3). */
@@ -196,6 +208,7 @@ export async function getRequestView(
     editsRemaining: editsRemaining(request),
     versionNumber: request.versionNumber,
     readOnly: decision.readOnly || decision.actingRole !== "requester",
+    decision: await latestDecision(tx, request),
   };
 }
 
@@ -241,4 +254,52 @@ export async function listMyRequests(tx: Tx, actor: Subject): Promise<MyRequest[
     editsRemaining: editsRemaining(request),
     updatedAt: request.updatedAt,
   }));
+}
+
+export type LatestDecision = {
+  kind: "approved" | "returned" | "declined";
+  reason: string | null;
+  boardReference: string | null;
+  approved: TaxBreakdown | null;
+  decidedAt: Date;
+};
+
+const DECISION_FOR_STATUS: Partial<Record<AnnualStatus, LatestDecision["kind"]>> = {
+  returned: "returned",
+  approved: "approved",
+  closed: "approved",
+  declined: "declined",
+};
+
+/** The decision behind the request's current status, if its status comes from one. */
+async function latestDecision(
+  tx: Tx,
+  request: typeof budgetRequests.$inferSelect,
+): Promise<LatestDecision | null> {
+  const kind = DECISION_FOR_STATUS[request.status];
+  if (!kind) return null;
+  const [row] = await tx
+    .select()
+    .from(approvalDecisions)
+    .where(eq(approvalDecisions.budgetRequestId, request.id))
+    .orderBy(desc(approvalDecisions.createdAt))
+    .limit(1);
+  // A reopen also returns a request; its reason is what the department needs to see.
+  if (!row || (row.decision !== kind && !(kind === "returned" && row.decision === "reopened"))) {
+    return null;
+  }
+  return {
+    kind,
+    reason: row.decisionReason,
+    boardReference: row.boardReference,
+    approved:
+      row.approvedTotalCents === null
+        ? null
+        : {
+            subtotal: row.approvedSubtotalCents!,
+            tax: row.approvedTaxCents!,
+            total: row.approvedTotalCents,
+          },
+    decidedAt: row.createdAt,
+  };
 }
