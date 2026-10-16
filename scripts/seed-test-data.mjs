@@ -121,6 +121,54 @@ export async function seedTestData(client) {
     }
   }
 
+  // FY2026 is closed, with Media Team's budget approved and released, so expenses
+  // (Part B) can be charged to it. Media's FY2027 request is left to the annual form.
+  const gina = ids["gina.admin@example.org"];
+  const pat = ids["pat.accountant@example.org"];
+  const { rows: fy2026 } = await client.query(
+    `insert into budget_cycles (name, budget_year, start_date, submission_deadline, status,
+       default_tax_rate, created_by_user_id)
+     values ('FY2026', 2026, '2026-01-01', '2025-11-30T08:00:00Z', 'closed', '0.1200', $1)
+     returning id`,
+    [gina],
+  );
+  // $30,000.00 including tax: $26,785.71 + $3,214.29 (CLAUDE.md test values).
+  const { rows: media } = await client.query(
+    `insert into budget_requests (budget_cycle_id, department_id, requester_user_id,
+       department_name_snapshot, title, justification, status, reference_number, tax_rate,
+       requested_subtotal_cents, requested_tax_cents, requested_total_cents,
+       approved_subtotal_cents, approved_tax_cents, approved_total_cents,
+       submitted_at, approved_at, version_number)
+     select $1, d.id, $2, d.name, 'Media ministry 2026', 'Sound, video and streaming.',
+       'approved', 'IFC-2026-0001', '0.1200', 2678571, 321429, 3000000, 2678571, 321429,
+       3000000, '2025-11-01T17:00:00Z', '2025-12-01T17:00:00Z', 1
+     from departments d where d.name = 'Media Team'
+     returning id`,
+    [fy2026[0].id, gina],
+  );
+  await client.query(
+    `insert into budget_line_items (budget_request_id, item_name, quantity, unit_price_cents,
+       line_total_cents, sort_order)
+     values ($1, 'Microphones and cables', 1, 1500000, 1500000, 0),
+            ($1, 'Streaming equipment', 1, 1178571, 1178571, 1)`,
+    [media[0].id],
+  );
+  const { rows: revision } = await client.query(
+    `insert into request_revisions (budget_request_id, revision_number, kind, edited_by_user_id,
+       tax_rate, subtotal_cents, tax_cents, total_cents, request_snapshot)
+     values ($1, 1, 'submission', $2, '0.1200', 2678571, 321429, 3000000, '{}')
+     returning id`,
+    [media[0].id, gina],
+  );
+  await client.query(
+    `insert into approval_decisions (budget_request_id, request_revision_id, decision, method,
+       approved_subtotal_cents, approved_tax_cents, approved_total_cents, approver_user_id,
+       acting_role, released_at)
+     values ($1, $2, 'approved', 'as_requested', 2678571, 321429, 3000000, $3, 'accountant',
+       '2025-12-01T17:00:00Z')`,
+    [media[0].id, revision[0].id, pat],
+  );
+
   // FY2027 is open, with its deadline 60 days out, so the annual form can be used (FR-03).
   await client.query(
     `insert into budget_cycles (name, budget_year, start_date, submission_deadline, status,

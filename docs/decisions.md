@@ -537,3 +537,27 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 - **Permissions** (`authz.ts`):
   - New actions: `expense.view_all`, `expense.review_queue`, `expense.board_queue`, `expense.process_queue`, `expense.cancel` and `expense.export`.
   - No approver decides an expense they submitted (FR-47), as well as one for their own department or that pays them.
+
+## Stage 3 step 2: submitting expenses (6B.3, FR-40 to FR-44) (2026-10-16)
+
+- **Pages:**
+  - **New expense** (`/expenses/new`): choose the type, the department and the budget year.
+  - **The form** (`/expenses/{id}/edit`): the budget strip, the details, items or receipt lines, how it's bought or who's paid, then a preview and **Confirm submission**.
+  - **The expense** (`/expenses/{id}`): the approval tracker, details, totals and next steps.
+  - **My expenses** (`/expenses/mine`): every expense of the person's departments, with each department's budget.
+- **Which year an expense is charged to.** The requester picks it from the years where the department has an approved budget whose decision has reached it (FR-19a) and whose spending period isn't locked. This calendar year's budget is preselected, otherwise the latest. FR-46 says "the year of the purchase date"; the app doesn't force that, because a December purchase for January's ministry is normal, and the accountant sees the year on every screen. AC-78 holds: with no such budget, nothing can be started or submitted.
+- **Drafts are saved with Save draft, not autosaved.** Expense forms are short. Rows are stored in their own tables, so a receipt line with anything typed must have a valid date and amount before it's saved.
+- **Who's paid:**
+  - **Me** uses the requester's account, with their sign-in email unless they give an e-transfer address.
+  - **Someone else** needs a name, and an email for an e-transfer. If that email belongs to an account, the claim records that person as the payee, so they can't approve it (FR-47).
+  - **Church card** means nothing is owed.
+  - Bank account numbers are never asked for.
+- **Late claims (FR-46):** a receipt older than `claim_deadline_days` (90) needs an explanation. A purchase date in the future is refused.
+- **Over budget (FR-43):** worked out from the live figures when the form opens and again on the server at submission. A claim linked to a purchase request counts that request's commitment as released.
+- **Editing (FR-44):**
+  - Any representative of the department can change a Submitted expense, or answer a return. Each change is a new revision.
+  - A change that changes nothing is refused.
+  - Withdrawing is allowed while Submitted or Returned.
+  - Cancelling an approved purchase request needs a reason, and is refused while a claim linked to it is on its way.
+- **Not built:** the optional "Expense submitter" permission for someone who isn't a department representative (6B.2). Only representatives submit.
+- **Test data:** the fake server now seeds a closed **FY2026** cycle where Media Team's $30,000.00 budget is approved and released, so expenses can be tried locally and in end-to-end tests. Media's FY2027 request is still left to the annual form.
