@@ -457,3 +457,16 @@ Updated: requirements 6B.3, 6B.4, FR-43, AC-70, the new AC-139 and AC-140, DRD b
 - **When it syncs:** at sign-in, for that person only, and nightly in `pco-verify` for every linked department, each in its own transaction, after the Group Leader checks. A source that's gone or can't be read changes nothing. It's recorded as `admin.pco_mapping_sync_problem` for the coming Access tab (FR-52). The last-sync time isn't an edit, so it doesn't change the department's version.
 - **Audited:** mapping changes, suggestions, adds, ignores, withdrawals, automatic joins and removals, flags and sync problems.
 - **Directory:** `listSources` and `sourceLeaderIds` are added to the Planning Center client. They cover Services team leaders, Groups memberships with role leader, and tag groups. The fake directory gained a "Media / Production" team, a "Youth Leaders" group and a "Ministry: Youth" tag.
+
+## Stage 2: the Access tab of Analytics & Audit (FR-52) (2026-10-16)
+
+- **Where:** Reports → Analytics & Audit → **Access** (`/reports/analytics/access`), for the System Administrator only (`analytics.admin_audit`). Other staff don't see the tab, and opening the address shows permission denied, which is audited.
+- **What it shows (last 7 days, church time):**
+  - Sign-ins per day by method (Planning Center or emailed code), with failures.
+  - Failed sign-ins: counts for 24 hours and 7 days, the 10 most recent, and a link to the full list in the Activity tab.
+  - Access denied attempts with the page refused.
+  - Suspended Group Leader checks (link to the person).
+  - Active departments without a Backup (link to their leaders).
+  - Planning Center mapping problems (FR-39), listed until a later sync succeeds or the department is unlinked (link to its mapping).
+- **Tables instead of charts:** each figure is a small count, and a table reads well with a screen reader and on a phone. Tables that scroll sideways on a phone can be focused by keyboard (WCAG 2.1.1).
+- **Tabs:** Activity and Access share one tab bar. The Overview tab joins it next.
