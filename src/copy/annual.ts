@@ -42,6 +42,12 @@ export const annualCopy = {
     proposedDepartment:
       "This department is still proposed. Ask the administrator to add it to the list or merge it into an existing department, then approve. You can still return or decline it.",
     notReopenable: "Only approved or declined requests can be reopened.",
+    // Messages (FR-31)
+    messageEmpty: "Write a message first.",
+    messageTooLong: "Keep the message under 2,000 characters.",
+    messageDraft: "Messages start once the request is submitted.",
+    messageLimit:
+      "You've sent a lot of messages today. Please try again tomorrow, or phone the accountant.",
     // Scheduled release (FR-19a)
     releaseAtRequired: "Choose the date and time the decisions go out.",
     releaseAtInvalid: "Enter a date and time, like 2026-12-01 09:00.",
@@ -66,6 +72,25 @@ export const annualCopy = {
     linesMismatch: "The items changed since you opened this request. Reload it and try again.",
     noLineChanges:
       "No item was changed. Use Approve as requested, or change an approved quantity or price.",
+  },
+  /** Messages between the department and the accountant (FR-31, DRD 6.11a). */
+  thread: {
+    heading: "Messages",
+    intro:
+      "Questions and answers about this request. A message doesn't change the request or use an edit.",
+    empty: "No messages yet.",
+    label: "Your message",
+    send: "Send",
+    sent: "Message sent.",
+    toAccountant: "Sends an email to the accountant.",
+    toDepartment: "Sends an email to the department's representatives.",
+    readOnly: "You can read the messages; only the department and the accountant write here.",
+    department: "Department",
+    accountant: "Accountant",
+    you: "You",
+    unread: (n: number) => (n === 1 ? "1 new message" : `${n} new messages`),
+    count: (n: number) => `${n} of 2,000 characters`,
+    linkTo: (domain: string) => `(${domain})`,
   },
   /** Scheduled release of decisions (FR-19a, DRD 6.7b). */
   release: {

@@ -6,11 +6,13 @@ import { DownloadButton } from "@/components/download-button";
 import { EmailHistory } from "@/components/email-history";
 import { HelpPanel } from "@/components/help-panel";
 import { RequestActivityLink } from "@/components/request-activity";
+import { RequestMessages } from "@/components/request-messages";
 import { ComparisonSummary, FinancialSummary } from "@/components/financial-summary";
 import { AdminSkeleton, PageHeader } from "@/components/ui/display";
 import { cardClass, linkClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
 import { getDb } from "@/db";
+import { getThread, unreadCounts } from "@/domain/annual/messages";
 import { getReviewView, type ReviewView } from "@/domain/annual/review-queries";
 import { describeChange, revisionChanges } from "@/domain/annual/revision-diff";
 import { isHttpUrl } from "@/domain/annual/schema";
@@ -63,7 +65,11 @@ async function ReviewContent({
   const db = getDb();
   const [view, zone] = await Promise.all([getReviewView(db, viewer, id), getChurchTimeZone(db)]);
   if (!view) return <RequestNotFound />;
-  const emails = await requestEmails(db, id);
+  const [emails, thread, unread] = await Promise.all([
+    requestEmails(db, id),
+    getThread(db, viewer, id),
+    unreadCounts(db, viewer, [id]),
+  ]);
   const done = typeof query.done === "string" ? r.done[query.done] : undefined;
   const approvedTotals = view.approval
     ? {
@@ -205,6 +211,14 @@ async function ReviewContent({
       </div>
 
       {/* After the decision on a phone, so the controls come right after the request. */}
+      {thread && (
+        <RequestMessages
+          requestId={view.id}
+          thread={thread}
+          zone={zone}
+          unread={unread.get(view.id) ?? 0}
+        />
+      )}
       <History view={view} zone={zone} />
       <EmailHistory emails={emails} zone={zone} />
       <RequestActivityLink requestId={view.id} />

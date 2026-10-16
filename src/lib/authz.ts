@@ -36,6 +36,10 @@ export type Action =
    * made; a department sees In Review until release.
    */
   | "annual.view_held"
+  /** Read a request's messages between the department and the accountant (FR-31). */
+  | "annual.messages_view"
+  /** Send one: the department's leaders, or the accountant's side once it's submitted. */
+  | "annual.message_send"
   // Expenses (Part B)
   | "expense.view"
   | "expense.submit"
@@ -162,6 +166,18 @@ const RULES: Record<Action, readonly Rule[]> = {
   "annual.export_all": [{ roles: [...ACCOUNTANTS, "system_admin"] }],
   // Reading the release overview is "annual.review"; this is for changing it.
   "annual.release": [{ roles: ACCOUNTANTS }],
+  // FR-31: the thread is between the department and the accountant's side; a leader who is
+  // also an accountant writes as the department. The administrator reads every message
+  // (AC-110); the board and Church Administrator aren't part of it.
+  "annual.messages_view": [
+    { roles: ["requester"], check: ownDepartment },
+    { roles: ACCOUNTANTS, check: notDraft },
+    { roles: ["system_admin"], readOnly: true },
+  ],
+  "annual.message_send": [
+    { roles: ["requester"], check: ownDepartment },
+    { roles: ACCOUNTANTS, check: notDraft },
+  ],
   "annual.view_held": [
     { roles: ACCOUNTANTS },
     { roles: ["church_admin", ...BOARD, "system_admin"], readOnly: true },

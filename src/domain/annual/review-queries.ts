@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { z } from "zod";
+import { unreadCounts } from "./messages";
 import { cycleRelease, type CycleRelease } from "./release";
 import {
   approvalAdjustments,
@@ -63,6 +64,8 @@ export type QueueRow = {
   status: Exclude<AnnualStatus, "draft">;
   requestedTotalCents: number;
   approvedTotalCents: number | null;
+  /** Messages from the department not read yet by this accountant (DRD 6.11a). */
+  unreadMessages: number;
 };
 
 export type DashboardCounts = {
@@ -329,12 +332,19 @@ export async function getReviewDashboard(
       status: r.status as Exclude<AnnualStatus, "draft">,
       requestedTotalCents: r.requestedTotalCents!,
       approvedTotalCents: isApproved(r.status) ? r.approvedTotalCents : null,
+      unreadMessages: 0,
     }))
     .sort(
       (a, b) =>
         queueRank(a.status) - queueRank(b.status) ||
         a.submittedAt.getTime() - b.submittedAt.getTime(),
     );
+  const unread = await unreadCounts(
+    tx,
+    actor,
+    queue.map((r) => r.requestId),
+  );
+  for (const row of queue) row.unreadMessages = unread.get(row.requestId) ?? 0;
 
   return {
     cycles,

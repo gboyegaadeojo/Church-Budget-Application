@@ -82,7 +82,7 @@ Each department submits **one** annual budget for the year. Once it has one (a d
 
 - You can **edit** a submitted budget **twice** before it is decided. The app shows how many edits are left. Edits are shared by everyone in your department.
 - If the accountant asks a question (**Returned for clarification**), it appears in My tasks. Answer it and resubmit; this does **not** use an edit.
-- Use **Messages** on the budget to talk with the accountant; each message emails the other side.
+- Use **Messages** on the budget (once it's submitted) to talk with the accountant; each message emails the other side. Messages can't be changed after sending, don't change the budget or use an edit, and stay open after the decision. A link you paste becomes clickable. Your budget list shows "1 new message" until you open it.
 - The accountant's question, decline reason or approved amount appears on your budget's page and is emailed to everyone who represents your department. The approved amount may be different from what you asked for; it always includes tax, and the page and the email show it beside what you asked for.
 - Some years the accountant decides every department first and shares all the decisions at once. Then your budget stays **In Review** with "Decisions will be shared on" and the date, even if it has been decided, and you can't change it. You're emailed on that day.
 - Before the deadline you're reminded 7 days and 1 day ahead if your department hasn't submitted. You're also told when a budget cycle opens, closes or reopens, and when your deadline changes.
@@ -156,6 +156,7 @@ Each department has a **Primary requester** (accountable for the department's bu
 5. **Reopen** an approved or declined budget with a reason if the board reconsiders. It goes back to the department as Returned for Clarification, without using one of its edits, and the earlier decision stays in the history.
 6. You're emailed when a budget is submitted, changed or answered if you are the Primary accountant (every accountant is, until one is chosen in Settings). **Emails** at the bottom of the review screen lists every email sent about the budget, copies included.
 7. You cannot decide a budget for a department you represent; the page says so, and another accountant or the backup approver decides it.
+8. **Messages** at the bottom of the review screen: write to the department's representatives (each message emails all of them), and read their replies. The review queue shows "1 new message" on a budget until you open it. Use **Return for clarification** when you need the department to change the budget; a message doesn't.
 
 ### Expenses (first approval)
 

@@ -49,6 +49,7 @@ export const emailCopy = {
       submitted: "Submitted",
       updated: "Updated",
       inReview: "In Review",
+      message: "New message",
       returned: "Returned for Clarification",
       approved: "Approved",
       declined: "Declined",
@@ -164,6 +165,19 @@ export const emailCopy = {
       intro: (department: string) => `${department}'s representatives were sent the reason.`,
       heldIntro: (department: string, release: string) =>
         `Decisions are held: ${department}'s representatives will be sent the reason on ${release}.`,
+    },
+    /** A message on a request (FR-31, AC-59). */
+    message: {
+      subjectToDepartment: (d: string, c: string, r: string) =>
+        `New message from the accountant: ${about(d, c, r)}`,
+      subjectToAccountant: (d: string, c: string, r: string) =>
+        `New message from ${d}: ${about(d, c, r)}`,
+      heading: "You have a new message",
+      intro: (person: string) => `${person} wrote:`,
+      label: "Message",
+      action:
+        "Reply on the request's page if you need to. A message doesn't change the request or use an edit.",
+      button: "Open the messages",
     },
     /** The shared message the accountant adds to every release email (FR-19a). */
     releaseMessage: "A message from the accountant",

@@ -34,6 +34,7 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "annual.returned": { label: "Returned the budget with a question", group: "decisions" },
   "annual.declined": { label: "Declined the budget", group: "decisions" },
   "annual.reopened": { label: "Reopened the decision", group: "decisions" },
+  "annual.message_sent": { label: "Sent a message", group: "requests" },
   "annual.decision_released": {
     label: "Released the decision to the department",
     group: "decisions",

@@ -323,3 +323,17 @@ Requested by the user: a second People custom field, **Ministry Department**, de
 - **End-to-end tests** don't hold the cycle: they share one open cycle with every other test running in parallel, and holding it would hold their approvals. Holding, releasing, Release now and Cancel are covered by integration tests named after AC-17 to AC-19; the end-to-end tests cover the page, its validation, access and axe.
 - **Not yet:** "Expenses can't start for a department until its decision is released" arrives with expenses (Stage 3).
 - **Fixed on the way:** the review screen's done message said "The department will be emailed once email sending is set up". Email has worked since step 7, so it now says the department has been emailed (or, when held, when it will see the decision).
+
+## Stage 2, step 2: request messages (FR-31) (2026-10-16)
+
+- **Tables** (migration `0012_request_messages`): `request_messages` (9.17, plus `acting_role` so each message shows which side wrote it) is append-only by trigger, like the other history tables, so a message can't be edited or deleted (FR-31). The text is 1 to 2,000 characters, checked in the database too. `request_message_reads` keeps when each person last read a request's thread, for the unread counts (DRD 6.11a). It's the only thing that changes, and it isn't audited because reading isn't a change.
+- **Who writes and reads:**
+  - The department's leaders write (`annual.message_send`, own department), as do the accountant and backup approver once the request is submitted. A leader who is also an accountant writes as the department.
+  - A draft has no thread: the accountant can't see a draft, so the panel appears once the request is submitted.
+  - The System Administrator reads every thread (AC-110). The board and the Church Administrator aren't part of it.
+  - The thread stays open after approval or decline.
+- **Emails (AC-59):** each message emails the other side through the outbox, with the text. The accountant's message goes to every representative of the department; a leader's goes to the accountant(s) (`accountantRecipients`, which will follow Away in FR-33). The writer is never emailed. The link opens the request at its Messages panel. Each message is audited (`annual.message_sent`, with the side and length, not the text) and so shows in the budget's activity.
+- **Limits:** 30 messages per person per rolling day. A conversation can't use up the free email quota (100 a day on Resend's free plan) that every other email shares. Each Send carries its own idempotency key, so a double click posts one message.
+- **Links:** http and https addresses in a message are shown as links that open in a new tab without the opener, each followed by its domain (CLAUDE.md "Links"). Nothing else is markup.
+- **Unread counts:** "1 new message" on the department's request rows (Annual Budget) and on the accountant's review queue, until the thread is opened. Messages you wrote yourself are never unread.
+- **Not yet:** a My tasks item for an unanswered message, and the email digest and preferences (later in Stage 2).
