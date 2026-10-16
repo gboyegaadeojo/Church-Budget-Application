@@ -59,6 +59,8 @@ export type Action =
   | "admin.departments"
   | "admin.cycles"
   | "admin.settings"
+  /** Settings → Branding: the logo upload, names and accent colour (FR-30, AC-101). */
+  | "admin.branding"
   | "admin.pco_mapping"
   | "admin.notifications"
   | "department.set_primary"
@@ -216,6 +218,7 @@ const RULES: Record<Action, readonly Rule[]> = {
   "admin.departments": [{ roles: ["system_admin"] }],
   "admin.cycles": [{ roles: ["system_admin"] }],
   "admin.settings": [{ roles: ["system_admin"] }],
+  "admin.branding": [{ roles: ["system_admin"] }],
   "admin.pco_mapping": [{ roles: ["system_admin"] }],
   /** Admin → Notifications & Audit: the email log and retrying failed emails (FR-21). */
   "admin.notifications": [{ roles: ["system_admin"] }],

@@ -4,6 +4,7 @@ import { exportsCopy } from "@/copy/exports";
 import { getDb } from "@/db";
 import { activityFiltersFrom, allActivity } from "@/domain/analytics/activity";
 import { emailBrand } from "@/domain/notifications/notice";
+import { getBrand, rasterLogo } from "@/domain/settings/brand";
 import { getChurchTimeZone } from "@/domain/settings";
 import { loadViewer } from "@/domain/users/viewer";
 import { writeAudit } from "@/lib/audit";
@@ -49,6 +50,7 @@ export async function GET(request: Request) {
     });
     const body = await activityWorkbook({
       brand: await emailBrand(tx),
+      logo: await rasterLogo(tx, await getBrand(tx)),
       generatedAt: now,
       zone,
       filterLabels,

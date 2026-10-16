@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Brand } from "@/components/app-shell/brand";
+import { Brand } from "@/components/app-shell/live-brand";
 
 /** Pages anyone can read without signing in (the privacy notice, FR-36). */
 export default function PublicLayout({ children }: LayoutProps<"/">) {

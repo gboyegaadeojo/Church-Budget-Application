@@ -4,6 +4,7 @@ import {
   boolean,
   char,
   check,
+  customType,
   date,
   index,
   integer,
@@ -823,5 +824,42 @@ export const emailOutbox = pgTable(
     index("email_outbox_request_idx").on(t.budgetRequestId, t.createdAt),
     check("email_outbox_sent_has_time", sql`(${t.status} = 'sent') = (${t.sentAt} is not null)`),
     check("email_outbox_attempts_non_negative", sql`${t.attempts} >= 0`),
+  ],
+);
+
+/** Raw bytes; PGlite and node-postgres both hand back a Uint8Array/Buffer. */
+const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({
+  dataType: () => "bytea",
+});
+
+/**
+ * The church's logo and square icon (FR-30, DRD 3.8). The only administrator upload.
+ * Kept in Postgres rather than R2: at most 1 MB each, and the R2 card-on-file decision
+ * is still open (docs/decisions.md). Append-only: a replacement is a new row and the
+ * settings `logo_asset_id` / `icon_asset_id` point at the current one.
+ */
+export const brandAssets = pgTable(
+  "brand_assets",
+  {
+    id: id(),
+    kind: text("kind").notNull(),
+    contentType: text("content_type").notNull(),
+    bytes: bytea("bytes").notNull(),
+    byteSize: integer("byte_size").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    sha256: char("sha256", { length: 64 }).notNull(),
+    uploadedByUserId: uuid("uploaded_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check("brand_assets_kind", sql`${t.kind} in ('logo', 'icon')`),
+    check(
+      "brand_assets_type",
+      sql`${t.contentType} in ('image/png', 'image/jpeg', 'image/svg+xml')`,
+    ),
+    check("brand_assets_size", sql`${t.byteSize} > 0 and ${t.byteSize} <= 1048576`),
   ],
 );

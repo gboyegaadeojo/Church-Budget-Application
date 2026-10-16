@@ -102,6 +102,12 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
   ["configure cycles", "admin.cycles", {}, ["no", "no", "no", "no", "no", "no", "act"]],
   ["change the sales tax rate", "admin.settings", {}, ["no", "no", "no", "no", "no", "no", "act"]],
   [
+    "AC-101 change the logo and colour",
+    "admin.branding",
+    {},
+    ["no", "no", "no", "no", "no", "no", "act"],
+  ],
+  [
     "map departments to Planning Center",
     "admin.pco_mapping",
     {},

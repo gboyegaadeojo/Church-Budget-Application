@@ -17,9 +17,10 @@ import {
   secondApprovers,
   usersWithRole,
 } from "@/domain/notifications/recipients";
-import { getChurchTimeZone, readSettings } from "@/domain/settings";
-import { appUrl, type EmailBrand, type EmailContent, type EmailLine } from "@/lib/email/layout";
+import { getChurchTimeZone } from "@/domain/settings";
+import { appUrl, type EmailContent, type EmailLine } from "@/lib/email/layout";
 import { enqueueEmail, type EmailAudience, type Recipient } from "@/lib/email/outbox";
+import { emailBrand } from "@/domain/notifications/notice";
 import { annualCopy } from "@/copy/annual";
 import { differenceText, formatCAD, type TaxBreakdown } from "@/lib/money";
 import { formatDateTime } from "@/lib/time-zone";
@@ -61,13 +62,12 @@ async function loadContext(tx: Tx, requestId: string, actorId: string) {
     .select({ name: users.displayName })
     .from(users)
     .where(eq(users.id, actorId));
-  const settings = await readSettings(tx, ["church_name", "app_name"]);
   return {
     request: row.request,
     cycleName: row.cycleName,
     actorName: actor?.name ?? "",
     zone: await getChurchTimeZone(tx),
-    brand: { churchName: settings.church_name, appName: settings.app_name } as EmailBrand,
+    brand: await emailBrand(tx),
   };
 }
 

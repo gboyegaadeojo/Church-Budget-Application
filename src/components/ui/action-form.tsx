@@ -224,6 +224,39 @@ export function TextField({
   );
 }
 
+/** The server's error for one field of the surrounding ActionForm, for custom fields. */
+export function useFieldError(name: string): string | undefined {
+  return useContext(FormErrors)[name];
+}
+
+/**
+ * A file picker, used only for the administrator's logo and icon (FR-30); every other
+ * form refuses files (AC-25). `accept` only guides the picker; the server checks the bytes.
+ */
+export function FileField({ accept, ...props }: FieldProps & { accept: string }) {
+  const { inputId, hintId, errorId, error } = useFieldIds(props.name);
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={inputId} className="block text-sm font-medium">
+        {props.label}
+      </label>
+      <input
+        id={inputId}
+        name={props.name}
+        type="file"
+        accept={accept}
+        required={props.required}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={
+          [props.hint && hintId, error && errorId].filter(Boolean).join(" ") || undefined
+        }
+        className="block w-full text-sm text-fg-muted file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-control file:border file:border-border-strong file:bg-surface file:px-4 file:text-sm file:font-medium file:text-fg hover:file:bg-surface-hover lg:file:min-h-9"
+      />
+      <Describe hint={props.hint} hintId={hintId} error={error} errorId={errorId} />
+    </div>
+  );
+}
+
 export function TextAreaField({ rows = 4, ...props }: FieldProps & { rows?: number }) {
   const { inputId, hintId, errorId, error } = useFieldIds(props.name);
   return (

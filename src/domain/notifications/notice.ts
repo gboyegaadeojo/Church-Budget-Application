@@ -1,6 +1,6 @@
 import type { Tx } from "@/db/types";
-import { readSettings } from "@/domain/settings";
-import type { EmailBrand, EmailContent } from "@/lib/email/layout";
+import { getBrand } from "@/domain/settings/brand";
+import { appUrl, type EmailBrand, type EmailContent } from "@/lib/email/layout";
 import { enqueueEmail, type EmailAudience, type Recipient } from "@/lib/email/outbox";
 
 /**
@@ -26,7 +26,19 @@ export async function queueNotice(
   return enqueueEmail(tx, { ...notice, brand: await emailBrand(tx) });
 }
 
+/**
+ * The names, logo and accent for emails and workbooks (FR-30). Emails show the logo only
+ * when it is a PNG or JPEG, since most mail clients won't show SVG.
+ */
 export async function emailBrand(tx: Tx): Promise<EmailBrand> {
-  const s = await readSettings(tx, ["church_name", "app_name"]);
-  return { churchName: s.church_name, appName: s.app_name };
+  const brand = await getBrand(tx);
+  const raster =
+    brand.logo &&
+    (brand.logo.contentType === "image/png" || brand.logo.contentType === "image/jpeg");
+  return {
+    churchName: brand.churchName,
+    appName: brand.appName,
+    logoUrl: raster ? appUrl(brand.logo!.path) : null,
+    accent: brand.palette?.light.accent ?? null,
+  };
 }

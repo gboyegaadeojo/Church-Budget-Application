@@ -47,39 +47,42 @@
   color-scheme: light;
 }
 
-.dark {
-  --bg: #08080a;
-  --surface: #101014;
-  --surface-2: #17171d;
-  --surface-hover: #202027;
-  --fg: #f5f5f7;
-  --fg-muted: #a3a3b0;
-  --border: #292931;
-  --border-strong: #6a6a78;
-  --accent: #a78bfa;
-  --accent-hover: #b9a4ff;
-  --on-accent: #08080a;
-  --accent-soft: #1f1933;
-  --success: #4ccb86;
-  --warning: #f0b65a;
-  --danger: #ff777f;
-  --info: #8db9ff;
-  /* In dark mode elevation comes from lighter surfaces, not shadows (DRD 3.6). */
-  --shadow-card: none;
-  --shadow-overlay: 0 0 0 1px var(--border);
-  --area-home: #a78bfa;
-  --area-home-soft: #221a3a;
-  --area-annual: #7fb0ff;
-  --area-annual-soft: #14223d;
-  --area-expenses: #4fd1c0;
-  --area-expenses-soft: #0e2b28;
-  --area-spending: #f2b45a;
-  --area-spending-soft: #2e2210;
-  --area-reports: #ff8cc0;
-  --area-reports-soft: #36162b;
-  --area-admin: #b4bfcf;
-  --area-admin-soft: #1d212b;
-  color-scheme: dark;
+/* Screen only: printed pages always use the light theme (DRD 6.12). */
+@media screen {
+  .dark {
+    --bg: #08080a;
+    --surface: #101014;
+    --surface-2: #17171d;
+    --surface-hover: #202027;
+    --fg: #f5f5f7;
+    --fg-muted: #a3a3b0;
+    --border: #292931;
+    --border-strong: #6a6a78;
+    --accent: #a78bfa;
+    --accent-hover: #b9a4ff;
+    --on-accent: #08080a;
+    --accent-soft: #1f1933;
+    --success: #4ccb86;
+    --warning: #f0b65a;
+    --danger: #ff777f;
+    --info: #8db9ff;
+    /* In dark mode elevation comes from lighter surfaces, not shadows (DRD 3.6). */
+    --shadow-card: none;
+    --shadow-overlay: 0 0 0 1px var(--border);
+    --area-home: #a78bfa;
+    --area-home-soft: #221a3a;
+    --area-annual: #7fb0ff;
+    --area-annual-soft: #14223d;
+    --area-expenses: #4fd1c0;
+    --area-expenses-soft: #0e2b28;
+    --area-spending: #f2b45a;
+    --area-spending-soft: #2e2210;
+    --area-reports: #ff8cc0;
+    --area-reports-soft: #36162b;
+    --area-admin: #b4bfcf;
+    --area-admin-soft: #1d212b;
+    color-scheme: dark;
+  }
 }
 
 @theme inline {
@@ -218,6 +221,16 @@
 @layer utilities {
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/* DRD 6.12: print on white, with no shadows; navigation is hidden with print:hidden. */
+@media print {
+  body {
+    background: #ffffff;
+  }
+  * {
+    box-shadow: none !important;
   }
 }
 

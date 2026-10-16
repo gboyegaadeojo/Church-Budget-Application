@@ -89,6 +89,14 @@ describe("no file uploads (FR-23, AC-25)", () => {
     );
   });
 
+  it("FR-30 lets the logo through on Settings → Branding only", async () => {
+    const logo = (path: string) =>
+      multipart(path, (f) => f.append("logo", new Blob(["x"]), "logo.png"));
+    expect(await refusesFiles(logo("/admin/settings/branding"))).toBe(false);
+    expect(await refusesFiles(logo("/admin/settings"))).toBe(true);
+    expect(await refusesFiles(logo("/admin/settings/branding/x"))).toBe(true);
+  });
+
   it("lets ordinary forms and reads through", async () => {
     expect(await refusesFiles(multipart("/annual/new", (f) => f.append("title", "Mics")))).toBe(
       false,

@@ -1,4 +1,4 @@
-import { Brand } from "@/components/app-shell/brand";
+import { Brand } from "@/components/app-shell/live-brand";
 
 /** Sign-in and access screens: one calm card, no navigation (DRD 6.1, 6.1a). */
 export default function AuthLayout({ children }: LayoutProps<"/">) {

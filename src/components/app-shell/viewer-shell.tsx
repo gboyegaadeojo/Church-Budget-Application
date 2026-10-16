@@ -5,7 +5,7 @@ import { hasRole } from "@/lib/roles";
 import { getViewerAllowingWaiting as getViewer } from "@/lib/viewer";
 import { AccountMenu } from "./account-menu";
 import { BottomBar } from "./bottom-bar";
-import { Brand } from "./brand";
+import { Brand, currentBrandView } from "./live-brand";
 import { Sidebar } from "./sidebar";
 
 /*
@@ -14,8 +14,8 @@ import { Sidebar } from "./sidebar";
  */
 
 export async function ViewerSidebar() {
-  const viewer = await getViewer();
-  return <Sidebar areas={navigationFor(viewer.roles)} />;
+  const [viewer, brand] = await Promise.all([getViewer(), currentBrandView()]);
+  return <Sidebar areas={navigationFor(viewer.roles)} brand={brand} />;
 }
 
 export async function ViewerBottomBar() {
@@ -40,7 +40,7 @@ export function SidebarFallback() {
   return (
     <div
       aria-hidden="true"
-      className="sticky top-0 hidden h-dvh shrink-0 border-r border-border bg-surface md:block md:w-[76px] lg:w-72"
+      className="sticky top-0 hidden h-dvh shrink-0 border-r border-border bg-surface md:block md:w-[76px] lg:w-72 print:hidden"
     >
       <div className="flex h-16 items-center px-4">
         <Brand compact className="mx-auto lg:hidden" />
