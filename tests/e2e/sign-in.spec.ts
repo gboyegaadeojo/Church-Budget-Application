@@ -31,6 +31,26 @@ test.describe("Sign-in (FR-01, FR-01a, DRD 6.1, 6.1a)", () => {
     await expect(page).toHaveURL(/\/sign-in/);
   });
 
+  test("a session cookie the server can't read (e.g. after AUTH_SECRET changes) means signed out", async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    // A cookie sealed with some other secret, like one left from before a restart.
+    await context.addCookies([
+      {
+        name: "authjs.session-token",
+        value:
+          "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIn0..c3RhbGU.c3RhbGUtc2Vzc2lvbg.c3RhbGU",
+        url: baseURL!,
+      },
+    ]);
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/sign-in/);
+    await signInAs(page, PEOPLE.gina);
+    await expect(page.getByRole("heading", { level: 1, name: "Home" })).toBeVisible();
+  });
+
   test("returns to the page that asked for sign-in", async ({ page }) => {
     await page.goto("/expenses/new");
     await signInAs(page, PEOPLE.gina, page.url());
