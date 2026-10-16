@@ -26,6 +26,7 @@ import { formatDateTime } from "@/lib/time-zone";
 import { RequestNotFound } from "../../[id]/not-found-state";
 import { AnnualStatusBadge } from "../../status-badge";
 import { DecisionPanel, ReopenControl, StartReview } from "./decision-panel";
+import { SecondApprovalPanel } from "./second-approval";
 
 const r = annualCopy.review;
 const f = annualCopy.form;
@@ -189,8 +190,17 @@ async function ReviewContent({
                 {annualCopy.errors.proposedDepartment}
               </p>
             )}
-            {view.canDecide ? (
+            {view.second?.canGive ? (
+              <SecondApprovalPanel id={view.id} version={view.version} />
+            ) : view.second ? (
+              <p className="text-sm text-fg-muted">
+                {view.blockedReason === "conflict_of_interest"
+                  ? annualCopy.second.ownDepartment
+                  : annualCopy.second.waiting}
+              </p>
+            ) : view.canDecide ? (
               <DecisionPanel
+                secondThreshold={view.secondThreshold}
                 id={view.id}
                 version={view.version}
                 rate={view.rate}

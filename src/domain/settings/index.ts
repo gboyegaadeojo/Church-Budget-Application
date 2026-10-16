@@ -35,7 +35,21 @@ export const SETTING_DEFAULTS = {
   admin_contact_email: "",
   /** FR-33: who gets the accountant emails; other accountant-role holders are backups. */
   primary_accountant_user_id: "",
+  /**
+   * FR-34: approvals at or above this approved total (incl. tax, in cents) need a second
+   * accountant's sign-off. Empty: off (the default).
+   */
+  second_approval_threshold: "",
 } as const;
+
+/** The second-approval threshold in cents, or null when it's off (FR-34). */
+export async function secondApprovalThreshold(tx: Tx): Promise<number | null> {
+  const { second_approval_threshold: value } = await readSettings(tx, [
+    "second_approval_threshold",
+  ]);
+  const cents = Number.parseInt(value, 10);
+  return Number.isSafeInteger(cents) && cents > 0 ? cents : null;
+}
 
 export type SettingKey = keyof typeof SETTING_DEFAULTS;
 

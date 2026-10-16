@@ -34,6 +34,13 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "annual.returned": { label: "Returned the budget with a question", group: "decisions" },
   "annual.declined": { label: "Declined the budget", group: "decisions" },
   "annual.reopened": { label: "Reopened the decision", group: "decisions" },
+  "annual.first_approved": { label: "Approved, pending a second approval", group: "decisions" },
+  "annual.second_approved": { label: "Gave the second approval", group: "decisions" },
+  "annual.second_refused": { label: "Refused the second approval", group: "decisions" },
+  "admin.second_approval_threshold_changed": {
+    label: "Changed the second-approval amount",
+    group: "settings",
+  },
   "annual.message_sent": { label: "Sent a message", group: "requests" },
   "annual.decision_released": {
     label: "Released the decision to the department",
@@ -152,7 +159,13 @@ export function eventTypesIn(group: ActivityGroup): string[] {
 }
 
 /** Money changes also count approvals, which carry amounts. */
-export const MONEY_EVENT_TYPES = ["annual.approved", "annual.reopened", "admin.tax_rate_changed"];
+export const MONEY_EVENT_TYPES = [
+  "annual.approved",
+  "annual.first_approved",
+  "annual.second_approved",
+  "annual.reopened",
+  "admin.tax_rate_changed",
+];
 
 export const activityCopy = {
   title: "Analytics & Audit",

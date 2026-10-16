@@ -7,7 +7,7 @@ import { ConflictError, parseInput, RuleError, ValidationError } from "@/domain/
 import { checkLeader, type LeaderCheck } from "@/domain/users/leader-check";
 import { changedFields, writeAudit, type AuditActor } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
-import { formatTaxRate, percentToTaxRate } from "@/lib/money";
+import { formatTaxRate, percentToTaxRate, parseCAD } from "@/lib/money";
 import type { PcoPerson, PlanningCenterDirectory } from "@/lib/pco";
 import { isValidTimeZone } from "@/lib/time-zone";
 import { DEPARTMENT_FIELD_MODES, readSettings, SETTING_DEFAULTS, type SettingKey } from "./index";
@@ -102,6 +102,31 @@ export async function updateTaxRate(
     "admin.tax_rate_changed",
   );
   return changed ? { rate: formatTaxRate(rate) } : null;
+}
+
+// ---------------------------------------------------------------- second approval (FR-34)
+
+/** Sets the approved total (incl. tax) that needs a second sign-off; empty turns it off. */
+export async function updateSecondApprovalThreshold(
+  tx: Tx,
+  actor: Subject,
+  input: { amount: string; versions: Record<string, unknown> },
+): Promise<boolean> {
+  assertCan(actor, "admin.settings");
+  const typed = (input.amount ?? "").trim().replace(/^$/, "");
+  let value = "";
+  if (typed !== "") {
+    const cents = parseCAD(typed);
+    if (cents === null || cents <= 0) throw new ValidationError({ amount: s.errors.threshold });
+    value = String(cents);
+  }
+  return writeSettings(
+    tx,
+    actor,
+    { second_approval_threshold: value },
+    input.versions,
+    "admin.second_approval_threshold_changed",
+  );
 }
 
 // ---------------------------------------------------------------- time zone

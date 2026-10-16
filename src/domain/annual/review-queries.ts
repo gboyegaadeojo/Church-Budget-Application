@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { z } from "zod";
+import { secondApprovalThreshold } from "@/domain/settings";
 import { unreadCounts } from "./messages";
 import { cycleRelease, type CycleRelease } from "./release";
 import {
@@ -430,6 +431,10 @@ export type ReviewView = Omit<RequestView, "lines"> & {
   canDecide: boolean;
   canReopen: boolean;
   blockedReason: DenyReason | null;
+  /** FR-34: the approved total that needs a second sign-off; null when it's off. */
+  secondThreshold: number | null;
+  /** Awaiting a second approval: whether this person may give it, or gave the first. */
+  second: { canGive: boolean; gaveFirst: boolean } | null;
 };
 
 /**
@@ -500,7 +505,8 @@ export async function getReviewView(
 
   let approval: CurrentApproval | null = null;
   const latestApproval = decisionRows.find((d) => d.decision.decision === "approved");
-  if (isApproved(base.status) && latestApproval) {
+  const awaitingSecond = base.status === "awaiting_second_approval";
+  if ((isApproved(base.status) || awaitingSecond) && latestApproval) {
     const d = latestApproval.decision;
     const approvedLines = await tx
       .select()
@@ -546,5 +552,14 @@ export async function getReviewView(
     canDecide: decide.allowed && decidable,
     canReopen: reopen.allowed && canTransition(base.status, "reopen"),
     blockedReason: decide.allowed ? null : decide.reason,
+    secondThreshold: await secondApprovalThreshold(tx),
+    second: awaitingSecond
+      ? {
+          canGive:
+            authorize(actor, "annual.second_approve", ctx).allowed &&
+            latestApproval?.decision.approverUserId !== actor.id,
+          gaveFirst: latestApproval?.decision.approverUserId === actor.id,
+        }
+      : null,
   };
 }

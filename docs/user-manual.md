@@ -153,10 +153,11 @@ Each department has a **Primary requester** (accountable for the department's bu
    - **Send immediately** (the usual): each department is emailed when you confirm.
    - **Hold and release on a date:** choose the date and time (church time) and, if you like, one message for every email ("Thank you for your work this year…"). Decide every department; they keep seeing **In Review** and get nothing until then. Questions are never held. All the emails go out within 15 minutes of the time. You're warned the day before if some departments aren't decided, and budgets decided after the time go straight out.
    - The page shows Approved, Declined, Undecided and Not submitted, and who gets which email. **Release now** sends everything held at once; **Cancel schedule** goes back to sending immediately and sends what's held. A banner on every review screen reminds you while decisions are held.
-5. **Reopen** an approved or declined budget with a reason if the board reconsiders. It goes back to the department as Returned for Clarification, without using one of its edits, and the earlier decision stays in the history.
-6. You're emailed when a budget is submitted, changed or answered if you are the Primary accountant (every accountant is, until one is chosen in Settings). **Emails** at the bottom of the review screen lists every email sent about the budget, copies included.
-7. You cannot decide a budget for a department you represent; the page says so, and another accountant or the backup approver decides it.
-8. **Messages** at the bottom of the review screen: write to the department's representatives (each message emails all of them), and read their replies. The review queue shows "1 new message" on a budget until you open it. Use **Return for clarification** when you need the department to change the budget; a message doesn't.
+5. **Second approval for large budgets** (if the administrator has turned it on): when an approval reaches the set amount, the button reads **Approve (needs second sign-off)**. After you confirm, the budget is **Awaiting Second Approval** and the department is told it's awaiting final sign-off. Another accountant or backup approver (not you, and nobody who leads the department) gets a task: they open it and choose **Give second approval**, or **Refuse** with a reason, which sends it back to In Review for you.
+6. **Reopen** an approved or declined budget with a reason if the board reconsiders. It goes back to the department as Returned for Clarification, without using one of its edits, and the earlier decision stays in the history.
+7. You're emailed when a budget is submitted, changed or answered if you are the Primary accountant (every accountant is, until one is chosen in Settings). **Emails** at the bottom of the review screen lists every email sent about the budget, copies included.
+8. You cannot decide a budget for a department you represent; the page says so, and another accountant or the backup approver decides it.
+9. **Messages** at the bottom of the review screen: write to the department's representatives (each message emails all of them), and read their replies. The review queue shows "1 new message" on a budget until you open it. Use **Return for clarification** when you need the department to change the budget; a message doesn't.
 
 ### Expenses (first approval)
 
@@ -242,7 +243,7 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 ### Settings
 
-Tax rate (applies to new submissions only), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), email settings, sign-in options (Planning Center, email), backup reminder delay, and the weekly audit summary email.
+Tax rate (applies to new submissions only), **Second approval for large budgets** (an approved total, including tax, at or above which a second accountant must sign off; empty means off), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), email settings, sign-in options (Planning Center, email), backup reminder delay, and the weekly audit summary email.
 
 - **Sales tax**: type the new rate (for example 12 or 12.5) and confirm. Requests already submitted keep the rate they were submitted with.
 - **Accountants**: more than one person can have the Accountant role (give it in Users & Roles). Choose the **Primary accountant**, who gets the accountant emails; everyone else with the Accountant or Backup approver role is a backup approver. If the Primary accountant loses the role or is deactivated, choose a new one here.

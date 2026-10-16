@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ActionForm, SelectField, SubmitButton } from "@/components/ui/action-form";
+import { ActionForm, SelectField, SubmitButton, TextField } from "@/components/ui/action-form";
 import {
   AdminSkeleton,
   Badge,
@@ -18,15 +18,17 @@ import {
   getDepartmentFieldSettings,
   getSignInSettings,
   readSettings,
+  secondApprovalThreshold,
 } from "@/domain/settings";
 import { settingVersions } from "@/domain/settings/service";
 import { churchToday, listSigners } from "@/domain/signers/service";
 import { accountantTeam, failingRequesters } from "@/domain/users/admin-queries";
 import { viewerAllowedTo } from "@/lib/admin-server";
-import { taxRateToPercent } from "@/lib/money";
+import { centsToInput } from "@/domain/annual/schema";
+import { formatCAD, taxRateToPercent } from "@/lib/money";
 import type { PcoFieldDefinition } from "@/lib/pco";
 import { getPlanningCenterDirectory } from "@/lib/pco-directory";
-import { timeZoneAction } from "./actions";
+import { secondApprovalAction, timeZoneAction } from "./actions";
 import { AccountantsSection, SignersSection } from "./people-sections";
 import { SignInSettingsForm, TaxRateForm } from "./settings-forms";
 
@@ -117,6 +119,10 @@ async function SettingsContent() {
     churchToday(db),
     getDepartmentFieldSettings(db),
   ]);
+  const [threshold, thresholdVersions] = await Promise.all([
+    secondApprovalThreshold(db),
+    settingVersions(db, ["second_approval_threshold"]),
+  ]);
 
   return (
     <>
@@ -124,6 +130,26 @@ async function SettingsContent() {
 
       <Section title={s.taxHeading} id="tax">
         <TaxRateForm percent={taxRateToPercent(sales_tax_rate)} versions={taxVersions} />
+      </Section>
+
+      <Section title={s.threshold.heading} description={s.threshold.intro} id="second-approval">
+        <ActionForm action={secondApprovalAction} aria-label={s.threshold.heading}>
+          <input type="hidden" name="versions" value={JSON.stringify(thresholdVersions)} />
+          <p className="text-sm font-medium">
+            {threshold === null ? s.threshold.off : s.threshold.on(formatCAD(threshold))}
+          </p>
+          <div className="max-w-xs">
+            <TextField
+              name="amount"
+              label={s.threshold.label}
+              hint={s.threshold.hint}
+              defaultValue={threshold === null ? "" : centsToInput(threshold)}
+              inputMode="decimal"
+              autoComplete="off"
+            />
+          </div>
+          <SubmitButton tone="secondary">{s.threshold.save}</SubmitButton>
+        </ActionForm>
       </Section>
 
       <AccountantsSection

@@ -68,6 +68,7 @@ export function DecisionPanel({
   requested,
   lines,
   board,
+  secondThreshold = null,
 }: {
   id: string;
   version: number;
@@ -76,6 +77,8 @@ export function DecisionPanel({
   lines: Line[];
   /** The cycle's board total and what's approved elsewhere, when one is set (4.2). */
   board?: { totalCents: number; allocatedCents: number } | null;
+  /** FR-34: approvals at or above this total need a second sign-off. */
+  secondThreshold?: number | null;
 }) {
   const ids = useId();
   const [kind, setKind] = useState<DecisionKind>("approve_as_requested");
@@ -104,6 +107,11 @@ export function DecisionPanel({
     : null;
   const approved = figures && "totals" in figures ? figures.totals : null;
   const overBoard = isApproval(kind) ? boardWarning(board, approved?.total) : null;
+  const needsSecond =
+    isApproval(kind) &&
+    secondThreshold !== null &&
+    approved !== null &&
+    approved.total >= secondThreshold;
   const fieldId = (name: string) => `${ids}-${name.replaceAll(".", "-")}`;
 
   function review() {
@@ -288,8 +296,17 @@ export function DecisionPanel({
           onClick={review}
           className={buttonClass(kind === "decline" ? "danger" : "primary", "w-full sm:w-auto")}
         >
-          {kind === "approve_as_requested" ? r.kinds.approve_as_requested : r.reviewDecision}
+          {needsSecond
+            ? annualCopy.second.approveLabel
+            : kind === "approve_as_requested"
+              ? r.kinds.approve_as_requested
+              : r.reviewDecision}
         </button>
+        {needsSecond && (
+          <p className="mt-2 text-sm text-fg-muted">
+            {annualCopy.second.needsSecond(formatCAD(secondThreshold!))}
+          </p>
+        )}
       </div>
 
       <AlertDialog.Root open={confirming} onOpenChange={(open) => !pending && setConfirming(open)}>

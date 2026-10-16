@@ -28,6 +28,8 @@ export type Action =
   | "annual.review"
   | "annual.decide"
   | "annual.reopen"
+  /** Give or refuse the second approval of a large budget (FR-34). */
+  | "annual.second_approve"
   | "annual.export_all"
   /** Choose how decisions reach departments, and release held ones (FR-19a). */
   | "annual.release"
@@ -167,6 +169,8 @@ const RULES: Record<Action, readonly Rule[]> = {
   "annual.review": [{ roles: ACCOUNTANTS }, { roles: ["system_admin"], readOnly: true }],
   "annual.decide": [{ roles: ACCOUNTANTS, check: notOwnDepartment }],
   "annual.reopen": [{ roles: ACCOUNTANTS, check: notOwnDepartment }],
+  // The service also refuses the person who gave the first approval.
+  "annual.second_approve": [{ roles: ACCOUNTANTS, check: notOwnDepartment }],
   "annual.export_all": [{ roles: [...ACCOUNTANTS, "system_admin"] }],
   // Reading the release overview is "annual.review"; this is for changing it.
   "annual.release": [{ roles: ACCOUNTANTS }],

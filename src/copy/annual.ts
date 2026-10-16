@@ -42,6 +42,11 @@ export const annualCopy = {
     proposedDepartment:
       "This department is still proposed. Ask the administrator to add it to the list or merge it into an existing department, then approve. You can still return or decline it.",
     notReopenable: "Only approved or declined requests can be reopened.",
+    // Second approval (FR-34)
+    notAwaitingSecond: "This request isn't waiting for a second approval.",
+    sameApprover:
+      "You gave the first approval, so another accountant or backup approver gives the second.",
+    refuseReasonRequired: "Say why you're refusing, so the first approver can look again.",
     // Messages (FR-31)
     messageEmpty: "Write a message first.",
     messageTooLong: "Keep the message under 2,000 characters.",
@@ -91,6 +96,25 @@ export const annualCopy = {
     unread: (n: number) => (n === 1 ? "1 new message" : `${n} new messages`),
     count: (n: number) => `${n} of 2,000 characters`,
     linkTo: (domain: string) => `(${domain})`,
+  },
+  /** Second approval for large budgets (FR-34, DRD 6.7). */
+  second: {
+    heading: "Second approval",
+    needsSecond: (amount: string) =>
+      `Approvals of ${amount} or more (including tax) need a second sign-off from another accountant or backup approver.`,
+    approveLabel: "Approve (needs second sign-off)",
+    firstBy: (name: string, when: string) => `First approval by ${name} on ${when}.`,
+    waiting: "Waiting for another accountant or backup approver to give the second approval.",
+    approve: "Give second approval",
+    approveTitle: "Give the second approval?",
+    approveBody:
+      "The budget becomes Approved for the amount above and the department is told (unless decisions are held for release).",
+    refuse: "Refuse",
+    refuseTitle: "Refuse the second approval?",
+    refuseBody: "The budget goes back to In Review for the accountant to look at again.",
+    reason: "Why you're refusing",
+    ownDepartment:
+      "You lead this department, so another accountant or backup approver gives the second approval.",
   },
   /** Scheduled release of decisions (FR-19a, DRD 6.7b). */
   release: {
@@ -173,6 +197,7 @@ export const annualCopy = {
   },
   tasks: {
     backupReminded: "Backup reminded",
+    secondApproval: "Give the second approval",
     continueDraft: "Finish and submit your budget",
     respond: "Respond to the accountant's question",
     open: "Open",
@@ -561,6 +586,9 @@ export const annualCopy = {
     },
     done: {
       approved: "Budget approved",
+      awaiting_second: "Approved; waiting for a second approval",
+      second_approved: "Second approval given: budget approved",
+      second_refused: "Second approval refused: back to In Review",
       returned: "Returned for clarification",
       declined: "Budget declined",
       reopened: "Budget reopened",

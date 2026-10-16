@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { annualCopy } from "@/copy/annual";
 import {
@@ -18,6 +18,7 @@ import { assertCan, authorize, type Subject } from "@/lib/authz";
 import type { TaxBreakdown } from "@/lib/money";
 import { approvedFigures, decisionSchema, DECISION_LIMITS, type DecisionKind } from "./decision";
 import { queueAnnualEmails, type AnnualEmailEvent } from "./emails";
+import { secondApprovalThreshold } from "@/domain/settings";
 import { isHolding } from "./release";
 import {
   actorOf,
@@ -168,7 +169,7 @@ export async function decideRequest(
   const from = canTransition(row.status, "start_review")
     ? transition(row.status, "start_review")
     : row.status;
-  const next = nextOrRefuse(from, EVENT[decision.kind], e.notDecidable);
+  let next = nextOrRefuse(from, EVENT[decision.kind], e.notDecidable);
   const requestRevisionId = await latestRevisionId(tx, row);
   // FR-19a: in Hold mode an approval or decline waits for the release; a question never does.
   const [cycle] = await tx
@@ -189,6 +190,8 @@ export async function decideRequest(
 
   let approved: TaxBreakdown | null = null;
   let auditDetails: Record<string, unknown> = {};
+  /** FR-34: an approval at or above the threshold waits for a second accountant. */
+  let pendingSecond = false;
 
   if (decision.kind === "return" || decision.kind === "decline") {
     await tx.insert(approvalDecisions).values({
@@ -214,11 +217,16 @@ export async function decideRequest(
       throw new ValidationError({ form: figures.error });
     }
     approved = figures.totals;
+    const threshold = await secondApprovalThreshold(tx);
+    pendingSecond = threshold !== null && approved.total >= threshold;
+    if (pendingSecond) next = nextOrRefuse(from, "approve_pending_second", e.notDecidable);
 
     const [created] = await tx
       .insert(approvalDecisions)
       .values({
         ...base,
+        // The first of two approvals isn't the final decision, so it's never held (FR-19a).
+        releasedAt: pendingSecond ? now : base.releasedAt,
         decision: "approved",
         method: METHOD[decision.kind],
         approvedSubtotalCents: approved.subtotal,
@@ -247,14 +255,22 @@ export async function decideRequest(
         createdByUserId: actor.id,
       });
     }
-    await updateRequest(tx, row, version, {
-      status: next,
-      approvedSubtotalCents: approved.subtotal,
-      approvedTaxCents: approved.tax,
-      approvedTotalCents: approved.total,
-      approvedAt: now,
-      declinedAt: null,
-    });
+    // Until the second approval, the request carries no approved amount (FR-34).
+    await updateRequest(
+      tx,
+      row,
+      version,
+      pendingSecond
+        ? { status: next, declinedAt: null }
+        : {
+            status: next,
+            approvedSubtotalCents: approved.subtotal,
+            approvedTaxCents: approved.tax,
+            approvedTotalCents: approved.total,
+            approvedAt: now,
+            declinedAt: null,
+          },
+    );
     const changedLines = figures.lines.filter(
       (l, i) => l.quantity !== lines[i].quantity || l.unitPriceCents !== lines[i].unitPriceCents,
     );
@@ -265,13 +281,15 @@ export async function decideRequest(
         decision.kind === "approve_different_amount" ? figures.adjustmentCents : undefined,
       boardReference: decision.boardReference ?? undefined,
       changedLines: changedLines.length > 0 ? changedLines : undefined,
+      ...(pendingSecond ? { stage: "first", secondApprovalThreshold: threshold } : {}),
     };
   }
+  const finalHeld = held && !pendingSecond;
 
   await writeAudit(tx, {
     actor: actorOf(actor, actingRole),
     area: "annual",
-    eventType: AUDIT_EVENT[decision.kind],
+    eventType: pendingSecond ? "annual.first_approved" : AUDIT_EVENT[decision.kind],
     ...auditBase(row),
     reason: decision.note ?? undefined,
     details: {
@@ -280,13 +298,17 @@ export async function decideRequest(
       requestedTotalCents: row.requestedTotalCents,
       versionNumber: row.versionNumber,
       ...auditDetails,
-      ...(held ? { heldUntil: cycle.decisionReleaseAt!.toISOString() } : {}),
+      ...(finalHeld ? { heldUntil: cycle.decisionReleaseAt!.toISOString() } : {}),
     },
   });
-  await queueAnnualEmails(tx, row.id, actor.id, emailEvent(decision), {
-    now,
-    ...(held ? { hold: { releaseAt: cycle.decisionReleaseAt! } } : {}),
-  });
+  // While decisions are held, the department isn't told it's awaiting sign-off either.
+  await queueAnnualEmails(
+    tx,
+    row.id,
+    actor.id,
+    pendingSecond ? { kind: "awaiting_second" } : emailEvent(decision),
+    { now, ...(held ? { hold: { releaseAt: cycle.decisionReleaseAt! } } : {}) },
+  );
 
   const result: DecideResult = {
     requestId: row.id,
@@ -294,7 +316,7 @@ export async function decideRequest(
     status: next,
     approved,
     decidedAt: now.toISOString(),
-    heldUntil: held ? cycle.decisionReleaseAt!.toISOString() : null,
+    heldUntil: finalHeld ? cycle.decisionReleaseAt!.toISOString() : null,
   };
   await tx.insert(idempotencyKeys).values({
     key,
@@ -380,6 +402,180 @@ export async function reopenRequest(
     key,
     userId: actor.id,
     action: "annual.reopen",
+    entityId: row.id,
+    result,
+  });
+  return result;
+}
+
+// ---------------------------------------------------------------- second approval (FR-34)
+
+const secondSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("approve") }),
+  z.object({
+    kind: z.literal("refuse"),
+    note: z
+      .string({ error: e.refuseReasonRequired })
+      .trim()
+      .min(1, e.refuseReasonRequired)
+      .max(DECISION_LIMITS.note, e.noteTooLong),
+  }),
+]);
+
+export type SecondDecisionInput = z.input<typeof secondSchema>;
+export type SecondDecideResult = {
+  requestId: string;
+  kind: "approve" | "refuse";
+  status: AnnualStatus;
+  heldUntil: string | null;
+};
+
+/** The first-stage approval a request awaiting a second approval is waiting on. */
+export async function pendingFirstApproval(tx: Tx, requestId: string) {
+  const [first] = await tx
+    .select()
+    .from(approvalDecisions)
+    .where(
+      and(
+        eq(approvalDecisions.budgetRequestId, requestId),
+        eq(approvalDecisions.decision, "approved"),
+      ),
+    )
+    .orderBy(desc(approvalDecisions.createdAt))
+    .limit(1);
+  return first ?? null;
+}
+
+/**
+ * The second approval of a large budget (FR-34): a different accountant or backup
+ * approver, who doesn't represent the department, gives it (the request becomes Approved
+ * for the first approver's amount and the department is told) or refuses it with a
+ * reason (back to In Review). Recorded as its own decision; nothing earlier changes.
+ */
+export async function secondDecideRequest(
+  tx: Tx,
+  actor: Subject,
+  input: { id: string; version: unknown; idempotencyKey: unknown; decision: unknown },
+  options: Options = {},
+): Promise<SecondDecideResult> {
+  const key = parseKey(input.idempotencyKey);
+  const repeat = await previousResult<SecondDecideResult>(tx, key, actor, "annual.second_decide");
+  if (repeat) return repeat;
+
+  const now = options.now ?? new Date();
+  const row = await loadRequest(tx, input.id, true);
+  const { actingRole } = assertCan(actor, "annual.second_approve", {
+    departmentId: row.departmentId,
+    annualStatus: row.status,
+  });
+  const version = parseVersion(input.version);
+  if (row.version !== version) throw new ConflictError({ type: "budget_request", id: row.id });
+  const decision = parseInput(secondSchema, input.decision);
+  if (row.status !== "awaiting_second_approval") throw new RuleError(e.notAwaitingSecond);
+  const first = await pendingFirstApproval(tx, row.id);
+  if (!first) throw new RuleError(e.notAwaitingSecond);
+  if (first.approverUserId === actor.id) throw new RuleError(e.sameApprover);
+  const requestRevisionId = await latestRevisionId(tx, row);
+
+  let next: AnnualStatus;
+  let heldUntil: Date | null = null;
+  if (decision.kind === "approve") {
+    next = transition(row.status, "second_approve");
+    const [cycle] = await tx
+      .select({
+        decisionEmailMode: budgetCycles.decisionEmailMode,
+        decisionReleaseAt: budgetCycles.decisionReleaseAt,
+      })
+      .from(budgetCycles)
+      .where(eq(budgetCycles.id, row.budgetCycleId));
+    if (isHolding(cycle, now)) heldUntil = cycle.decisionReleaseAt;
+    await tx.insert(approvalDecisions).values({
+      budgetRequestId: row.id,
+      requestRevisionId,
+      decision: "second_approved",
+      decisionStage: "second",
+      approvedSubtotalCents: first.approvedSubtotalCents,
+      approvedTaxCents: first.approvedTaxCents,
+      approvedTotalCents: first.approvedTotalCents,
+      approverUserId: actor.id,
+      actingRole,
+      // FR-19a: the final decision waits for the release like any other.
+      releasedAt: heldUntil ? null : now,
+    });
+    await updateRequest(tx, row, version, {
+      status: next,
+      approvedSubtotalCents: first.approvedSubtotalCents,
+      approvedTaxCents: first.approvedTaxCents,
+      approvedTotalCents: first.approvedTotalCents,
+      approvedAt: now,
+    });
+    await writeAudit(tx, {
+      actor: actorOf(actor, actingRole),
+      area: "annual",
+      eventType: "annual.second_approved",
+      ...auditBase(row),
+      details: {
+        before: { status: row.status },
+        after: { status: next },
+        firstApproverUserId: first.approverUserId,
+        approvedTotalCents: first.approvedTotalCents,
+        ...(heldUntil ? { heldUntil: heldUntil.toISOString() } : {}),
+      },
+    });
+    await queueAnnualEmails(
+      tx,
+      row.id,
+      first.approverUserId,
+      { kind: "approved" },
+      {
+        now,
+        ...(heldUntil ? { hold: { releaseAt: heldUntil } } : {}),
+      },
+    );
+  } else {
+    next = transition(row.status, "second_refuse");
+    await tx.insert(approvalDecisions).values({
+      budgetRequestId: row.id,
+      requestRevisionId,
+      decision: "second_refused",
+      decisionStage: "second",
+      decisionReason: decision.note,
+      approverUserId: actor.id,
+      actingRole,
+      releasedAt: now,
+    });
+    await updateRequest(tx, row, version, { status: next });
+    await writeAudit(tx, {
+      actor: actorOf(actor, actingRole),
+      area: "annual",
+      eventType: "annual.second_refused",
+      ...auditBase(row),
+      reason: decision.note,
+      details: {
+        before: { status: row.status },
+        after: { status: next },
+        firstApproverUserId: first.approverUserId,
+      },
+    });
+    await queueAnnualEmails(
+      tx,
+      row.id,
+      actor.id,
+      { kind: "second_refused", reason: decision.note, firstApproverId: first.approverUserId },
+      { now },
+    );
+  }
+
+  const result: SecondDecideResult = {
+    requestId: row.id,
+    kind: decision.kind,
+    status: next,
+    heldUntil: heldUntil?.toISOString() ?? null,
+  };
+  await tx.insert(idempotencyKeys).values({
+    key,
+    userId: actor.id,
+    action: "annual.second_decide",
     entityId: row.id,
     result,
   });
