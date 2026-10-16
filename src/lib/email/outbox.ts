@@ -24,6 +24,8 @@ export type QueuedEmail = {
   brand: EmailBrand;
   budgetRequestId?: string;
   cycleId?: string;
+  /** For emails that must go once only: a repeat with this key skips addresses already queued. */
+  dedupeKey?: string;
   now?: Date;
 };
 
@@ -37,7 +39,10 @@ export function trackQueuedEmails<T>(
   return queuedInAction.run(store, async () => ({ result: await work(), queued: store.count }));
 }
 
-/** One row per distinct address, each with the same rendered email. Returns the row count. */
+/**
+ * One row per distinct address, each with the same rendered email. Returns how many rows
+ * were added (fewer than the recipients when a dedupe key was already used).
+ */
 export async function enqueueEmail(tx: Tx, email: QueuedEmail): Promise<number> {
   const seen = new Set<string>();
   const recipients = email.to.filter((r) => {
@@ -49,25 +54,30 @@ export async function enqueueEmail(tx: Tx, email: QueuedEmail): Promise<number> 
   if (recipients.length === 0) return 0;
   const rendered = renderEmail(email.content, email.brand);
   const now = email.now ?? new Date();
-  await tx.insert(emailOutbox).values(
-    recipients.map((r) => ({
-      template: email.template,
-      audience: email.audience,
-      toEmail: r.email.trim(),
-      toUserId: r.userId ?? null,
-      subject: rendered.subject,
-      textBody: rendered.text,
-      htmlBody: rendered.html,
-      budgetRequestId: email.budgetRequestId ?? null,
-      cycleId: email.cycleId ?? null,
-      nextAttemptAt: now,
-      createdAt: now,
-      updatedAt: now,
-    })),
-  );
+  const inserted = await tx
+    .insert(emailOutbox)
+    .values(
+      recipients.map((r) => ({
+        template: email.template,
+        audience: email.audience,
+        toEmail: r.email.trim(),
+        toUserId: r.userId ?? null,
+        subject: rendered.subject,
+        textBody: rendered.text,
+        htmlBody: rendered.html,
+        budgetRequestId: email.budgetRequestId ?? null,
+        cycleId: email.cycleId ?? null,
+        dedupeKey: email.dedupeKey ?? null,
+        nextAttemptAt: now,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    )
+    .onConflictDoNothing()
+    .returning({ id: emailOutbox.id });
   const store = queuedInAction.getStore();
-  if (store) store.count += recipients.length;
-  return recipients.length;
+  if (store) store.count += inserted.length;
+  return inserted.length;
 }
 
 // ---------------------------------------------------------------- delivery

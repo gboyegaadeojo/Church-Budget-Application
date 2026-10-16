@@ -1,5 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { userDepartments, userRoles, users } from "@/db/schema";
+import { departments, userDepartments, userRoles, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { readSettings } from "@/domain/settings";
 import type { Recipient } from "@/lib/email/outbox";
@@ -50,4 +50,42 @@ export async function accountantRecipients(tx: Tx): Promise<NamedRecipient[]> {
   ]);
   const chosen = accountants.find((a) => a.userId === primary);
   return chosen ? [chosen] : accountants;
+}
+
+/** "Administrators" in FR-21's System table: everyone with the System Administrator role. */
+export function administrators(tx: Tx): Promise<NamedRecipient[]> {
+  return usersWithRole(tx, ["system_admin"]);
+}
+
+/** One person, if they can sign in (a role or access email is about their own account). */
+export async function person(tx: Tx, userId: string): Promise<NamedRecipient[]> {
+  return tx
+    .select(columns)
+    .from(users)
+    .where(and(eq(users.id, userId), canSignIn));
+}
+
+/** Representatives of every active department, for cycle announcements (FR-21). */
+export async function allRepresentatives(tx: Tx): Promise<NamedRecipient[]> {
+  return tx
+    .selectDistinct(columns)
+    .from(userDepartments)
+    .innerJoin(users, eq(users.id, userDepartments.userId))
+    .innerJoin(departments, eq(departments.id, userDepartments.departmentId))
+    .where(and(eq(departments.status, "active"), canSignIn))
+    .orderBy(users.displayName);
+}
+
+/** Representatives of the given departments. */
+export async function representativesOf(
+  tx: Tx,
+  departmentIds: readonly string[],
+): Promise<NamedRecipient[]> {
+  if (departmentIds.length === 0) return [];
+  return tx
+    .selectDistinct(columns)
+    .from(userDepartments)
+    .innerJoin(users, eq(users.id, userDepartments.userId))
+    .where(and(inArray(userDepartments.departmentId, [...departmentIds]), canSignIn))
+    .orderBy(users.displayName);
 }

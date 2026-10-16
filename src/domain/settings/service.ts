@@ -11,6 +11,7 @@ import { formatTaxRate, percentToTaxRate } from "@/lib/money";
 import type { PcoPerson, PlanningCenterDirectory } from "@/lib/pco";
 import { isValidTimeZone } from "@/lib/time-zone";
 import { DEPARTMENT_FIELD_MODES, readSettings, SETTING_DEFAULTS, type SettingKey } from "./index";
+import { emailPrimaryAccountantCleared } from "@/domain/users/emails";
 
 /**
  * Admin → Settings: sales tax rate (FR-07a), church time zone, and sign-in and
@@ -249,7 +250,7 @@ export async function clearPrimaryAccountantIf(
       after: { primary_accountant_user_id: "" },
     },
   });
-  // TODO(step 7): email the administrators to choose a new Primary accountant.
+  await emailPrimaryAccountantCleared(tx, userId);
 }
 
 // ---------------------------------------------------------------- test a person

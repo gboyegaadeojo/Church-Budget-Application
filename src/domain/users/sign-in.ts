@@ -5,6 +5,7 @@ import { getSignInSettings } from "@/domain/settings";
 import { writeAudit } from "@/lib/audit";
 import { PlanningCenterUnavailableError, type PlanningCenterDirectory } from "@/lib/pco";
 import type { Role } from "@/lib/roles";
+import { emailAccessRequest, emailNewLeaderWaiting } from "./emails";
 import type { AccessDeniedReason } from "./access";
 import { checkLeader, type LeaderCheck } from "./leader-check";
 import { refreshMinistryDepartments } from "./ministry-departments";
@@ -236,14 +237,27 @@ export async function resolveSignIn(
   }
 
   // 3b. New person: only verified Group Leaders join by themselves (FR-01a "New leaders").
+  // Anyone else is an access request for the administrators (FR-21 "System").
+  const denyNewPerson = async (reason: AccessDeniedReason, detail: string) => {
+    const result = await deny(reason, detail);
+    if (reason !== "unavailable") {
+      await emailAccessRequest(tx, {
+        email,
+        name: identity.name ?? null,
+        method: method === "google" ? "Google" : "Planning Center",
+        now: deps.now,
+      });
+    }
+    return result;
+  };
   if (!settings.leader.requireForRequesters) {
-    return deny("not-allowed", "No account, and leaders do not join by Planning Center");
+    return denyNewPerson("not-allowed", "No account, and leaders do not join by Planning Center");
   }
   const check = await checkLeader(directory, settings.leader, {
     pcoPersonId: method === "planningcenter" ? identity.subject : null,
     email: method === "google" ? email : null,
   });
-  if (check.status !== "leader") return deny(deniedReason(check, false), describe(check));
+  if (check.status !== "leader") return denyNewPerson(deniedReason(check, false), describe(check));
 
   const accountEmail = email ?? check.person.emails[0] ?? null;
   if (!accountEmail) return deny("not-allowed", "No email address on the Planning Center profile");
@@ -285,7 +299,7 @@ export async function resolveSignIn(
     { now: deps.now, actor: { kind: "user", userId: created.id } },
   );
   if (synced && synced.joined.length > 0) return succeed(created.id, "home");
-  // TODO(step 7): email the administrator to assign a department (FR-01a "New leaders").
+  await emailNewLeaderWaiting(tx, created.id);
   return succeed(created.id, "waiting");
 }
 

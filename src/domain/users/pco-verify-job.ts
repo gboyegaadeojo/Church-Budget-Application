@@ -5,6 +5,7 @@ import { getSignInSettings } from "@/domain/settings";
 import { writeAudit } from "@/lib/audit";
 import type { PlanningCenterDirectory } from "@/lib/pco";
 import type { Role } from "@/lib/roles";
+import { emailPcoUnavailable } from "./emails";
 import { checkLeader } from "./leader-check";
 import { refreshMinistryDepartments } from "./ministry-departments";
 import { rolesOf } from "./sign-in";
@@ -59,7 +60,7 @@ export async function runPcoVerification(
       entity: { type: "job", id: "pco-verify" },
       reason: error instanceof Error ? error.message : "Planning Center unavailable",
     });
-    // TODO(step 7): email the administrator about the outage (FR-01a).
+    await emailPcoUnavailable(db, now);
     return summary;
   }
 

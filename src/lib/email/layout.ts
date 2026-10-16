@@ -36,6 +36,8 @@ export type EmailContent = {
   paragraphs?: string[];
   facts?: { label: string; value: string }[];
   changes?: string[];
+  /** Any other bulleted list with its own heading, e.g. departments still outstanding. */
+  list?: { heading: string; items: string[] };
   summary?: EmailSummary;
   lines?: { heading: string; items: EmailLine[] };
   note?: { label: string; text: string };
@@ -97,9 +99,9 @@ function renderText(content: EmailContent, brand: EmailBrand): string {
     for (const f of content.facts) out.push(`${f.label}: ${f.value}`);
     out.push("");
   }
-  if (content.changes?.length) {
-    out.push(`${c.whatChanged}:`);
-    for (const change of content.changes) out.push(`- ${change}`);
+  for (const list of bulletLists(content)) {
+    out.push(`${list.heading}:`);
+    for (const item of list.items) out.push(`- ${item}`);
     out.push("");
   }
   if (content.summary) {
@@ -125,6 +127,13 @@ function renderText(content: EmailContent, brand: EmailBrand): string {
   out.push(`${content.button.label}: ${content.button.href}`, "");
   out.push("--", c.footer(brand.appName, brand.churchName), c.signInNote);
   return out.join("\n");
+}
+
+function bulletLists(content: EmailContent): { heading: string; items: string[] }[] {
+  return [
+    ...(content.changes?.length ? [{ heading: c.whatChanged, items: content.changes }] : []),
+    ...(content.list?.items.length ? [content.list] : []),
+  ];
 }
 
 function lineText(l: EmailLine): string {
@@ -201,11 +210,11 @@ function renderHtml(content: EmailContent, brand: EmailBrand, subject: string): 
       .join("");
     parts.push(section(`<table style="border-collapse:collapse;">${rows}</table>`));
   }
-  if (content.changes?.length) {
-    const items = content.changes.map((x) => `<li>${escapeHtml(x)}</li>`).join("");
+  for (const list of bulletLists(content)) {
+    const items = list.items.map((x) => `<li>${escapeHtml(x)}</li>`).join("");
     parts.push(
       section(
-        `<p style="margin:0 0 6px;font-size:14px;font-weight:600;">${escapeHtml(c.whatChanged)}</p><ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.5;">${items}</ul>`,
+        `<p style="margin:0 0 6px;font-size:14px;font-weight:600;">${escapeHtml(list.heading)}</p><ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.5;">${items}</ul>`,
       ),
     );
   }

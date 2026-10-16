@@ -82,6 +82,7 @@ Each department submits **one** annual budget for the year. Once it has one (a d
 - If the accountant asks a question (**Returned for clarification**), it appears in My tasks. Answer it and resubmit; this does **not** use an edit.
 - Use **Messages** on the budget to talk with the accountant; each message emails the other side.
 - The accountant's question, decline reason or approved amount appears on your budget's page and is emailed to everyone who represents your department. The approved amount may be different from what you asked for; it always includes tax, and the page and the email show it beside what you asked for.
+- Before the deadline you're reminded 7 days and 1 day ahead if your department hasn't submitted. You're also told when a budget cycle opens, closes or reopens, and when your deadline changes.
 - You're also emailed when you submit (your receipt), when anyone in your department changes the budget, when the review starts, and if it's reopened. Each email says what changed and what, if anything, you need to do. Its link asks you to sign in.
 - **Emails** at the bottom of your budget's page lists every email sent to your department about it, and whether it went. If one says **Couldn't be sent**, the budget itself is safe; ask the administrator to check the address.
 
@@ -233,6 +234,9 @@ Tax rate (applies to new submissions only), Planning Center connection, custom f
 **Signing authorities**: the people who can sign church cheques. They don't need an account in the app. **Add signer** when someone can sign cheques (name, optional email, and the date they start). To fix a spelling or remove someone, open **Edit {name}**; **Remove** takes the date they stop and an optional reason. Removed signers stay on the list and on every payment they signed. When the Church Administrator records a cheque payment, she picks the two people who signed from this list, so keep at least two active; the page warns you when fewer remain.
 
 ### Keeping it healthy
+
+You're emailed when something needs you: a leader joins or proposes a department, a new leader is waiting for a department, a requester is suspended because Planning Center no longer lists them, Planning Center can't be reached, someone without access tries to sign in, or the Primary accountant is cleared. Once a day you also get a list of any emails that couldn't be sent after every retry.
+
 
 Emails that don't go are retried for about three days. Until the failed-emails list arrives in Admin, a failed one shows as **Couldn't be sent** under **Emails** on the budget. Check **Admin → Notifications & Audit** for failed emails once it exists, and **Reports → Analytics & Audit → Access** weekly (see the [go-live checklist](go-live-checklist.md), section 4).
 

@@ -43,7 +43,7 @@ Private repositories get about 2,000 free Actions minutes a month, and every run
 - **Recommended:** run the 15-minute jobs as **Netlify Scheduled Functions** (included in the free plan) that call the same `/api/jobs/<name>` endpoints, and keep GitHub Actions for CI and the nightly backup.
 - Or run the GitHub Actions schedule every 30 minutes and accept slower email retries and decision release.
 
-**Chosen (step 7a): Netlify Scheduled Functions.** `netlify/functions/send-outbox.mts` runs every 15 minutes on the free plan. It needs `JOBS_SECRET` set in Netlify; Netlify provides `URL` itself. GitHub Actions runs only the nightly jobs, including a nightly outbox backstop, which need the `APP_URL` and `JOBS_SECRET` repository secrets.
+**Chosen (step 7a): Netlify Scheduled Functions.** `netlify/functions/send-outbox.mts` runs every 15 minutes on the free plan. It needs `JOBS_SECRET` set in Netlify; Netlify provides `URL` itself. GitHub Actions runs only the nightly jobs (Planning Center check, deadline reminders and the failed-email digest, and an outbox backstop), which need the `APP_URL` and `JOBS_SECRET` repository secrets.
 
 ## 2. Information the church provides
 

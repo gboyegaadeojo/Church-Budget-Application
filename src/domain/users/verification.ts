@@ -3,6 +3,7 @@ import { userDepartments, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { promoteBackupsWhenPrimaryLeaves } from "@/domain/departments/service";
 import { writeAudit, type AuditActor } from "@/lib/audit";
+import { emailLeaderSuspended } from "./emails";
 import { PCO_GRACE_MS } from "./access";
 import type { LeaderCheck } from "./leader-check";
 
@@ -110,8 +111,8 @@ export async function applyVerification(
     })
     .where(eq(users.id, user.id));
   if (wasLeader || user.accessStatus !== "suspended_not_leader") {
-    // TODO(step 7): email the administrator and accountant through the outbox (FR-01a, AC-9).
     await audit("access.leader_suspended", { result: check.status });
+    await emailLeaderSuspended(tx, user.id);
     // FR-38: a suspended Primary hands the department to its Backup.
     await promoteBackupsWhenPrimaryLeaves(
       tx,

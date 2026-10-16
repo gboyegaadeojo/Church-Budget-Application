@@ -4,6 +4,8 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { getDb } from "@/db";
 import { resolveSignIn, type ExternalIdentity } from "@/domain/users/sign-in";
+import { sendOutboxAfterResponse } from "@/lib/email";
+import { trackQueuedEmails } from "@/lib/email/outbox";
 import { writeAudit } from "@/lib/audit";
 import { fakeSignInEnabled } from "@/lib/auth-mode";
 import { rememberDeniedEmail } from "@/lib/denied-email";
@@ -140,13 +142,17 @@ export const authConfig: NextAuthConfig = {
         return "/access-denied/not-allowed";
       }
       const ipHash = await requestIpHash();
-      const result = await getDb().transaction((tx) =>
-        resolveSignIn(
-          tx,
-          { directory: getPlanningCenterDirectory(), now: new Date(), requestIpHash: ipHash },
-          identity,
+      const { result, queued } = await trackQueuedEmails(() =>
+        getDb().transaction((tx) =>
+          resolveSignIn(
+            tx,
+            { directory: getPlanningCenterDirectory(), now: new Date(), requestIpHash: ipHash },
+            identity,
+          ),
         ),
       );
+      // Access requests and leader notices go after the sign-in commits.
+      if (queued > 0) sendOutboxAfterResponse();
       if (!result.ok) {
         await rememberDeniedEmail(result.email ?? identity.email);
         return `/access-denied/${result.reason}`;

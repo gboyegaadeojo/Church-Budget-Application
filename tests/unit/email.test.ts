@@ -76,6 +76,20 @@ describe("email layout (DRD 7.5)", () => {
     expect(escapeHtml(`'`)).toBe("&#39;");
   });
 
+  it("shows a list under its own heading, apart from what changed", () => {
+    const { text, html } = renderEmail(
+      {
+        ...content,
+        changes: ["Title changed"],
+        list: { heading: "Not submitted", items: ["Ushering Team", "Choir"] },
+      },
+      brand,
+    );
+    expect(text).toContain("What changed:\n- Title changed");
+    expect(text).toContain("Not submitted:\n- Ushering Team\n- Choir");
+    expect(html).toContain("<li>Ushering Team</li>");
+  });
+
   it("keeps the subject on one line", () => {
     expect(renderEmail({ ...content, subject: "A\r\nBcc: someone" }, brand).subject).toBe(
       "A Bcc: someone",

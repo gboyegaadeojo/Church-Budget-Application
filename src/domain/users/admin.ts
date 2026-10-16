@@ -9,6 +9,7 @@ import { clearPrimaryAccountantIf } from "@/domain/settings/service";
 import { writeAudit, type AuditActor } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
 import { ROLES, type Role } from "@/lib/roles";
+import { emailRolesChanged, emailStaffAdded } from "./emails";
 
 /**
  * Users and roles (FR-02, Requirements 3, 20.5). Staff are added by email address; a
@@ -113,7 +114,7 @@ export async function addStaff(
     entity: { type: "user", id: created.id },
     details: { after: { email: data.email, name: data.displayName, roles } },
   });
-  // TODO(step 7): email the person that they have access (DRD 7.5 "role change").
+  await emailStaffAdded(tx, created.id, roles);
   return { userId: created.id, name: data.displayName };
 }
 
@@ -180,7 +181,7 @@ export async function setUserRoles(
       "the Primary accountant lost the Accountant role",
     );
   }
-  // TODO(step 7): email the person about the role change (DRD 7.5).
+  await emailRolesChanged(tx, user.id, current, next);
 }
 
 // ---------------------------------------------------------------- activate / deactivate
