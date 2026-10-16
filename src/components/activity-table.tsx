@@ -81,7 +81,14 @@ export function ActivityTable({
 }) {
   const reviews = authorize(viewer, "annual.review").allowed;
   const admin = viewer.roles.includes("system_admin");
-  const requestHref = (id: string) => (reviews ? `/annual/review/${id}` : `/annual/${id}`);
+  // A leader opens their own department's budget (drafts too); the accountant opens the
+  // review screen; anyone else the read-only budget page.
+  const leads = (departmentId: string | undefined) =>
+    departmentId !== undefined && viewer.departments.some((d) => d.id === departmentId);
+  const requestHref = (e: ActivityItem) =>
+    reviews && !leads(e.department?.id)
+      ? `/annual/review/${e.request!.id}`
+      : `/annual/${e.request!.id}`;
   const th = "px-4 py-2.5 text-xs font-semibold tracking-wide text-fg-muted uppercase";
 
   const what = (e: ActivityItem) => {
@@ -94,7 +101,7 @@ export function ActivityTable({
           {showItem && e.request && (
             <>
               {" · "}
-              <Link href={requestHref(e.request.id)} className={linkClass}>
+              <Link href={requestHref(e)} className={linkClass}>
                 {e.request.reference || e.request.title || annualCopy.dashboard.untitled}
               </Link>
             </>
@@ -114,7 +121,8 @@ export function ActivityTable({
         </p>
         {rows.length > 0 && (
           <details className="group/details">
-            <summary className="cursor-pointer text-xs font-medium text-accent">
+            {/* 24 px tall at least, so it's an easy target (WCAG 2.5.8). */}
+            <summary className="cursor-pointer py-1 text-xs leading-4 font-medium text-accent">
               {a.showDetails}
             </summary>
             <DetailsTable rows={rows} />

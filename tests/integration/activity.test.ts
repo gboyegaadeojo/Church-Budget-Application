@@ -3,7 +3,12 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { budgetRequests, userRoles } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
-import { activityPeople, allActivity, listActivity } from "@/domain/analytics/activity";
+import {
+  activityOptions,
+  activityPeople,
+  allActivity,
+  listActivity,
+} from "@/domain/analytics/activity";
 import { buildAnnualExport } from "@/domain/annual/export";
 import { decideRequest } from "@/domain/annual/review";
 import { saveDraft, startRequest, submitRequest } from "@/domain/annual/service";
@@ -176,6 +181,62 @@ describe("Activity tab (FR-52, AC-125, AC-126)", () => {
     expect(seen).not.toContain("admin.tax_rate_changed");
   });
 
+  it("staff don't see the administration log, not even their own sign-ins or settings", async () => {
+    const pat = await person("accountant");
+    for (const [area, eventType] of [
+      ["access", "access.sign_in_failed"],
+      ["access", "access.denied"],
+      ["admin", "user.away_set"],
+      ["admin", "admin.activity_exported"],
+    ] as const) {
+      await writeAudit(db, {
+        actor: { kind: "user", userId: pat.id, actingRole: "accountant" },
+        area,
+        eventType,
+        entity: { type: "user", id: pat.id },
+      });
+    }
+    await writeAudit(db, {
+      actor: { kind: "system" },
+      area: "admin",
+      eventType: "notifications.email_failed",
+      entity: { type: "email_outbox" },
+    });
+    const seen = types((await listActivity(db, pat, {}, { pageSize: 500 })).items);
+    expect(seen.filter((e) => /^(access|admin|user|notifications)\./.test(e))).toEqual([]);
+    expect(seen).toContain("annual.approved");
+
+    // An administrator-only view typed into the address shows their usual log instead.
+    for (const quick of ["access", "settings", "emails"]) {
+      const viewed = await listActivity(db, pat, { quick }, { pageSize: 500 });
+      expect(types(viewed.items)).toEqual(seen);
+    }
+    expect(
+      types((await listActivity(db, pat, { area: "admin" }, { pageSize: 500 })).items),
+    ).toEqual(seen);
+
+    // The administrator still sees all of it.
+    const all = types((await listActivity(db, admin, {}, { pageSize: 500 })).items);
+    expect(all).toEqual(
+      expect.arrayContaining(["access.denied", "user.away_set", "notifications.email_failed"]),
+    );
+  });
+
+  it("offers each role only the views and filters it can use", () => {
+    const staff = activityOptions(accountant);
+    expect(staff.quickViews).toEqual(["today", "decisionsWeek", "money"]);
+    expect(staff.areas).toEqual(["annual", "expenses", "spending"]);
+    expect(staff.groups).not.toContain("access");
+    expect(staff.roles).not.toContain("system_admin");
+    expect(activityOptions({ id: "c", roles: ["church_admin"], departments: [] }).areas).toEqual([
+      "spending",
+    ]);
+    const everything = activityOptions(admin);
+    expect(everything.quickViews).toContain("emails");
+    expect(everything.areas).toContain("access");
+    expect(everything.roles).toContain("system_admin");
+  });
+
   // Analytics & Audit is staff-only (docs/decisions.md, 2026-10-16); this scope now serves a
   // leader's "Activity on this budget" page.
   it("AC-128 a leader's budget history holds only their own department, without internal exports", async () => {
@@ -207,7 +268,10 @@ describe("Activity tab (FR-52, AC-125, AC-126)", () => {
     const decisions = await listActivity(db, admin, { group: "decisions" }, { pageSize: 500 });
     expect(new Set(types(decisions.items))).toEqual(new Set(["annual.approved"]));
     const access = await listActivity(db, admin, { quick: "access" }, { pageSize: 500 });
-    expect(types(access.items)).toEqual(["access.sign_in_failed"]);
+    expect(types(access.items)).toContain("access.sign_in_failed");
+    expect(types(access.items).every((e) => /^access\.(sign_in_failed|denied)$/.test(e))).toBe(
+      true,
+    );
     const future = await listActivity(db, admin, { from: "2099-01-01" });
     expect(future.total).toBe(0);
     const search = await listActivity(db, admin, { q: referenceA }, { pageSize: 500 });

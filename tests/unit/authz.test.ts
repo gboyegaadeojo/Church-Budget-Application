@@ -261,6 +261,12 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     {},
     ["no", "act", "act", "read", "read", "act", "act"],
   ],
+  [
+    "see sign-ins, settings, role changes and failed emails in Analytics & Audit",
+    "analytics.admin_audit",
+    {},
+    ["no", "no", "no", "no", "no", "no", "act"],
+  ],
 ];
 
 describe("authorization matrix (Requirements 3.6)", () => {
