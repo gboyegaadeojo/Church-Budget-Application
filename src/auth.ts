@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { getDb } from "@/db";
 import { resolveSignIn, type ExternalIdentity } from "@/domain/users/sign-in";
+import { authLogger } from "@/lib/auth-logger";
 import { sendOutboxAfterResponse } from "@/lib/email";
 import { trackQueuedEmails } from "@/lib/email/outbox";
 import { writeAudit } from "@/lib/audit";
@@ -134,6 +135,7 @@ export const authConfig: NextAuthConfig = {
   trustHost: true,
   session: { strategy: "jwt", maxAge: 12 * 60 * 60, updateAge: 60 * 60 },
   pages: { signIn: "/sign-in", error: "/sign-in" },
+  logger: authLogger,
   callbacks: {
     async signIn({ user, account, profile, credentials }) {
       const identity = toIdentity({ account, profile, credentials });
