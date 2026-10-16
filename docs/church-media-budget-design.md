@@ -875,7 +875,7 @@ Two large, clear choices with one-line explanations:
 
 ### Budget strip (both types)
 
-At the top of the form, always visible: Department · Available $30,000.00 · Committed $1,008.00 · Spent $4,200.00 · Remaining $24,792.00, then after entering amounts: "Remaining after this: $23,784.00". Over budget turns the after-value Danger with "Over budget by $X" and reveals the required explanation field.
+At the top of the form, always visible: Department · Available $30,000.00 · Committed $1,008.00 · Spent $4,200.00 · Remaining $24,792.00, then after entering amounts: "Remaining after this: $23,784.00". Over budget turns the after-value Danger with "Over budget by $X" and reveals the required explanation field, under a warning (icon and text, not colour alone): "This takes Media over budget by $X. You can still submit; the Board Chair must approve it." Submitting stays enabled (FR-43).
 
 ### Purchase request form
 
@@ -900,7 +900,7 @@ An **approval tracker** at the top of every expense (requester, accountant, Boar
 
 ### Board Chair review
 
-Same split layout, read-only lines, with the accountant's approved amount and note highlighted at the top. Decision bar: **Give final approval** (primary) · Approve a smaller amount (incl. tax) · Return to accountant · Decline. Designed mobile-first, because the Board Chair will often approve from an email on a phone: the email's button opens straight to this screen after sign-in. Warnings for duplicates, late claims, and over budget appear above the decision bar with text and icons.
+Same split layout, read-only lines, with the accountant's approved amount and note highlighted at the top. Decision bar: **Give final approval** (primary) · Approve a smaller amount (incl. tax) · Return to accountant · Decline. Designed mobile-first, because the Board Chair will often approve from an email on a phone: the email's button opens straight to this screen after sign-in. Warnings for duplicates, late claims, and over budget appear above the decision bar with text and icons. The over-budget warning reads "This takes Media over budget by $X", worked out at the moment of the decision, with the requester's explanation beneath it; the accountant's review screen shows the same block (FR-43).
 
 ### Ready to process queue (Church Administrator / accountant)
 
