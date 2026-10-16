@@ -20,9 +20,8 @@ function safeRedirect(value: FormDataEntryValue | null): string {
 }
 
 export async function signInWithProvider(formData: FormData) {
-  const provider = formData.get("provider");
-  if (provider !== "google" && provider !== "planningcenter") return;
-  await signIn(provider, { redirectTo: safeRedirect(formData.get("callbackUrl")) });
+  if (formData.get("provider") !== "planningcenter") return;
+  await signIn("planningcenter", { redirectTo: safeRedirect(formData.get("callbackUrl")) });
 }
 
 export async function signInFake(formData: FormData) {

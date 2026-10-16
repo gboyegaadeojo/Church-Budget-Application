@@ -28,7 +28,6 @@ export const SETTING_DEFAULTS = {
    */
   pco_department_field_name: "Ministry Department",
   pco_department_mode: "suggest",
-  signin_google_enabled: "true",
   signin_planning_center_enabled: "true",
   /** FR-01b: "Continue with email" (a 6-digit code emailed to an address on the allowlist). */
   signin_email_enabled: "true",
@@ -78,7 +77,6 @@ export type LeaderSettings = {
 
 export type SignInSettings = {
   leader: LeaderSettings;
-  googleEnabled: boolean;
   planningCenterEnabled: boolean;
   emailEnabled: boolean;
   adminContactEmail: string;
@@ -90,7 +88,6 @@ export async function getSignInSettings(tx: Tx): Promise<SignInSettings> {
     "pco_leader_accepted_values",
     "pco_require_for_requesters",
     "pco_require_for_staff",
-    "signin_google_enabled",
     "signin_planning_center_enabled",
     "signin_email_enabled",
     "admin_contact_email",
@@ -102,7 +99,6 @@ export async function getSignInSettings(tx: Tx): Promise<SignInSettings> {
       requireForRequesters: bool(s.pco_require_for_requesters),
       requireForStaff: bool(s.pco_require_for_staff),
     },
-    googleEnabled: bool(s.signin_google_enabled),
     planningCenterEnabled: bool(s.signin_planning_center_enabled),
     emailEnabled: bool(s.signin_email_enabled),
     adminContactEmail: s.admin_contact_email.trim(),

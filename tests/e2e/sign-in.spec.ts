@@ -84,7 +84,7 @@ test.describe("Sign-in (FR-01, FR-01a, DRD 6.1, 6.1a)", () => {
     await expect(page).toHaveURL(/\/sign-in$/);
   });
 
-  test("AC-8 a Google account with no Planning Center person is not found", async ({ page }) => {
+  test("AC-8 a Planning Center profile the church can't find is not found", async ({ page }) => {
     await signInAs(page, PEOPLE.stranger);
     await expect(page).toHaveURL(/\/access-denied\/not-found$/);
     await expect(
@@ -182,6 +182,34 @@ test.describe("Sign-in (FR-01, FR-01a, DRD 6.1, 6.1a)", () => {
     await page.goto("/access-denied/whatever");
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
     await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(1);
+  });
+});
+
+test.describe("Linking a staff member's Planning Center profile (FR-01a, AC-6)", () => {
+  test("AC-6 the administrator links Bo, who then signs in with Planning Center", async ({
+    page,
+    browser,
+  }) => {
+    await signInAs(page, PEOPLE.bo);
+    await expect(page).toHaveURL(/\/access-denied\/link-required$/);
+    await expect(
+      page.getByRole("heading", { name: "Your Planning Center profile isn't linked yet" }),
+    ).toBeVisible();
+
+    const adminContext = await browser.newContext({ viewport: DESKTOP });
+    const admin = await adminContext.newPage();
+    await signInAs(admin, PEOPLE.gina, "/sign-in?callbackUrl=%2Fadmin%2Fusers");
+    await admin.getByRole("link", { name: "Bo Chair", exact: true }).click();
+    const section = admin.getByRole("region", { name: "Planning Center profile" });
+    await expect(section.getByText("Not linked.", { exact: false })).toBeVisible();
+    await expectAxeClean(admin);
+    await section.getByRole("button", { name: "Link to Bo Chair" }).click();
+    await expect(section.getByText("Linked to Bo Chair")).toBeVisible();
+    await adminContext.close();
+
+    await page.getByRole("button", { name: "Use a different account" }).click();
+    await signInAs(page, PEOPLE.bo);
+    await expect(page).toHaveURL("/");
   });
 });
 

@@ -1,10 +1,11 @@
 [
   {
-    "label": "Gina Admin (every role, Google)",
-    "provider": "google",
-    "subject": "google-gina",
+    "label": "Gina Admin (every role, Planning Center)",
+    "provider": "planningcenter",
+    "subject": "1000",
     "email": "gina.admin@example.org",
-    "name": "Gina Admin"
+    "name": "Gina Admin",
+    "organizationId": "100"
   },
   {
     "label": "Sam Lee (Media leader, Planning Center)",
@@ -15,11 +16,12 @@
     "organizationId": "100"
   },
   {
-    "label": "Ada Obi (new leader, Google)",
-    "provider": "google",
-    "subject": "google-ada",
+    "label": "Ada Obi (new leader, Planning Center)",
+    "provider": "planningcenter",
+    "subject": "1002",
     "email": "ada.obi@example.org",
-    "name": "Ada Obi"
+    "name": "Ada Obi",
+    "organizationId": "100"
   },
   {
     "label": "Noah Keeper (new leader with a Ministry Department, Planning Center)",
@@ -38,24 +40,35 @@
     "organizationId": "100"
   },
   {
-    "label": "Kim Former (leader removed, Google)",
-    "provider": "google",
-    "subject": "google-kim",
+    "label": "Kim Former (leader removed, Planning Center)",
+    "provider": "planningcenter",
+    "subject": "1004",
     "email": "kim.former@example.org",
-    "name": "Kim Former"
+    "name": "Kim Former",
+    "organizationId": "100"
   },
   {
-    "label": "Stranger (not in Planning Center, Google)",
-    "provider": "google",
-    "subject": "google-stranger",
+    "label": "Stranger (Planning Center profile the church can't read)",
+    "provider": "planningcenter",
+    "subject": "9999",
     "email": "stranger@example.org",
-    "name": "Stranger"
+    "name": "Stranger",
+    "organizationId": "100"
   },
   {
-    "label": "Accountant Pat (staff, Google)",
-    "provider": "google",
-    "subject": "google-pat",
+    "label": "Accountant Pat (staff, Planning Center, linked)",
+    "provider": "planningcenter",
+    "subject": "1006",
     "email": "pat.accountant@example.org",
-    "name": "Pat Accountant"
+    "name": "Pat Accountant",
+    "organizationId": "100"
+  },
+  {
+    "label": "Bo Chair (Board Chair, Planning Center, not linked yet)",
+    "provider": "planningcenter",
+    "subject": "1007",
+    "email": "bo.chair@example.org",
+    "name": "Bo Chair",
+    "organizationId": "100"
   }
 ]

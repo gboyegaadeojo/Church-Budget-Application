@@ -1,6 +1,6 @@
 /**
- * Fake sign-in (a test-only "provider" that lets you sign in as any Google or Planning
- * Center identity) exists so end-to-end tests and local development work without real
+ * Fake sign-in (a test-only "provider" that lets you sign in as any Planning Center or
+ * email identity) exists so end-to-end tests and local development work without real
  * credentials. It can never turn on for a deployed site: it needs AUTH_FAKE_PROVIDERS=1
  * and an AUTH_URL on this computer, and Netlify builds are always refused.
  */

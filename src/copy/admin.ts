@@ -47,11 +47,13 @@ export const adminCopy = {
     empty: "No one matches that search.",
     addHeading: "Add a staff member",
     email: "Email address",
-    emailHint: "Any address works. They sign in with Google or Planning Center using it.",
+    emailHint:
+      "Any address works. Staff sign in with Planning Center once you link their profile on their page. The Church Administrator and System Administrators can also sign in with a code sent to this address.",
     displayName: "Name",
     roles: "Roles",
     add: "Add staff member",
-    added: (name: string) => `${name} was added.`,
+    added: (name: string) =>
+      `${name} was added. If they're in Planning Center, open their page to link their profile.`,
     rolesHeading: "Roles",
     rolesHint:
       "When someone leaves, remove their role or deactivate them, then give the role to the new person. Their past decisions stay in the history under their name.",
@@ -72,6 +74,32 @@ export const adminCopy = {
     verifiedAt: (when: string) => `Group Leader, checked ${when}`,
     notVerified: "Not verified as a Group Leader",
     neverChecked: "Not checked yet",
+    pco: {
+      heading: "Planning Center profile",
+      intro:
+        "Planning Center sign-in reaches this account only once it's linked to the person's profile. Check it's the right person before you link it.",
+      linked: (name: string) => `Linked to ${name}`,
+      linkedId: (id: string) => `Linked to Planning Center person ${id}`,
+      notLinked: "Not linked. They can't sign in with Planning Center yet.",
+      suggestions: "In Planning Center with this email address",
+      noSuggestions: "No one in Planning Center has this email address. Search by name instead.",
+      search: "Find their Planning Center profile",
+      searchHint: "Search by name or email.",
+      searchButton: "Search Planning Center",
+      noMatch: "No one in Planning Center matches.",
+      linkTo: (name: string) => `Link to ${name}`,
+      linkedElsewhere: (name: string) => `Linked to ${name}'s account`,
+      inactive: "Inactive in Planning Center",
+      unlink: "Unlink",
+      unlinkTitle: (name: string) => `Unlink ${name}'s Planning Center profile?`,
+      unlinkBody:
+        "They won't be able to sign in with Planning Center until a profile is linked again. Nothing else changes.",
+      linkedMessage: (name: string, person: string) =>
+        `${name} is now linked to ${person} in Planning Center.`,
+      unlinkedMessage: (name: string) => `${name}'s Planning Center profile was unlinked.`,
+      unavailable: "Planning Center can't be reached right now. Try again shortly.",
+      notConfigured: "Planning Center isn't set up: PCO_APP_ID and PCO_PAT_SECRET are missing.",
+    },
     statusLabels: {
       active: "Active",
       pending_department: "Waiting for department",
@@ -89,6 +117,10 @@ export const adminCopy = {
       lastAdminDeactivate:
         "This is the last active System Administrator. Add another administrator first.",
       selfDeactivate: "You can't deactivate your own account. Ask another administrator.",
+      pcoPersonMissing: "That person isn't in the church's Planning Center.",
+      pcoPersonTaken: (name: string) =>
+        `That Planning Center profile is already linked to ${name}. Unlink it there first.`,
+      pcoQuery: "Type at least 2 characters.",
     },
   },
   departments: {
@@ -283,7 +315,6 @@ export const adminCopy = {
     accessHeading: "Sign-in",
     contactEmail: "Contact email on access screens",
     contactEmailHint: "Shown to people who can't sign in, as who to contact.",
-    allowGoogle: "Allow Google sign-in",
     allowPlanningCenter: "Allow Planning Center sign-in",
     allowEmail: "Allow email sign-in",
     allowEmailHint:

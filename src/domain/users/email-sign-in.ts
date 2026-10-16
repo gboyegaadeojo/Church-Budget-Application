@@ -20,7 +20,7 @@ import { formatDateTime } from "@/lib/time-zone";
  *
  * Checking the code runs in its own transaction, before Auth.js signs the person in,
  * so a wrong try is counted even though the sign-in fails. `resolveSignIn` then decides
- * what the account may do, exactly as for Google and Planning Center.
+ * what the account may do, exactly as for Planning Center.
  */
 
 export const CODE_LIFETIME_MS = 10 * 60_000;

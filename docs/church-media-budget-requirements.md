@@ -606,7 +606,9 @@ Refunds and returns follow the same steps with the entry type **Refund**, which 
 | FR-52 | Activity, audit and analytics dashboard | Core | 1 (activity log), 2 (annual analytics), 4 (expense and spending analytics) |
 
 
-## FR-01: Google Authentication (included)
+## FR-01: Google Authentication (removed)
+
+> **Changed 2026-10-15 (church decision, docs/decisions.md):** there is no Google sign-in. Everyone signs in with Planning Center (FR-01a); the Church Administrator and System Administrators, who may not be church members, can also use an emailed code (FR-01b). Administrators link staff accounts to Planning Center profiles. The rules below (server-side validation, allowlist, clear access-denied messages, secure sessions, no passwords) still apply to every method.
 
 - Use Google OAuth 2.0 / OpenID Connect through an established authentication implementation.
 - Validate authentication on the server.
@@ -653,6 +655,8 @@ Purpose: confirm that the person submitting budgets or expenses is a recognized 
 - A list of current requesters who fail verification, with the reason.
 
 ## FR-01b: Sign-In with Any Email Address (staff)
+
+> **Changed 2026-10-15 (church decision, docs/decisions.md):** only the Church Administrator and System Administrators can use the emailed code, and there is no Google option. Other staff sign in with Planning Center once an administrator links their profile. AC-132 is tested with a Church Administrator.
 
 Staff (accountant, backup approver, Board Chair, Vice-Chair, Church Administrator, System Administrator) can use an email address that is not Gmail or a church address, such as their work or personal email.
 

@@ -321,7 +321,7 @@ export const emailCopy = {
       subject: (app: string) => `You have access to ${app}`,
       heading: "You have access",
       intro: (app: string, church: string) =>
-        `An administrator gave you access to ${app} for ${church}. Sign in with Google or Planning Center using this email address.`,
+        `An administrator gave you access to ${app} for ${church}. Sign in with Planning Center.`,
       emailCodeToo:
         "You can also choose Continue with email on the sign-in page, and we'll send a 6-digit code to this address.",
     },

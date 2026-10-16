@@ -545,7 +545,7 @@ Include:
 - Church application identity.
 - Clear product name.
 - Short description of the application.
-- **Continue with Planning Center** and **Continue with Google** buttons, equal size, stacked, each following its brand guidelines, then a quieter **Continue with email** text button (FR-01b) that opens an email field, then a 6-digit code field (one input with `autocomplete="one-time-code"`, paste-friendly). There is no authenticator step. A line underneath: "Department leaders: your Group Leader status in Planning Center is checked when you sign in."
+- **Continue with Planning Center** button, following its brand guidelines, then a quieter "Not in Planning Center? **Continue with email**" text button (FR-01b, Church Administrator and System Administrators only; Google sign-in removed 2026-10-15, see docs/decisions.md) that opens an email field, then a 6-digit code field (one input with `autocomplete="one-time-code"`, paste-friendly). There is no authenticator step. A line underneath: "Department leaders: your Group Leader status in Planning Center is checked when you sign in."
 - Access restriction explanation where appropriate.
 - Helpful access-request instructions.
 - Short privacy note (what is stored: name, email, budget data).

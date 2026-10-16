@@ -42,7 +42,6 @@ const SIGN_IN_KEYS = [
   "pco_require_for_staff",
   "pco_department_field_name",
   "pco_department_mode",
-  "signin_google_enabled",
   "signin_planning_center_enabled",
   "signin_email_enabled",
 ] as const;
@@ -172,7 +171,6 @@ async function SettingsContent() {
             requireForStaff: signIn.leader.requireForStaff,
             departmentFieldName: departmentField.fieldName,
             departmentMode: departmentField.mode,
-            googleEnabled: signIn.googleEnabled,
             planningCenterEnabled: signIn.planningCenterEnabled,
             emailEnabled: signIn.emailEnabled,
           }}

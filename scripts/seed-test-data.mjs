@@ -39,7 +39,6 @@ const PEOPLE = [
   {
     email: "gina.admin@example.org",
     name: "Gina Admin",
-    googleSubject: "google-gina",
     pcoPersonId: "1000",
     roles: ALL_ROLES,
     departments: [["Media Team", "primary"]],
@@ -64,7 +63,17 @@ const PEOPLE = [
   {
     email: "pat.accountant@example.org",
     name: "Pat Accountant",
+    // Linked by an administrator, so Planning Center sign-in reaches this account.
+    pcoPersonId: "1006",
     roles: ["accountant"],
+    departments: [],
+    leader: false,
+  },
+  {
+    // Added by an administrator but not linked yet: Planning Center sign-in asks for a link.
+    email: "bo.chair@example.org",
+    name: "Bo Chair",
+    roles: ["board_chair"],
     departments: [],
     leader: false,
   },
@@ -91,11 +100,11 @@ export async function seedTestData(client) {
   const ids = {};
   for (const p of PEOPLE) {
     const { rows } = await client.query(
-      `insert into users (email, display_name, google_subject_id, pco_person_id,
+      `insert into users (email, display_name, pco_person_id,
          pco_leader_verified, pco_verified_at, access_status)
-       values ($1, $2, $3, $4, $5, case when $5 then now() end, 'active')
+       values ($1, $2, $3, $4, case when $4 then now() end, 'active')
        returning id`,
-      [p.email, p.name, p.googleSubject ?? null, p.pcoPersonId ?? null, p.leader],
+      [p.email, p.name, p.pcoPersonId ?? null, p.leader],
     );
     const userId = rows[0].id;
     ids[p.email] = userId;

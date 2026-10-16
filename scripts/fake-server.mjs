@@ -1,7 +1,7 @@
 /**
  * Runs the app with no outside services, for end-to-end tests and trying things locally:
  * an in-process Postgres (PGlite) served on a local port, migrated and seeded with test
- * data, fake Google and Planning Center sign-in, and the fake Planning Center directory.
+ * data, fake Planning Center and email sign-in, and the fake Planning Center directory.
  *
  *   node scripts/fake-server.mjs          # next start (after `npm run build`), port 3100
  *   node scripts/fake-server.mjs --dev    # next dev, port 3000

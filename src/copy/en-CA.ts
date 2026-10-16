@@ -113,7 +113,6 @@ export const copy = {
     description:
       "Plan your department's annual budget, submit expenses and follow spending, all in one place.",
     continueWithPlanningCenter: "Continue with Planning Center",
-    continueWithGoogle: "Continue with Google",
     email: {
       prompt: "Not in Planning Center?",
       open: "Continue with email",
@@ -138,7 +137,7 @@ export const copy = {
         `Too many wrong codes. Try again in ${minutes === 1 ? "1 minute" : `${minutes} minutes`}.`,
       tooMany: (minutes: number) =>
         `Too many codes asked for. Try again in ${minutes === 1 ? "1 minute" : `${minutes} minutes`}.`,
-      disabled: "Email sign-in is turned off. Use Google or Planning Center instead.",
+      disabled: "Email sign-in is turned off. Use Planning Center instead.",
       unavailable: "Email sign-in isn't available right now. Please try again shortly.",
     },
     leaderNote:
@@ -147,13 +146,13 @@ export const copy = {
     accessLeaders:
       "Department leaders get access once Planning Center shows them as a Group Leader. Ask your Planning Center administrator if you're not marked yet.",
     accessStaff:
-      "Church staff: ask the administrator to add your email address. The Church Administrator and System Administrators can also sign in with an emailed code.",
+      "Church staff: ask the administrator to add you and link your Planning Center profile. The Church Administrator and System Administrators can also sign in with an emailed code.",
     contact: (email: string) => `Questions? Email ${email}.`,
     privacyNote:
       "We store your name, email address and your budget activity, only to run the church's budgets.",
     error: "Sign-in didn't finish. Please try again.",
     notConfigured:
-      "Sign-in isn't set up yet. The administrator needs to add the Google, Planning Center or email settings.",
+      "Sign-in isn't set up yet. The administrator needs to add the Planning Center or email settings.",
     fakeHeading: "Test sign-in",
     fakeNote: "Local development only. These people come from tests/fixtures.",
     fakeAs: (label: string) => `Sign in as ${label}`,
@@ -170,7 +169,7 @@ export const copy = {
     reasons: {
       "not-found": {
         heading: "We couldn't find you in the church's Planning Center",
-        body: "Your Google email address doesn't match anyone in the church's Planning Center. Try signing in with Planning Center, or ask the church office to add this email to your profile.",
+        body: "We couldn't read your profile in the church's Planning Center. Ask the church office to check your Planning Center profile, then sign in again.",
       },
       "not-leader": {
         heading: "Submitting budgets is for Group Leaders",
@@ -193,8 +192,8 @@ export const copy = {
         body: "This account isn't set up for Church Budget, or it has been turned off. Church staff: ask the administrator to add or reactivate your email address.",
       },
       "link-required": {
-        heading: "Sign in with Google first",
-        body: "This Planning Center account hasn't been linked to your Church Budget account yet. Sign in once with Google using the same email address, or ask the administrator to link it.",
+        heading: "Your Planning Center profile isn't linked yet",
+        body: "Your Church Budget account is set up, but it isn't linked to this Planning Center profile yet. Ask the administrator to link it, then sign in again.",
       },
     },
   },

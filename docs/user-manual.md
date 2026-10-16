@@ -25,12 +25,13 @@ This manual explains how to use the app, by role. It is written from the specifi
 ### Signing in
 
 1. Open the app's web address on a computer or phone.
-2. Choose **Continue with Planning Center** or **Continue with Google**. They reach the same account if your email matches. If your **Ministry Department** field in Planning Center names your department, you are added to it when you sign in.
+2. Choose **Continue with Planning Center**. If your **Ministry Department** field in Planning Center names your department, you are added to it when you sign in.
+   - **Staff added by the administrator:** the first time, you may see "Your Planning Center profile isn't linked yet". Ask the administrator to link it, then sign in again.
    - **Not in the church's Planning Center?** The Church Administrator and System Administrators can choose **Continue with email** instead: enter the address the church has for you, and type in the 6-digit code we email you. A code works once, for 10 minutes. After 5 wrong codes, wait 15 minutes. Everyone else signs in with Planning Center.
 3. Department leaders must be marked as a **Group Leader** in Planning Center: **Ministry Leader** set to **Yes** on their Planning Center profile. If you see "Your Group Leader status in Planning Center could not be confirmed", ask your ministry's Planning Center administrator.
 4. If you see "Waiting for department assignment", the System Administrator has been told and will add you.
 
-Two-step verification isn't required for any role. Turning it on for your own Google or Planning Center account is still a good idea.
+Two-step verification isn't required for any role. Turning it on for your own Planning Center account is still a good idea.
 
 ### Home and My tasks
 
@@ -205,6 +206,8 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 **Admin → Users & Roles**: add people, assign roles and departments, deactivate people who leave. Keep at least two System Administrators.
 
+- **Link each staff member's Planning Center profile** so they can sign in: open their page and, under **Planning Center profile**, choose **Link to {name}** for the person with their email address, or search by name. Check it's the right person: Planning Center sign-in never links accounts by email on its own, because people can change the email on their own profile. Department leaders don't need this; they're linked when they first sign in.
+
 ### Departments
 
 **Admin → Departments**:
@@ -224,7 +227,7 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 ### Settings
 
-Tax rate (applies to new submissions only), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), email settings, sign-in options (Google, Planning Center, email), backup reminder delay, and the weekly audit summary email.
+Tax rate (applies to new submissions only), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), email settings, sign-in options (Planning Center, email), backup reminder delay, and the weekly audit summary email.
 
 - **Sales tax**: type the new rate (for example 12 or 12.5) and confirm. Requests already submitted keep the rate they were submitted with.
 - **Accountants**: more than one person can have the Accountant role (give it in Users & Roles). Choose the **Primary accountant**, who gets the accountant emails; everyone else with the Accountant or Backup approver role is a backup approver. If the Primary accountant loses the role or is deactivated, choose a new one here.

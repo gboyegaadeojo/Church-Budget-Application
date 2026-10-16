@@ -1,6 +1,6 @@
 /** Access-denied screen variants (DRD 6.1a). The page lives at /access-denied/{reason}. */
 export const ACCESS_DENIED_REASONS = [
-  /** Google sign-in with no matching Planning Center person. */
+  /** No Planning Center person could be found or read for this sign-in. */
   "not-found",
   /** Planning Center profile isn't marked as a Group Leader. */
   "not-leader",

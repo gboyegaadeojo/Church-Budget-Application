@@ -67,6 +67,24 @@
         "77": ["true"],
         "88": ["Sanctuary Keepers Team"]
       }
+    },
+    {
+      "id": "1006",
+      "name": "Pat Accountant",
+      "status": "active",
+      "emails": ["pat.accountant@example.org"],
+      "fieldValues": {
+        "77": ["false"]
+      }
+    },
+    {
+      "id": "1007",
+      "name": "Bo Chair",
+      "status": "active",
+      "emails": ["bo.chair@example.org"],
+      "fieldValues": {
+        "77": ["false"]
+      }
     }
   ]
 }

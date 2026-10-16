@@ -149,7 +149,7 @@ export async function emailPcoUnavailable(tx: Tx, now: Date) {
 }
 
 /**
- * Most access-request emails a day. Anyone with a Google or Planning Center account can
+ * Most access-request emails a day. Anyone with a Planning Center account can
  * try to sign in, so the emails are capped to keep the shared Resend quota for budgets.
  */
 export const ACCESS_REQUESTS_PER_DAY = 10;
