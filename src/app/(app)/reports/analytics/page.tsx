@@ -20,17 +20,16 @@ import { DownloadButton } from "@/components/download-button";
 import { ActivityTable } from "@/components/activity-table";
 import { AdminSkeleton, PageHeader, PermissionDenied } from "@/components/ui/display";
 import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
-import { ACTIVITY_GROUPS, activityCopy as a, type ActivityGroup } from "@/copy/activity";
+import { activityCopy as a, type ActivityGroup } from "@/copy/activity";
 import { copy } from "@/copy/en-CA";
 import { getDb } from "@/db";
 import { budgetCycles, departments } from "@/db/schema";
 import {
   activityFiltersFrom,
+  activityOptions,
   activityPeople,
   activityQuery,
-  AUDIT_AREAS,
   listActivity,
-  QUICK_VIEWS,
   type ActivityFilters,
   type AuditAreaName,
   type QuickView,
@@ -39,7 +38,7 @@ import type { AreaId } from "@/domain/navigation";
 import { getChurchTimeZone } from "@/domain/settings";
 import { viewerAllowedTo } from "@/lib/admin-server";
 import { cn } from "@/lib/cn";
-import { ROLES, type Role } from "@/lib/roles";
+import type { Role } from "@/lib/roles";
 import { formatDate } from "@/lib/time-zone";
 
 export const metadata: Metadata = { title: a.title };
@@ -103,6 +102,8 @@ async function Activity({ searchParams }: { searchParams: Promise<Search> }) {
       .from(departments)
       .orderBy(asc(departments.name)),
   ]);
+  // Only what this person's roles cover: the administration log is the administrator's.
+  const offered = activityOptions(viewer);
   const base = activityQuery(filters);
   const filtered = base !== "";
   const href = (extra: ActivityFilters) => {
@@ -147,7 +148,7 @@ async function Activity({ searchParams }: { searchParams: Promise<Search> }) {
         aria-label={a.quick.label}
         className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
       >
-        {QUICK_VIEWS.map((v) => {
+        {offered.quickViews.map((v) => {
           const active = filters.quick === v;
           const { area, icon: Icon } = QUICK_STYLE[v];
           const style = AREA_STYLE[area];
@@ -236,7 +237,7 @@ async function Activity({ searchParams }: { searchParams: Promise<Search> }) {
               value={filters.role}
               options={[
                 { value: "", label: a.filters.anyRole },
-                ...ROLES.map((r) => ({ value: r, label: copy.roles[r] })),
+                ...offered.roles.map((r) => ({ value: r, label: copy.roles[r] })),
               ]}
             />
             <Select
@@ -245,7 +246,7 @@ async function Activity({ searchParams }: { searchParams: Promise<Search> }) {
               value={filters.area}
               options={[
                 { value: "", label: a.filters.anyArea },
-                ...AUDIT_AREAS.map((r) => ({ value: r, label: a.areas[r] })),
+                ...offered.areas.map((r) => ({ value: r, label: a.areas[r] })),
               ]}
             />
             <Select
@@ -254,7 +255,7 @@ async function Activity({ searchParams }: { searchParams: Promise<Search> }) {
               value={filters.group}
               options={[
                 { value: "", label: a.filters.anyGroup },
-                ...ACTIVITY_GROUPS.map((g) => ({ value: g, label: a.groups[g] })),
+                ...offered.groups.map((g) => ({ value: g, label: a.groups[g] })),
               ]}
             />
             <Select

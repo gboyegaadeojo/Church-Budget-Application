@@ -135,4 +135,27 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
     await recent.getByRole("link", { name: "See all activity" }).click();
     await expect(page).toHaveURL(/\/reports\/analytics$/);
   });
+
+  test("the accountant's log has no sign-in, settings or email views", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.pat);
+    await page.goto("/reports/analytics");
+    const quick = page.getByRole("region", { name: "Quick views" });
+    await expect(quick.getByRole("link", { name: "Money changes" })).toBeVisible();
+    for (const name of [
+      "Failed sign-ins and access denied",
+      "Settings and role changes",
+      "Emails that failed",
+    ]) {
+      await expect(quick.getByRole("link", { name })).toHaveCount(0);
+    }
+    await page.getByText("More filters").click();
+    await expect(
+      page.getByLabel("Role used").locator("option", { hasText: "System Administrator" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByLabel("Area", { exact: true }).locator("option", { hasText: "Access" }),
+    ).toHaveCount(0);
+    await expectAxeClean(page);
+  });
 });

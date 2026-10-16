@@ -76,7 +76,12 @@ export type Action =
   | "department.away"
   // Everyone
   | "home.view"
-  | "analytics.view";
+  | "analytics.view"
+  /**
+   * The administration log in Analytics & Audit: sign-ins and access denied, settings and
+   * role changes, emails, and the Access tab (FR-52). Not other staff, even for their own.
+   */
+  | "analytics.admin_audit";
 
 /** What the action is about. Pass whatever applies; rules that need a field treat it as missing. */
 export type AuthzContext = {
@@ -248,6 +253,7 @@ const RULES: Record<Action, readonly Rule[]> = {
     { roles: [...ACCOUNTANTS, "church_admin", "system_admin"] },
     { roles: BOARD, readOnly: true },
   ],
+  "analytics.admin_audit": [{ roles: ["system_admin"] }],
 };
 
 /** Decides whether `subject` may perform `action` on the item described by `ctx`. */

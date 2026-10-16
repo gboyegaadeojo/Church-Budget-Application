@@ -399,3 +399,24 @@ Requested by the user: a second People custom field, **Ministry Department**, de
 - **The monthly spending summary** (FR-21) joins the optional emails in Stage 4.
 - **Account menu:** "Email preferences" is now a link (it was Coming soon).
 - **End-to-end tests** only toggle a requester's reminders. The accountant's copies and digest are integration tests, because other e2e tests count the accountant's emails.
+
+## Analytics & Audit: each role sees its own areas (FR-52) (2026-10-16)
+
+The church asked that staff other than the System Administrator not see sign-ins, access denied, settings and role changes, or failed emails, and that nobody can act as anyone else.
+
+- **No impersonation.** The app has no "act as" or "view as" feature: the viewer is always the signed-in person, with roles read fresh from the database. The Activity filter that was labelled "Acting as" filtered by the role a person used. It's now **Role used**, in the export too.
+- **The administration log is the System Administrator's** (`analytics.admin_audit`):
+  - The Access and Admin areas are hidden from everyone else, **including their own events** there (sign-ins, Away and email preference changes, exports of the log).
+  - "Everyone sees their own actions" now means their own actions in the financial areas.
+  - The quick views Failed sign-ins and access denied, Settings and role changes, and Emails that failed are shown to the administrator only, as are the matching kinds of event, the Access and Admin areas, and System Administrator in the Role used list.
+  - A hidden filter typed into the address is ignored, so the person sees their usual log.
+  - The coming Access tab uses the same action.
+- **Per role** (Requirements 3.6):
+  - Accountant and backup approver: Annual Budget, Expenses and Spending.
+  - Church Administrator: Spending.
+  - Board Chair and Vice-Chair: their own expense decisions (Stage 3).
+  - The Person filter stays for staff, listing only people in their log (decided 2026-10-16).
+- **One scope** (`activityScope`) serves the page, the Excel export and Home's Recent activity.
+- **Budget links in the log** open the review screen for an accountant, but the budget page itself when the person leads that department. A leader's draft can't be opened on the review screen.
+- **Accessibility:** "Show the details" in the log is now 24 px tall (WCAG 2.5.8 target size). The accountant's new axe check found it.
+- **Dev note:** a local `dev:fake` server started before the live-migration watcher must have new migrations applied by hand. The FY2027 submission error seen on 2026-10-16 was migrations 0014 and 0015 missing there, not a code fault.

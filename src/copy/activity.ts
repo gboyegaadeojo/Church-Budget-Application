@@ -205,7 +205,7 @@ export const activityCopy = {
     qHint: "Reference, person or department",
     person: "Person",
     anyone: "Anyone",
-    role: "Acting as",
+    role: "Role used",
     anyRole: "Any role",
     area: "Area",
     anyArea: "Any area",
@@ -265,7 +265,7 @@ export const activityCopy = {
     columns: {
       when: "Date and time",
       person: "Person",
-      role: "Acting as",
+      role: "Role used",
       area: "Area",
       what: "What happened",
       type: "Event type",

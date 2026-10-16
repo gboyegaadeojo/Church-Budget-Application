@@ -1509,7 +1509,7 @@ Location: **Reports → Analytics & Audit** in the one app (FR-37). What each pe
 
 - A searchable, filterable timeline of every audit event (FR-22): when, who (and the role they acted in), what, which item, and the reason. Each row expands to show before-and-after values.
 - Filters: person, role, area, event type (with groups such as "Decisions", "Money changes", "Access and sign-in", "Settings"), department, cycle, date range, and a free-text search over reference numbers and names.
-- Quick views: "Today", "Decisions this week", "Money changes", "Failed sign-ins and access denied", "Settings and role changes", "Emails that failed".
+- Quick views: "Today", "Decisions this week", "Money changes", and for the System Administrator only, "Failed sign-ins and access denied", "Settings and role changes" and "Emails that failed". Sign-ins, access, settings, role changes and emails are never shown to other staff, even their own (decided 2026-10-16, docs/decisions.md).
 - Clicking a reference number opens the item with its full history. Each item's own History tab shows the same events for that item only.
 - **Export** the filtered log to Excel. Exporting the audit log is itself audited.
 

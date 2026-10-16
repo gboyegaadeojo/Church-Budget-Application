@@ -30,7 +30,7 @@ import {
 } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { getChurchTimeZone } from "@/domain/settings";
-import type { Subject } from "@/lib/authz";
+import { authorize, type Subject } from "@/lib/authz";
 import { ROLES, type Role } from "@/lib/roles";
 import { zonedDate, zonedLocalToUtc } from "@/lib/time-zone";
 
@@ -43,7 +43,9 @@ import { zonedDate, zonedLocalToUtc } from "@/lib/time-zone";
  * - Requester: their own departments' activity (no internal exports). Only the budget's
  *   own "Activity on this budget" page uses this now: Analytics & Audit and Home's Recent
  *   activity are for staff (`analytics.view`, docs/decisions.md 2026-10-16).
- * - Everyone: what they did themselves.
+ * - Everyone: what they did themselves in the financial areas.
+ * Sign-ins, access denied, settings, roles and emails (the Admin and Access areas) are the
+ * System Administrator's alone, even a person's own (`analytics.admin_audit`).
  * Several roles see the union. Filters only ever narrow this scope.
  */
 
@@ -150,10 +152,52 @@ const departmentId = sql<
 >`coalesce(${auditEvents.departmentId}, ${request.departmentId})`;
 const cycleId = sql<string | null>`coalesce(${auditEvents.cycleId}, ${request.budgetCycleId})`;
 
+/** Quick views and event groups about sign-ins, settings and emails: administrator only. */
+const ADMIN_QUICK_VIEWS: readonly QuickView[] = ["access", "settings", "emails"];
+const ADMIN_GROUPS: readonly ActivityGroup[] = ["access", "settings", "emails"];
+
+/** Whether this person sees the administration log (sign-ins, settings, roles, emails). */
+export function seesAdminAudit(actor: Subject): boolean {
+  return authorize(actor, "analytics.admin_audit").allowed;
+}
+
+/** The areas this person's log can hold, for the Area filter. */
+export function activityAreasFor(actor: Subject): AuditAreaName[] {
+  if (seesAdminAudit(actor)) return [...AUDIT_AREAS];
+  const areas = new Set<AuditAreaName>();
+  if (actor.roles.some((r) => ACCOUNTANT_ROLES.includes(r) || r === "requester")) {
+    FINANCIAL_AREAS.forEach((a) => areas.add(a));
+  }
+  if (actor.roles.includes("church_admin")) areas.add("spending");
+  // The board's own expense decisions arrive with Stage 3.
+  if (actor.roles.some((r) => r === "board_chair" || r === "vice_chair")) areas.add("expenses");
+  return AUDIT_AREAS.filter((a) => areas.has(a));
+}
+
+/** The filters and quick views worth offering this person (the scope still decides). */
+export function activityOptions(actor: Subject): {
+  areas: AuditAreaName[];
+  quickViews: QuickView[];
+  groups: ActivityGroup[];
+  roles: Role[];
+} {
+  const admin = seesAdminAudit(actor);
+  return {
+    areas: activityAreasFor(actor),
+    quickViews: QUICK_VIEWS.filter((v) => admin || !ADMIN_QUICK_VIEWS.includes(v)),
+    groups: ACTIVITY_GROUPS.filter((g) => admin || !ADMIN_GROUPS.includes(g)),
+    roles: ROLES.filter((r) => admin || r !== "system_admin"),
+  };
+}
+
 /** What this person may see; null means everything. */
 export function activityScope(actor: Subject): SQL | null {
-  if (actor.roles.includes("system_admin")) return null;
-  const allowed: SQL[] = [eq(auditEvents.actorUserId, actor.id)];
+  if (seesAdminAudit(actor)) return null;
+  // Their own actions, but only in the financial areas: a person's own sign-ins, settings
+  // and email preference changes are in the administration log.
+  const allowed: SQL[] = [
+    and(eq(auditEvents.actorUserId, actor.id), inArray(auditEvents.area, FINANCIAL_AREAS))!,
+  ];
   if (actor.roles.some((r) => ACCOUNTANT_ROLES.includes(r))) {
     allowed.push(inArray(auditEvents.area, FINANCIAL_AREAS));
   }
@@ -186,6 +230,9 @@ async function conditions(tx: Tx, actor: Subject, f: ActivityFilters, now: Date)
   const where: SQL[] = [];
   const scope = activityScope(actor);
   if (scope) where.push(scope);
+  // A filter or quick view this person isn't offered is ignored, so a hand-typed address
+  // shows their whole log rather than an empty page.
+  const offered = activityOptions(actor);
 
   if (f.requestId && uuid.safeParse(f.requestId).success) {
     where.push(
@@ -202,11 +249,11 @@ async function conditions(tx: Tx, actor: Subject, f: ActivityFilters, now: Date)
   if (f.personId && uuid.safeParse(f.personId).success) {
     where.push(eq(auditEvents.actorUserId, f.personId));
   }
-  const role = ROLES.find((r) => r === f.role);
+  const role = offered.roles.find((r) => r === f.role);
   if (role) where.push(eq(auditEvents.actingRole, role));
-  const area = AUDIT_AREAS.find((a) => a === f.area);
+  const area = offered.areas.find((a) => a === f.area);
   if (area) where.push(eq(auditEvents.area, area));
-  const group = ACTIVITY_GROUPS.find((g) => g === f.group);
+  const group = offered.groups.find((g) => g === f.group);
   if (group) where.push(inArray(auditEvents.eventType, typesOf(group)));
   if (f.departmentId && uuid.safeParse(f.departmentId).success) {
     where.push(eq(departmentId, f.departmentId));
@@ -223,7 +270,7 @@ async function conditions(tx: Tx, actor: Subject, f: ActivityFilters, now: Date)
     if (until) where.push(lt(auditEvents.eventTimestamp, until));
   }
 
-  switch (QUICK_VIEWS.find((v) => v === f.quick)) {
+  switch (offered.quickViews.find((v) => v === f.quick)) {
     case "today": {
       const today = startOf(zonedDate(now, zone));
       if (today) where.push(gte(auditEvents.eventTimestamp, today));
