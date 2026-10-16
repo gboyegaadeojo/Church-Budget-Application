@@ -1,14 +1,16 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { CheckCircle2, Eye, ShieldAlert } from "lucide-react";
+import { EmailHistory } from "@/components/email-history";
 import { ComparisonSummary, FinancialSummary } from "@/components/financial-summary";
 import { AdminSkeleton, PageHeader } from "@/components/ui/display";
 import { cardClass, linkClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
 import { getDb } from "@/db";
 import { getReviewView, type ReviewView } from "@/domain/annual/review-queries";
-import { revisionChanges, type RevisionChange } from "@/domain/annual/revision-diff";
+import { describeChange, revisionChanges } from "@/domain/annual/revision-diff";
 import { isHttpUrl } from "@/domain/annual/schema";
+import { requestEmails } from "@/domain/notifications/history";
 import { getChurchTimeZone } from "@/domain/settings";
 import { viewerAllowedTo } from "@/lib/admin-server";
 import { cn } from "@/lib/cn";
@@ -56,6 +58,7 @@ async function ReviewContent({
   const db = getDb();
   const [view, zone] = await Promise.all([getReviewView(db, viewer, id), getChurchTimeZone(db)]);
   if (!view) return <RequestNotFound />;
+  const emails = await requestEmails(db, id);
   const done = typeof query.done === "string" ? r.done[query.done] : undefined;
   const approvedTotals = view.approval
     ? {
@@ -164,6 +167,7 @@ async function ReviewContent({
 
       {/* After the decision on a phone, so the controls come right after the request. */}
       <History view={view} zone={zone} />
+      <EmailHistory emails={emails} zone={zone} />
     </>
   );
 }
@@ -331,26 +335,6 @@ function ReviewLines({ view }: { view: ReviewView }) {
   );
 }
 
-function changeText(change: RevisionChange): string {
-  const c = r.changes;
-  switch (change.kind) {
-    case "title":
-      return c.title;
-    case "justification":
-      return c.justification;
-    case "added":
-      return c.added(change.item);
-    case "removed":
-      return c.removed(change.item);
-    case "changed":
-      return c.changed(
-        change.item,
-        `${change.from.quantity} × ${formatCAD(change.from.unitPriceCents)}`,
-        `${change.to.quantity} × ${formatCAD(change.to.unitPriceCents)}`,
-      );
-  }
-}
-
 /** Each submitted version with what changed from the one before, and every decision. */
 function History({ view, zone }: { view: ReviewView; zone: string }) {
   return (
@@ -378,7 +362,7 @@ function History({ view, zone }: { view: ReviewView; zone: string }) {
                     {changes.length === 0 ? (
                       <li>{r.changes.none}</li>
                     ) : (
-                      changes.map((change, j) => <li key={j}>{changeText(change)}</li>)
+                      changes.map((change, j) => <li key={j}>{describeChange(change)}</li>)
                     )}
                     {previous.totalCents !== rev.totalCents && (
                       <li>

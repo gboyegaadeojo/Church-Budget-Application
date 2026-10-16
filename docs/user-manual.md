@@ -81,7 +81,9 @@ Each department submits **one** annual budget for the year. Once it has one (a d
 - You can **edit** a submitted budget **twice** before it is decided. The app shows how many edits are left. Edits are shared by everyone in your department.
 - If the accountant asks a question (**Returned for clarification**), it appears in My tasks. Answer it and resubmit; this does **not** use an edit.
 - Use **Messages** on the budget to talk with the accountant; each message emails the other side.
-- The accountant's question, decline reason or approved amount appears on your budget's page (and by email once email sending is set up). The approved amount may be different from what you asked for; it always includes tax, and the page shows it beside what you asked for.
+- The accountant's question, decline reason or approved amount appears on your budget's page and is emailed to everyone who represents your department. The approved amount may be different from what you asked for; it always includes tax, and the page and the email show it beside what you asked for.
+- You're also emailed when you submit (your receipt), when anyone in your department changes the budget, when the review starts, and if it's reopened. Each email says what changed and what, if anything, you need to do. Its link asks you to sign in.
+- **Emails** at the bottom of your budget's page lists every email sent to your department about it, and whether it went. If one says **Couldn't be sent**, the budget itself is safe; ask the administrator to check the address.
 
 ### See how much is left
 
@@ -139,9 +141,10 @@ Each department has a **Primary requester** (accountable for the department's bu
    - **Adjust individual items**: change approved quantities or prices before tax (quantity 0 leaves an item out) and add a note; the app adds tax;
    - **Return for clarification** with your question;
    - **Decline** with a reason.
-3. **Review decision**, check the summary (requested, approved and the difference, all including tax), and confirm. The department sees the decision on its budget straight away; emails follow once email sending is set up.
+3. **Review decision**, check the summary (requested, approved and the difference, all including tax), and confirm. The department sees the decision on its budget straight away and is emailed; you get a copy for your records.
 4. **Reopen** an approved or declined budget with a reason if the board reconsiders. It goes back to the department as Returned for Clarification, without using one of its edits, and the earlier decision stays in the history.
-5. You cannot decide a budget for a department you represent; the page says so, and another accountant or the backup approver decides it.
+5. You're emailed when a budget is submitted, changed or answered if you are the Primary accountant (every accountant is, until one is chosen in Settings). **Emails** at the bottom of the review screen lists every email sent about the budget, copies included.
+6. You cannot decide a budget for a department you represent; the page says so, and another accountant or the backup approver decides it.
 
 ### Expenses (first approval)
 
@@ -231,7 +234,7 @@ Tax rate (applies to new submissions only), Planning Center connection, custom f
 
 ### Keeping it healthy
 
-Check **Admin → Notifications & Audit** for failed emails, and **Reports → Analytics & Audit → Access** weekly (see the [go-live checklist](go-live-checklist.md), section 4).
+Emails that don't go are retried for about three days. Until the failed-emails list arrives in Admin, a failed one shows as **Couldn't be sent** under **Emails** on the budget. Check **Admin → Notifications & Audit** for failed emails once it exists, and **Reports → Analytics & Audit → Access** weekly (see the [go-live checklist](go-live-checklist.md), section 4).
 
 ---
 

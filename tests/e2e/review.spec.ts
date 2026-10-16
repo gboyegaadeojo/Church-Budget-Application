@@ -111,6 +111,13 @@ test.describe("Accountant review (Stage 1 step 6)", () => {
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "Reopen" })).toBeVisible();
 
+    // AC-56 AC-58: the accountant's history lists every email, copies included.
+    const emails = page.getByRole("region", { name: "Emails" });
+    await expect(emails.getByText(/^Budget approved: Prayer Warrior Team FY2027/)).toBeVisible();
+    // No Primary accountant is chosen in the test data, so every accountant gets a copy.
+    await expect(emails.getByText(/^Copy: approved Prayer Warrior Team/).first()).toBeVisible();
+    await expect(emails.getByText(/^Your budget is being reviewed:/)).toBeVisible();
+
     // The department sees the approved amount beside what it asked for.
     const sam = await browser.newContext();
     const samPage = await sam.newPage();

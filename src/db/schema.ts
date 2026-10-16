@@ -660,3 +660,53 @@ export const auditEvents = pgTable(
     ),
   ],
 );
+
+// ---------------------------------------------------------------- email outbox (9.14, FR-21)
+
+export const emailStatusEnum = pgEnum("email_status", ["pending", "sending", "sent", "failed"]);
+/** Who an email is for, so a request's history can show the department only its own. */
+export const emailAudienceEnum = pgEnum("email_audience", [
+  "requester",
+  "accountant",
+  "church_admin",
+  "administrator",
+  "person",
+]);
+
+/**
+ * Every email the app sends (CLAUDE.md constraint 7, Requirements 9.14). Services write
+ * a row in the same transaction as the change; it is sent after commit and retried with
+ * backoff. The rendered subject and bodies are kept, so the history shows exactly what
+ * went out. Rows are never deleted (the migration blocks it).
+ */
+export const emailOutbox = pgTable(
+  "email_outbox",
+  {
+    id: id(),
+    /** e.g. "annual.submitted.receipt". */
+    template: text("template").notNull(),
+    audience: emailAudienceEnum("audience").notNull(),
+    toEmail: text("to_email").notNull(),
+    toUserId: uuid("to_user_id").references(() => users.id),
+    subject: text("subject").notNull(),
+    textBody: text("text_body").notNull(),
+    htmlBody: text("html_body").notNull(),
+    budgetRequestId: uuid("budget_request_id").references(() => budgetRequests.id),
+    cycleId: uuid("cycle_id").references(() => budgetCycles.id),
+    status: emailStatusEnum("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+    lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    providerMessageId: text("provider_message_id"),
+    lastError: text("last_error"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("email_outbox_due_idx").on(t.status, t.nextAttemptAt),
+    index("email_outbox_request_idx").on(t.budgetRequestId, t.createdAt),
+    check("email_outbox_sent_has_time", sql`(${t.status} = 'sent') = (${t.sentAt} is not null)`),
+    check("email_outbox_attempts_non_negative", sql`${t.attempts} >= 0`),
+  ],
+);

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
+import { EmailHistory } from "@/components/email-history";
 import { ComparisonSummary, FinancialSummary } from "@/components/financial-summary";
 import { AdminSkeleton, PageHeader } from "@/components/ui/display";
 import { buttonClass, cardClass } from "@/components/ui/styles";
@@ -11,6 +12,7 @@ import { getDb } from "@/db";
 import { getRequestView, type RequestView } from "@/domain/annual/queries";
 import { formatCAD, lineTotal } from "@/lib/money";
 import { canTransition } from "@/domain/annual/status";
+import { requestEmails } from "@/domain/notifications/history";
 import { getChurchTimeZone } from "@/domain/settings";
 import { cn } from "@/lib/cn";
 import { formatDateTime } from "@/lib/time-zone";
@@ -55,6 +57,10 @@ async function RequestContent({
   ]);
   if (!request) return <RequestNotFound />;
   const done = DONE.find((d) => d === query.done);
+  // The department sees the emails sent to it, not the accountant's copies (AC-58).
+  const emails = request.referenceNumber
+    ? await requestEmails(db, request.id, ["requester"])
+    : null;
 
   return (
     <>
@@ -121,6 +127,8 @@ async function RequestContent({
           <Actions request={request} />
         </aside>
       </div>
+
+      {emails && <EmailHistory emails={emails} zone={zone} />}
     </>
   );
 }

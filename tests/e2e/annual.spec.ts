@@ -161,9 +161,19 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     // AC-37: one reference; the confirmation states the total and remaining edits.
     await page.waitForURL(/\?done=submitted$/);
     await expect(page.getByRole("heading", { name: "Request submitted" })).toBeVisible();
-    await expect(page.getByText(IFC)).toHaveCount(2);
+    // The confirmation, the details and the receipt's subject under Emails.
+    await expect(page.getByText(IFC)).toHaveCount(3);
     await expect(page.getByText("You can make 2 changes before it's reviewed.")).toBeVisible();
-    await expect(page.getByText("We'll email your receipt shortly.")).toBeVisible();
+    await expect(page.getByText(/A receipt is being emailed/)).toBeVisible();
+
+    // AC-58 FR-11: the receipt is sent after the response and listed on the request.
+    const emails = page.getByRole("region", { name: "Emails" });
+    await expect(emails.getByText(/^Budget received: Drama Team FY2027/)).toBeVisible();
+    await expect(async () => {
+      await page.reload();
+      await expect(emails.getByText("Sent", { exact: true })).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
+    await expect(emails.getByText(/New budget submitted/)).toHaveCount(0);
 
     await page.goto("/annual");
     const mine = page.getByRole("table", { name: "My budget requests" });

@@ -174,3 +174,18 @@ export function parseCAD(input: string): number | null {
   const value = dollars * 100n + cents;
   return value > BigInt(Number.MAX_SAFE_INTEGER) ? null : Number(value);
 }
+
+/** How the approved total compares with what was asked: "$14,800.00 less than requested". */
+export function differenceText(
+  requestedCents: number,
+  approvedCents: number,
+  words: {
+    less: (amount: string) => string;
+    more: (amount: string) => string;
+    none: string;
+  },
+): string {
+  const diff = approvedCents - requestedCents;
+  if (diff === 0) return words.none;
+  return diff < 0 ? words.less(formatCAD(-diff)) : words.more(formatCAD(diff));
+}
