@@ -949,6 +949,7 @@ describe("settings", () => {
       "pco_require_for_staff",
       "signin_google_enabled",
       "signin_planning_center_enabled",
+      "signin_email_enabled",
     ] as const;
     const base = {
       adminContactEmail: "office@example.org",
@@ -960,6 +961,7 @@ describe("settings", () => {
       departmentMode: "suggest",
       googleEnabled: true,
       planningCenterEnabled: true,
+      emailEnabled: true,
     };
     await expect(
       run(async (tx) =>
@@ -967,6 +969,7 @@ describe("settings", () => {
           ...base,
           googleEnabled: false,
           planningCenterEnabled: false,
+          emailEnabled: false,
           versions: await settingVersions(tx, keys),
         }),
       ),

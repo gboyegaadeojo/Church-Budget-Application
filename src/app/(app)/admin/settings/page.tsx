@@ -44,6 +44,7 @@ const SIGN_IN_KEYS = [
   "pco_department_mode",
   "signin_google_enabled",
   "signin_planning_center_enabled",
+  "signin_email_enabled",
 ] as const;
 
 /**
@@ -173,6 +174,7 @@ async function SettingsContent() {
             departmentMode: departmentField.mode,
             googleEnabled: signIn.googleEnabled,
             planningCenterEnabled: signIn.planningCenterEnabled,
+            emailEnabled: signIn.emailEnabled,
           }}
           versions={signInVersions}
           fields={pco.fields?.map((f) => ({ name: f.name, dataType: f.dataType })) ?? null}

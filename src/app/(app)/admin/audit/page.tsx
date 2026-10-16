@@ -96,7 +96,7 @@ async function NotificationsContent({
         })}
       </section>
 
-      {log.counts.failed > 0 && (
+      {log.retryable > 0 && (
         <ActionForm action={retryEmailsAction} aria-label={a.retryAll} className="space-y-2">
           <input type="hidden" name="all" value="1" />
           <SubmitButton tone="secondary">{a.retryAll}</SubmitButton>
@@ -218,7 +218,7 @@ function EmailTable({ items, zone }: { items: EmailLogItem[]; zone: string }) {
               </td>
               <td className="py-3 pr-4">
                 <Badge tone={TONE[e.status]}>{labels[e.status]}</Badge>
-                {e.status === "failed" && (
+                {e.status === "failed" && !e.sensitive && (
                   <ActionForm
                     action={retryEmailsAction}
                     aria-label={a.retryLabel(e.subject, e.to)}

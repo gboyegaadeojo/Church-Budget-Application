@@ -10,8 +10,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * sign-out.
  */
 
-/** Paths open without a session. */
-const PUBLIC_PREFIXES = ["/sign-in", "/access-denied", "/api/auth", "/api/jobs"];
+/** Paths open without a session. /api/test answers 404 unless fake sign-in is on (tests only). */
+const PUBLIC_PREFIXES = ["/sign-in", "/access-denied", "/api/auth", "/api/jobs", "/api/test"];
 
 /** Auth.js session cookie names (the secure variant is used over https). */
 const SESSION_COOKIES = ["authjs.session-token", "__Secure-authjs.session-token"];

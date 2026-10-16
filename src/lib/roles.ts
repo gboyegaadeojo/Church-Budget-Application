@@ -11,6 +11,12 @@ export const ROLES = [
 
 export type Role = (typeof ROLES)[number];
 
+/**
+ * Who may sign in with an emailed code (FR-01b as decided 2026-10-15): the people who may
+ * not be in the church's Planning Center. Everyone else signs in with Planning Center.
+ */
+export const EMAIL_SIGN_IN_ROLES: readonly Role[] = ["church_admin", "system_admin"];
+
 export function isRole(value: string): value is Role {
   return (ROLES as readonly string[]).includes(value);
 }

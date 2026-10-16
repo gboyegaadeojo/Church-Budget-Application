@@ -4,7 +4,7 @@ import type { Tx } from "@/db/types";
 import { getSignInSettings } from "@/domain/settings";
 import { writeAudit } from "@/lib/audit";
 import { PlanningCenterUnavailableError, type PlanningCenterDirectory } from "@/lib/pco";
-import type { Role } from "@/lib/roles";
+import { EMAIL_SIGN_IN_ROLES, type Role } from "@/lib/roles";
 import { emailAccessRequest, emailNewLeaderWaiting } from "./emails";
 import type { AccessDeniedReason } from "./access";
 import { checkLeader, type LeaderCheck } from "./leader-check";
@@ -12,18 +12,20 @@ import { refreshMinistryDepartments } from "./ministry-departments";
 import { applyVerification } from "./verification";
 
 /**
- * Sign-in (FR-01, FR-01a, AC-1 to AC-10). The identity has already been verified by
- * Auth.js (Google's or Planning Center's signed ID token). This decides whether that
- * identity gets in, as which account, and records it in the audit log.
+ * Sign-in (FR-01, FR-01a, FR-01b, AC-1 to AC-10). The identity has already been verified
+ * by Auth.js (Google's or Planning Center's signed ID token, or an emailed code checked by
+ * email-sign-in.ts). This decides whether that identity gets in, as which account, and
+ * records it in the audit log.
  *
  * Account linking: a Google sign-in links by its verified email; a Planning Center
  * sign-in links only by Planning Center person id, because people can edit the emails
- * on their own Planning Center profile (see docs/decisions.md).
+ * on their own Planning Center profile (see docs/decisions.md). An emailed code finds
+ * the account by its address only: codes go only to addresses already on the allowlist.
  */
 
 export type ExternalIdentity = {
-  provider: "google" | "planningcenter";
-  /** Google's subject, or the Planning Center person id. */
+  provider: "google" | "planningcenter" | "email";
+  /** Google's subject, the Planning Center person id, or the address an emailed code proved. */
   subject: string;
   email: string | null;
   emailVerified: boolean;
@@ -128,6 +130,12 @@ export async function resolveSignIn(
   if (method === "planningcenter" && !settings.planningCenterEnabled) {
     return deny("not-allowed", "Planning Center sign-in is turned off");
   }
+  if (method === "email" && !settings.emailEnabled) {
+    return deny("not-allowed", "Email sign-in is turned off");
+  }
+  if (method === "email" && !email) {
+    return deny("not-allowed", "No email address was proved");
+  }
   if (method === "google" && (!email || !identity.emailVerified)) {
     return deny("not-allowed", "Google did not confirm the email address");
   }
@@ -147,9 +155,11 @@ export async function resolveSignIn(
   let user =
     method === "google"
       ? await findBy(tx, eq(users.googleSubjectId, identity.subject))
-      : await findBy(tx, eq(users.pcoPersonId, identity.subject));
+      : method === "planningcenter"
+        ? await findBy(tx, eq(users.pcoPersonId, identity.subject))
+        : await findBy(tx, sql`lower(${users.email}) = ${email}`);
 
-  if (!user && email) {
+  if (!user && email && method !== "email") {
     const byEmail = await findBy(tx, sql`lower(${users.email}) = ${email}`);
     if (byEmail) {
       if (method === "google") {
@@ -190,10 +200,17 @@ export async function resolveSignIn(
     const mustVerify = (requester && settings.leader.requireForRequesters) || staffMustVerify;
 
     if (roles.length === 0) return deny("not-allowed", "Account has no roles", user.id);
+    if (method === "email" && !roles.some((r) => EMAIL_SIGN_IN_ROLES.includes(r))) {
+      return deny(
+        "not-allowed",
+        "Email sign-in is only for the Church Administrator and System Administrators",
+        user.id,
+      );
+    }
 
     if (!mustVerify) {
-      if (method === "google" && !user.pcoPersonId && deps.directory) {
-        await linkPlanningCenterByEmail(tx, deps.directory, user, email!, deps.now);
+      if (method !== "planningcenter" && !user.pcoPersonId && deps.directory) {
+        await linkPlanningCenterByEmail(tx, deps.directory, user, email!, deps.now, method);
       }
       return succeed(user.id, "home");
     }
@@ -237,7 +254,9 @@ export async function resolveSignIn(
   }
 
   // 3b. New person: only verified Group Leaders join by themselves (FR-01a "New leaders").
-  // Anyone else is an access request for the administrators (FR-21 "System").
+  // Anyone else is an access request for the administrators (FR-21 "System"). Emailed
+  // codes only go to existing accounts, so an unknown address stops here, silently (AC-133).
+  if (method === "email") return deny("not-allowed", "No account with this email address");
   const denyNewPerson = async (reason: AccessDeniedReason, detail: string) => {
     const result = await deny(reason, detail);
     if (reason !== "unavailable") {
@@ -331,8 +350,8 @@ function describe(check: LeaderCheck): string {
 }
 
 /**
- * Links a staff member's Planning Center person when their verified Google email
- * matches exactly one Planning Center person (FR-01a). Best effort: an outage or an
+ * Links a staff member's Planning Center person when their verified email (Google's, or
+ * one an emailed code proved) matches exactly one Planning Center person (FR-01a). Best effort: an outage or an
  * ambiguous match leaves the account unlinked.
  */
 async function linkPlanningCenterByEmail(
@@ -341,6 +360,7 @@ async function linkPlanningCenterByEmail(
   user: UserRow,
   email: string,
   now: Date,
+  method: "google" | "email",
 ) {
   try {
     const people = (await directory.findPeopleByEmail(email)).filter(
@@ -357,7 +377,11 @@ async function linkPlanningCenterByEmail(
       area: "access",
       eventType: "access.identity_linked",
       entity: { type: "user", id: user.id },
-      details: { method: "planningcenter", by: "verified Google email", pcoPersonId: people[0].id },
+      details: {
+        method: "planningcenter",
+        by: method === "google" ? "verified Google email" : "emailed code",
+        pcoPersonId: people[0].id,
+      },
     });
   } catch {
     // Planning Center unavailable: try again at the next sign-in.

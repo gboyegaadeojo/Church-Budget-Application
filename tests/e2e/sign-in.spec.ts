@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   DESKTOP,
   expectAxeClean,
@@ -183,4 +183,69 @@ test.describe("Sign-in (FR-01, FR-01a, DRD 6.1, 6.1a)", () => {
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
     await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(1);
   });
+});
+
+test.describe("Continue with email (FR-01b, DRD 6.1)", () => {
+  const CAROL = "carol.office@outlook.com";
+
+  /** The newest code the fake sender emailed to this address (test-only route). */
+  async function emailedCode(page: Page, to: string): Promise<string> {
+    let code = "";
+    await expect(async () => {
+      const res = await page.request.get(`/api/test/emails?to=${encodeURIComponent(to)}`);
+      const { emails } = (await res.json()) as { emails: { text: string }[] };
+      code = emails[0]?.text.match(/\b(\d{6})\b/)?.[1] ?? "";
+      expect(code).not.toBe("");
+    }).toPass({ timeout: 10_000 });
+    return code;
+  }
+
+  async function askForCode(page: Page, email: string) {
+    await page.goto("/sign-in");
+    await page.getByRole("button", { name: "Continue with email" }).click();
+    await page.getByLabel("Email address").fill(email);
+    await page.getByRole("button", { name: "Email me a code" }).click();
+    await expect(page.getByText(`If ${email} can sign in here`)).toBeVisible();
+  }
+
+  test("AC-132 the Church Administrator signs in with an emailed code", async ({ page }) => {
+    await askForCode(page, CAROL);
+    await expect(page.getByLabel("6-digit code")).toBeFocused();
+    await page.getByLabel("6-digit code").fill(await emailedCode(page, CAROL));
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page).toHaveURL("/");
+    await expect(page.getByText("Welcome, Carol")).toBeVisible();
+  });
+
+  test("AC-133 an unknown address sees the same message, and a wrong code says so", async ({
+    page,
+  }) => {
+    await askForCode(page, "someone.else@outlook.com");
+    const code = page.getByLabel("6-digit code");
+    await code.fill("000000");
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page.getByText("That code isn't right. 4 tries left.")).toHaveRole("alert");
+    await expect(code).toHaveAttribute("aria-invalid", "true");
+
+    await page.getByRole("button", { name: "Use a different email" }).click();
+    await expect(page.getByLabel("Email address")).toHaveValue("someone.else@outlook.com");
+  });
+
+  for (const [name, size] of [
+    ["360 px", MOBILE],
+    ["1440 px", DESKTOP],
+  ] as const) {
+    test(`the email and code steps are axe clean at ${name}`, async ({ page }) => {
+      await page.setViewportSize(size);
+      await page.goto("/sign-in");
+      await page.getByRole("button", { name: "Continue with email" }).click();
+      await expectNoHorizontalScroll(page);
+      await expectAxeClean(page);
+      await page.getByLabel("Email address").fill(`axe-${size.width}@outlook.com`);
+      await page.getByRole("button", { name: "Email me a code" }).click();
+      await expect(page.getByLabel("6-digit code")).toBeVisible();
+      await expectNoHorizontalScroll(page);
+      await expectAxeClean(page);
+    });
+  }
 });

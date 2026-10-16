@@ -17,6 +17,8 @@ export async function queueNotice(
     cycleId?: string;
     budgetRequestId?: string;
     dedupeKey?: string;
+    expiresAt?: Date;
+    sensitive?: boolean;
     now?: Date;
   },
 ): Promise<number> {

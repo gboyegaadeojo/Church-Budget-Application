@@ -285,6 +285,9 @@ export const adminCopy = {
     contactEmailHint: "Shown to people who can't sign in, as who to contact.",
     allowGoogle: "Allow Google sign-in",
     allowPlanningCenter: "Allow Planning Center sign-in",
+    allowEmail: "Allow email sign-in",
+    allowEmailHint:
+      "People already added here can sign in with a 6-digit code sent to their email address.",
     pcoHeading: "Planning Center",
     connection: "Connection",
     connected: "Connected",

@@ -30,6 +30,8 @@ export const SETTING_DEFAULTS = {
   pco_department_mode: "suggest",
   signin_google_enabled: "true",
   signin_planning_center_enabled: "true",
+  /** FR-01b: "Continue with email" (a 6-digit code emailed to an address on the allowlist). */
+  signin_email_enabled: "true",
   /** Shown on access-denied screens as who to contact (DRD 6.1a). */
   admin_contact_email: "",
   /** FR-33: who gets the accountant emails; other accountant-role holders are backups. */
@@ -78,6 +80,7 @@ export type SignInSettings = {
   leader: LeaderSettings;
   googleEnabled: boolean;
   planningCenterEnabled: boolean;
+  emailEnabled: boolean;
   adminContactEmail: string;
 };
 
@@ -89,6 +92,7 @@ export async function getSignInSettings(tx: Tx): Promise<SignInSettings> {
     "pco_require_for_staff",
     "signin_google_enabled",
     "signin_planning_center_enabled",
+    "signin_email_enabled",
     "admin_contact_email",
   ]);
   return {
@@ -100,6 +104,7 @@ export async function getSignInSettings(tx: Tx): Promise<SignInSettings> {
     },
     googleEnabled: bool(s.signin_google_enabled),
     planningCenterEnabled: bool(s.signin_planning_center_enabled),
+    emailEnabled: bool(s.signin_email_enabled),
     adminContactEmail: s.admin_contact_email.trim(),
   };
 }
