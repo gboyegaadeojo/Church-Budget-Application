@@ -6,11 +6,13 @@ import type { ActivityItem } from "@/domain/analytics/activity";
 import { detailText } from "@/domain/analytics/details";
 import type { EmailBrand } from "@/lib/email/layout";
 import { formatDateTime } from "@/lib/time-zone";
+import { addLogo, type WorkbookLogo } from "./logo";
 import { safeText } from "./safe";
 
 /** The filtered activity log as a workbook (FR-52, AC-126), with the formula guard. */
 export async function activityWorkbook(input: {
   brand: EmailBrand;
+  logo?: WorkbookLogo | null;
   generatedAt: Date;
   zone: string;
   filterLabels: string[];
@@ -52,6 +54,7 @@ export async function activityWorkbook(input: {
   header.eachCell((cell) => {
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE8EDF3" } };
   });
+  addLogo(book, sheet, input.logo, columns.length);
   for (const e of input.items) {
     sheet.addRow({
       when: formatDateTime(e.at, input.zone),

@@ -32,7 +32,7 @@ export function BottomBar({ areas }: { areas: NavArea[] }) {
   return (
     <nav
       aria-label={copy.nav.mobileNavigation}
-      className="fixed inset-x-0 bottom-0 z-(--z-nav) border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-(--z-nav) border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden print:hidden"
     >
       <ul className="flex">
         {barAreas.map((area) => {

@@ -36,14 +36,15 @@ export async function settingVersions<K extends SettingKey>(
 }
 
 /** Writes the settings that changed, refusing if any was changed since it was read. */
-async function writeSettings(
+export async function writeSettings(
   tx: Tx,
   actor: Subject,
   values: Partial<Record<SettingKey, string>>,
   versions: Record<string, unknown>,
   eventType: string,
+  action: "admin.settings" | "admin.branding" = "admin.settings",
 ): Promise<boolean> {
-  const { actingRole } = assertCan(actor, "admin.settings");
+  const { actingRole } = assertCan(actor, action);
   const keys = Object.keys(values) as SettingKey[];
   const before = await readSettings(tx, keys);
   const changes = changedFields(before as Record<string, string>, values);

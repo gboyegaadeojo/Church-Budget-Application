@@ -15,6 +15,11 @@ export const SETTING_DEFAULTS = {
   weekly_audit_summary: "false",
   church_name: "Immanuel Fellowship Church",
   app_name: "Church Budget",
+  /** FR-30: the accent colour as a checked hex; empty means the DRD default. */
+  accent_color: "",
+  /** FR-30: the current brand_assets rows; empty means none (the default mark). */
+  logo_asset_id: "",
+  icon_asset_id: "",
   /** IANA zone for showing and scheduling times (CLAUDE.md "Time zone"). */
   church_timezone: CHURCH_TIME_ZONE_DEFAULT,
   /** FR-01a: the People custom field that marks a Group Leader, and the values that count. */

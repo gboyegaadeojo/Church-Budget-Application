@@ -11,13 +11,15 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 
 /**
- * Paths open without a session: sign-in, access screens and the privacy notice (FR-36).
+ * Paths open without a session: sign-in, access screens, the privacy notice (FR-36) and
+ * the church's logo and icon (FR-30), which the sign-in screen and emails show.
  * /api/test answers 404 unless fake sign-in is on (tests only).
  */
 const PUBLIC_PREFIXES = [
   "/sign-in",
   "/access-denied",
   "/privacy",
+  "/brand",
   "/api/auth",
   "/api/jobs",
   "/api/test",
@@ -33,14 +35,19 @@ export function isPublicPath(pathname: string): boolean {
 /**
  * No file uploads (FR-23, AC-25, CLAUDE.md constraint 5). Forms reach server actions as
  * multipart bodies, so multipart itself can't be refused; what's refused is any file in
- * it, and any multipart body to an API route. The two allowed uploads (receipts, the
- * logo) arrive with their stages and will be let through here, by path, then.
+ * it, and any multipart body to an API route. The allowed uploads are let through by
+ * page path: the administrator's logo and icon on Settings → Branding (FR-30); the
+ * service checks the role, size and file type again. Receipts (6B.9) join in Stage 3.
  */
+export const UPLOAD_PATHS = ["/admin/settings/branding"];
+
 export async function refusesFiles(request: Request): Promise<boolean> {
   if (request.method === "GET" || request.method === "HEAD") return false;
   const type = request.headers.get("content-type")?.toLowerCase() ?? "";
   if (!type.startsWith("multipart/form-data")) return false;
-  if (new URL(request.url).pathname.startsWith("/api/")) return true;
+  const { pathname } = new URL(request.url);
+  if (pathname.startsWith("/api/")) return true;
+  if (UPLOAD_PATHS.includes(pathname)) return false;
   try {
     const form = await request.clone().formData();
     for (const [, value] of form) {

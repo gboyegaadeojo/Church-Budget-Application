@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Brand } from "@/components/app-shell/brand";
+import { Brand } from "@/components/app-shell/live-brand";
 import { Breadcrumbs } from "@/components/app-shell/breadcrumbs";
 import { Footer } from "@/components/app-shell/footer";
 import { GlobalSearch } from "@/components/app-shell/global-search";
@@ -33,8 +33,8 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <ViewerSidebar />
         </Suspense>
 
-        <div className="flex min-w-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
-          <header className="sticky top-0 z-(--z-sticky) flex h-16 items-center justify-between gap-4 border-b border-border bg-bg/90 px-4 backdrop-blur md:justify-end lg:px-8">
+        <div className="flex min-w-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 print:pb-0">
+          <header className="sticky top-0 z-(--z-sticky) flex h-16 items-center justify-between gap-4 border-b border-border bg-bg/90 px-4 backdrop-blur md:justify-end lg:px-8 print:hidden">
             <Link href="/" className="rounded-control md:hidden">
               <Brand />
             </Link>
@@ -48,6 +48,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
 
           <main id="main" tabIndex={-1} className="flex-1 px-4 py-6 outline-none lg:px-8 lg:py-8">
             <div className="mx-auto w-full max-w-7xl">
+              {/* Printed pages carry the church's logo and names instead of the navigation (DRD 6.12, FR-30). */}
+              <div className="mb-6 hidden border-b border-border pb-4 print:block">
+                <Brand />
+              </div>
               <Suspense fallback={null}>
                 <Breadcrumbs />
               </Suspense>

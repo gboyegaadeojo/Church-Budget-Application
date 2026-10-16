@@ -5,6 +5,7 @@ import { annualCopy } from "@/copy/annual";
 import type { AnnualExport, ExportRequest } from "@/domain/annual/export";
 import { sumCents } from "@/lib/money";
 import { formatDateTime } from "@/lib/time-zone";
+import { addLogo } from "./logo";
 import { CAD_FORMAT, centsToDollars, RATE_FORMAT, safeText } from "./safe";
 
 /**
@@ -55,6 +56,7 @@ function sheetWithHeader(
     from: { row: HEADER_ROWS + 1, column: 1 },
     to: { row: HEADER_ROWS + 1, column: columns.length },
   };
+  addLogo(book, sheet, data.logo, columns.length);
   return sheet;
 }
 

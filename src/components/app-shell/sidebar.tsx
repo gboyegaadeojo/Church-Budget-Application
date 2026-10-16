@@ -6,7 +6,7 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { copy } from "@/copy/en-CA";
 import type { NavArea } from "@/domain/navigation";
 import { cn } from "@/lib/cn";
-import { Brand } from "./brand";
+import { BrandMark, type BrandView } from "./brand";
 import { NavRail } from "./nav-flyout";
 import { NavTree } from "./nav-tree";
 
@@ -16,7 +16,7 @@ const STORAGE_KEY = "sidebar-collapsed";
  * Side navigation (DRD 6.0). Tablets (md) get the icon rail; desktops (lg) get the
  * accordion, which can collapse to the same rail. Phones use the bottom bar instead.
  */
-export function Sidebar({ areas }: { areas: NavArea[] }) {
+export function Sidebar({ areas, brand }: { areas: NavArea[]; brand: BrandView }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -47,14 +47,14 @@ export function Sidebar({ areas }: { areas: NavArea[] }) {
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-standard ease-standard md:flex",
+        "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-standard ease-standard md:flex print:hidden",
         "md:w-[76px]",
         !collapsed && "lg:w-72",
       )}
     >
       <div className="flex h-16 shrink-0 items-center px-4">
-        <Brand compact className={cn(rail, "mx-auto")} />
-        <Brand className={full} />
+        <BrandMark brand={brand} compact className={cn(rail, "mx-auto")} />
+        <BrandMark brand={brand} className={full} />
       </div>
 
       <nav

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/display";
 import { linkClass } from "@/components/ui/styles";
 import { adminCopy } from "@/copy/admin";
+import { brandingCopy } from "@/copy/branding";
 import { getDb } from "@/db";
 import {
   getChurchTimeZone,
@@ -127,6 +128,16 @@ async function SettingsContent() {
   return (
     <>
       <PageHeader title={s.title} />
+
+      <Section
+        title={brandingCopy.settingsHeading}
+        description={brandingCopy.settingsIntro}
+        id="branding"
+      >
+        <Link href="/admin/settings/branding" className={linkClass}>
+          {brandingCopy.settingsLink}
+        </Link>
+      </Section>
 
       <Section title={s.taxHeading} id="tax">
         <TaxRateForm percent={taxRateToPercent(sales_tax_rate)} versions={taxVersions} />

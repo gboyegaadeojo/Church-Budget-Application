@@ -5,6 +5,8 @@ import { budgetCycles, budgetRequests, departments, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { RuleError } from "@/domain/errors";
 import { emailBrand } from "@/domain/notifications/notice";
+import { getBrand, rasterLogo } from "@/domain/settings/brand";
+import type { WorkbookLogo } from "@/lib/excel/logo";
 import { getChurchTimeZone } from "@/domain/settings";
 import { writeAudit } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
@@ -69,6 +71,7 @@ export type ExportRequest = {
 
 export type AnnualExport = {
   brand: EmailBrand;
+  logo: WorkbookLogo | null;
   generatedAt: Date;
   zone: string;
   cycle: { id: string; name: string; budgetYear: number };
@@ -240,6 +243,7 @@ export async function buildAnnualExport(
 
   return {
     brand: await emailBrand(tx),
+    logo: await rasterLogo(tx, await getBrand(tx)),
     generatedAt: now,
     zone: await getChurchTimeZone(tx),
     cycle: { id: cycle.id, name: cycle.name, budgetYear: cycle.budgetYear },

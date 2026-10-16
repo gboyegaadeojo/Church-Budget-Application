@@ -5,11 +5,19 @@ import { formatCAD, formatTaxRate, type TaxBreakdown, type TaxRate } from "@/lib
  * The one email layout (DRD 7.5): a heading, a plain-language status line, the facts
  * (reference, department, year), what changed, the Subtotal / Sales tax / Total block,
  * the items, a note, "what you need to do" and a button with the plain link beneath it.
- * Every email has a plain-text twin. Single column, 600 px, no images, and nothing that
+ * Every email has a plain-text twin. Single column, 600 px, no images but the church's
+ * logo (FR-30, with the names as its alt text), and nothing that
  * relies on colour alone, so it reads well in dark-mode clients too.
  */
 
-export type EmailBrand = { churchName: string; appName: string };
+export type EmailBrand = {
+  churchName: string;
+  appName: string;
+  /** An absolute URL of the PNG or JPEG logo (FR-30); null shows the names only. */
+  logoUrl?: string | null;
+  /** The administrator's checked accent for the button; null keeps the default blue. */
+  accent?: string | null;
+};
 
 export type EmailLine = {
   name: string;
@@ -188,10 +196,16 @@ function htmlLines(lines: { heading: string; items: EmailLine[] }): string {
   return `<p style="margin:0 0 6px;font-size:14px;font-weight:600;">${escapeHtml(lines.heading)}</p><table style="border-collapse:collapse;width:100%;">${rows}</table>`;
 }
 
+/** The logo above the names, sized by height so wide and square logos both fit. */
+function logoHtml(brand: EmailBrand): string {
+  if (!brand.logoUrl || !/^https?:\/\//.test(brand.logoUrl)) return "";
+  return `<img src="${escapeHtml(brand.logoUrl)}" alt="${escapeHtml(brand.churchName)}" height="40" style="display:block;height:40px;width:auto;max-width:240px;margin:0 0 12px;border:0;">`;
+}
+
 function renderHtml(content: EmailContent, brand: EmailBrand, subject: string): string {
   const parts: string[] = [];
   parts.push(
-    `<tr><td style="padding:24px 24px 8px;"><p style="margin:0;${MUTED}font-size:13px;">${escapeHtml(brand.churchName)} · ${escapeHtml(brand.appName)}</p><h1 style="margin:8px 0 0;font-size:22px;line-height:1.3;">${escapeHtml(content.heading)}</h1></td></tr>`,
+    `<tr><td style="padding:24px 24px 8px;">${logoHtml(brand)}<p style="margin:0;${MUTED}font-size:13px;">${escapeHtml(brand.churchName)} · ${escapeHtml(brand.appName)}</p><h1 style="margin:8px 0 0;font-size:22px;line-height:1.3;">${escapeHtml(content.heading)}</h1></td></tr>`,
   );
   parts.push(
     section(
@@ -233,9 +247,10 @@ function renderHtml(content: EmailContent, brand: EmailBrand, subject: string): 
     ),
   );
   const href = escapeHtml(content.button.href);
+  const button = brand.accent && /^#[0-9a-f]{6}$/.test(brand.accent) ? brand.accent : "#1d4ed8";
   parts.push(
     section(
-      `<a href="${href}" style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 20px;border-radius:8px;">${escapeHtml(content.button.label)}</a><p style="margin:12px 0 0;font-size:13px;${MUTED}word-break:break-all;">${escapeHtml(c.orOpen)} <a href="${href}" style="color:#1d4ed8;">${href}</a></p>`,
+      `<a href="${href}" style="display:inline-block;background:${button};color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 20px;border-radius:8px;">${escapeHtml(content.button.label)}</a><p style="margin:12px 0 0;font-size:13px;${MUTED}word-break:break-all;">${escapeHtml(c.orOpen)} <a href="${href}" style="color:${button};">${href}</a></p>`,
     ),
   );
   parts.push(
