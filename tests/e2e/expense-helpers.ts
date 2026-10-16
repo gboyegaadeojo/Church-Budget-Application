@@ -64,3 +64,49 @@ export async function submitPurchase(
   await context.close();
   return { id, reference };
 }
+
+/** Sam submits a $168.00 claim to be paid by e-transfer; returns its id and reference. */
+export async function submitClaim(browser: Browser, title: string) {
+  const context = await browser.newContext({ viewport: DESKTOP });
+  const page = await context.newPage();
+  await signInAs(page, PEOPLE.sam);
+  await startExpense(page, "Expense claim");
+  await fillDetails(page, title);
+  const line = page.getByRole("group", { name: "Receipt line 1" });
+  await line.getByLabel("Date").fill("2026-10-01");
+  await line.getByLabel("Vendor").fill("Long & McQuade");
+  await line.getByLabel("Description").fill("XLR cables");
+  await line.getByLabel("Amount paid (incl. tax)").fill("168.00");
+  await page.getByLabel("E-transfer", { exact: true }).check();
+  await page.getByLabel("E-transfer email").fill("sam.lee@example.org");
+  await page.getByLabel("No receipt available").check();
+  await page.getByLabel("Why there's no receipt").fill("Paper receipt, given to the office.");
+  await preview(page);
+  await confirm(page);
+  const id = new URL(page.url()).pathname.split("/").pop()!;
+  const reference = (await page.getByText(EXP).first().textContent())!.match(EXP)![0];
+  await context.close();
+  return { id, reference };
+}
+
+/** The accountant (Pat) and then the Board Chair (Cleo) approve it. */
+export async function approveBoth(browser: Browser, id: string) {
+  for (const [who, path, button, done] of [
+    [PEOPLE.pat, `/expenses/review/${id}`, "Approve and send to Board Chair", /\?done=approve$/],
+    [
+      PEOPLE.cleo,
+      `/expenses/awaiting-approval/${id}`,
+      "Give final approval",
+      /\?done=final_approve$/,
+    ],
+  ] as const) {
+    const context = await browser.newContext({ viewport: DESKTOP });
+    const page = await context.newPage();
+    await signInAs(page, who);
+    await page.goto(path);
+    await page.getByRole("button", { name: button }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Confirm" }).click();
+    await page.waitForURL(done);
+    await context.close();
+  }
+}

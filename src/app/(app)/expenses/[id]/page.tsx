@@ -8,11 +8,12 @@ import { buttonClass, cardClass, linkClass } from "@/components/ui/styles";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
 import { getExpenseView, type ExpenseView } from "@/domain/expenses/queries";
+import { paymentOf } from "@/domain/expenses/payment";
 import { listReceipts } from "@/domain/expenses/receipts";
 import { getChurchTimeZone } from "@/domain/settings";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
-import { formatDateTime } from "@/lib/time-zone";
+import { formatDate, formatDateTime } from "@/lib/time-zone";
 import { getViewer } from "@/lib/viewer";
 import { BudgetStrip, OverBudgetWarning } from "../budget-strip";
 import { ExpenseLines } from "../expense-lines";
@@ -58,6 +59,7 @@ async function ExpenseContent({
   const done = DONE.find((d) => d === query.done);
   const receipts =
     expense.type === "expense_claim" ? await listReceipts(db, viewer, expense.id) : null;
+  const payment = await paymentOf(db, expense.id);
   const pending = ["draft", "submitted", "in_review", "returned", "awaiting_board"].includes(
     expense.status,
   );
@@ -82,6 +84,7 @@ async function ExpenseContent({
             submittedAt: expense.submittedAt,
             requester: expense.requester.name,
             decisions: expense.decisions,
+            paidAt: payment ? new Date(`${payment.paidOn}T12:00:00Z`) : null,
           })}
         />
       </div>
@@ -119,6 +122,29 @@ async function ExpenseContent({
           )}
           <ExpenseLines expense={expense} />
           {receipts && <ReceiptList expenseId={expense.id} receipts={receipts} />}
+          {payment && (
+            <section className="space-y-1 rounded-control border border-success p-4 text-sm">
+              <h2 className="font-semibold">{expensesCopy.payment.paidHeading}</h2>
+              <p>
+                {expensesCopy.payment.paidSummary(
+                  expensesCopy.payment.methods[payment.method],
+                  formatDate(payment.paidOn),
+                )}{" "}
+                · <span className="tabular font-semibold">{formatCAD(payment.amountCents)}</span>
+              </p>
+              {payment.reference && (
+                <p>
+                  {expensesCopy.payment.reference}: {payment.reference}
+                </p>
+              )}
+              {payment.chequeSigner1Name && (
+                <p>
+                  {expensesCopy.payment.signers}: {payment.chequeSigner1Name},{" "}
+                  {payment.chequeSigner2Name}
+                </p>
+              )}
+            </section>
+          )}
           {expense.content.noReceiptReason && (
             <Note label={v.noReceipt}>{expense.content.noReceiptReason}</Note>
           )}

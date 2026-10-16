@@ -18,7 +18,6 @@ export const PEOPLE = {
   bo: "Bo Chair",
   cleo: "Cleo Chair",
   vic: "Vic Vice",
-  carol: "Carol Office",
 } as const;
 
 /** Signs in through the real Auth.js flow with the fake provider (test-only). */
