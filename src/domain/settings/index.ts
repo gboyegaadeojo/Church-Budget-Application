@@ -45,7 +45,29 @@ export const SETTING_DEFAULTS = {
    * accountant's sign-off. Empty: off (the default).
    */
   second_approval_threshold: "",
+  /** FR-46: a claim this many days after the purchase needs an explanation. */
+  claim_deadline_days: "90",
+  /** FR-49 reminders: an approved purchase request not bought or claimed (requester). */
+  unclaimed_purchase_reminder_days: "60",
+  /** FR-49 reminders: approved but not processed (accountant, Church Administrator). */
+  payment_reminder_days: "14",
+  /** FR-49 reminders: waiting for the Board Chair (Board Chair, accountant). */
+  board_reminder_days: "7",
 } as const;
+
+/** A whole-number-of-days setting, or its default when the stored value is unusable. */
+export async function daysSetting(
+  tx: Tx,
+  key:
+    | "claim_deadline_days"
+    | "unclaimed_purchase_reminder_days"
+    | "payment_reminder_days"
+    | "board_reminder_days",
+): Promise<number> {
+  const { [key]: value } = await readSettings(tx, [key]);
+  const days = Number.parseInt(value, 10);
+  return Number.isSafeInteger(days) && days > 0 ? days : Number(SETTING_DEFAULTS[key]);
+}
 
 /** The second-approval threshold in cents, or null when it's off (FR-34). */
 export async function secondApprovalThreshold(tx: Tx): Promise<number | null> {

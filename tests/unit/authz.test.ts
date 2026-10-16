@@ -200,6 +200,43 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     ["no", "act", "act", "read", "read", "act", "read"],
   ],
   [
+    "list every department's expenses",
+    "expense.view_all",
+    {},
+    ["no", "act", "act", "no", "no", "act", "read"],
+  ],
+  [
+    "open the expense review queue",
+    "expense.review_queue",
+    {},
+    ["no", "act", "act", "no", "no", "no", "read"],
+  ],
+  [
+    "open the Board Chair's queue",
+    "expense.board_queue",
+    {},
+    ["no", "no", "no", "act", "act", "no", "read"],
+  ],
+  [
+    "open the Ready to process queue",
+    "expense.process_queue",
+    {},
+    ["no", "act", "act", "no", "no", "act", "read"],
+  ],
+  [
+    "cancel another department's approved purchase request",
+    "expense.cancel",
+    YOUTH,
+    ["no", "act", "act", "no", "no", "no", "no"],
+  ],
+  [
+    "cancel one's own department's approved purchase request",
+    "expense.cancel",
+    OWN,
+    ["act", "act", "act", "no", "no", "no", "no"],
+  ],
+  ["export expense reports", "expense.export", {}, ["no", "act", "act", "no", "no", "act", "act"]],
+  [
     "change how decisions are released (FR-19a)",
     "annual.release",
     {},
@@ -366,6 +403,7 @@ describe("System Administrator", () => {
     "expense.first_approve",
     "expense.final_approve",
     "expense.pay",
+    "expense.cancel",
     "spending.record",
     "spending.amend",
     "spending.lock",
@@ -431,6 +469,20 @@ describe("Board Chair and Vice-Chair", () => {
 
   it("cannot decide annual budgets", () => {
     expect(can(single("board_chair"), "annual.decide", YOUTH)).toBe(false);
+  });
+});
+
+describe("own submissions (FR-47)", () => {
+  it("no approver decides an expense they submitted", () => {
+    const ctx = { ...YOUTH, requesterUserId: "u1" };
+    expect(authorize(single("accountant"), "expense.first_approve", ctx)).toEqual({
+      allowed: false,
+      reason: "conflict_of_interest",
+    });
+    expect(can(single("board_chair"), "expense.final_approve", ctx)).toBe(false);
+    expect(
+      can(single("accountant"), "expense.first_approve", { ...YOUTH, requesterUserId: "u2" }),
+    ).toBe(true);
   });
 });
 

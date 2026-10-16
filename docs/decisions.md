@@ -512,3 +512,28 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
   - On wide screens the short settings sit two to a row.
   - Page titles are larger and bolder.
 - **Fixed:** an out-of-date note on Notifications & Audit said the activity log "moves … in the next step". It now links to the activity log.
+
+## Stage 3 step 1: the expense data model (6B.10) (2026-10-16)
+
+- **Tables** (migration `0018_expenses`): `expense_submissions`, `expense_items` (purchase requests), `expense_receipt_lines` (claims), `expense_receipt_files`, `expense_revisions`, `expense_decisions`, `expense_payments`, and a first `spending_entries` table (FR-24). Stage 4 builds the ledger screens on it. Amounts are integer cents. A claim stores its total as the subtotal with zero tax, because receipt amounts already include tax (FR-41), and a check constraint enforces it.
+- **Additions to 6B.10:**
+  - `department_name_snapshot`, `late_claim_explanation` (FR-46), `how_bought` (FR-40), `payee_kind` (self, someone else, church card) and `submitted_at`, `approved_at`, `closed_at` on the submission.
+  - `revision_id` on each decision, so it names the version decided on.
+  - `remaining_after_cents` on each decision, so the over-budget figure each approver saw is kept (AC-140).
+  - `sha256` on receipt files, to spot the same file twice.
+  - `difference_note` on payments, for an amount paid that differs from the approved amount.
+  - Cheque signers are stored as ids plus names, so a removed signer still shows on past payments (AC-134).
+- **`approved_total` holds the current approved amount.** The accountant's approval sets it, and the Board Chair's final approval may lower it. The budget counts it only from final approval on (AC-73). Until then an item awaiting the Board Chair is Pending, at the accountant's amount.
+- **Append-only:** revisions, decisions and payments can't be changed or deleted. Receipt files and spending entries can't be deleted; they're marked removed or voided instead. A submission can be deleted only while it's a never-submitted draft. Database triggers enforce all of this, as for Part A.
+- **Emails** gain the `board` audience and a link to the expense (`email_outbox.expense_submission_id`).
+- **Settings** (6B.10): `claim_deadline_days` (90), `unclaimed_purchase_reminder_days` (60) and `payment_reminder_days` (14). One addition, `board_reminder_days` (7), holds FR-49's "waiting for the Board Chair over 7 days".
+- **Budget figures** (`src/domain/expenses/budget.ts`, FR-25):
+  - Available is the approved annual total once its decision has reached the department. A held decision (FR-19a) doesn't start expenses yet.
+  - Committed is approved purchase requests that are Approved or Processing.
+  - Spent is recorded expense entries minus refunds.
+  - Remaining is Available − Committed − Spent.
+  - Pending is shown but never deducted.
+  - Amendments join Available in Stage 4.
+- **Permissions** (`authz.ts`):
+  - New actions: `expense.view_all`, `expense.review_queue`, `expense.board_queue`, `expense.process_queue`, `expense.cancel` and `expense.export`.
+  - No approver decides an expense they submitted (FR-47), as well as one for their own department or that pays them.
