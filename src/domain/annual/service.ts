@@ -34,6 +34,7 @@ import {
 } from "./schema";
 export { totalsOf } from "./schema";
 import { canTransition, InvalidTransitionError, transition, type AnnualEvent } from "./status";
+import { queueAnnualEmails } from "./emails";
 
 /**
  * Annual budget requests, the requester's side (FR-03 to FR-12, FR-32). Every function
@@ -545,7 +546,7 @@ export async function submitRequest(
       after: { status: next, referenceNumber, taxRate: rate, totalCents: totals.total },
     },
   });
-  // TODO(step 7): outbox the receipt to every representative and the accountant notice (FR-11).
+  await queueAnnualEmails(tx, row.id, actor.id, { kind: "submitted" }, { now });
 
   const result: SubmitResult = {
     requestId: row.id,
@@ -677,7 +678,9 @@ export async function reviseRequest(
       usedEdit,
     },
   });
-  // TODO(step 7): outbox the revision notice to the accountant and representatives (AC-44).
+  await queueAnnualEmails(tx, row.id, actor.id, {
+    kind: responding ? "clarification_answered" : "revised",
+  });
 
   const result: ReviseResult = {
     requestId: row.id,

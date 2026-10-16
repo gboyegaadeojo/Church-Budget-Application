@@ -1,3 +1,6 @@
+import { annualCopy } from "@/copy/annual";
+import { formatCAD } from "@/lib/money";
+
 /**
  * What changed between two submitted versions of a request (DRD 6.7 "highlighted diff
  * between versions"). Items are paired by name, ignoring case; two items with the same
@@ -45,4 +48,26 @@ export function revisionChanges(previous: Snapshot, next: Snapshot): RevisionCha
   }
   for (const old of unmatched) changes.push({ kind: "removed", item: old.name });
   return changes;
+}
+
+const c = annualCopy.review.changes;
+
+/** One change in words: "Mixer: 1 × $1,025.00 → 2 × $1,025.00". */
+export function describeChange(change: RevisionChange): string {
+  switch (change.kind) {
+    case "title":
+      return c.title;
+    case "justification":
+      return c.justification;
+    case "added":
+      return c.added(change.item);
+    case "removed":
+      return c.removed(change.item);
+    case "changed":
+      return c.changed(
+        change.item,
+        `${change.from.quantity} × ${formatCAD(change.from.unitPriceCents)}`,
+        `${change.to.quantity} × ${formatCAD(change.to.unitPriceCents)}`,
+      );
+  }
 }

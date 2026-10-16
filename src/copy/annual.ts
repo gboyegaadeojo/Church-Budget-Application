@@ -278,7 +278,8 @@ export const annualCopy = {
     submitted: "Request submitted",
     revised: "Changes saved",
     responded: "Response sent",
-    receipt: "Your request is saved. We'll email your receipt shortly.",
+    receipt:
+      "Your request is saved. A receipt is being emailed to your department's leaders; it shows under Emails below once it's sent.",
     editsRemaining: (left: number) =>
       left === 0
         ? "No changes are left before it's reviewed."

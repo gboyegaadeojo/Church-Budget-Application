@@ -64,6 +64,13 @@
       "when": 1792108735276,
       "tag": "0008_ministry_department",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792112349918,
+      "tag": "0009_email_outbox",
+      "breakpoints": true
     }
   ]
 }

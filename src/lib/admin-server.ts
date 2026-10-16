@@ -12,6 +12,8 @@ import { getChurchTimeZone } from "@/domain/settings";
 import { loadViewer } from "@/domain/users/viewer";
 import type { ActionState } from "./action-state";
 import { writeAudit } from "./audit";
+import { sendOutboxAfterResponse } from "./email";
+import { trackQueuedEmails } from "./email/outbox";
 import { authorize, ForbiddenError, type Action, type AuthzContext } from "./authz";
 import type { Viewer } from "./roles";
 import { formatDateTime } from "./time-zone";
@@ -84,7 +86,8 @@ type RunOptions = {
 };
 
 /**
- * Runs `work` in one transaction as the signed-in person, then refreshes `paths`.
+ * Runs `work` in one transaction as the signed-in person, then refreshes `paths` and
+ * sends any emails the change queued.
  * Every service checks permission itself; this only reports the outcome.
  */
 export async function runAction(
@@ -109,7 +112,12 @@ export async function runForResult<T>(
 ): Promise<ResultState<T>> {
   const viewer = await actionViewer(options.allowWaiting);
   try {
-    const { message, data } = await getDb().transaction((tx) => work(tx, viewer));
+    const { result, queued } = await trackQueuedEmails(() =>
+      getDb().transaction((tx) => work(tx, viewer)),
+    );
+    const { message, data } = result;
+    // Emails queued by the change go once it has committed (CLAUDE.md constraint 7).
+    if (queued > 0) sendOutboxAfterResponse();
     for (const path of options.paths) revalidatePath(path);
     return { status: "success", message, data };
   } catch (error) {

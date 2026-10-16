@@ -15,6 +15,7 @@ import { writeAudit } from "@/lib/audit";
 import { assertCan, authorize, type Subject } from "@/lib/authz";
 import type { TaxBreakdown } from "@/lib/money";
 import { approvedFigures, decisionSchema, DECISION_LIMITS, type DecisionKind } from "./decision";
+import { queueAnnualEmails, type AnnualEmailEvent } from "./emails";
 import {
   actorOf,
   lineRowsOf,
@@ -90,6 +91,7 @@ export async function startReview(tx: Tx, actor: Subject, input: { id: string })
     ...auditBase(row),
     details: { before: { status: row.status }, after: { status: next } },
   });
+  await queueAnnualEmails(tx, row.id, actor.id, { kind: "review_started" });
   return true;
 }
 
@@ -124,6 +126,13 @@ const AUDIT_EVENT: Record<DecisionKind, string> = {
   return: "annual.returned",
   decline: "annual.declined",
 };
+
+/** Which email a decision sends (FR-19, FR-21). Return and decline always carry a note. */
+function emailEvent(decision: { kind: DecisionKind; note?: string | null }): AnnualEmailEvent {
+  if (decision.kind === "return") return { kind: "returned", question: decision.note ?? "" };
+  if (decision.kind === "decline") return { kind: "declined", reason: decision.note ?? "" };
+  return { kind: "approved" };
+}
 
 /**
  * Records the accountant's decision on the latest submitted version. A request still
@@ -254,7 +263,7 @@ export async function decideRequest(
       ...auditDetails,
     },
   });
-  // TODO(step 7): outbox the approval, clarification or decline email (FR-19, FR-21, AC-56).
+  await queueAnnualEmails(tx, row.id, actor.id, emailEvent(decision), { now });
 
   const result: DecideResult = {
     requestId: row.id,
@@ -340,7 +349,7 @@ export async function reopenRequest(
       after: { status: next, approvedTotalCents: null },
     },
   });
-  // TODO(step 7): outbox "Request reopened" to the representatives and accountant (FR-21).
+  await queueAnnualEmails(tx, row.id, actor.id, { kind: "reopened", reason }, { now });
 
   const result: ReopenResult = { requestId: row.id, status: next, reopenedAt: now.toISOString() };
   await tx.insert(idempotencyKeys).values({
