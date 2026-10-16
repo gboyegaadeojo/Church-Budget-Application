@@ -1,8 +1,9 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, exists, isNull, notExists, sql } from "drizzle-orm";
 import { z } from "zod";
 import { annualCopy } from "@/copy/annual";
 import { nextReference } from "@/db/reference";
 import {
+  approvedLineItems,
   budgetCycles,
   budgetLineItems,
   budgetRequests,
@@ -46,10 +47,10 @@ import { canTransition, InvalidTransitionError, transition, type AnnualEvent } f
 const e = annualCopy.errors;
 export const EDIT_LIMIT = 2;
 
-type RequestRow = typeof budgetRequests.$inferSelect;
+export type RequestRow = typeof budgetRequests.$inferSelect;
 type Options = { now?: Date };
 
-const actorOf = (actor: Subject, actingRole: Role): AuditActor => ({
+export const actorOf = (actor: Subject, actingRole: Role): AuditActor => ({
   kind: "user",
   userId: actor.id,
   actingRole,
@@ -58,11 +59,11 @@ const actorOf = (actor: Subject, actingRole: Role): AuditActor => ({
 const versionSchema = z.coerce.number().int().positive();
 const keySchema = z.uuid();
 
-function parseVersion(value: unknown): number {
+export function parseVersion(value: unknown): number {
   return parseInput(z.object({ version: versionSchema }), { version: value }).version;
 }
 
-async function loadRequest(tx: Tx, id: string, lock = false): Promise<RequestRow> {
+export async function loadRequest(tx: Tx, id: string, lock = false): Promise<RequestRow> {
   if (!z.uuid().safeParse(id).success) throw new RuleError(e.notFound);
   const query = tx.select().from(budgetRequests).where(eq(budgetRequests.id, id)).limit(1);
   const [row] = lock ? await query.for("update") : await query;
@@ -75,7 +76,7 @@ function can(actor: Subject, action: Action, row: RequestRow) {
 }
 
 /** Changes the request only if nobody else changed it since `version` was read (DRD 11.2). */
-async function updateRequest(
+export async function updateRequest(
   tx: Tx,
   row: RequestRow,
   version: number,
@@ -90,12 +91,19 @@ async function updateRequest(
   return rows[0].version;
 }
 
-export async function linesOf(tx: Tx, requestId: string): Promise<LineContent[]> {
-  const rows = await tx
+/** The request's working lines with their ids, in form order (superseded ones left out). */
+export async function lineRowsOf(tx: Tx, requestId: string) {
+  return tx
     .select()
     .from(budgetLineItems)
-    .where(eq(budgetLineItems.budgetRequestId, requestId))
+    .where(
+      and(eq(budgetLineItems.budgetRequestId, requestId), isNull(budgetLineItems.supersededAt)),
+    )
     .orderBy(asc(budgetLineItems.sortOrder));
+}
+
+export async function linesOf(tx: Tx, requestId: string): Promise<LineContent[]> {
+  const rows = await lineRowsOf(tx, requestId);
   return rows.map((r) => ({
     name: r.itemName,
     quantity: r.quantity,
@@ -105,9 +113,24 @@ export async function linesOf(tx: Tx, requestId: string): Promise<LineContent[]>
   }));
 }
 
-/** Replaces the request's working lines. Submitted versions live on in request_revisions. */
+/**
+ * Replaces the request's working lines. Submitted versions live on in request_revisions.
+ * Lines an earlier approval points to are kept as superseded, never deleted (constraint 6).
+ */
 async function replaceLines(tx: Tx, requestId: string, lines: readonly LineContent[]) {
-  await tx.delete(budgetLineItems).where(eq(budgetLineItems.budgetRequestId, requestId));
+  const current = and(
+    eq(budgetLineItems.budgetRequestId, requestId),
+    isNull(budgetLineItems.supersededAt),
+  );
+  const referenced = tx
+    .select({ id: approvedLineItems.budgetLineItemId })
+    .from(approvedLineItems)
+    .where(eq(approvedLineItems.budgetLineItemId, budgetLineItems.id));
+  await tx
+    .update(budgetLineItems)
+    .set({ supersededAt: new Date() })
+    .where(and(current, exists(referenced)));
+  await tx.delete(budgetLineItems).where(and(current, notExists(referenced)));
   if (lines.length === 0) return;
   await tx.insert(budgetLineItems).values(
     lines.map((line, sortOrder) => ({
@@ -139,7 +162,7 @@ function snapshotOf(row: Pick<RequestRow, "title" | "justification">, lines: Lin
 
 // ---------------------------------------------------------------- idempotency (FR-10)
 
-async function previousResult<T>(
+export async function previousResult<T>(
   tx: Tx,
   key: string,
   actor: Subject,
@@ -158,7 +181,7 @@ async function previousResult<T>(
   return row.result as T;
 }
 
-function parseKey(value: unknown): string {
+export function parseKey(value: unknown): string {
   const parsed = keySchema.safeParse(value);
   if (!parsed.success) throw new ValidationError({ form: e.idempotencyKey });
   return parsed.data;
@@ -535,7 +558,7 @@ export async function submitRequest(
   return result;
 }
 
-function nextOrRefuse(from: RequestRow["status"], event: AnnualEvent, message: string) {
+export function nextOrRefuse(from: RequestRow["status"], event: AnnualEvent, message: string) {
   try {
     return transition(from, event);
   } catch (error) {

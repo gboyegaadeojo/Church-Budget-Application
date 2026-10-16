@@ -460,6 +460,11 @@ export const budgetLineItems = pgTable(
     productUrl: text("product_url"),
     notes: text("notes"),
     sortOrder: integer("sort_order").notNull(),
+    /**
+     * Set when a revision replaces a line that an approval points to (FR-18a reopen):
+     * the line stays for the history and drops out of the working lines.
+     */
+    supersededAt: timestamp("superseded_at", { withTimezone: true }),
     version: version(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
