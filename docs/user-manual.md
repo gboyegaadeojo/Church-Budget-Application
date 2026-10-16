@@ -57,6 +57,14 @@ You never need to switch accounts. If you are both an accountant and a requester
 
 From the account menu: theme (light, dark or system), email preferences, **Away** (accountants, Board Chair, Vice-Chair, Primary requesters), and sign out.
 
+**Email preferences** (account menu → Email preferences) let you turn off emails you don't need:
+
+- **Reminders** (everyone): deadline reminders, reminders to answer the accountant's question, and the accountant's list of departments still to submit.
+- **Copies of my own decisions** (accountants): the copy you get when you approve, decline, return or reopen a request. The department is always emailed.
+- **New submissions and revisions** (accountants): **Each one as it arrives**, or **One email a day**, which arrives early each morning with everything since the last one. The review dashboard always shows new work straight away. Switching back to each one as it arrives sends anything that was waiting at once.
+
+Receipts, decisions, messages and changes to your roles or sign-in are always sent.
+
 ### Money on screen
 
 All amounts are Canadian dollars. Every total shows **Subtotal**, **Sales tax (12%)**, and **Total (incl. tax)**. Prices you type are **before tax**; the app adds tax once on the subtotal.

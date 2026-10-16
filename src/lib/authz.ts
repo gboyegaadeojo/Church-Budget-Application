@@ -68,6 +68,10 @@ export type Action =
   | "cycle.extend_deadline"
   /** Set one's own Away, so accountant emails go to the backup approvers (FR-33). */
   | "account.away"
+  /** One's own email preferences: reminders, copies and the daily digest (FR-21). */
+  | "account.email_preferences"
+  /** The accountant-only email preferences: copies and the daily digest (FR-21). */
+  | "account.accountant_emails"
   /** Set the department's Primary as Away, so the Backups cover (FR-38). */
   | "department.away"
   // Everyone
@@ -230,6 +234,8 @@ const RULES: Record<Action, readonly Rule[]> = {
   "cycle.extend_deadline": [{ roles: ["system_admin", ...ACCOUNTANTS] }],
   // The Board Chair's Away routes expense approvals to the Vice-Chair: Stage 3.
   "account.away": [{ roles: ACCOUNTANTS }],
+  "account.email_preferences": [{ roles: EVERY_ROLE }],
+  "account.accountant_emails": [{ roles: ACCOUNTANTS }],
   "department.away": [
     { roles: ["requester"], check: primaryOfDepartment },
     { roles: ["system_admin"] },

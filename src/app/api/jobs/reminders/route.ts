@@ -1,6 +1,7 @@
 import { getDb } from "@/db";
 import { runClarificationReminders } from "@/domain/annual/clarification-reminders";
 import { runReminders } from "@/domain/cycles/emails";
+import { queueAccountantDigests } from "@/domain/notifications/accountant-digest";
 import { queueFailureDigest } from "@/domain/notifications/failure-digest";
 import { getEmailSender } from "@/lib/email";
 import { deliverOutbox } from "@/lib/email/outbox";
@@ -9,8 +10,9 @@ import { isAuthorizedJobRequest } from "@/lib/jobs";
 /**
  * Daily job (CLAUDE.md "Scheduled jobs"): the 7-day and 1-day deadline reminders, the
  * clarification reminders (the Primary, then the Backups after the escalation delay), the
- * accountant's list of departments outstanding after the deadline, and the administrators'
- * digest of failed emails. Each is queued once only, so a repeated run sends nothing new.
+ * accountant's list of departments outstanding after the deadline, the administrators'
+ * digest of failed emails, and the daily digest for accountants who chose one (FR-21).
+ * Each is queued once only, so a repeated run sends nothing new.
  */
 export async function POST(request: Request) {
   if (!isAuthorizedJobRequest(request)) {
@@ -21,7 +23,8 @@ export async function POST(request: Request) {
   const reminders = await runReminders(db, now);
   const clarifications = await runClarificationReminders(db, now);
   const failureDigest = await db.transaction((tx) => queueFailureDigest(tx, now));
+  const accountantDigests = await db.transaction((tx) => queueAccountantDigests(tx, now));
   const sender = getEmailSender();
   const sent = sender ? await deliverOutbox(db, sender, { limit: 100 }) : null;
-  return Response.json({ ...reminders, clarifications, failureDigest, sent });
+  return Response.json({ ...reminders, clarifications, failureDigest, accountantDigests, sent });
 }
