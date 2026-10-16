@@ -13,9 +13,35 @@ const ADMIN_PAGES = [
   ["/admin/departments", "Departments"],
   ["/admin/cycles", "Budget Cycles"],
   ["/admin/settings", "Settings"],
+  ["/admin/audit", "Notifications & Audit"],
 ] as const;
 
 test.describe("Admin (Stage 1 step 4)", () => {
+  test("FR-21 the email log filters by status, and only the administrator can open it", async ({
+    page,
+    browser,
+  }) => {
+    await signInAs(page, PEOPLE.gina);
+    await page.goto("/admin/audit");
+    const counts = page.getByRole("region", { name: "Emails by status" });
+    await expect(counts.getByRole("link", { name: /Couldn.t be sent/ })).toBeVisible();
+    // The fake sender never fails, so the failed filter is empty and offers no bulk retry.
+    await page.getByLabel("Status", { exact: true }).selectOption("failed");
+    await page.getByRole("button", { name: "Show" }).click();
+    await expect(page).toHaveURL(/status=failed/);
+    await expect(page.getByText("No emails match.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Send all failed again" })).toHaveCount(0);
+
+    const pat = await browser.newContext();
+    const patPage = await pat.newPage();
+    await signInAs(patPage, PEOPLE.pat);
+    await patPage.goto("/admin/audit");
+    await expect(
+      patPage.getByRole("heading", { name: "You don't have access to this page" }),
+    ).toBeVisible();
+    await pat.close();
+  });
+
   for (const [label, viewport] of [
     ["360 px", MOBILE],
     ["1440 px", DESKTOP],

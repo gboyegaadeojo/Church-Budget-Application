@@ -230,4 +230,11 @@ Requested by the user: a second People custom field, **Ministry Department**, de
 - **`dedupe_key` on the outbox** (migration 0010) makes an email go once per key and address: reminders are keyed by department, deadline and day count (a new deadline gets new reminders); the outstanding list by the deadline; the digest and the Planning Center outage notice by date.
 - **Access requests are limited:** once a day per address, and at most 10 a day per administrator overall. Anyone with a Google or Planning Center account can try to sign in, so without a limit a stranger could use up the church's shared Resend quota. A refusal because Planning Center is down isn't an access request.
 - **Sign-in and the Planning Center job send their emails straight away** like actions do (`after()` and a direct outbox run), instead of waiting for the next scheduled run.
-- **Not yet:** the administrator's list of failed emails (Admin → Notifications & Audit) is the next small PR; until then the digest and each request's Emails section show failures. Email-code sign-in (FR-01b) follows.
+- **Not yet:** email-code sign-in (FR-01b) follows.
+
+## Admin → Notifications & Audit: the email log (2026-10-15)
+
+- **`/admin/audit` is the email log for now** (FR-21 "Log attempted notifications, provider outcomes, and failures"): counts by status, a status filter and a search over subject, address and name, the newest 100 emails with their tries, last error and times, and a link to the request.
+- **Send again** puts a failed email back in the queue with a fresh set of retries; **Send all failed again** does that for every failed email, for after a Resend setting is fixed. Only failed emails can be sent again: a sent one never goes twice, and a waiting one is already queued. Each use is audited (`admin.emails_retried`). The permission is `admin.notifications`, System Administrator only.
+- **The activity log** (FR-22, FR-52 Activity tab) is step 8, under Reports → Analytics & Audit; the page says so.
+- **Navigation fix found while testing:** an area's pages became visible one frame after the group opened, so a very quick Tab after Enter skipped them (an intermittent e2e failure). The visibility transition now runs only when a group closes.

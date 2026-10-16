@@ -119,14 +119,18 @@ function AreaGroup({
 
       {/*
         Height animates with grid rows. Closing makes the pages inert at once (out of the
-        tab order while they slide shut), then invisible.
+        tab order while they slide shut), then invisible. Opening makes them visible at
+        once: a visibility transition would keep them hidden for its first frame, so a
+        quick Tab after Enter would skip past them.
       */}
       <div
         id={id}
         inert={!open}
         className={cn(
-          "grid transition-[grid-template-rows,visibility] duration-standard ease-standard",
-          open ? "visible grid-rows-[1fr]" : "invisible grid-rows-[0fr]",
+          "grid duration-standard ease-standard",
+          open
+            ? "visible grid-rows-[1fr] transition-[grid-template-rows]"
+            : "invisible grid-rows-[0fr] transition-[grid-template-rows,visibility]",
         )}
       >
         <div className="overflow-hidden">
