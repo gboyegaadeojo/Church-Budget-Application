@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { confirm, EXP, fillDetails, preview, startExpense } from "./expense-helpers";
 import {
   DESKTOP,
   expectAxeClean,
@@ -8,40 +9,7 @@ import {
   signInAs,
 } from "./helpers";
 
-/*
- * Expense submissions, the requester's side (Stage 3; 6B.3, DRD 6.9a). The fake server
- * seeds a closed FY2026 cycle where Media Team's $30,000.00 budget is approved and
- * released; Sam Lee (Media's Backup) submits against it. Tests run in parallel against
- * one database, so none of them relies on Media's exact Remaining.
- */
-
-const EXP = /EXP-2026-\d{4}/;
-
-async function startExpense(page: Page, type: "Purchase request" | "Expense claim") {
-  await page.goto("/expenses/new");
-  await page.getByRole("radio", { name: new RegExp(`^${type}`) }).check({ force: true });
-  await page.getByLabel("Department", { exact: true }).selectOption({ label: "Media Team" });
-  await page.getByLabel("Budget year").selectOption({ label: "FY2026" });
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.waitForURL(/\/expenses\/[0-9a-f-]+\/edit$/);
-}
-
-async function fillDetails(page: Page, title: string) {
-  await page.getByLabel("Title", { exact: true }).fill(title);
-  await page.getByLabel("Why it's needed").fill("Two microphones have failed.");
-}
-
-async function preview(page: Page) {
-  await page.getByRole("button", { name: "Preview" }).click();
-  await expect(page.getByRole("heading", { name: "Preview" })).toBeVisible();
-}
-
-async function confirm(page: Page) {
-  await page.getByRole("button", { name: "Confirm submission" }).click();
-  await page.getByRole("button", { name: "Submit", exact: true }).click();
-  await page.waitForURL(/\/expenses\/[0-9a-f-]+\?done=submitted$/);
-  await expect(page.getByRole("heading", { name: "Expense submitted" })).toBeVisible();
-}
+/* Expense submissions, the requester's side (Stage 3; 6B.3, DRD 6.9a). */
 
 test.describe("Expense submissions (Stage 3)", () => {
   test("AC-65 AC-115 purchase request: 2 × $450.00 = $1,008.00 incl. tax", async ({ page }) => {

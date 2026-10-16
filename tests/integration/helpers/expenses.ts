@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { userDepartments, userRoles } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
 import type { ExpenseContentInput } from "@/domain/expenses/schema";
@@ -21,10 +22,15 @@ export async function person(db: Db, roles: Role[], departmentIds: string[] = []
   const row = await insertUser(db, { pcoLeaderVerified: true, accessStatus: "active" });
   for (const role of roles) await db.insert(userRoles).values({ userId: row.id, role });
   for (const departmentId of departmentIds) {
+    // The first leader is the department's Primary; anyone later is a Representative.
+    const taken = await db
+      .select({ id: userDepartments.id })
+      .from(userDepartments)
+      .where(eq(userDepartments.departmentId, departmentId));
     await db.insert(userDepartments).values({
       userId: row.id,
       departmentId,
-      representativeType: "primary",
+      representativeType: taken.length === 0 ? "primary" : "representative",
     });
   }
   const subject: Subject = {
