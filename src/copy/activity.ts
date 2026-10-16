@@ -107,6 +107,21 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
     label: "Planning Center lists a department again",
     group: "settings",
   },
+  "admin.department_pco_mapping_changed": {
+    label: "Changed a department's Planning Center mapping",
+    group: "settings",
+  },
+  "admin.pco_leader_suggested": { label: "Planning Center suggested a leader", group: "settings" },
+  "admin.pco_suggestion_added": { label: "Added a suggested leader", group: "settings" },
+  "admin.pco_suggestion_ignored": { label: "Ignored a suggested leader", group: "settings" },
+  "admin.pco_suggestion_withdrawn": {
+    label: "A suggested leader is no longer a leader in Planning Center",
+    group: "settings",
+  },
+  "admin.pco_mapping_sync_problem": {
+    label: "Couldn't check a department's Planning Center leaders",
+    group: "settings",
+  },
   "admin.pco_person_tested": { label: "Tested a person in Planning Center", group: "settings" },
   "admin.pco_person_searched": {
     label: "Searched Planning Center for a person",

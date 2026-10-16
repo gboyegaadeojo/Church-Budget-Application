@@ -24,6 +24,10 @@ export type PcoFieldDefinition = {
   dataType: string;
 };
 
+/** A Services team, Groups group or group tag a department can be mapped to (FR-39). */
+export type PcoSource = { id: string; name: string };
+export type PcoTeamSourceType = "services_team" | "groups_group" | "groups_tag";
+
 export interface PlanningCenterDirectory {
   /** The church's organization id, to reject sign-ins from other churches. */
   organizationId(): Promise<string>;
@@ -36,6 +40,13 @@ export interface PlanningCenterDirectory {
   searchPeople(query: string): Promise<PcoPerson[]>;
   /** The raw values stored for one person and field (several for checkboxes). */
   getFieldValues(personId: string, fieldDefinitionId: string): Promise<string[]>;
+  /** Services teams, Groups groups and group tags, for the department mapping (FR-39). */
+  listSources(type: PcoTeamSourceType): Promise<PcoSource[]>;
+  /**
+   * The Planning Center person ids of a source's leaders: a team's team leaders, a
+   * group's leaders, or the leaders of every group with the tag. Null if it no longer exists.
+   */
+  sourceLeaderIds(type: PcoTeamSourceType, id: string): Promise<string[] | null>;
 }
 
 /** Planning Center could not answer: network, timeout, rate limit, outage or bad credentials. */
@@ -223,13 +234,71 @@ export class HttpPlanningCenterDirectory implements PlanningCenterDirectory {
     );
     return data.data.map((d) => text(d, "value"));
   }
+
+  async listSources(type: PcoTeamSourceType): Promise<PcoSource[]> {
+    const current = (r: Resource) => !r.attributes.archived_at && !r.attributes.deleted_at;
+    if (type === "groups_tag") {
+      const groups = await this.getList("/groups/v2/tag_groups?include=tags&per_page=100");
+      const tags = new Map(
+        (groups.included ?? []).filter((t) => t.type === "Tag").map((t) => [t.id, t]),
+      );
+      return groups.data.flatMap((g) =>
+        relatedIds(g, "tags").flatMap((id) => {
+          const tag = tags.get(id);
+          return tag ? [{ id, name: `${text(g, "name")}: ${text(tag, "name")}` }] : [];
+        }),
+      );
+    }
+    const path = type === "services_team" ? "/services/v2/teams" : "/groups/v2/groups";
+    const rows = await this.getList(`${path}?per_page=100`);
+    return rows.data.filter(current).map((r) => ({ id: r.id, name: text(r, "name") }));
+  }
+
+  /** The leaders of one group, or null if the group is gone. */
+  private async groupLeaderIds(groupId: string): Promise<string[] | null> {
+    const exists = await this.get(`/groups/v2/groups/${groupId}`);
+    if (exists === null) return null;
+    const members = await this.getList(
+      `/groups/v2/groups/${groupId}/memberships?where[role]=leader&per_page=100`,
+    );
+    return members.data
+      .filter((m) => text(m, "role") === "" || text(m, "role") === "leader")
+      .flatMap((m) => relatedIds(m, "person"));
+  }
+
+  async sourceLeaderIds(type: PcoTeamSourceType, id: string): Promise<string[] | null> {
+    if (!/^\d+$/.test(id)) return null;
+    if (type === "services_team") {
+      const team = await this.get(`/services/v2/teams/${id}`);
+      if (team === null) return null;
+      const leaders = await this.getList(`/services/v2/teams/${id}/team_leaders?per_page=100`);
+      return unique(
+        leaders.data.flatMap((l) => [...relatedIds(l, "people"), ...relatedIds(l, "person")]),
+      );
+    }
+    if (type === "groups_group") return this.groupLeaderIds(id);
+    const tag = await this.get(`/groups/v2/tags/${id}`);
+    if (tag === null) return null;
+    const groups = await this.getList(`/groups/v2/tags/${id}/groups?per_page=100`);
+    const all: string[] = [];
+    for (const g of groups.data) all.push(...((await this.groupLeaderIds(g.id)) ?? []));
+    return unique(all);
+  }
 }
+
+const unique = (ids: string[]) => [...new Set(ids)];
 
 /** Test and local-development stand-in, loaded from fixtures instead of the network. */
 export type FakeDirectoryData = {
   organizationId: string;
   fields: PcoFieldDefinition[];
   people: (PcoPerson & { fieldValues?: Record<string, string[]> })[];
+  /** Services teams with their team leaders' person ids (FR-39). */
+  teams?: (PcoSource & { leaderIds: string[] })[];
+  /** Groups with their leaders' person ids and tag ids. */
+  groups?: (PcoSource & { leaderIds: string[]; tagIds?: string[] })[];
+  /** Group tags, named "Tag group: Tag". */
+  tags?: PcoSource[];
   /** Simulate an outage. */
   unavailable?: boolean;
 };
@@ -280,5 +349,28 @@ export class FakePlanningCenterDirectory implements PlanningCenterDirectory {
   async getFieldValues(personId: string, fieldDefinitionId: string) {
     this.check();
     return this.data.people.find((p) => p.id === personId)?.fieldValues?.[fieldDefinitionId] ?? [];
+  }
+
+  async listSources(type: PcoTeamSourceType) {
+    this.check();
+    const rows =
+      type === "services_team"
+        ? (this.data.teams ?? [])
+        : type === "groups_group"
+          ? (this.data.groups ?? [])
+          : (this.data.tags ?? []);
+    return rows.map(({ id, name }) => ({ id, name }));
+  }
+
+  async sourceLeaderIds(type: PcoTeamSourceType, id: string) {
+    this.check();
+    if (type === "services_team")
+      return this.data.teams?.find((t) => t.id === id)?.leaderIds ?? null;
+    if (type === "groups_group")
+      return this.data.groups?.find((g) => g.id === id)?.leaderIds ?? null;
+    if (!this.data.tags?.some((t) => t.id === id)) return null;
+    return unique(
+      (this.data.groups ?? []).filter((g) => g.tagIds?.includes(id)).flatMap((g) => g.leaderIds),
+    );
   }
 }

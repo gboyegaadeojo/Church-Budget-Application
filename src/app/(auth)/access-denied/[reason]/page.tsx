@@ -11,6 +11,7 @@ import { copy } from "@/copy/en-CA";
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
 import { getOpenCycle } from "@/domain/annual/queries";
+import { suggestedFor } from "@/domain/departments/pco-mapping";
 import { getSignInSettings } from "@/domain/settings";
 import { ACCESS_DENIED_REASONS, isAccessDeniedReason } from "@/domain/users/access";
 import { deniedEmail } from "@/lib/denied-email";
@@ -49,10 +50,25 @@ export default async function AccessDeniedPage({ params }: PageProps<"/access-de
         </div>
       </div>
       <Suspense fallback={<p className="text-sm text-fg-muted">{copy.app.loading}</p>}>
+        {reason === "waiting" && <AskedToConfirm />}
         {reason === "waiting" && <PickDepartment />}
         <AccountDetails />
       </Suspense>
     </div>
+  );
+}
+
+/** FR-39: Planning Center named their departments, and the administrator was asked to confirm. */
+async function AskedToConfirm() {
+  await connection();
+  const userId = (await auth())?.user?.id;
+  if (!userId) return null;
+  const names = await suggestedFor(getDb(), userId);
+  if (names.length === 0) return null;
+  return (
+    <p className="rounded-control border border-info p-4 text-sm" role="status">
+      {d.askedToConfirm(names.join(", "))}
+    </p>
   );
 }
 

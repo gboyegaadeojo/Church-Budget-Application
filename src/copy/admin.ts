@@ -173,6 +173,72 @@ export const adminCopy = {
     pcoSaved: "Planning Center value saved.",
     fromPlanningCenter: "From Planning Center",
     noLongerListed: "No longer listed in Planning Center",
+    /** FR-39: linking a department to a Services team, Groups group or group tag. */
+    pco: {
+      heading: "Planning Center mapping",
+      intro:
+        "Link this department to a team, group or tag in Planning Center, so its leaders there become the department's leaders. Nothing is ever written to Planning Center.",
+      source: "Linked to",
+      noSource: "Not linked",
+      sourceTypes: {
+        services_team: "Services team",
+        groups_group: "Group",
+        groups_tag: "Group tag",
+      },
+      sourceOption: (type: string, name: string) => `${type}: ${name}`,
+      current: (type: string, name: string) => `Linked to the ${type} "${name}".`,
+      notLinked: "Not linked to a team, group or tag. Leaders are assigned here instead.",
+      mode: "When leaders are found",
+      modes: {
+        suggest: "Suggest them (you add or ignore each one)",
+        automatic: "Add them automatically as Representatives, and remove them when they leave",
+      },
+      countsAsLeaders: "Team leaders count as Group Leaders",
+      countsAsLeadersHint:
+        "Lets this source's leaders submit without the Group Leader field in Planning Center.",
+      save: "Save mapping",
+      saved: "Planning Center mapping saved.",
+      lastSynced: (when: string) => `Last checked ${when}.`,
+      neverSynced: "Not checked yet.",
+      syncNow: "Sync now",
+      synced: (added: number, suggested: number, flagged: number, removed: number) =>
+        [
+          "Checked with Planning Center.",
+          added ? `${added} added.` : "",
+          suggested ? `${suggested} suggested.` : "",
+          flagged ? `${flagged} no longer a leader.` : "",
+          removed ? `${removed} removed.` : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      unavailable:
+        "Planning Center can't be reached right now, so the list of teams can't load. The current mapping stays in force.",
+      suggestionsHeading: "Suggested by Planning Center",
+      suggestionsHint:
+        "These people lead the linked source in Planning Center. They can't act for the department until you add them.",
+      noSuggestions: "No suggestions waiting.",
+      suggestedSince: (when: string) => `Suggested ${when}`,
+      addAs: "Add as",
+      add: "Add",
+      ignore: "Ignore",
+      added: "Leader added from Planning Center.",
+      ignored: "Suggestion ignored.",
+      noLongerLeader: "No longer a team leader in Planning Center",
+      removedReason: (source: string) =>
+        `Automatic: no longer a leader of ${source} in Planning Center`,
+      teamLeaderValue: (source: string) => `Team leader: ${source}`,
+      problemMissing:
+        "The linked team, group or tag no longer exists in Planning Center. Link the department again.",
+      problemUnavailable: "Planning Center couldn't be reached to check this department's leaders.",
+      listBadge: (name: string) => `Planning Center: ${name}`,
+      errors: {
+        source: "Choose a team, group or tag from the list.",
+        taken: (name: string) =>
+          `${name} is already linked to that. Link each one to one department.`,
+        unavailable: "Planning Center can't be reached right now. Try again shortly.",
+        notMapped: "Link the department to a team, group or tag first.",
+      },
+    },
     statusHeading: "Status",
     deactivate: "Deactivate department",
     deactivateTitle: (name: string) => `Deactivate ${name}?`,

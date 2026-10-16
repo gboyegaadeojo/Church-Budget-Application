@@ -6,7 +6,11 @@ import { writeAudit } from "@/lib/audit";
 import type { PlanningCenterDirectory } from "@/lib/pco";
 import type { Role } from "@/lib/roles";
 import { emailPcoUnavailable } from "./emails";
-import { checkLeader } from "./leader-check";
+import {
+  checkLeaderOrTeamLeader,
+  syncAllMappings,
+  type MappingRunSummary,
+} from "@/domain/departments/pco-mapping";
 import { refreshMinistryDepartments } from "./ministry-departments";
 import { rolesOf } from "./sign-in";
 import { applyVerification } from "./verification";
@@ -17,6 +21,8 @@ export type PcoVerifySummary = {
   suspended: number;
   /** Departments leaders joined through their Ministry Department field. */
   departmentsJoined: number;
+  /** Departments mapped to a Planning Center team, group or tag (FR-39). */
+  mappings: MappingRunSummary | null;
   unavailable: boolean;
 };
 
@@ -31,7 +37,7 @@ const STAFF: Role[] = [
 
 /**
  * Nightly `pco-verify` job (FR-01a "When checked", AC-9): re-checks everyone who must be
- * a Group Leader. Each person is checked in their own transaction, so one failure does
+ * a Group Leader, then syncs every department mapped to a Planning Center team (FR-39). Each person is checked in their own transaction, so one failure does
  * not undo the others. If Planning Center is down, nothing changes and the outage is
  * logged once; the 72-hour grace period then applies at sign-in.
  */
@@ -46,6 +52,7 @@ export async function runPcoVerification(
     verified: 0,
     suspended: 0,
     departmentsJoined: 0,
+    mappings: null,
     unavailable: false,
   };
 
@@ -68,7 +75,10 @@ export async function runPcoVerification(
     ...(settings.leader.requireForRequesters ? (["requester"] as Role[]) : []),
     ...(settings.leader.requireForStaff ? STAFF : []),
   ];
-  if (roles.length === 0) return summary;
+  if (roles.length === 0) {
+    summary.mappings = await syncAllMappings(db, directory, now);
+    return summary;
+  }
 
   const people = await db
     .selectDistinct({ id: users.id })
@@ -85,7 +95,7 @@ export async function runPcoVerification(
   for (const { id } of people) {
     await db.transaction(async (tx) => {
       const [user] = await tx.select().from(users).where(eq(users.id, id)).for("update");
-      const check = await checkLeader(directory, settings.leader, {
+      const check = await checkLeaderOrTeamLeader(tx, directory, settings.leader, {
         pcoPersonId: user.pcoPersonId,
         email: user.pcoPersonId ? null : user.email,
       });
@@ -104,6 +114,9 @@ export async function runPcoVerification(
       if (!outcome.requesterUsable && check.status !== "unavailable") summary.suspended++;
     });
   }
+
+  // After verification, so the mapping sees today's Group Leader answers (FR-39).
+  summary.mappings = await syncAllMappings(db, directory, now);
 
   await writeAudit(db, {
     actor: { kind: "job" },

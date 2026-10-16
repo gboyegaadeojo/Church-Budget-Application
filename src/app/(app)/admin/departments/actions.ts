@@ -12,8 +12,15 @@ import {
   setPlanningCenterValue,
   setRepresentative,
 } from "@/domain/departments/service";
+import {
+  addSuggestedLeader,
+  ignoreSuggestedLeader,
+  setDepartmentMapping,
+  syncDepartmentNow,
+} from "@/domain/departments/pco-mapping";
 import type { ActionState } from "@/lib/action-state";
 import { form, runAction } from "@/lib/admin-server";
+import { getPlanningCenterDirectory } from "@/lib/pco-directory";
 
 const d = adminCopy.departments;
 const LIST = "/admin/departments";
@@ -125,6 +132,68 @@ export async function removeLeaderAction(_: ActionState, data: FormData): Promis
       return d.leaderSaved;
     },
     { paths: [page(departmentId), LIST, "/admin/users"] },
+  );
+}
+
+// ---------------------------------------------------------------- Planning Center mapping (FR-39)
+
+export async function departmentMappingAction(
+  _: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  const id = form.text(data, "id");
+  return runAction(
+    async (tx, viewer) => {
+      await setDepartmentMapping(tx, viewer, getPlanningCenterDirectory(), {
+        id,
+        source: form.text(data, "source"),
+        mode: form.text(data, "mode") || "suggest",
+        countsAsLeaders: form.checked(data, "countsAsLeaders"),
+        version: form.text(data, "version"),
+      });
+      return d.pco.saved;
+    },
+    { paths: [page(id), LIST] },
+  );
+}
+
+export async function syncNowAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const id = form.text(data, "id");
+  return runAction(
+    async (tx, viewer) => {
+      const s = await syncDepartmentNow(tx, viewer, getPlanningCenterDirectory(), { id });
+      return d.pco.synced(s.added.length, s.suggested.length, s.flagged.length, s.removed.length);
+    },
+    { paths: [page(id), LIST, "/admin/users"] },
+  );
+}
+
+export async function addSuggestionAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const departmentId = form.text(data, "departmentId");
+  return runAction(
+    async (tx, viewer) => {
+      await addSuggestedLeader(tx, viewer, {
+        id: form.text(data, "suggestionId"),
+        slot: form.text(data, "slot"),
+        version: form.text(data, "version"),
+      });
+      return d.pco.added;
+    },
+    { paths: [page(departmentId), LIST, "/admin/users"] },
+  );
+}
+
+export async function ignoreSuggestionAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const departmentId = form.text(data, "departmentId");
+  return runAction(
+    async (tx, viewer) => {
+      await ignoreSuggestedLeader(tx, viewer, {
+        id: form.text(data, "suggestionId"),
+        version: form.text(data, "version"),
+      });
+      return d.pco.ignored;
+    },
+    { paths: [page(departmentId)] },
   );
 }
 
