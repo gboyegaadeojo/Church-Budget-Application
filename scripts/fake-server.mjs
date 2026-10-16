@@ -10,6 +10,7 @@
  */
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { watch } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
@@ -29,12 +30,34 @@ const server = new PGLiteSocketServer({ db, port: dbPort, host: "127.0.0.1", max
 await server.start();
 const databaseUrl = `postgres://postgres:postgres@127.0.0.1:${dbPort}/postgres`;
 
+const migrationsFolder = path.join(root, "drizzle");
 const client = new pg.Client({ connectionString: databaseUrl });
 await client.connect();
-await migrate(drizzle(client), { migrationsFolder: path.join(root, "drizzle") });
+await migrate(drizzle(client), { migrationsFolder });
 await seedTestData(client);
 await client.end();
 console.log(`Fake database ready on port ${dbPort} (migrated and seeded).`);
+
+// With --dev, a migration added while the server runs (a new step's table) is applied
+// as soon as it lands, so pages that use it work without a restart.
+if (dev) {
+  let timer;
+  watch(path.join(migrationsFolder, "meta", "_journal.json"), () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const c = new pg.Client({ connectionString: databaseUrl });
+      try {
+        await c.connect();
+        await migrate(drizzle(c), { migrationsFolder });
+        console.log("Fake database: new migrations applied.");
+      } catch (error) {
+        console.error(`Fake database: migrating failed (restart to start fresh): ${error.message}`);
+      } finally {
+        await c.end().catch(() => {});
+      }
+    }, 1000);
+  });
+}
 
 const next = spawn(
   process.execPath,
