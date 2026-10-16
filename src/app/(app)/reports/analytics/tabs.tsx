@@ -17,7 +17,11 @@ export function AnalyticsTabs({ current, showAccess }: { current: Tab; showAcces
       : []),
   ];
   return (
-    <nav aria-label={a.tabs.label} className="flex gap-1 border-b border-border">
+    // A segmented control: the current tab is a raised pill on a soft track.
+    <nav
+      aria-label={a.tabs.label}
+      className="inline-flex max-w-full gap-1 overflow-x-auto rounded-[12px] bg-surface-2 p-1"
+    >
       {tabs.map((tab) => {
         const active = tab.id === current;
         return (
@@ -26,10 +30,10 @@ export function AnalyticsTabs({ current, showAccess }: { current: Tab; showAcces
             href={tab.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "-mb-px inline-flex min-h-11 items-center border-b-2 px-3 text-sm lg:min-h-9",
+              "inline-flex min-h-10 items-center rounded-[9px] px-4 text-sm whitespace-nowrap transition-colors duration-fast lg:min-h-9",
               active
-                ? "border-area-reports font-semibold text-area-reports"
-                : "border-transparent text-fg-muted hover:text-fg",
+                ? "bg-surface font-semibold text-area-reports shadow-card"
+                : "text-fg-muted hover:bg-surface/60 hover:text-fg",
             )}
           >
             {tab.label}

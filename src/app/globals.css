@@ -15,7 +15,7 @@
   --surface-hover: #ebecf2;
   --fg: #18181b;
   --fg-muted: #656572;
-  --border: #e4e4ea;
+  --border: #e8e8ee;
   --border-strong: #8a8a96;
   --accent: #6d45d8;
   --accent-hover: #5934bd;
@@ -25,7 +25,7 @@
   --warning: #965a08;
   --danger: #c43d46;
   --info: #3267b1;
-  --shadow-card: 0 1px 2px rgb(24 24 27 / 0.04), 0 1px 3px rgb(24 24 27 / 0.06);
+  --shadow-card: 0 1px 2px rgb(24 24 27 / 0.03), 0 4px 14px rgb(24 24 27 / 0.04);
   --shadow-overlay: 0 8px 24px rgb(24 24 27 / 0.12), 0 2px 6px rgb(24 24 27 / 0.08);
   /*
    * One colour per navigation area, so each group is recognisable at a glance.
@@ -123,9 +123,9 @@
   --font-sans:
     "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  --radius-control: 8px;
-  --radius-card: 14px;
-  --radius-dialog: 18px;
+  --radius-control: 10px;
+  --radius-card: 18px;
+  --radius-dialog: 22px;
 
   --shadow-card: var(--shadow-card);
   --shadow-overlay: var(--shadow-overlay);

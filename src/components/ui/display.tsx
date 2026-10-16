@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { ArrowLeft, Inbox, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Inbox, ShieldAlert, type LucideIcon } from "lucide-react";
 import { adminCopy } from "@/copy/admin";
 import { copy } from "@/copy/en-CA";
 import { cn } from "@/lib/cn";
 import { cardClass } from "./styles";
+import { TONE, type Tone } from "./tone";
+
+export type { Tone } from "./tone";
 
 /** Status badge (DRD 7.2): readable text, semantic tone, never pulsing. */
 export type BadgeTone = "neutral" | "info" | "success" | "warning" | "danger";
@@ -58,42 +61,134 @@ export function PageHeader({
         </Link>
       )}
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-[32px] leading-tight font-bold tracking-tight">{title}</h1>
         {children}
       </div>
-      {intro && <p className="max-w-3xl text-fg-muted">{intro}</p>}
+      {intro && <p className="max-w-3xl text-[15px] text-fg-muted">{intro}</p>}
     </div>
   );
 }
 
+/** An icon in a rounded tile of a tone's colour: how each card shows what it's about. */
+export function IconChip({
+  icon: Icon,
+  tone,
+  size = "md",
+}: {
+  icon: LucideIcon;
+  tone: Tone;
+  size?: "sm" | "md";
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "grid shrink-0 place-items-center rounded-[10px]",
+        TONE[tone].chip,
+        size === "md" ? "size-10" : "size-8",
+      )}
+    >
+      <Icon className={size === "md" ? "size-5" : "size-4"} />
+    </span>
+  );
+}
+
+/**
+ * A card with a heading. With `icon` and `tone`, the heading leads with a coloured icon
+ * tile, so the cards on one page are easy to tell apart (DRD 3.2 area colours).
+ */
 export function Section({
   title,
   description,
   children,
   id,
+  icon,
+  tone = "slate",
+  actions,
 }: {
   title: string;
   description?: string;
   children: React.ReactNode;
   id?: string;
+  icon?: LucideIcon;
+  tone?: Tone;
+  /** Shown at the right of the heading, such as a link or a count. */
+  actions?: React.ReactNode;
 }) {
   const headingId = `${id ?? title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-heading`;
   return (
-    <section aria-labelledby={headingId} className={cn(cardClass, "space-y-4")}>
-      <div className="space-y-1">
-        <h2 id={headingId} className="text-lg font-semibold">
-          {title}
-        </h2>
-        {description && <p className="text-sm text-fg-muted">{description}</p>}
+    <section
+      aria-labelledby={headingId}
+      className={cn(cardClass, "scroll-mt-20 space-y-5")}
+      id={id}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        {icon && <IconChip icon={icon} tone={tone} />}
+        <div className="min-w-0 flex-1 space-y-1">
+          <h2 id={headingId} className="text-[17px] leading-tight font-semibold tracking-tight">
+            {title}
+          </h2>
+          {description && <p className="text-sm text-fg-muted">{description}</p>}
+        </div>
+        {actions && <div className="shrink-0">{actions}</div>}
       </div>
       {children}
     </section>
   );
 }
 
+/**
+ * A headline number (DRD 6.13 "headline cards"): a label, the figure, an optional line
+ * beneath, and a coloured icon tile. `emphasis` rings it, for "this needs you".
+ */
+export function StatCard({
+  label,
+  value,
+  icon,
+  tone,
+  children,
+  emphasis = false,
+  href,
+  current = false,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon: LucideIcon;
+  tone: Tone;
+  children?: React.ReactNode;
+  emphasis?: boolean;
+  href?: string;
+  /** The filter this tile links to is the one showing. */
+  current?: boolean;
+}) {
+  const body = (
+    <>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-medium text-fg-muted">{label}</p>
+        <IconChip icon={icon} tone={tone} size="sm" />
+      </div>
+      <p className="text-[28px] leading-none font-semibold tracking-tight tabular">{value}</p>
+      {children && <div className="text-sm text-fg-muted">{children}</div>}
+    </>
+  );
+  const className = cn(
+    cardClass,
+    "flex flex-col gap-3 p-5 sm:p-5",
+    (emphasis || current) && "ring-2 ring-accent ring-offset-0",
+    href && "transition-shadow duration-fast hover:shadow-overlay",
+  );
+  return href ? (
+    <Link href={href} className={className} aria-current={current ? "true" : undefined}>
+      {body}
+    </Link>
+  ) : (
+    <div className={className}>{body}</div>
+  );
+}
+
 export function EmptyState({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-control border border-dashed border-border-strong p-5 text-sm text-fg-muted">
+    <div className="flex items-center gap-3 rounded-[12px] bg-surface-2 p-4 text-sm text-fg-muted">
       <Inbox className="size-5 shrink-0" aria-hidden="true" />
       <p>{children}</p>
     </div>

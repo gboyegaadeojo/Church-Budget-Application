@@ -2,13 +2,21 @@ import { Suspense } from "react";
 import { UnreadMessages } from "@/components/request-messages";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarClock, CheckCircle2, MessageCircleQuestion, Plane } from "lucide-react";
+import {
+  CalendarClock,
+  CheckCircle2,
+  MessageCircleQuestion,
+  Plane,
+  FileText,
+  CalendarX,
+} from "lucide-react";
 import {
   AdminSkeleton,
   EmptyState,
   PageHeader,
   PermissionDenied,
   Section,
+  IconChip,
 } from "@/components/ui/display";
 import { buttonClass, cardClass, linkClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
@@ -140,9 +148,12 @@ async function DashboardContent({
       {cycle && deadline ? (
         <section aria-labelledby="cycle-heading" className={cn(cardClass, "space-y-4")}>
           <div className="flex items-start gap-3">
-            <CalendarClock className="mt-0.5 size-6 shrink-0 text-accent" aria-hidden="true" />
+            <IconChip icon={CalendarClock} tone="blue" />
             <div className="space-y-1">
-              <h2 id="cycle-heading" className="text-lg font-semibold">
+              <h2
+                id="cycle-heading"
+                className="text-[17px] leading-tight font-semibold tracking-tight"
+              >
                 {d.cycleOpen(cycle.name)}
               </h2>
               <p className="text-sm text-fg-muted">
@@ -153,7 +164,7 @@ async function DashboardContent({
             </div>
           </div>
           {thisYear.length > 0 && (
-            <ul className="divide-y divide-border rounded-control border border-border">
+            <ul className="divide-y divide-border overflow-hidden rounded-[14px] bg-surface-2/60">
               {thisYear.map((r) => {
                 const action = openAction(r);
                 return (
@@ -204,11 +215,20 @@ async function DashboardContent({
           )}
         </section>
       ) : (
-        <section aria-labelledby="cycle-heading" className={cn(cardClass, "space-y-1")}>
-          <h2 id="cycle-heading" className="text-lg font-semibold">
-            {d.closedTitle}
-          </h2>
-          <p className="text-sm text-fg-muted">{d.closedBody(adminContactEmail)}</p>
+        <section
+          aria-labelledby="cycle-heading"
+          className={cn(cardClass, "flex items-start gap-3")}
+        >
+          <IconChip icon={CalendarX} tone="slate" />
+          <div className="space-y-1">
+            <h2
+              id="cycle-heading"
+              className="text-[17px] leading-tight font-semibold tracking-tight"
+            >
+              {d.closedTitle}
+            </h2>
+            <p className="text-sm text-fg-muted">{d.closedBody(adminContactEmail)}</p>
+          </div>
         </section>
       )}
 
@@ -217,10 +237,15 @@ async function DashboardContent({
           aria-labelledby="needs-action-heading"
           className={cn(cardClass, "space-y-3 border-warning")}
         >
-          <h2 id="needs-action-heading" className="flex items-center gap-2 text-lg font-semibold">
-            <MessageCircleQuestion className="size-5 text-warning" aria-hidden="true" />
-            {d.needsAction}
-          </h2>
+          <div className="flex items-center gap-3">
+            <IconChip icon={MessageCircleQuestion} tone="amber" />
+            <h2
+              id="needs-action-heading"
+              className="text-[17px] leading-tight font-semibold tracking-tight"
+            >
+              {d.needsAction}
+            </h2>
+          </div>
           <RequestTable requests={returned} caption={d.needsAction} />
         </section>
       )}
@@ -253,7 +278,7 @@ async function DashboardContent({
         />
       ))}
 
-      <Section title={d.myRequests} id="my-requests">
+      <Section title={d.myRequests} id="my-requests" icon={FileText} tone="violet">
         {others.length === 0 && returned.length === 0 ? (
           <EmptyState>{d.empty}</EmptyState>
         ) : others.length > 0 ? (

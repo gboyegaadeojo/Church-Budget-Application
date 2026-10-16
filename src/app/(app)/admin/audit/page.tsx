@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Mail, Send, XCircle } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import {
   AdminSkeleton,
@@ -10,9 +10,11 @@ import {
   PageHeader,
   PermissionDenied,
   Section,
+  StatCard,
   type BadgeTone,
+  type Tone,
 } from "@/components/ui/display";
-import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
+import { buttonClass, inputClass, linkClass } from "@/components/ui/styles";
 import { emailCopy } from "@/copy/email";
 import { getDb } from "@/db";
 import {
@@ -38,7 +40,13 @@ const TONE: Record<EmailStatus, BadgeTone> = {
   sent: "success",
   failed: "danger",
 };
-const ICON = { pending: Clock, sending: Clock, sent: CheckCircle2, failed: XCircle } as const;
+const ICON = { pending: Clock, sending: Send, sent: CheckCircle2, failed: XCircle } as const;
+const STATUS_TONE: Record<EmailStatus, Tone> = {
+  pending: "amber",
+  sending: "blue",
+  sent: "green",
+  failed: "red",
+};
 
 /** Admin → Notifications & Audit: the email log and sending failed emails again (FR-21). */
 export default function NotificationsPage({ searchParams }: PageProps<"/admin/audit">) {
@@ -70,32 +78,19 @@ async function NotificationsContent({
     <>
       <PageHeader title={a.title} intro={a.intro} />
 
-      <section aria-label={a.countsLabel} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {EMAIL_STATUSES.map((s) => {
-          const Icon = ICON[s];
-          return (
-            <Link
-              key={s}
-              href={`/admin/audit?status=${s}`}
-              aria-current={status === s ? "true" : undefined}
-              className={cn(
-                cardClass,
-                "block space-y-1 p-4 transition-colors hover:border-border-strong sm:p-4",
-                status === s && "border-primary",
-              )}
-            >
-              <span className="flex items-center gap-1.5 text-sm text-fg-muted">
-                <Icon className="size-4" aria-hidden="true" />
-                {labels[s]}
-              </span>
-              <span className="tabular block text-2xl font-semibold">
-                {log.counts[s].toLocaleString("en-CA")}
-              </span>
-            </Link>
-          );
-        })}
+      <section aria-label={a.countsLabel} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {EMAIL_STATUSES.map((s) => (
+          <StatCard
+            key={s}
+            href={`/admin/audit?status=${s}`}
+            current={status === s}
+            label={labels[s]}
+            value={log.counts[s].toLocaleString("en-CA")}
+            icon={ICON[s]}
+            tone={STATUS_TONE[s]}
+          />
+        ))}
       </section>
-
       {log.retryable > 0 && (
         <ActionForm action={retryEmailsAction} aria-label={a.retryAll} className="space-y-2">
           <input type="hidden" name="all" value="1" />
@@ -104,7 +99,7 @@ async function NotificationsContent({
         </ActionForm>
       )}
 
-      <Section title={a.logHeading} id="email-log">
+      <Section title={a.logHeading} id="email-log" icon={Mail} tone="violet">
         <form
           method="get"
           role="search"
@@ -159,7 +154,12 @@ async function NotificationsContent({
         {log.truncated && <p className="text-sm text-fg-muted">{a.truncated}</p>}
       </Section>
 
-      <p className="text-sm text-fg-muted">{a.activityNote}</p>
+      <p className="text-sm text-fg-muted">
+        {a.activityNote}{" "}
+        <Link href="/reports/analytics" className={linkClass}>
+          {a.activityLink}
+        </Link>
+      </p>
     </>
   );
 }

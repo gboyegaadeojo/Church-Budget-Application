@@ -1,3 +1,4 @@
+import { Palette, Percent, ShieldCheck, Globe2, Plug, UserX } from "lucide-react";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -129,39 +130,67 @@ async function SettingsContent() {
     <>
       <PageHeader title={s.title} />
 
-      <Section
-        title={brandingCopy.settingsHeading}
-        description={brandingCopy.settingsIntro}
-        id="branding"
-      >
-        <Link href="/admin/settings/branding" className={linkClass}>
-          {brandingCopy.settingsLink}
-        </Link>
-      </Section>
+      {/* The short settings side by side on wide screens. */}
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Section
+          title={brandingCopy.settingsHeading}
+          description={brandingCopy.settingsIntro}
+          id="branding"
+          icon={Palette}
+          tone="pink"
+        >
+          <Link href="/admin/settings/branding" className={linkClass}>
+            {brandingCopy.settingsLink}
+          </Link>
+        </Section>
 
-      <Section title={s.taxHeading} id="tax">
-        <TaxRateForm percent={taxRateToPercent(sales_tax_rate)} versions={taxVersions} />
-      </Section>
+        <Section title={s.taxHeading} id="tax" icon={Percent} tone="teal">
+          <TaxRateForm percent={taxRateToPercent(sales_tax_rate)} versions={taxVersions} />
+        </Section>
 
-      <Section title={s.threshold.heading} description={s.threshold.intro} id="second-approval">
-        <ActionForm action={secondApprovalAction} aria-label={s.threshold.heading}>
-          <input type="hidden" name="versions" value={JSON.stringify(thresholdVersions)} />
-          <p className="text-sm font-medium">
-            {threshold === null ? s.threshold.off : s.threshold.on(formatCAD(threshold))}
-          </p>
-          <div className="max-w-xs">
-            <TextField
-              name="amount"
-              label={s.threshold.label}
-              hint={s.threshold.hint}
-              defaultValue={threshold === null ? "" : centsToInput(threshold)}
-              inputMode="decimal"
-              autoComplete="off"
-            />
-          </div>
-          <SubmitButton tone="secondary">{s.threshold.save}</SubmitButton>
-        </ActionForm>
-      </Section>
+        <Section
+          title={s.threshold.heading}
+          description={s.threshold.intro}
+          id="second-approval"
+          icon={ShieldCheck}
+          tone="violet"
+        >
+          <ActionForm action={secondApprovalAction} aria-label={s.threshold.heading}>
+            <input type="hidden" name="versions" value={JSON.stringify(thresholdVersions)} />
+            <p className="text-sm font-medium">
+              {threshold === null ? s.threshold.off : s.threshold.on(formatCAD(threshold))}
+            </p>
+            <div className="max-w-xs">
+              <TextField
+                name="amount"
+                label={s.threshold.label}
+                hint={s.threshold.hint}
+                defaultValue={threshold === null ? "" : centsToInput(threshold)}
+                inputMode="decimal"
+                autoComplete="off"
+              />
+            </div>
+            <SubmitButton tone="secondary">{s.threshold.save}</SubmitButton>
+          </ActionForm>
+        </Section>
+
+        <Section title={s.timeZoneHeading} id="time-zone" icon={Globe2} tone="blue">
+          <ActionForm action={timeZoneAction} aria-label={s.timeZoneHeading}>
+            <input type="hidden" name="versions" value={JSON.stringify(zoneVersions)} />
+            <div className="max-w-md">
+              <SelectField
+                name="timeZone"
+                label={s.timeZone}
+                hint={s.timeZoneHint}
+                defaultValue={zone}
+                options={timeZoneOptions(zone).map((z) => ({ value: z, label: z }))}
+                required
+              />
+            </div>
+            <SubmitButton tone="secondary">{adminCopy.common.save}</SubmitButton>
+          </ActionForm>
+        </Section>
+      </div>
 
       <AccountantsSection
         team={team}
@@ -171,24 +200,7 @@ async function SettingsContent() {
 
       <SignersSection signers={signers} today={today} />
 
-      <Section title={s.timeZoneHeading} id="time-zone">
-        <ActionForm action={timeZoneAction} aria-label={s.timeZoneHeading}>
-          <input type="hidden" name="versions" value={JSON.stringify(zoneVersions)} />
-          <div className="max-w-md">
-            <SelectField
-              name="timeZone"
-              label={s.timeZone}
-              hint={s.timeZoneHint}
-              defaultValue={zone}
-              options={timeZoneOptions(zone).map((z) => ({ value: z, label: z }))}
-              required
-            />
-          </div>
-          <SubmitButton tone="secondary">{adminCopy.common.save}</SubmitButton>
-        </ActionForm>
-      </Section>
-
-      <Section title={s.pcoHeading} id="planning-center">
+      <Section title={s.pcoHeading} id="planning-center" icon={Plug} tone="amber">
         <p className="flex flex-wrap items-center gap-2 text-sm">
           <span className="text-fg-muted">{s.connection}</span>
           {pco.connection === "connected" ? (
@@ -216,7 +228,7 @@ async function SettingsContent() {
         />
       </Section>
 
-      <Section title={s.failingHeading} id="failing">
+      <Section title={s.failingHeading} id="failing" icon={UserX} tone="red">
         {failing.length === 0 ? (
           <EmptyState>{s.failingEmpty}</EmptyState>
         ) : (

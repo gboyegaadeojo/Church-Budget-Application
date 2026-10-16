@@ -530,8 +530,8 @@ export const emailCopy = {
     retried: (n: number) => `${n} ${plural(n, "email", "emails")} will be sent again.`,
     nothingToRetry: "There are no failed emails to send again.",
     openRequest: "Open request",
-    activityNote:
-      "The full activity log moves to Reports → Analytics & Audit in the next step; every change is already recorded.",
+    activityNote: "Every change in the app, not only emails, is in the activity log.",
+    activityLink: "Open the activity log",
   },
 
   /** The Emails section of a request's history (AC-58). */

@@ -2,7 +2,25 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DownloadButton } from "@/components/download-button";
-import { AdminSkeleton, EmptyState, PageHeader, PermissionDenied } from "@/components/ui/display";
+import {
+  BadgeCheck,
+  BarChart3,
+  FileText,
+  Hourglass,
+  Landmark,
+  Scale,
+  Timer,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  AdminSkeleton,
+  EmptyState,
+  IconChip,
+  PageHeader,
+  PermissionDenied,
+  StatCard,
+  type Tone,
+} from "@/components/ui/display";
 import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
 import { activityCopy } from "@/copy/activity";
 import { getDb } from "@/db";
@@ -117,24 +135,6 @@ function Filters({ data }: { data: Overview }) {
   );
 }
 
-function Tile({
-  label,
-  value,
-  children,
-}: {
-  label: string;
-  value: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className={cn(cardClass, "space-y-2")}>
-      <p className="text-sm text-fg-muted">{label}</p>
-      <p className="text-2xl font-semibold tabular">{value}</p>
-      {children}
-    </div>
-  );
-}
-
 function Headlines({ data }: { data: Overview }) {
   const { counts, board, turnaround } = data;
   const percent =
@@ -142,7 +142,12 @@ function Headlines({ data }: { data: Overview }) {
   const over = board ? board.allocatedCents - board.totalCents : 0;
   return (
     <section aria-label={o.intro} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Tile label={o.board} value={board ? formatCAD(board.totalCents) : "—"}>
+      <StatCard
+        label={o.board}
+        value={board ? formatCAD(board.totalCents) : "—"}
+        icon={Landmark}
+        tone="violet"
+      >
         {board ? (
           <>
             <div
@@ -168,21 +173,33 @@ function Headlines({ data }: { data: Overview }) {
         ) : (
           <p className="text-sm text-fg-muted">{o.boardNone}</p>
         )}
-      </Tile>
-      <Tile label={o.requested} value={formatCAD(counts.totalRequestedCents)}>
+      </StatCard>
+      <StatCard
+        label={o.requested}
+        value={formatCAD(counts.totalRequestedCents)}
+        icon={FileText}
+        tone="blue"
+      >
         <p className="text-sm text-fg-muted">{o.requestedFrom(counts.submitted)}</p>
-      </Tile>
-      <Tile label={o.approved} value={formatCAD(counts.totalApprovedCents)}>
+      </StatCard>
+      <StatCard
+        label={o.approved}
+        value={formatCAD(counts.totalApprovedCents)}
+        icon={BadgeCheck}
+        tone="green"
+      >
         <p className="text-sm text-fg-muted">{o.approvedFrom(counts.approved)}</p>
-      </Tile>
-      <Tile
+      </StatCard>
+      <StatCard
+        icon={Timer}
+        tone="amber"
         label={o.turnaround}
         value={turnaround.averageDays === null ? "—" : o.days(turnaround.averageDays)}
       >
         <p className="text-sm text-fg-muted">
           {turnaround.decided ? o.turnaroundFrom(turnaround.decided) : o.noDecisions}
         </p>
-      </Tile>
+      </StatCard>
     </section>
   );
 }
@@ -194,19 +211,26 @@ const td = "py-2 pr-4 align-top";
 function ChartCard({
   id,
   title,
+  icon,
+  tone,
   children,
   table,
 }: {
   id: string;
   title: string;
+  icon: LucideIcon;
+  tone: Tone;
   children: React.ReactNode;
   table: React.ReactNode;
 }) {
   return (
-    <section aria-labelledby={`${id}-heading`} className={cn(cardClass, "space-y-4")}>
-      <h2 id={`${id}-heading`} className="text-lg font-semibold">
-        {title}
-      </h2>
+    <section aria-labelledby={`${id}-heading`} className={cn(cardClass, "space-y-5")}>
+      <div className="flex items-center gap-3">
+        <IconChip icon={icon} tone={tone} />
+        <h2 id={`${id}-heading`} className="text-[17px] leading-tight font-semibold tracking-tight">
+          {title}
+        </h2>
+      </div>
       {children}
       <details className="rounded-control border border-border">
         <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-medium lg:min-h-9">
@@ -225,6 +249,8 @@ function StagesChart({ data }: { data: Overview }) {
   return (
     <ChartCard
       id="stages"
+      icon={BarChart3}
+      tone="blue"
       title={o.stagesTitle(data.counts.approved, data.counts.expected)}
       table={
         <table className="w-full text-sm">
@@ -304,6 +330,8 @@ function AmountsChart({ data }: { data: Overview }) {
   return (
     <ChartCard
       id="amounts"
+      icon={Scale}
+      tone="teal"
       title={o.amountsTitle(
         formatCAD(data.counts.totalApprovedCents),
         formatCAD(data.counts.totalRequestedCents),
@@ -408,10 +436,13 @@ function AmountsChart({ data }: { data: Overview }) {
 function Waiting({ data }: { data: Overview }) {
   const rows = data.turnaround.waiting;
   return (
-    <section aria-labelledby="waiting-heading" className={cn(cardClass, "space-y-4")}>
-      <h2 id="waiting-heading" className="text-lg font-semibold">
-        {o.waitingTitle}
-      </h2>
+    <section aria-labelledby="waiting-heading" className={cn(cardClass, "space-y-5")}>
+      <div className="flex items-center gap-3">
+        <IconChip icon={Hourglass} tone="amber" />
+        <h2 id="waiting-heading" className="text-[17px] leading-tight font-semibold tracking-tight">
+          {o.waitingTitle}
+        </h2>
+      </div>
       {rows.length === 0 ? (
         <EmptyState>{o.waitingNone}</EmptyState>
       ) : (

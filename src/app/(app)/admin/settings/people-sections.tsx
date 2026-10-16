@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Calculator, PenLine } from "lucide-react";
 import {
   ActionForm,
   SelectField,
@@ -46,7 +46,7 @@ export function AccountantsSection({
   const primary = team.find((m) => m.id === primaryId);
   const candidates = team.filter((m) => m.accountant);
   return (
-    <Section title={a.heading} description={a.intro} id="accountants">
+    <Section title={a.heading} description={a.intro} id="accountants" icon={Calculator} tone="blue">
       {team.length === 0 ? (
         <EmptyState>
           {a.empty}{" "}
@@ -105,7 +105,7 @@ export function SignersSection({ signers, today }: { signers: Signer[]; today: s
     x.activeFrom <= today && (x.activeUntil === null || today < x.activeUntil);
   const activeCount = signers.filter(isActive).length;
   return (
-    <Section title={g.heading} description={g.intro} id="signers">
+    <Section title={g.heading} description={g.intro} id="signers" icon={PenLine} tone="green">
       {activeCount < 2 && <Warning>{g.fewerThanTwo(activeCount)}</Warning>}
       {signers.length === 0 ? (
         <EmptyState>{g.empty}</EmptyState>

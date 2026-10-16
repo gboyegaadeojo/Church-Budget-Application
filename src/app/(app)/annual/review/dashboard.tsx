@@ -1,9 +1,29 @@
 import Link from "next/link";
 import { UnreadMessages } from "@/components/request-messages";
-import { CalendarClock, Eye, Plane } from "lucide-react";
+import {
+  BadgeCheck,
+  Building2,
+  CalendarClock,
+  ClipboardCheck,
+  Eye,
+  FileText,
+  Gavel,
+  Hourglass,
+  Inbox,
+  Plane,
+  Send,
+} from "lucide-react";
 import { BoardAllocationBar } from "@/components/board-allocation";
 import { DownloadButton } from "@/components/download-button";
-import { Badge, EmptyState, PageHeader, PermissionDenied, Section } from "@/components/ui/display";
+import {
+  Badge,
+  EmptyState,
+  IconChip,
+  PageHeader,
+  PermissionDenied,
+  Section,
+  StatCard,
+} from "@/components/ui/display";
 import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
 import { accountCopy } from "@/copy/account";
 import { annualCopy } from "@/copy/annual";
@@ -154,17 +174,47 @@ export async function ReviewDashboardView({
             </div>
           </form>
 
-          <section aria-label={r.cards.expected} className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-            <Stat label={r.cards.expected} value={counts.expected} />
-            <Stat label={r.cards.submitted} value={counts.submitted} />
-            <Stat label={r.cards.outstanding} value={counts.outstanding} />
-            <Stat label={r.cards.awaiting} value={counts.awaitingReview} strong />
-            <Stat label={r.cards.totalRequested} value={formatCAD(counts.totalRequestedCents)} />
-            <Stat label={r.cards.totalApproved} value={formatCAD(counts.totalApprovedCents)} />
-            <p className="col-span-2 text-sm text-fg-muted lg:col-span-3">
-              {r.cards.returned} {counts.returned} · {r.cards.approved} {counts.approved} ·{" "}
-              {r.cards.declined} {counts.declined}
-            </p>
+          <section
+            aria-label={r.cards.expected}
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <StatCard
+              label={r.cards.awaiting}
+              value={counts.awaitingReview}
+              icon={ClipboardCheck}
+              tone="violet"
+              emphasis={counts.awaitingReview > 0}
+            />
+            <StatCard label={r.cards.submitted} value={counts.submitted} icon={Send} tone="blue">
+              {r.cards.expected} {counts.expected}
+            </StatCard>
+            <StatCard
+              label={r.cards.outstanding}
+              value={counts.outstanding}
+              icon={Hourglass}
+              tone="amber"
+            />
+            <StatCard
+              label={r.cards.totalRequested}
+              value={formatCAD(counts.totalRequestedCents)}
+              icon={FileText}
+              tone="teal"
+            />
+            <StatCard
+              label={r.cards.totalApproved}
+              value={formatCAD(counts.totalApprovedCents)}
+              icon={BadgeCheck}
+              tone="green"
+            />
+            <StatCard
+              label={r.cards.decided}
+              value={counts.approved + counts.declined}
+              icon={Gavel}
+              tone="pink"
+            >
+              {r.cards.approved} {counts.approved} · {r.cards.declined} {counts.declined} ·{" "}
+              {r.cards.returned} {counts.returned}
+            </StatCard>
           </section>
 
           {cover.primaryAway && cover.primary && (
@@ -189,16 +239,15 @@ export async function ReviewDashboardView({
             <section
               aria-labelledby="decision-emails-heading"
               className={cn(
-                "flex flex-wrap items-center gap-3 rounded-card border bg-surface p-4 shadow-card",
-                dashboard.release.holding ? "border-warning" : "border-border",
+                cardClass,
+                "flex flex-wrap items-center gap-3 p-4 sm:p-4",
+                dashboard.release.holding && "border-warning",
               )}
             >
-              <CalendarClock
-                aria-hidden="true"
-                className={cn(
-                  "size-5 shrink-0",
-                  dashboard.release.holding ? "text-warning" : "text-fg-muted",
-                )}
+              <IconChip
+                icon={CalendarClock}
+                tone={dashboard.release.holding ? "amber" : "blue"}
+                size="sm"
               />
               <div className="min-w-0 flex-1">
                 <h2 id="decision-emails-heading" className="text-sm font-semibold">
@@ -218,7 +267,7 @@ export async function ReviewDashboardView({
             </section>
           )}
 
-          <Section title={r.queueHeading} id="queue">
+          <Section title={r.queueHeading} id="queue" icon={Inbox} tone="violet">
             {queue.length === 0 ? (
               <EmptyState>{counts.submitted === 0 ? r.queueNone : r.queueEmpty}</EmptyState>
             ) : (
@@ -226,7 +275,7 @@ export async function ReviewDashboardView({
             )}
           </Section>
 
-          <Section title={r.departmentsHeading} id="departments">
+          <Section title={r.departmentsHeading} id="departments" icon={Building2} tone="blue">
             <DepartmentTable
               rows={departments}
               zone={zone}
@@ -269,26 +318,9 @@ function Select({
   );
 }
 
-function Stat({
-  label,
-  value,
-  strong,
-}: {
-  label: string;
-  value: string | number;
-  strong?: boolean;
-}) {
-  return (
-    <div className={cn(cardClass, "space-y-1 p-4 sm:p-4", strong && "border-accent")}>
-      <p className="text-xs font-medium text-fg-muted">{label}</p>
-      <p className="tabular text-xl font-semibold sm:text-2xl">{value}</p>
-    </div>
-  );
-}
-
 // relative: keeps visually hidden header text inside the scrolling region.
 const tableWrap = "relative -mx-1 overflow-x-auto px-1";
-const th = "py-2 pr-4 text-xs font-medium text-fg-muted";
+const th = "py-2.5 pr-4 text-xs font-semibold tracking-wide text-fg-muted uppercase";
 
 function QueueTable({
   rows,
@@ -332,7 +364,7 @@ function QueueTable({
           {rows.map((row) => {
             const awaiting = AWAITING.includes(row.status);
             return (
-              <tr key={row.requestId}>
+              <tr key={row.requestId} className="transition-colors hover:bg-surface-hover/60">
                 <td className="py-3 pr-4 font-medium whitespace-nowrap">{row.referenceNumber}</td>
                 <td className="py-3 pr-4">
                   {row.departmentName}
@@ -433,7 +465,7 @@ function DepartmentTable({
         </thead>
         <tbody className="divide-y divide-border">
           {rows.map((row) => (
-            <tr key={row.departmentId}>
+            <tr key={row.departmentId} className="transition-colors hover:bg-surface-hover/60">
               <td className="py-3 pr-4 font-medium">
                 {row.requestId ? (
                   <Link href={`/annual/review/${row.requestId}`} className={linkClass}>
