@@ -30,6 +30,7 @@ import {
   activityPeople,
   activityQuery,
   listActivity,
+  seesAdminAudit,
   type ActivityFilters,
   type AuditAreaName,
   type QuickView,
@@ -40,6 +41,7 @@ import { viewerAllowedTo } from "@/lib/admin-server";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/roles";
 import { formatDate } from "@/lib/time-zone";
+import { AnalyticsTabs } from "./tabs";
 
 export const metadata: Metadata = { title: a.title };
 
@@ -134,14 +136,7 @@ async function Activity({ searchParams }: { searchParams: Promise<Search> }) {
     <>
       <PageHeader title={a.title} intro={a.intro} />
 
-      <nav aria-label={a.title} className="flex gap-1 border-b border-border">
-        <span
-          aria-current="page"
-          className="-mb-px border-b-2 border-area-reports px-3 py-2 text-sm font-semibold text-area-reports"
-        >
-          {a.tabs.activity}
-        </span>
-      </nav>
+      <AnalyticsTabs current="activity" showAccess={seesAdminAudit(viewer)} />
 
       {/* One row that scrolls sideways on a phone; wraps on wider screens. */}
       <section

@@ -136,6 +136,44 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
     await expect(page).toHaveURL(/\/reports\/analytics$/);
   });
 
+  for (const [name, size] of [
+    ["360 px", MOBILE],
+    ["1440 px", DESKTOP],
+  ] as const) {
+    test(`FR-52 the administrator's Access tab lists sign-ins and what to fix, axe clean at ${name}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(size);
+      await signInAs(page, PEOPLE.gina);
+      await page.goto("/reports/analytics");
+      await page
+        .getByRole("navigation", { name: "Analytics & Audit tabs" })
+        .getByRole("link", { name: "Access" })
+        .click();
+      await expect(page).toHaveURL(/\/reports\/analytics\/access$/);
+      await expect(page.getByRole("region", { name: "Sign-ins per day" })).toBeVisible();
+      await expect(page.getByRole("region", { name: "Failed sign-ins" })).toBeVisible();
+      await expect(
+        page.getByRole("region", { name: "Departments without a Backup" }),
+      ).toBeVisible();
+      await expectAxeClean(page);
+      await expectNoHorizontalScroll(page);
+    });
+  }
+
+  test("FR-52 staff don't see the Access tab, and can't open it", async ({ page }) => {
+    await signInAs(page, PEOPLE.pat);
+    await page.goto("/reports/analytics");
+    await expect(
+      page.getByRole("navigation", { name: "Analytics & Audit tabs" }).getByRole("link", {
+        name: "Access",
+      }),
+    ).toHaveCount(0);
+    await page.goto("/reports/analytics/access");
+    await expect(page.getByText("The Access tab is for the System Administrator.")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Sign-ins per day" })).toHaveCount(0);
+  });
+
   test("the accountant's log has no sign-in, settings or email views", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.pat);
