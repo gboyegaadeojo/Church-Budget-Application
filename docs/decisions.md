@@ -581,3 +581,24 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 - **Removing a receipt** marks it removed and keeps the file for the retention period (6 years). It's allowed only while the department can still change the claim.
 - **The same file on two claims** (same SHA-256) is flagged to the department and the approvers (FR-47).
 - **Phones:** **Take photo** opens the camera. **Choose file** takes several files. On wider screens, files can be dropped on the box.
+
+## Stage 3 step 4: the accountant's first approval (6B.4 level 1) (2026-10-16)
+
+- **Pages:**
+  - **Review queue** (`/expenses/review`). Headline figures: waiting, total waiting, over budget, oldest. Filters (department, type, status, over budget only) are kept in the address. Rows show days waiting and flags.
+  - **Review screen** (`/expenses/review/{id}`). Details and lines on the left. On the right: receipts, the budget impact (Remaining now, and if approved), warnings, then the decision.
+- **Opening a Submitted expense starts the review** (status In Review), as for annual budgets. From then on the department can't edit it (FR-44, AC-71). Only someone who may decide it starts it.
+- **Decisions:**
+  - **Approve and send to Board Chair.**
+  - **Approve a different amount**: one total including tax, with a required reason. For a purchase request the tax is worked out inside it (AC-69); a claim adds none. It can't be **more** than was asked, so an approval never raises what the requester asked for.
+  - **Return for clarification**, with a question.
+  - **Decline**, with a reason.
+  - Every decision is confirmed in a dialog that says what happens next, and is idempotent.
+- **Approval doesn't charge the budget** (AC-73). The expense waits at the accountant's amount as Pending, and the Board Chair's final approval charges it.
+- **Warnings above the decision:**
+  - **Over budget**, worked out now (FR-43, AC-140), with the requester's explanation.
+  - **Duplicates** (FR-47): another live claim of the department with the same vendor, date and amount, or the same receipt number, linked.
+  - **Late receipts** (FR-46), with the explanation.
+  - **No receipt**, with the reason.
+  - **A claim above the purchase request it closes** (FR-42).
+- **Conflicts (AC-72):** someone who leads the department, submitted the expense or is its payee sees the screen read-only, with the reason. The queue marks those rows. Each decision records the remaining balance at that moment.
