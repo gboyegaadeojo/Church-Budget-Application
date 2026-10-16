@@ -129,7 +129,7 @@ test.describe("Expense submissions (Stage 3)", () => {
     await page.getByLabel("Over-budget explanation").fill("The old desk failed; the board agreed.");
     await preview(page);
     await confirm(page);
-    await expect(page.getByText(/This takes Media Team over budget by \$/)).toBeVisible();
+    await expect(page.getByText(/This takes Media Team over budget by \$/).first()).toBeVisible();
     await expect(page.getByText("The old desk failed; the board agreed.")).toBeVisible();
   });
 
