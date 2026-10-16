@@ -145,8 +145,9 @@ export const MONEY_EVENT_TYPES = ["annual.approved", "annual.reopened", "admin.t
 export const activityCopy = {
   title: "Analytics & Audit",
   intro: "Everything that happens in the app: who did what, when and why.",
+  denied:
+    "Analytics & Audit is for church staff. Your budget's own history is under Activity on this budget, on the budget.",
   tabs: { activity: "Activity", overview: "Overview", access: "Access" },
-  laterTabs: "The Overview and Access tabs arrive with the next stage.",
   groups: {
     requests: "Budget requests",
     decisions: "Decisions",
@@ -175,7 +176,7 @@ export const activityCopy = {
   filters: {
     heading: "Filters",
     q: "Search",
-    qHint: "A reference number, a person or a department.",
+    qHint: "Reference, person or department",
     person: "Person",
     anyone: "Anyone",
     role: "Acting as",
@@ -191,6 +192,7 @@ export const activityCopy = {
     from: "From",
     to: "To",
     apply: "Apply filters",
+    more: "More filters",
     reset: "Reset filters",
   },
   columns: {
@@ -200,6 +202,13 @@ export const activityCopy = {
     item: "Item",
     department: "Department",
     reason: "Reason",
+  },
+  chips: {
+    label: "Filters applied",
+    search: (q: string) => `“${q}”`,
+    from: (date: string) => `From ${date}`,
+    to: (date: string) => `To ${date}`,
+    remove: (filter: string) => `Remove filter: ${filter}`,
   },
   caption: "Activity, newest first",
   system: "The app",

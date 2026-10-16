@@ -96,10 +96,11 @@ export const AREAS: readonly AreaDef[] = [
         act: ["accountant", "backup_approver", "church_admin", "system_admin"],
       },
       {
-        // FR-52, DRD 6.13: everyone sees it, scoped by role on the server; the board reads only.
+        // FR-52, DRD 6.13: staff only (docs/decisions.md, 2026-10-16), scoped by role on the
+        // server; the board reads only.
         href: "/reports/analytics",
         label: n.analyticsAndAudit,
-        act: ["requester", "accountant", "backup_approver", "church_admin", "system_admin"],
+        act: ["accountant", "backup_approver", "church_admin", "system_admin"],
         view: BOARD,
       },
     ],

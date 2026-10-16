@@ -1,20 +1,69 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/display";
+import { KeyRound } from "lucide-react";
+import { AREA_STYLE, AreaBadge } from "@/components/app-shell/area-icon";
 import { linkClass } from "@/components/ui/styles";
 import { activityCopy as a, activityLabel } from "@/copy/activity";
 import { annualCopy } from "@/copy/annual";
 import { copy } from "@/copy/en-CA";
-import type { ActivityItem } from "@/domain/analytics/activity";
+import type { ActivityItem, AuditAreaName } from "@/domain/analytics/activity";
+import type { AreaId } from "@/domain/navigation";
 import { detailRows } from "@/domain/analytics/details";
 import { authorize, type Subject } from "@/lib/authz";
 import { cn } from "@/lib/cn";
+import type { Role } from "@/lib/roles";
 import { formatDateTime } from "@/lib/time-zone";
 
+/** Each role's chip colour (text names the role, so colour is never the only signal). */
+const ROLE_TONE: Record<Role, string> = {
+  requester: "bg-area-expenses-soft text-area-expenses",
+  accountant: "bg-area-annual-soft text-area-annual",
+  backup_approver: "bg-area-annual-soft text-area-annual",
+  board_chair: "bg-area-reports-soft text-area-reports",
+  vice_chair: "bg-area-reports-soft text-area-reports",
+  church_admin: "bg-area-spending-soft text-area-spending",
+  system_admin: "bg-area-admin-soft text-area-admin",
+};
+
+/** The audit areas in the navigation's colours; Access uses Admin's, with its own icon. */
+const AUDIT_AREA: Record<AuditAreaName, AreaId> = {
+  annual: "annual",
+  expenses: "expenses",
+  spending: "spending",
+  admin: "admin",
+  access: "admin",
+};
+
+function AuditAreaBadge({ area }: { area: AuditAreaName }) {
+  if (area !== "access") return <AreaBadge area={AUDIT_AREA[area]} size="sm" />;
+  const s = AREA_STYLE.admin;
+  return (
+    <span
+      aria-hidden="true"
+      className={cn("grid size-7 shrink-0 place-items-center rounded-control", s.soft, s.text)}
+    >
+      <KeyRound className="size-4" />
+    </span>
+  );
+}
+
+export function RoleChip({ role }: { role: Role }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        ROLE_TONE[role],
+      )}
+    >
+      {copy.roles[role]}
+    </span>
+  );
+}
+
 /**
- * The activity log as a table (DRD 6.13): when, who with the role they acted in, what in
- * plain language, the item, department and reason. Each row with details expands to a
- * before/after comparison; changes are marked with a word as well as colour. Reference
- * numbers, people and departments are links where the viewer may open them.
+ * The activity log (DRD 6.13): each event with its area's icon and colour, what happened
+ * in plain language with its budget and department, who did it in which role, when, and
+ * why. Rows with details expand to a before/after comparison; changes are marked with a
+ * word as well as colour. A table on wider screens, a list of cards on phones.
  */
 export function ActivityTable({
   items,
@@ -33,111 +82,122 @@ export function ActivityTable({
   const reviews = authorize(viewer, "annual.review").allowed;
   const admin = viewer.roles.includes("system_admin");
   const requestHref = (id: string) => (reviews ? `/annual/review/${id}` : `/annual/${id}`);
-  const th = "py-2 pr-4 font-medium text-fg-muted";
+  const th = "px-4 py-2.5 text-xs font-semibold tracking-wide text-fg-muted uppercase";
+
+  const what = (e: ActivityItem) => {
+    const rows = detailRows(e.details);
+    return (
+      <div className="min-w-0 space-y-1">
+        <p className="font-medium">{activityLabel(e.eventType)}</p>
+        <p className="text-xs text-fg-muted">
+          {a.areas[e.area]}
+          {showItem && e.request && (
+            <>
+              {" · "}
+              <Link href={requestHref(e.request.id)} className={linkClass}>
+                {e.request.reference || e.request.title || annualCopy.dashboard.untitled}
+              </Link>
+            </>
+          )}
+          {showItem && e.department && (
+            <>
+              {" · "}
+              {admin ? (
+                <Link href={`/admin/departments/${e.department.id}`} className={linkClass}>
+                  {e.department.name}
+                </Link>
+              ) : (
+                e.department.name
+              )}
+            </>
+          )}
+        </p>
+        {rows.length > 0 && (
+          <details className="group/details">
+            <summary className="cursor-pointer text-xs font-medium text-accent">
+              {a.showDetails}
+            </summary>
+            <DetailsTable rows={rows} />
+          </details>
+        )}
+      </div>
+    );
+  };
+
+  const who = (e: ActivityItem) => (
+    <div className="space-y-1">
+      <p>
+        {e.actor ? (
+          admin ? (
+            <Link href={`/admin/users/${e.actor.id}`} className={linkClass}>
+              {e.actor.name}
+            </Link>
+          ) : (
+            e.actor.name
+          )
+        ) : (
+          <span className="text-fg-muted">{e.actorKind === "job" ? a.job : a.system}</span>
+        )}
+      </p>
+      {e.actingRole && <RoleChip role={e.actingRole} />}
+    </div>
+  );
 
   return (
     <div
-      className="overflow-x-auto rounded-card border border-border bg-surface"
-      tabIndex={0}
       role="region"
       aria-label={caption}
+      className="overflow-hidden rounded-card border border-border bg-surface shadow-card"
     >
-      <table className="w-full min-w-[52rem] text-left text-sm">
+      {/* Phones: one card per event. */}
+      <ul className="divide-y divide-border md:hidden">
+        {items.map((e) => (
+          <li key={e.id} className="flex gap-3 p-4">
+            <AuditAreaBadge area={e.area} />
+            <div className="min-w-0 flex-1 space-y-2 text-sm">
+              {what(e)}
+              {who(e)}
+              <p className="text-xs text-fg-muted">{formatDateTime(e.at, zone)}</p>
+              {e.reason && <p className="break-words">{e.reason}</p>}
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <table className="hidden w-full text-left text-sm md:table">
         <caption className="sr-only">{caption}</caption>
-        <thead className="border-b border-border">
+        <thead className="border-b border-border bg-surface-2">
           <tr>
-            <th scope="col" className={cn(th, "pl-4")}>
-              {a.columns.when}
+            <th scope="col" className={th}>
+              {a.columns.what}
             </th>
             <th scope="col" className={th}>
               {a.columns.who}
             </th>
             <th scope="col" className={th}>
-              {a.columns.what}
+              {a.columns.when}
             </th>
-            {showItem && (
-              <th scope="col" className={th}>
-                {a.columns.item}
-              </th>
-            )}
-            {showItem && (
-              <th scope="col" className={th}>
-                {a.columns.department}
-              </th>
-            )}
             <th scope="col" className={th}>
               {a.columns.reason}
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {items.map((e) => {
-            const rows = detailRows(e.details);
-            return (
-              <tr key={e.id} className="align-top">
-                <td className="py-3 pr-4 pl-4 whitespace-nowrap">{formatDateTime(e.at, zone)}</td>
-                <td className="py-3 pr-4">
-                  {e.actor ? (
-                    admin ? (
-                      <Link href={`/admin/users/${e.actor.id}`} className={linkClass}>
-                        {e.actor.name}
-                      </Link>
-                    ) : (
-                      e.actor.name
-                    )
-                  ) : (
-                    <span className="text-fg-muted">
-                      {e.actorKind === "job" ? a.job : a.system}
-                    </span>
-                  )}
-                  {e.actingRole && (
-                    <span className="mt-1 block">
-                      <Badge>{copy.roles[e.actingRole]}</Badge>
-                    </span>
-                  )}
-                </td>
-                <td className="py-3 pr-4">
-                  <span className="block">{activityLabel(e.eventType)}</span>
-                  <span className="block text-xs text-fg-muted">{a.areas[e.area]}</span>
-                  {rows.length > 0 && (
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-xs text-accent">
-                        {a.showDetails}
-                      </summary>
-                      <DetailsTable rows={rows} />
-                    </details>
-                  )}
-                </td>
-                {showItem && (
-                  <td className="py-3 pr-4 whitespace-nowrap">
-                    {e.request ? (
-                      <Link href={requestHref(e.request.id)} className={linkClass}>
-                        {e.request.reference || e.request.title || annualCopy.dashboard.untitled}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                )}
-                {showItem && (
-                  <td className="py-3 pr-4">
-                    {e.department ? (
-                      admin ? (
-                        <Link href={`/admin/departments/${e.department.id}`} className={linkClass}>
-                          {e.department.name}
-                        </Link>
-                      ) : (
-                        e.department.name
-                      )
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                )}
-                <td className="max-w-xs py-3 pr-4 break-words">{e.reason ?? "—"}</td>
-              </tr>
-            );
-          })}
+          {items.map((e) => (
+            <tr key={e.id} className="align-top transition-colors hover:bg-surface-hover">
+              <td className="px-4 py-3">
+                <div className="flex gap-3">
+                  <AuditAreaBadge area={e.area} />
+                  {what(e)}
+                </div>
+              </td>
+              <td className="px-4 py-3">{who(e)}</td>
+              <td className="px-4 py-3 whitespace-nowrap text-fg-muted">
+                {formatDateTime(e.at, zone)}
+              </td>
+              <td className="max-w-xs px-4 py-3 break-words">{e.reason ?? "—"}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

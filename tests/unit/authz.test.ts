@@ -195,10 +195,11 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
   ],
   ["see My tasks", "home.view", {}, ["act", "act", "act", "act", "act", "act", "act"]],
   [
+    // Staff only (docs/decisions.md, 2026-10-16).
     "use Analytics & Audit",
     "analytics.view",
     {},
-    ["act", "act", "act", "read", "read", "act", "act"],
+    ["no", "act", "act", "read", "read", "act", "act"],
   ],
 ];
 
@@ -256,6 +257,13 @@ describe("multi-role users (union of roles)", () => {
     expect(
       authorize(accountantRequester, "annual.view", { ...OWN, annualStatus: "draft" }),
     ).toMatchObject({ allowed: true, actingRole: "requester", readOnly: false });
+  });
+
+  it("opens Analytics & Audit through the staff role", () => {
+    expect(authorize(accountantRequester, "analytics.view")).toMatchObject({
+      allowed: true,
+      actingRole: "accountant",
+    });
   });
 
   it("acts as accountant for other departments", () => {

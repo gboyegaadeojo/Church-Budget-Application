@@ -23,9 +23,8 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
         page.getByRole("heading", { level: 1, name: "Analytics & Audit" }),
       ).toBeVisible();
       const log = page.getByRole("region", { name: "Activity, newest first" });
-      // Gina's own sign-in is there, with the method in its details.
-      const row = log.getByRole("row").filter({ hasText: "Signed in" }).first();
-      await expect(row).toBeVisible();
+      // Gina's own sign-in is there: a table row on a wide screen, a card on a phone.
+      await expect(log.getByText("Signed in").filter({ visible: true }).first()).toBeVisible();
       await expectNoHorizontalScroll(page);
       await expectAxeClean(page);
     });
@@ -39,9 +38,15 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
     await page.goto("/reports/analytics");
     await page.getByRole("link", { name: "Settings and role changes" }).click();
     await expect(page).toHaveURL(/quick=settings/);
+    await page.getByText("More filters").click();
     await page.getByLabel("Kind of event").selectOption("access");
     await page.getByRole("button", { name: "Apply filters" }).click();
     await expect(page).toHaveURL(/group=access/);
+    // Each applied filter is a chip that removes just itself.
+    const applied = page.getByRole("list", { name: "Filters applied" });
+    await expect(applied.getByRole("link")).toHaveCount(2);
+    await applied.getByRole("link", { name: "Remove filter: Access and sign-in" }).click();
+    await expect(page).toHaveURL(/quick=settings$/);
     await page.getByRole("link", { name: "Reset filters" }).first().click();
     await expect(page).toHaveURL(/\/reports\/analytics$/);
 
@@ -55,12 +60,18 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
     ).toBeVisible();
   });
 
-  test("a department leader's log holds only their own activity", async ({ page }) => {
+  test("AC-128 a department leader can't open Analytics & Audit or export the log", async ({
+    page,
+  }) => {
+    await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.sam);
+    const nav = page.getByRole("navigation", { name: "Main navigation" });
+    await expect(nav.getByRole("link", { name: "Analytics & Audit" })).toHaveCount(0);
     await page.goto("/reports/analytics");
-    const log = page.getByRole("region", { name: "Activity, newest first" });
-    await expect(log.getByRole("row").filter({ hasText: "Signed in" }).first()).toBeVisible();
-    await expect(log.getByText("Gina Admin")).toHaveCount(0);
+    await expect(page.getByText("Analytics & Audit is for church staff.")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Activity, newest first" })).toHaveCount(0);
+    const response = await page.request.get("/api/exports/activity");
+    expect(response.status()).toBe(403);
   });
 
   test("global search opens with / and goes to a page by keyboard", async ({ page }) => {
@@ -92,7 +103,9 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
     await expect(page).toHaveURL(/\/admin\/users$/);
   });
 
-  test("Home's recent activity shows what happened on the person's budgets", async ({ page }) => {
+  test("a leader keeps their budget's history, without Recent activity on Home", async ({
+    page,
+  }) => {
     await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.sam);
     await page.goto("/annual/new");
@@ -106,12 +119,19 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
     await page.goto(`/annual/${id}/activity`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     const own = page.getByRole("region", { name: "Activity on this budget" });
-    await expect(own.getByText("Started a draft budget")).toBeVisible();
+    await expect(own.getByText("Started a draft budget").filter({ visible: true })).toBeVisible();
     await expectAxeClean(page);
 
     await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Recent activity" })).toHaveCount(0);
+  });
+
+  test("staff see Recent activity on Home, linked to the full log", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.pat);
     const recent = page.getByRole("region", { name: "Recent activity" });
-    await expect(recent.getByText("Started a draft budget").first()).toBeVisible();
+    await expect(recent).toBeVisible();
     await recent.getByRole("link", { name: "See all activity" }).click();
     await expect(page).toHaveURL(/\/reports\/analytics$/);
   });

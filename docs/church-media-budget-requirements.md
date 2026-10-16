@@ -361,7 +361,7 @@ The system administrator ("Administrator" in this document) maintains applicatio
 | See the "My tasks" home (FR-37) | Yes | Yes | Yes | Yes | Yes |
 | Set Primary and Backup requesters (FR-38) | Primary can nominate Backups | No | No | No | Yes |
 | Map departments to Planning Center (FR-39) | No | No | No | No | Yes |
-| Activity, audit and analytics dashboard (FR-52) | Own department's activity | Annual budget, expense and spending analytics; financial audit log | Analytics for expenses they decided; read-only | Spending and payment analytics; spending audit log | Everything, including sign-ins, settings and access changes |
+| Activity, audit and analytics dashboard (FR-52) | None (staff only); their own budget's history on the budget | Annual budget, expense and spending analytics; financial audit log | Analytics for expenses they decided; read-only | Spending and payment analytics; spending audit log | Everything, including sign-ins, settings and access changes |
 
 The Vice-Chair column is identical to the Board Chair column. A person with several roles gets the union of their roles' permissions, still subject to the conflict-of-interest rules (FR-33, FR-47).
 
@@ -1526,7 +1526,7 @@ Location: **Reports → Analytics & Audit** in the one app (FR-37). What each pe
 ### Rules
 
 - Read-only: nothing on this dashboard changes data; actions happen on the item's own page.
-- Requesters see only their own department's analytics and activity, without payment details (20.1).
+- Analytics & Audit is for staff only (decided 2026-10-16, docs/decisions.md). Requesters can't open it and the server refuses it; they see their own budget's history on the budget ("Activity on this budget"), without payment details (20.1).
 - Charts follow DRD 6.13: accessible colours, table alternatives, keyboard navigation, and no information conveyed by colour alone.
 - Performance: the Overview loads within the targets in 13.1 for a full year of data; heavy figures may be pre-computed by the nightly job and labelled "Updated at {time}".
 
@@ -2664,7 +2664,7 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 - **AC-125** Every event type listed in FR-22, including sign-ins, access denied, and settings changes, appears in the Activity tab with actor, role, time, item, and reason.
 - **AC-126** Filtering the Activity tab by department, person, event group, and date range returns only matching events, and the filtered view can be exported to Excel; the export is audited.
 - **AC-127** The Overview totals (approved, committed, spent, remaining) match the Spending dashboard and the Budget vs Actual export to the cent.
-- **AC-128** A requester sees only their own department's analytics and activity, with no payment details; a direct request for another department's data is refused by the server.
+- **AC-128** A requester can't open Analytics & Audit or export its log (the server refuses both). On their own budget they see its history only, with no payment details; a direct request for another department's data is refused by the server.
 - **AC-129** Clicking a chart bar opens the list of items behind it, and each chart has an accessible table view.
 - **AC-130** No user, including the administrator, can edit or delete an audit event through the app or its API.
 

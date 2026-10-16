@@ -33,7 +33,9 @@ import { zonedDate, zonedLocalToUtc } from "@/lib/time-zone";
  * - System Administrator: everything, including sign-ins, settings and access changes.
  * - Accountant and backup approver: the financial log (Annual Budget, Expenses, Spending).
  * - Church Administrator: the spending log.
- * - Requester: their own departments' activity (no internal exports).
+ * - Requester: their own departments' activity (no internal exports). Only the budget's
+ *   own "Activity on this budget" page uses this now: Analytics & Audit and Home's Recent
+ *   activity are for staff (`analytics.view`, docs/decisions.md 2026-10-16).
  * - Everyone: what they did themselves.
  * Several roles see the union. Filters only ever narrow this scope.
  */

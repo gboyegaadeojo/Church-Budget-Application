@@ -190,8 +190,10 @@ const RULES: Record<Action, readonly Rule[]> = {
   "cycle.extend_deadline": [{ roles: ["system_admin", ...ACCOUNTANTS] }],
 
   "home.view": [{ roles: EVERY_ROLE }],
+  // Staff only, by the church's decision (docs/decisions.md, 2026-10-16): a requester sees
+  // their own budget's history on the budget, not the dashboard.
   "analytics.view": [
-    { roles: EVERY_ROLE.filter((r) => !BOARD.includes(r)) },
+    { roles: [...ACCOUNTANTS, "church_admin", "system_admin"] },
     { roles: BOARD, readOnly: true },
   ],
 };

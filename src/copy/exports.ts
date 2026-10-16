@@ -26,8 +26,24 @@ export const exportsCopy = {
     status: "Status",
     download: "Download Excel",
     noCycles: "There are no budget cycles yet.",
-    laterHeading: "Coming with later stages",
-    later: "Expense, payment and spending reports arrive with expenses and spending tracking.",
+    activityHeading: "Activity log",
+    activityIntro:
+      "Who did what and when, with filters and its own Excel export, on Analytics & Audit.",
+    activityOpen: "Open Analytics & Audit",
+    later: [
+      {
+        area: "expenses",
+        title: "Expenses and payments",
+        intro: "Purchase requests, claims, approvals and payments, by department.",
+        stage: "Coming in Stage 3",
+      },
+      {
+        area: "spending",
+        title: "Spending and budget vs actual",
+        intro: "Spending entries, refunds and what's left of each department's budget.",
+        stage: "Coming in Stage 4",
+      },
+    ],
     nothingForYou:
       "There are no reports for your roles yet. Spending reports arrive with spending tracking.",
   },

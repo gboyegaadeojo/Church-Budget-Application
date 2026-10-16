@@ -998,7 +998,7 @@ One page under **Reports → Analytics & Audit**, with three tabs: **Overview**,
 
 **States (11):** loading skeletons per card; empty state "No activity for these filters" with **Reset filters**; error state per card with **Retry**, so one failed chart does not blank the page; permission-denied view for tabs a role cannot see.
 
-**Requester view:** the same page limited to their department: budget, committed, spent, remaining, their requests' timelines and activity. Payment details are hidden.
+**Requester view:** none. Analytics & Audit is for staff only (decided 2026-10-16, docs/decisions.md); a requester sees each of their budgets' history on **Activity on this budget**, and their department's budget figures on their own pages. Payment details are hidden.
 
 ## 6.12 Print styles
 

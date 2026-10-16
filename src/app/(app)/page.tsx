@@ -12,6 +12,7 @@ import { getDb } from "@/db";
 import { listActivity } from "@/domain/analytics/activity";
 import { getChurchTimeZone } from "@/domain/settings";
 import { authorize } from "@/lib/authz";
+import { cn } from "@/lib/cn";
 import type { Viewer } from "@/lib/roles";
 import { formatDateTime } from "@/lib/time-zone";
 import { getViewer } from "@/lib/viewer";
@@ -37,6 +38,7 @@ async function HomeContent() {
   const tasks = await getMyTasks(viewer);
   const firstName = viewer.name.split(" ")[0] ?? viewer.name;
   const now = new Date();
+  const staff = authorize(viewer, "analytics.view").allowed;
 
   return (
     <>
@@ -71,14 +73,15 @@ async function HomeContent() {
         )}
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      {/* Recent activity is part of Analytics & Audit, which is for staff only. */}
+      <div className={cn("grid gap-8", staff && "lg:grid-cols-2")}>
         <EmptySection
           id="at-a-glance-heading"
           title={h.atAGlance}
           body={h.atAGlanceEmpty}
           icon={<LayoutGrid className="size-5 text-fg-muted" aria-hidden="true" />}
         />
-        <RecentActivity viewer={viewer} />
+        {staff && <RecentActivity viewer={viewer} />}
       </div>
     </>
   );

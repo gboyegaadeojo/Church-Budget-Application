@@ -176,7 +176,9 @@ describe("Activity tab (FR-52, AC-125, AC-126)", () => {
     expect(seen).not.toContain("admin.tax_rate_changed");
   });
 
-  it("AC-128 a leader sees only their own department's activity, without internal exports", async () => {
+  // Analytics & Audit is staff-only (docs/decisions.md, 2026-10-16); this scope now serves a
+  // leader's "Activity on this budget" page.
+  it("AC-128 a leader's budget history holds only their own department, without internal exports", async () => {
     const { items } = await listActivity(db, leaderA, {}, { pageSize: 500 });
     expect(items.length).toBeGreaterThan(0);
     for (const item of items) {
@@ -248,6 +250,15 @@ describe("global search (DRD 6.0)", () => {
     // The accountant doesn't see a department's draft.
     const drafts = await globalSearch(db, accountant, "Sound desk");
     expect(drafts.some((r) => r.href.includes(draftA))).toBe(false);
+  });
+
+  it("doesn't offer Analytics & Audit to a department leader", async () => {
+    const pages = (await globalSearch(db, leaderA, "Analytics")).filter((r) => r.group === "pages");
+    expect(pages.some((r) => r.href === "/reports/analytics")).toBe(false);
+    const staff = (await globalSearch(db, accountant, "Analytics")).filter(
+      (r) => r.group === "pages",
+    );
+    expect(staff.some((r) => r.href === "/reports/analytics")).toBe(true);
   });
 
   it("finds people for the administrator only, and pages from the person's navigation", async () => {

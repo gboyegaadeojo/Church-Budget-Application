@@ -15,7 +15,7 @@ This manual explains how to use the app, by role. It is written from the specifi
 6. [Board Chair and Vice-Chair](#6-board-chair-and-vice-chair)
 7. [Church Administrator](#7-church-administrator)
 8. [System Administrator](#8-system-administrator)
-9. [Analytics and Audit (everyone, by role)](#9-analytics-and-audit-everyone-by-role)
+9. [Analytics and Audit (staff)](#9-analytics-and-audit-staff)
 10. [Frequently asked questions](#10-frequently-asked-questions)
 
 ---
@@ -39,7 +39,7 @@ Everyone lands on **Home**:
 
 - **My tasks** lists everything waiting for you across all your roles, oldest first, with one button each. When it is empty it says "You're all caught up."
 - **At a glance** shows a card for each of your roles, such as your department's remaining budget.
-- **Recent activity** shows what changed on items you are involved in.
+- **Recent activity** (staff) shows what changed on items you are involved in, with a link to the full log.
 
 You never need to switch accounts. If you are both an accountant and a requester, you see both in one menu.
 
@@ -167,7 +167,7 @@ Turn on **Away** in the account menu; the backup approver gets your emails and t
 
 ### Reports
 
-**Reports** for Excel exports, and **Reports → Analytics & Audit** for charts and the activity log (section 9).
+**Reports → Exports** has a card for each report (each explains what's in it before you download), and **Reports → Analytics & Audit** for charts and the activity log (section 9).
 
 - **One budget:** **Download Excel** at the top of its review screen, or the **Excel** button on its row in the Review dashboard's department list.
 - **What you're looking at:** **Export this view** on the Review dashboard downloads the cycle with the status and department you filtered by (the search box isn't applied).
@@ -255,21 +255,21 @@ Emails that don't go are retried for about three days. **Admin → Notifications
 
 ---
 
-## 9. Analytics and Audit (everyone, by role)
+## 9. Analytics and Audit (staff)
 
-**Reports → Analytics & Audit** has three tabs. What you see depends on your roles; requesters see their own department only.
+**Reports → Analytics & Audit** is for church staff: the accountant and backup approver, the Board Chair and Vice-Chair (read only), the Church Administrator and the System Administrator. Department leaders don't have it; each of their budgets has its own **Activity on this budget** page instead. It has three tabs, and what you see depends on your roles.
 
 - **Overview:** headline numbers (approved, committed, spent, remaining, waiting approvals) and charts. Use the filter bar (cycle, department, area, dates). Click a bar to see the items behind it, then click an item to open it. **Chart / Table** switches to a table; **Export** downloads Excel.
-- **Activity** (available now): every action on the platform: who did it, in which role, when, on what, and why. Use the quick views (Today, Decisions this week, Money changes, Failed sign-ins and access denied, Settings and role changes, Emails that failed), search (a reference number, person or department), or the filters (person, role, area, kind of event, department, cycle, dates). **Show the details** on a row shows the before and after values, with changes marked. **Export to Excel** downloads the filtered log; the export is recorded too. Pages hold 50 events.
-  - Who sees what: the System Administrator sees everything; the accountant and backup approver see the budget, expense and spending log; the Church Administrator the spending log; department leaders their own departments' activity. Everyone sees what they did themselves.
-  - Each budget has its own **Activity on this budget** page, linked from the budget.
+- **Activity** (available now): every action on the platform: who did it, in which role, when, on what, and why. Use the coloured quick views (Today, Decisions this week, Money changes, Failed sign-ins and access denied, Settings and role changes, Emails that failed), search (a reference number, person or department), or **More filters** (person, role, area, kind of event, department, cycle, dates). Each filter you apply shows as a chip under the search box; select its **×** to remove just that one, or **Reset filters**. Each event shows its area's icon and colour. **Show the details** on a row shows the before and after values, with changes marked. **Export to Excel** downloads the filtered log; the export is recorded too. Pages hold 50 events.
+  - Who sees what: the System Administrator sees everything; the accountant and backup approver see the budget, expense and spending log; the Church Administrator the spending log. Everyone sees what they did themselves.
+  - Each budget has its own **Activity on this budget** page, linked from the budget. Department leaders see it for their own budgets.
 - **Access** (System Administrator): failed sign-ins, access denied attempts, Planning Center problems, and departments without a Backup, each with a link to fix it.
 
 The Overview and Access tabs arrive with the next stage.
 
 The address keeps your filters, so you can bookmark a view or send the link to a colleague who has the same access.
 
-**Finding things:** **Search** in the top bar (or press **/** or **Ctrl+K**) finds a budget by reference number, title, department or item, a department, a page, and (for the System Administrator) a person. Use the arrow keys and Enter, or click. Pages below the main ones show **breadcrumbs** above the title, such as "Annual Budget / Review dashboard", to step back up. **Home** shows **Recent activity** on your budgets and tasks.
+**Finding things:** **Search** in the top bar (or press **/** or **Ctrl+K**) finds a budget by reference number, title, department or item, a department, a page, and (for the System Administrator) a person. Use the arrow keys and Enter, or click. Pages below the main ones show **breadcrumbs** above the title, such as "Annual Budget / Review dashboard", to step back up. For staff, **Home** shows **Recent activity** on your budgets and tasks.
 
 ---
 
