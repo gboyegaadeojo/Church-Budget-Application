@@ -207,6 +207,25 @@ export function StartForm({
         </div>
       )}
 
+      {/* FR-35: only for a department with an earlier request and no budget this year. */}
+      {chosen?.lastYear && !chosen.existing && (
+        <div className="space-y-1">
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium">
+            <input
+              type="checkbox"
+              name="fromLastYear"
+              value="yes"
+              aria-describedby={`${ids}-last-year-hint`}
+              className="size-5 shrink-0 accent-accent"
+            />
+            {s.lastYear(chosen.lastYear.cycleName, chosen.lastYear.reference)}
+          </label>
+          <p id={`${ids}-last-year-hint`} className="pl-8 text-xs text-fg-muted">
+            {s.lastYearHint}
+          </p>
+        </div>
+      )}
+
       <div className="flex justify-end">
         <SubmitButton className="w-full sm:w-auto">
           {chosen?.existing ? s.openIt : s.continue}

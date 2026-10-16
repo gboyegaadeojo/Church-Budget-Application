@@ -34,6 +34,7 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "annual.returned": { label: "Returned the budget with a question", group: "decisions" },
   "annual.declined": { label: "Declined the budget", group: "decisions" },
   "annual.reopened": { label: "Reopened the decision", group: "decisions" },
+  "annual.copied_last_year": { label: "Started from last year's request", group: "requests" },
   "annual.first_approved": { label: "Approved, pending a second approval", group: "decisions" },
   "annual.second_approved": { label: "Gave the second approval", group: "decisions" },
   "annual.second_refused": { label: "Refused the second approval", group: "decisions" },

@@ -16,7 +16,7 @@ import type { TaxBreakdown } from "@/lib/money";
 import type { LineContent } from "./schema";
 import { unreadCounts } from "./messages";
 import { hiddenDecisions } from "./release";
-import { currentTaxRate, editsRemaining, linesOf, totalsOf } from "./service";
+import { currentTaxRate, editsRemaining, lastYearRequests, linesOf, totalsOf } from "./service";
 import type { AnnualStatus } from "./status";
 
 /** Read models for the requester's annual budget screens (DRD 6.2 to 6.5). */
@@ -58,6 +58,8 @@ export type DepartmentChoice = {
   existing: { requestId: string; startedBy: string } | null;
   /** Named by the person's Planning Center Ministry Department. */
   fromPlanningCenter: boolean;
+  /** The department's most recent submitted request from an earlier cycle (FR-35). */
+  lastYear: { cycleName: string; reference: string | null } | null;
 };
 
 export type DepartmentPicker = {
@@ -105,14 +107,17 @@ async function departmentChoices(
     .innerJoin(users, eq(users.id, budgetRequests.requesterUserId))
     .where(eq(budgetRequests.budgetCycleId, cycleId));
   const mine = new Set(actor.departments.map((d) => d.id));
+  const previous = await lastYearRequests(tx, cycleId);
   const choices = rows.map((r) => {
     const request = started.find((s) => s.departmentId === r.id);
+    const last = previous.get(r.id);
     return {
       id: r.id,
       name: r.name,
       yours: mine.has(r.id),
       existing: request ? { requestId: request.requestId, startedBy: request.startedBy } : null,
       fromPlanningCenter: fromPlanningCenter.has(r.id),
+      lastYear: last ? { cycleName: last.cycleName, reference: last.reference } : null,
     };
   });
   const first = (c: DepartmentChoice) => c.yours || c.fromPlanningCenter;

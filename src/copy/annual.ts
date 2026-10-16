@@ -295,6 +295,14 @@ export const annualCopy = {
     existing: (department: string, by: string) =>
       `${department} already has a budget started by ${by}. A department submits one budget a year; you can open it and edit it.`,
     hasBudget: "Has a budget",
+    lastYear: (cycle: string, reference: string | null) =>
+      reference
+        ? `Start from last year's request (${cycle}, ${reference})`
+        : `Start from last year's request (${cycle})`,
+    lastYearHint:
+      "Copies the title, reasons and items into a new draft at today's tax rate. Check every item before you submit.",
+    copiedNote:
+      "This draft starts from last year's request, at today's tax rate. Check every item, quantity and price before you submit.",
     openIt: "Open it",
     continue: "Continue",
     noCycleTitle: "No budget cycle is open",
