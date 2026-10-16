@@ -41,13 +41,16 @@ export async function startAction(_: ActionState, data: FormData): Promise<Actio
         cycleId: form.text(data, "cycleId"),
         departmentId: choice === "other" ? undefined : choice,
         otherName: choice === "other" ? form.text(data, "otherName") : undefined,
+        fromLastYear: data.get("fromLastYear") === "yes",
       }),
     }),
     { paths: [DASHBOARD], allowWaiting: true },
   );
   if (result.status !== "success") return result;
-  const { requestId, existing } = result.data;
-  redirect(existing ? view(requestId) : `${view(requestId)}/edit`);
+  const { requestId, existing, copied } = result.data;
+  redirect(
+    existing ? view(requestId) : `${view(requestId)}/edit${copied ? "?from=last-year" : ""}`,
+  );
 }
 
 export type DraftInput = { id: string; version: number } & RequestContentInput;

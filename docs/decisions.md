@@ -365,3 +365,11 @@ Requested by the user: a second People custom field, **Ministry Department**, de
   - Both take an idempotency key and are audited.
 - **With scheduled release (FR-19a):** the first approval isn't a final decision, so it's never held. But while the cycle holds decisions, the department sees In Review instead of Awaiting Second Approval and isn't told it's awaiting sign-off, because either would give the decision away. The second approval is the final decision: it's held and released like any approval.
 - **End-to-end tests** only change the threshold to an amount far above anything the other tests approve, because they run in parallel against one database. The approve, second-approval and refuse flows are integration tests.
+
+## Stage 2, step 5: start from last year's request (FR-35) (2026-10-16)
+
+- **Where:** a checkbox on the start form (step 1). It shows only when the chosen department has a submitted request from an earlier cycle and no budget yet this cycle, and it names that request ("Start from last year's request (FY2026, IFC-2026-0004)"). FR-35 says "when starting a new request", so it lives there rather than as a separate button on the dashboard (DRD 6.2).
+- **What counts as last year's:** the department's request in the most recent earlier cycle that was submitted (any status but Draft). An old draft is never copied.
+- **What's copied (AC-64):** title, justification and each item's name, quantity, unit price, link and notes. It goes into a normal new draft, which uses today's tax rate and can be changed freely. Approved values, revisions, decisions, messages, emails and the reference number stay with last year's request, which is untouched. Audited as `annual.copied_last_year` with the source request.
+- **The editor** opens with a note to check every item. If there's nothing to copy (the department never submitted before), the draft starts empty as usual.
+- **Tests:** the fake test data has a single cycle, so the option doesn't appear in end-to-end tests. AC-64 is an integration test (copied content, today's rate, nothing else copied, last year unchanged).

@@ -1,4 +1,4 @@
-import { and, asc, eq, exists, isNull, notExists, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, isNull, lt, ne, notExists, sql } from "drizzle-orm";
 import { z } from "zod";
 import { annualCopy } from "@/copy/annual";
 import { nextReference } from "@/db/reference";
@@ -331,7 +331,13 @@ async function pickDepartment(
   return created;
 }
 
-export type StartResult = { requestId: string; departmentId: string; existing: boolean };
+export type StartResult = {
+  requestId: string;
+  departmentId: string;
+  existing: boolean;
+  /** Started from an earlier cycle's request (FR-35): which one. */
+  copied?: { cycleName: string; reference: string | null } | null;
+};
 
 /**
  * Step 1 of the form: pick a department (or type a new one) for the open cycle. If the
@@ -341,7 +347,7 @@ export type StartResult = { requestId: string; departmentId: string; existing: b
 export async function startRequest(
   tx: Tx,
   actor: Subject,
-  input: { cycleId: string; departmentId?: string; otherName?: string },
+  input: { cycleId: string; departmentId?: string; otherName?: string; fromLastYear?: boolean },
 ): Promise<StartResult> {
   const { actingRole } = assertCan(actor, "annual.start");
   const [cycle] = z.uuid().safeParse(input.cycleId).success
@@ -389,7 +395,93 @@ export async function startRequest(
     cycleId: cycle.id,
     details: { after: { department: department.name, cycle: cycle.name } },
   });
-  return { requestId: created.id, departmentId: department.id, existing: false };
+  const copied = input.fromLastYear
+    ? await copyLastYear(tx, actor, actingRole, { requestId: created.id, department, cycle })
+    : null;
+  return { requestId: created.id, departmentId: department.id, existing: false, copied };
+}
+
+/**
+ * FR-35, AC-64: fills a new draft from the department's request in an earlier cycle: its
+ * title, justification and items (names, quantities, unit prices, links, notes). Approved
+ * values, history, messages and the reference aren't copied, and the draft uses today's
+ * tax rate like any other. Returns what it copied from, or null if there was nothing.
+ */
+async function copyLastYear(
+  tx: Tx,
+  actor: Subject,
+  actingRole: Role,
+  input: {
+    requestId: string;
+    department: { id: string; name: string };
+    cycle: { id: string; name: string };
+  },
+): Promise<{ cycleName: string; reference: string | null } | null> {
+  const source = (await lastYearRequests(tx, input.cycle.id)).get(input.department.id);
+  if (!source) return null;
+  const [from] = await tx
+    .select({ title: budgetRequests.title, justification: budgetRequests.justification })
+    .from(budgetRequests)
+    .where(eq(budgetRequests.id, source.requestId));
+  const lines = await linesOf(tx, source.requestId);
+  await tx
+    .update(budgetRequests)
+    .set({ title: from.title, justification: from.justification })
+    .where(eq(budgetRequests.id, input.requestId));
+  await replaceLines(tx, input.requestId, lines);
+  await writeAudit(tx, {
+    actor: actorOf(actor, actingRole),
+    area: "annual",
+    eventType: "annual.copied_last_year",
+    entity: { type: "budget_request", id: input.requestId },
+    departmentId: input.department.id,
+    cycleId: input.cycle.id,
+    details: {
+      fromRequestId: source.requestId,
+      fromReference: source.reference,
+      fromCycle: source.cycleName,
+      lines: lines.length,
+    },
+  });
+  return { cycleName: source.cycleName, reference: source.reference };
+}
+
+/**
+ * Each department's most recent submitted request from a cycle before this one (FR-35):
+ * what "Start from last year's request" copies. Drafts never count.
+ */
+export async function lastYearRequests(
+  tx: Tx,
+  cycleId: string,
+): Promise<Map<string, { requestId: string; cycleName: string; reference: string | null }>> {
+  const [cycle] = await tx
+    .select({ year: budgetCycles.budgetYear })
+    .from(budgetCycles)
+    .where(eq(budgetCycles.id, cycleId));
+  if (!cycle) return new Map();
+  const rows = await tx
+    .select({
+      requestId: budgetRequests.id,
+      departmentId: budgetRequests.departmentId,
+      cycleName: budgetCycles.name,
+      year: budgetCycles.budgetYear,
+      reference: budgetRequests.referenceNumber,
+    })
+    .from(budgetRequests)
+    .innerJoin(budgetCycles, eq(budgetCycles.id, budgetRequests.budgetCycleId))
+    .where(and(lt(budgetCycles.budgetYear, cycle.year), ne(budgetRequests.status, "draft")))
+    .orderBy(desc(budgetCycles.budgetYear));
+  const out = new Map<string, { requestId: string; cycleName: string; reference: string | null }>();
+  for (const r of rows) {
+    if (!out.has(r.departmentId)) {
+      out.set(r.departmentId, {
+        requestId: r.requestId,
+        cycleName: r.cycleName,
+        reference: r.reference,
+      });
+    }
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------- drafts (FR-05)

@@ -21,7 +21,7 @@ export const helpCopy = {
       who: "requester",
       steps: [
         "Annual Budget → My department's budget → Start a budget request, then choose your department. If it isn't listed, choose Other and type its name; the administrator adds it.",
-        "Give the request a title and say why the ministry needs the money.",
+        "Give the request a title and say why the ministry needs the money. If your department submitted last year, you can tick Start from last year's request to begin with last year's items.",
         "Add each item with its quantity and its unit price before tax. The app adds the line totals and the sales tax.",
         "Preview the request, then Confirm submission. You get a receipt by email with the reference number, like IFC-2027-0007.",
         "Your draft saves itself as you type, and everyone who leads the department can see and finish it.",
