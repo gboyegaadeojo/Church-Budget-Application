@@ -42,7 +42,16 @@ import {
   updateTaxRate,
   updateTimeZone,
 } from "@/domain/settings/service";
-import { addStaff, setUserActive, setUserRoles } from "@/domain/users/admin";
+import {
+  addStaff,
+  linkPlanningCenterPerson,
+  searchPlanningCenterPeople,
+  setUserActive,
+  setUserRoles,
+  suggestPlanningCenterPeople,
+  unlinkPlanningCenterPerson,
+} from "@/domain/users/admin";
+import { resolveSignIn } from "@/domain/users/sign-in";
 import { loadViewer } from "@/domain/users/viewer";
 import { ForbiddenError, type Subject } from "@/lib/authz";
 import { FakePlanningCenterDirectory } from "@/lib/pco";
@@ -318,6 +327,128 @@ describe("users and roles (FR-02)", () => {
         }),
       ),
     ).rejects.toBeInstanceOf(ConflictError);
+  });
+});
+
+describe("linking a Planning Center profile (FR-01a, AC-6)", () => {
+  const pcoDirectory = () =>
+    new FakePlanningCenterDirectory({
+      organizationId: "100",
+      fields: [{ id: "77", name: "Ministry Leader", dataType: "boolean" }],
+      people: [
+        { id: "7001", name: "Treasurer Tess", status: "active", emails: ["tess@example.org"] },
+        { id: "7002", name: "Tess Twin", status: "active", emails: ["tess@example.org"] },
+        { id: "7003", name: "Other Person", status: "active", emails: ["other@example.org"] },
+      ],
+    });
+
+  it("suggests people with the account's email, links one, and Planning Center sign-in then reaches it", async () => {
+    const staff = await person(["accountant"], { email: "tess@example.org" });
+    const dir = pcoDirectory();
+    const suggestions = await run((tx) => suggestPlanningCenterPeople(tx, admin, dir, staff.id));
+    expect(suggestions.map((p) => p.id)).toEqual(["7001", "7002"]);
+
+    // Before linking, Planning Center sign-in asks for a link.
+    const signIn = () =>
+      run((tx) =>
+        resolveSignIn(
+          tx,
+          { directory: dir, now: NOW },
+          {
+            provider: "planningcenter",
+            subject: "7001",
+            email: "tess@example.org",
+            emailVerified: false,
+            name: "Treasurer Tess",
+            organizationId: "100",
+          },
+        ),
+      );
+    expect(await signIn()).toMatchObject({ ok: false, reason: "link-required" });
+
+    expect(
+      await run((tx) =>
+        linkPlanningCenterPerson(tx, admin, dir, {
+          userId: staff.id,
+          pcoPersonId: "7001",
+          version: staff.version,
+        }),
+      ),
+    ).toEqual({ name: expect.any(String), personName: "Treasurer Tess" });
+    expect(await signIn()).toEqual({ ok: true, userId: staff.id, landing: "home" });
+    expect(await audits("access.identity_linked", staff.id)).toMatchObject([
+      { actorUserId: admin.id, details: { by: "administrator", after: { pcoPersonId: "7001" } } },
+    ]);
+  });
+
+  it("refuses a person linked to someone else, a person not in Planning Center, and a stale page", async () => {
+    const dir = pcoDirectory();
+    const first = await person(["accountant"]);
+    const second = await person(["board_chair"]);
+    await run((tx) =>
+      linkPlanningCenterPerson(tx, admin, dir, {
+        userId: first.id,
+        pcoPersonId: "7003",
+        version: first.version,
+      }),
+    );
+    await expect(
+      run((tx) =>
+        linkPlanningCenterPerson(tx, admin, dir, {
+          userId: second.id,
+          pcoPersonId: "7003",
+          version: second.version,
+        }),
+      ),
+    ).rejects.toBeInstanceOf(RuleError);
+    await expect(
+      run((tx) =>
+        linkPlanningCenterPerson(tx, admin, dir, {
+          userId: second.id,
+          pcoPersonId: "9999",
+          version: second.version,
+        }),
+      ),
+    ).rejects.toBeInstanceOf(RuleError);
+    // first's version moved on when it was linked.
+    await expect(
+      run((tx) =>
+        unlinkPlanningCenterPerson(tx, admin, { userId: first.id, version: first.version }),
+      ),
+    ).rejects.toBeInstanceOf(ConflictError);
+    const results = await run((tx) =>
+      searchPlanningCenterPeople(tx, admin, dir, { userId: second.id, query: "other" }),
+    );
+    expect(results).toMatchObject([{ id: "7003", linkedTo: { id: first.id } }]);
+    expect(await audits("admin.pco_person_searched", second.id)).toHaveLength(1);
+  });
+
+  it("unlinks, and clears the Group Leader result that belonged to that person", async () => {
+    const lead = await leader({ pcoPersonId: "7002" });
+    await run((tx) =>
+      unlinkPlanningCenterPerson(tx, admin, { userId: lead.id, version: lead.version }),
+    );
+    const [after] = await db.select().from(users).where(eq(users.id, lead.id));
+    expect(after).toMatchObject({
+      pcoPersonId: null,
+      pcoLeaderVerified: false,
+      pcoVerifiedAt: null,
+    });
+    expect(await audits("access.identity_unlinked", lead.id)).toHaveLength(1);
+  });
+
+  it("is for System Administrators only", async () => {
+    const accountant = await person(["accountant"]);
+    const target = await person(["board_chair"]);
+    await expect(
+      run((tx) =>
+        linkPlanningCenterPerson(tx, accountant, pcoDirectory(), {
+          userId: target.id,
+          pcoPersonId: "7001",
+          version: target.version,
+        }),
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });
 
@@ -947,7 +1078,6 @@ describe("settings", () => {
       "pco_leader_accepted_values",
       "pco_require_for_requesters",
       "pco_require_for_staff",
-      "signin_google_enabled",
       "signin_planning_center_enabled",
       "signin_email_enabled",
     ] as const;
@@ -959,7 +1089,6 @@ describe("settings", () => {
       requireForStaff: false,
       departmentFieldName: "Ministry Department",
       departmentMode: "suggest",
-      googleEnabled: true,
       planningCenterEnabled: true,
       emailEnabled: true,
     };
@@ -967,7 +1096,6 @@ describe("settings", () => {
       run(async (tx) =>
         updateSignInSettings(tx, admin, {
           ...base,
-          googleEnabled: false,
           planningCenterEnabled: false,
           emailEnabled: false,
           versions: await settingVersions(tx, keys),

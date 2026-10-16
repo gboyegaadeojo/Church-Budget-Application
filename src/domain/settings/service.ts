@@ -155,7 +155,6 @@ const signInSchema = z.object({
   departmentMode: z
     .string()
     .pipe(z.enum(DEPARTMENT_FIELD_MODES, { error: s.errors.departmentMode })),
-  googleEnabled: z.boolean(),
   planningCenterEnabled: z.boolean(),
   emailEnabled: z.boolean(),
 });
@@ -171,7 +170,7 @@ export async function updateSignInSettings(
 ): Promise<void> {
   assertCan(actor, "admin.settings");
   const data = parseInput(signInSchema, input);
-  if (!data.googleEnabled && !data.planningCenterEnabled && !data.emailEnabled) {
+  if (!data.planningCenterEnabled && !data.emailEnabled) {
     throw new RuleError(s.errors.signInMethod);
   }
   const flag = (b: boolean) => (b ? "true" : "false");
@@ -186,7 +185,6 @@ export async function updateSignInSettings(
       pco_require_for_staff: flag(data.requireForStaff),
       pco_department_field_name: data.departmentFieldName,
       pco_department_mode: data.departmentMode,
-      signin_google_enabled: flag(data.googleEnabled),
       signin_planning_center_enabled: flag(data.planningCenterEnabled),
       signin_email_enabled: flag(data.emailEnabled),
     },

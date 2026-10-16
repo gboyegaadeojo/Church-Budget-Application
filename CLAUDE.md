@@ -31,7 +31,7 @@ Read the relevant FRs and the DRD screen section before starting any feature. If
 | UI | Tailwind CSS with design tokens from DRD 3.2 as CSS variables, shadcn/ui (Radix), Lucide icons, Inter font (self-hosted) |
 | Forms and validation | React Hook Form + Zod; the Zod schemas are shared by client and server |
 | Database | Neon Postgres (free) with the Drizzle ORM and Drizzle migrations |
-| Auth | Auth.js (NextAuth v5): Google provider + custom OAuth provider for Planning Center |
+| Auth | Auth.js (NextAuth v5): custom OAuth provider for Planning Center + emailed-code sign-in for the Church Administrator and System Administrators. No Google sign-in (docs/decisions.md, 2026-10-15) |
 | Planning Center | People API, called server-side with the church's Personal Access Token |
 | Email | Resend (REST API via `fetch`, the church's existing account) behind an `EmailSender` interface; a fake sender in tests |
 | Files (receipts, logo) | Cloudflare R2 (S3 API), private bucket, signed URLs |
@@ -93,7 +93,7 @@ Work stage by stage. A stage is done when its ACs pass in CI.
 1. **Stage 1: Annual Budget MVP**
    1. Repo, CI, design tokens, one-app layout shell with area navigation and the Home/My tasks page (DRD 6.0, FR-37), light/dark/system theme.
    2. `money.ts`, `authz.ts`, `audit.ts` and the DB schema for Part A.
-   3. Auth: Google and Planning Center, account linking, Group Leader check, access-denied variants (FR-01, FR-01a, DRD 6.1a).
+   3. Auth: Planning Center, account linking, Group Leader check, access-denied variants (FR-01, FR-01a, DRD 6.1a). (Google was removed later; see docs/decisions.md.)
    4. Admin: users and roles, departments (with Proposed, Primary and Backup requester, FR-38), cycles, settings (tax, Planning Center).
    5. Annual budget form: details → items with sticky summary → preview → confirm; drafts and autosave; 2 edits; shared department requests (FR-03 to FR-12, FR-32).
    6. Accountant dashboard and review: approve as requested, approve a different amount (inclusive), line changes, clarification, decline (FR-13 to FR-18).
@@ -133,7 +133,6 @@ Open one PR per numbered step or per feature. Keep PRs small.
 ```
 DATABASE_URL
 AUTH_SECRET, AUTH_URL
-GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 PCO_CLIENT_ID, PCO_CLIENT_SECRET          # OAuth sign-in
 PCO_APP_ID, PCO_PAT_SECRET                # server-side People API (Personal Access Token)
 RESEND_API_KEY, RESEND_FROM               # email sending (From is on the church's verified domain)

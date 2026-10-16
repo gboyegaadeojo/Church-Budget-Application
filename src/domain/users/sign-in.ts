@@ -13,19 +13,20 @@ import { applyVerification } from "./verification";
 
 /**
  * Sign-in (FR-01, FR-01a, FR-01b, AC-1 to AC-10). The identity has already been verified
- * by Auth.js (Google's or Planning Center's signed ID token, or an emailed code checked by
+ * by Auth.js (Planning Center's signed ID token, or an emailed code checked by
  * email-sign-in.ts). This decides whether that identity gets in, as which account, and
  * records it in the audit log.
  *
- * Account linking: a Google sign-in links by its verified email; a Planning Center
- * sign-in links only by Planning Center person id, because people can edit the emails
- * on their own Planning Center profile (see docs/decisions.md). An emailed code finds
- * the account by its address only: codes go only to addresses already on the allowlist.
+ * Account linking: a Planning Center sign-in finds the account by Planning Center person
+ * id only, never by email, because people can edit the emails on their own Planning
+ * Center profile (see docs/decisions.md). An administrator links staff they added
+ * (Admin → Users); an emailed code proves the address, so it finds the account by email
+ * and links the matching Planning Center person.
  */
 
 export type ExternalIdentity = {
-  provider: "google" | "planningcenter" | "email";
-  /** Google's subject, the Planning Center person id, or the address an emailed code proved. */
+  provider: "planningcenter" | "email";
+  /** The Planning Center person id, or the address an emailed code proved. */
   subject: string;
   email: string | null;
   emailVerified: boolean;
@@ -123,9 +124,9 @@ export async function resolveSignIn(
     return { ok: true, userId, landing };
   };
 
-  // 1. The method must be turned on, and the identity trustworthy.
-  if (method === "google" && !settings.googleEnabled) {
-    return deny("not-allowed", "Google sign-in is turned off");
+  // 1. The method must be known and turned on, and the identity trustworthy.
+  if (method !== "planningcenter" && method !== "email") {
+    return deny("not-allowed", `Unknown sign-in method: ${String(method)}`);
   }
   if (method === "planningcenter" && !settings.planningCenterEnabled) {
     return deny("not-allowed", "Planning Center sign-in is turned off");
@@ -136,55 +137,36 @@ export async function resolveSignIn(
   if (method === "email" && !email) {
     return deny("not-allowed", "No email address was proved");
   }
-  if (method === "google" && (!email || !identity.emailVerified)) {
-    return deny("not-allowed", "Google did not confirm the email address");
-  }
   if (method === "planningcenter") {
-    let churchOrg: string;
+    let churchOrg: string | null = null;
     try {
       churchOrg = await directory.organizationId();
     } catch {
-      return deny("unavailable", "Planning Center could not be reached to confirm the church");
+      // A person already linked here is known to be the church's: let them reach the
+      // 72-hour rule below (FR-01a) instead of being turned away by the outage.
+      if (!(await findBy(tx, eq(users.pcoPersonId, identity.subject)))) {
+        return deny("unavailable", "Planning Center could not be reached to confirm the church");
+      }
     }
-    if (identity.organizationId !== churchOrg) {
+    if (churchOrg !== null && identity.organizationId !== churchOrg) {
       return deny("not-allowed", "Planning Center account belongs to another organization");
     }
   }
 
   // 2. Find the account.
-  let user =
-    method === "google"
-      ? await findBy(tx, eq(users.googleSubjectId, identity.subject))
-      : method === "planningcenter"
-        ? await findBy(tx, eq(users.pcoPersonId, identity.subject))
-        : await findBy(tx, sql`lower(${users.email}) = ${email}`);
+  const user =
+    method === "planningcenter"
+      ? await findBy(tx, eq(users.pcoPersonId, identity.subject))
+      : await findBy(tx, sql`lower(${users.email}) = ${email}`);
 
-  if (!user && email && method !== "email") {
+  if (!user && email && method === "planningcenter") {
     const byEmail = await findBy(tx, sql`lower(${users.email}) = ${email}`);
     if (byEmail) {
-      if (method === "google") {
-        if (byEmail.googleSubjectId && byEmail.googleSubjectId !== identity.subject) {
-          return deny("not-allowed", "Email is linked to a different Google account", byEmail.id);
-        }
-        await tx
-          .update(users)
-          .set({ googleSubjectId: identity.subject, updatedAt: deps.now })
-          .where(eq(users.id, byEmail.id));
-        await writeAudit(tx, {
-          actor: { kind: "user", userId: byEmail.id },
-          area: "access",
-          eventType: "access.identity_linked",
-          entity: { type: "user", id: byEmail.id },
-          details: { method, by: "verified email" },
-        });
-        user = { ...byEmail, googleSubjectId: identity.subject };
-      } else {
-        return deny(
-          "link-required",
-          "Planning Center account is not linked to the account with this email",
-          byEmail.id,
-        );
-      }
+      return deny(
+        "link-required",
+        "Planning Center account is not linked to the account with this email",
+        byEmail.id,
+      );
     }
   }
 
@@ -209,8 +191,8 @@ export async function resolveSignIn(
     }
 
     if (!mustVerify) {
-      if (method !== "planningcenter" && !user.pcoPersonId && deps.directory) {
-        await linkPlanningCenterByEmail(tx, deps.directory, user, email!, deps.now, method);
+      if (method === "email" && !user.pcoPersonId && deps.directory) {
+        await linkPlanningCenterByEmail(tx, deps.directory, user, email!, deps.now);
       }
       return succeed(user.id, "home");
     }
@@ -263,7 +245,7 @@ export async function resolveSignIn(
       await emailAccessRequest(tx, {
         email,
         name: identity.name ?? null,
-        method: method === "google" ? "Google" : "Planning Center",
+        method: "Planning Center",
         now: deps.now,
       });
     }
@@ -273,8 +255,8 @@ export async function resolveSignIn(
     return denyNewPerson("not-allowed", "No account, and leaders do not join by Planning Center");
   }
   const check = await checkLeader(directory, settings.leader, {
-    pcoPersonId: method === "planningcenter" ? identity.subject : null,
-    email: method === "google" ? email : null,
+    pcoPersonId: identity.subject,
+    email: null,
   });
   if (check.status !== "leader") return denyNewPerson(deniedReason(check, false), describe(check));
 
@@ -289,7 +271,6 @@ export async function resolveSignIn(
     .values({
       email: accountEmail,
       displayName: identity.name?.trim() || check.person.name || accountEmail,
-      googleSubjectId: method === "google" ? identity.subject : null,
       pcoPersonId: check.person.id,
       pcoLeaderVerified: true,
       pcoVerifiedAt: deps.now,
@@ -350,8 +331,8 @@ function describe(check: LeaderCheck): string {
 }
 
 /**
- * Links a staff member's Planning Center person when their verified email (Google's, or
- * one an emailed code proved) matches exactly one Planning Center person (FR-01a). Best effort: an outage or an
+ * Links an administrator's Planning Center person when the address an emailed code
+ * proved matches exactly one Planning Center person (FR-01a). Best effort: an outage or an
  * ambiguous match leaves the account unlinked.
  */
 async function linkPlanningCenterByEmail(
@@ -360,7 +341,6 @@ async function linkPlanningCenterByEmail(
   user: UserRow,
   email: string,
   now: Date,
-  method: "google" | "email",
 ) {
   try {
     const people = (await directory.findPeopleByEmail(email)).filter(
@@ -379,7 +359,7 @@ async function linkPlanningCenterByEmail(
       entity: { type: "user", id: user.id },
       details: {
         method: "planningcenter",
-        by: method === "google" ? "verified Google email" : "emailed code",
+        by: "emailed code",
         pcoPersonId: people[0].id,
       },
     });

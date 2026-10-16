@@ -16,10 +16,15 @@ import { linkClass } from "@/components/ui/styles";
 import { adminCopy } from "@/copy/admin";
 import { getDb } from "@/db";
 import { getChurchTimeZone } from "@/domain/settings";
+import { suggestPlanningCenterPeople, type PcoCandidate } from "@/domain/users/admin";
 import { getUserDetail } from "@/domain/users/admin-queries";
 import { viewerAllowedTo } from "@/lib/admin-server";
+import { PlanningCenterUnavailableError } from "@/lib/pco";
+import { getPlanningCenterDirectory } from "@/lib/pco-directory";
+import type { Viewer } from "@/lib/roles";
 import { formatDateTime } from "@/lib/time-zone";
 import { setActiveAction } from "../actions";
+import { PcoLink } from "./pco-link";
 import { UserStatusBadge } from "../status-badge";
 import { RolesForm } from "./roles-form";
 
@@ -89,6 +94,15 @@ async function UserContent({ params }: Pick<PageProps<"/admin/users/[id]">, "par
         </ActionForm>
       </Section>
 
+      <Section title={u.pco.heading} id="planning-center">
+        <PcoLink
+          userId={user.id}
+          name={user.displayName}
+          version={user.version}
+          {...await planningCenterLink(viewer, user)}
+        />
+      </Section>
+
       <Section title={u.rolesHeading} id="roles">
         <RolesForm
           userId={user.id}
@@ -118,4 +132,34 @@ async function UserContent({ params }: Pick<PageProps<"/admin/users/[id]">, "par
       </Section>
     </>
   );
+}
+
+/**
+ * The linked Planning Center person's name, or people with this account's email to
+ * suggest. Planning Center being down or not set up shows a message, not an error page.
+ */
+async function planningCenterLink(
+  viewer: Viewer,
+  user: { id: string; pcoPersonId: string | null },
+): Promise<{
+  linked: { id: string; name: string | null } | null;
+  suggestions: PcoCandidate[] | null;
+  problem?: string;
+}> {
+  const linked = user.pcoPersonId ? { id: user.pcoPersonId, name: null as string | null } : null;
+  const directory = getPlanningCenterDirectory();
+  if (!directory) return { linked, suggestions: null, problem: u.pco.notConfigured };
+  try {
+    if (linked) {
+      linked.name = (await directory.getPerson(linked.id))?.name ?? null;
+      return { linked, suggestions: null };
+    }
+    return {
+      linked,
+      suggestions: await suggestPlanningCenterPeople(getDb(), viewer, directory, user.id),
+    };
+  } catch (error) {
+    if (!(error instanceof PlanningCenterUnavailableError)) throw error;
+    return { linked, suggestions: null, problem: u.pco.unavailable };
+  }
 }

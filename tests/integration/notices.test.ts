@@ -423,7 +423,7 @@ describe("access emails (FR-01a, FR-21 System)", () => {
         emailAccessRequest(tx, {
           email,
           name: null,
-          method: "Google",
+          method: "Planning Center",
           now: new Date(NOW.getTime() + offset),
         }),
       );

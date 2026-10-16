@@ -57,13 +57,25 @@ function directory(people: FakeDirectoryData["people"], extra: Partial<FakeDirec
   });
 }
 
-const google = (email: string, subject = `g-${email}`): ExternalIdentity => ({
-  provider: "google",
-  subject,
+/** An address an emailed code proved (email-sign-in.ts checked the code). */
+const emailCode = (email: string): ExternalIdentity => ({
+  provider: "email",
+  subject: email,
   email,
   emailVerified: true,
-  name: "Google Person",
+  name: null,
 });
+
+/** A staff account linked to its own Planning Center person (no Group Leader field). */
+async function linkedStaff(roles: Role[], overrides: Partial<typeof users.$inferInsert> = {}) {
+  const pcoPerson = person(null);
+  const user = await staffUser(roles, {
+    email: pcoPerson.emails[0],
+    pcoPersonId: pcoPerson.id,
+    ...overrides,
+  });
+  return { user, pcoPerson };
+}
 
 const planningCenter = (personId: string, email: string | null = null): ExternalIdentity => ({
   provider: "planningcenter",
@@ -207,44 +219,18 @@ describe("Planning Center sign-in (FR-01a)", () => {
   });
 });
 
-describe("Google sign-in (FR-01, FR-01a)", () => {
-  it("AC-6 Google and Planning Center reach the same account when the emails match", async () => {
-    const leader = person("Yes", { email: "ada@example.org" });
-    const dir = directory([leader]);
-    const first = await signIn(dir, google("Ada@Example.org", "google-ada"));
-    const second = await signIn(dir, planningCenter(leader.id));
-    expect(first.ok && second.ok).toBe(true);
-    if (first.ok && second.ok) expect(second.userId).toBe(first.userId);
-  });
-
-  it("AC-6 links a staff member's Google and Planning Center identities", async () => {
-    const staff = await staffUser(["accountant"], { email: "acct@example.org" });
-    const pcoPerson = person(null, { email: "acct@example.org" });
-    const dir = directory([pcoPerson]);
-
-    expect(await signIn(dir, google("acct@example.org", "google-acct"))).toEqual({
+describe("Planning Center sign-in for new people and staff (FR-01a, FR-21)", () => {
+  it("AC-6 an administrator-linked Planning Center profile reaches the staff account", async () => {
+    const { user, pcoPerson } = await linkedStaff(["accountant"]);
+    expect(await signIn(directory([pcoPerson]), planningCenter(pcoPerson.id))).toEqual({
       ok: true,
-      userId: staff.id,
-      landing: "home",
-    });
-    const [linked] = await db.select().from(users).where(eq(users.id, staff.id));
-    expect(linked).toMatchObject({ googleSubjectId: "google-acct", pcoPersonId: pcoPerson.id });
-    expect(await signIn(dir, planningCenter(pcoPerson.id))).toMatchObject({ userId: staff.id });
-  });
-
-  it("AC-8 checks a requester's Google sign-in against Planning Center", async () => {
-    const requester = await staffUser(["requester"], { email: "lead@example.org" });
-    await giveDepartment(requester.id);
-    const leader = person("true", { email: "lead@example.org" });
-    expect(await signIn(directory([leader]), google("lead@example.org"))).toEqual({
-      ok: true,
-      userId: requester.id,
+      userId: user.id,
       landing: "home",
     });
   });
 
-  it("AC-8 denies a Google sign-in with no matching Planning Center person", async () => {
-    expect(await signIn(directory([]), google("stranger@example.org"))).toEqual({
+  it("AC-8 denies someone whose Planning Center profile the church can't find", async () => {
+    expect(await signIn(directory([]), planningCenter("424242", "stranger@example.org"))).toEqual({
       ok: false,
       reason: "not-found",
       email: "stranger@example.org",
@@ -253,53 +239,78 @@ describe("Google sign-in (FR-01, FR-01a)", () => {
 
   it("FR-21 tells the administrators about an access request, but not about an outage refusal", async () => {
     const administrator = await staffUser(["system_admin"]);
-    await signIn(directory([]), google("wants.in@example.org"));
-    await signIn(directory([], { unavailable: true }), google("outage@example.org"));
+    await signIn(directory([]), planningCenter("434343", "wants.in@example.org"));
+    await signIn(
+      directory([], { unavailable: true }),
+      planningCenter("444444", "outage@example.org"),
+    );
     const requests = await db
       .select()
       .from(emailOutbox)
       .where(eq(emailOutbox.template, "access.request"));
     expect(requests.map((r) => [r.toUserId, r.subject])).toEqual([
-      [administrator.id, "Access request: Google Person (wants.in@example.org)"],
+      [administrator.id, "Access request: PCO Person (wants.in@example.org)"],
     ]);
   });
 
-  it("AC-2 does not let any Google account in because it can sign in", async () => {
+  it("AC-2 does not let a Planning Center account in just because it can sign in", async () => {
     const member = person("No", { email: "member@example.org" });
-    expect(await signIn(directory([member]), google("member@example.org"))).toMatchObject({
-      ok: false,
-      reason: "not-leader",
-    });
+    expect(
+      await signIn(directory([member]), planningCenter(member.id, "member@example.org")),
+    ).toMatchObject({ ok: false, reason: "not-leader" });
     expect(await db.select().from(users).where(eq(users.email, "member@example.org"))).toEqual([]);
   });
 
-  it("denies an email Google has not verified", async () => {
-    const result = await signIn(directory([]), {
-      ...google("x@example.org"),
-      emailVerified: false,
+  it("refuses Google, which the church doesn't use", async () => {
+    const staff = await staffUser(["accountant"]);
+    const google = { ...emailCode(staff.email), provider: "google" } as unknown as ExternalIdentity;
+    expect(await signIn(directory([]), google)).toMatchObject({ ok: false, reason: "not-allowed" });
+  });
+});
+
+describe("emailed-code sign-in (FR-01b)", () => {
+  it("lets the Church Administrator in, and links their Planning Center profile when one matches", async () => {
+    const admin = await staffUser(["church_admin"], { email: "office@outlook.com" });
+    const pcoPerson = person(null, { email: "office@outlook.com" });
+    expect(await signIn(directory([pcoPerson]), emailCode("Office@Outlook.com"))).toEqual({
+      ok: true,
+      userId: admin.id,
+      landing: "home",
     });
-    expect(result).toMatchObject({ ok: false, reason: "not-allowed" });
+    const [after] = await db.select().from(users).where(eq(users.id, admin.id));
+    expect(after.pcoPersonId).toBe(pcoPerson.id);
+    expect(await lastAudit(admin.id, "access.identity_linked")).toMatchObject({
+      details: { by: "emailed code" },
+    });
   });
 
-  it("treats a shared email on several Planning Center people as not found", async () => {
-    const a = person("true", { email: "family@example.org" });
-    const b = person("true", { email: "family@example.org" });
-    expect(await signIn(directory([a, b]), google("family@example.org"))).toMatchObject({
+  it("refuses other roles and unknown addresses, without an access request", async () => {
+    const accountant = await staffUser(["accountant"]);
+    expect(await signIn(directory([]), emailCode(accountant.email))).toMatchObject({
       ok: false,
-      reason: "not-found",
+      reason: "not-allowed",
     });
+    expect(await signIn(directory([]), emailCode("unknown@outlook.com"))).toMatchObject({
+      ok: false,
+      reason: "not-allowed",
+    });
+    const requests = await db
+      .select()
+      .from(emailOutbox)
+      .where(eq(emailOutbox.template, "access.request"));
+    expect(requests.some((r) => r.subject.includes("unknown@outlook.com"))).toBe(false);
   });
 
-  it("respects the Allow Google sign-in setting", async () => {
-    await setSetting("signin_google_enabled", "false");
+  it("respects the Allow email sign-in setting", async () => {
+    await setSetting("signin_email_enabled", "false");
     try {
-      const staff = await staffUser(["accountant"]);
-      expect(await signIn(directory([]), google(staff.email))).toMatchObject({
+      const admin = await staffUser(["system_admin"]);
+      expect(await signIn(directory([]), emailCode(admin.email))).toMatchObject({
         ok: false,
         reason: "not-allowed",
       });
     } finally {
-      await setSetting("signin_google_enabled", "true");
+      await setSetting("signin_email_enabled", "true");
     }
   });
 });
@@ -307,10 +318,10 @@ describe("Google sign-in (FR-01, FR-01a)", () => {
 describe("staff (AC-10) and deactivated accounts", () => {
   it("AC-10 lets the accountant and Church Administrator in without the field", async () => {
     for (const role of ["accountant", "church_admin"] as const) {
-      const staff = await staffUser([role]);
-      expect(await signIn(directory([]), google(staff.email))).toEqual({
+      const { user, pcoPerson } = await linkedStaff([role]);
+      expect(await signIn(directory([pcoPerson]), planningCenter(pcoPerson.id))).toEqual({
         ok: true,
-        userId: staff.id,
+        userId: user.id,
         landing: "home",
       });
     }
@@ -319,10 +330,10 @@ describe("staff (AC-10) and deactivated accounts", () => {
   it("requires the field for staff only when the administrator turns that on", async () => {
     await setSetting("pco_require_for_staff", "true");
     try {
-      const staff = await staffUser(["accountant"]);
-      expect(await signIn(directory([]), google(staff.email))).toMatchObject({
+      const { pcoPerson } = await linkedStaff(["accountant"]);
+      expect(await signIn(directory([pcoPerson]), planningCenter(pcoPerson.id))).toMatchObject({
         ok: false,
-        reason: "not-found",
+        reason: "not-leader",
       });
     } finally {
       await setSetting("pco_require_for_staff", "false");
@@ -330,29 +341,25 @@ describe("staff (AC-10) and deactivated accounts", () => {
   });
 
   it("refuses a deactivated account", async () => {
-    const staff = await staffUser(["accountant"], { active: false });
-    expect(await signIn(directory([]), google(staff.email))).toMatchObject({
+    const { user, pcoPerson } = await linkedStaff(["accountant"], { active: false });
+    expect(await signIn(directory([pcoPerson]), planningCenter(pcoPerson.id))).toMatchObject({
       ok: false,
       reason: "not-allowed",
     });
-    expect(await loadViewer(db, staff.id)).toEqual({ ok: false, reason: "not-allowed" });
+    expect(await loadViewer(db, user.id)).toEqual({ ok: false, reason: "not-allowed" });
   });
 
   it("audits a failed sign-in with the method and reason", async () => {
-    await signIn(directory([]), google("nobody@example.org"));
-    const [row] = await db
-      .select()
-      .from(auditEvents)
-      .where(eq(auditEvents.eventType, "access.sign_in_failed"))
-      .orderBy(auditEvents.eventTimestamp);
-    expect(row).toMatchObject({ area: "access", actorKind: expect.any(String) });
+    await signIn(directory([]), planningCenter("454545", "nobody@example.org"));
     const all = await db
       .select()
       .from(auditEvents)
       .where(eq(auditEvents.eventType, "access.sign_in_failed"));
-    expect(all.some((r) => (r.details as { email?: string }).email === "nobody@example.org")).toBe(
-      true,
-    );
+    const row = all.find((r) => (r.details as { email?: string }).email === "nobody@example.org");
+    expect(row).toMatchObject({
+      area: "access",
+      details: { method: "planningcenter", result: "not-found" },
+    });
   });
 });
 
@@ -384,7 +391,7 @@ describe("suspension and the 72-hour rule (AC-9)", () => {
     });
 
     pcoPerson.fieldValues = { [FIELD.id]: ["false"] };
-    expect(await signIn(directory([pcoPerson]), google(user.email))).toMatchObject({
+    expect(await signIn(directory([pcoPerson]), planningCenter(pcoPerson.id))).toMatchObject({
       ok: false,
       reason: "suspended",
     });
@@ -396,7 +403,7 @@ describe("suspension and the 72-hour rule (AC-9)", () => {
     ).toHaveLength(1);
     expect(await loadViewer(db, user.id)).toEqual({ ok: false, reason: "suspended" });
     // Signing in again still explains the suspension.
-    expect(await signIn(directory([pcoPerson]), google(user.email))).toMatchObject({
+    expect(await signIn(directory([pcoPerson]), planningCenter(pcoPerson.id))).toMatchObject({
       ok: false,
       reason: "suspended",
     });
@@ -405,9 +412,9 @@ describe("suspension and the 72-hour rule (AC-9)", () => {
   it("restores a suspended leader once Planning Center confirms them again", async () => {
     const { user, pcoPerson } = await verifiedRequester(1);
     pcoPerson.fieldValues = {};
-    await signIn(directory([pcoPerson]), google(user.email));
+    await signIn(directory([pcoPerson]), planningCenter(pcoPerson.id));
     pcoPerson.fieldValues = { [FIELD.id]: ["Yes"] };
-    expect(await signIn(directory([pcoPerson]), google(user.email))).toMatchObject({
+    expect(await signIn(directory([pcoPerson]), planningCenter(pcoPerson.id))).toMatchObject({
       ok: true,
       landing: "home",
     });
@@ -419,7 +426,9 @@ describe("suspension and the 72-hour rule (AC-9)", () => {
   it("keeps a suspended requester's other roles", async () => {
     const { user, pcoPerson } = await verifiedRequester(1, ["accountant"]);
     pcoPerson.fieldValues = {};
-    expect(await signIn(directory([pcoPerson]), google(user.email))).toMatchObject({ ok: true });
+    expect(await signIn(directory([pcoPerson]), planningCenter(pcoPerson.id))).toMatchObject({
+      ok: true,
+    });
     const viewer = await loadViewer(db, user.id);
     expect(viewer).toMatchObject({ ok: true, viewer: { roles: ["accountant"], departments: [] } });
   });
@@ -427,7 +436,10 @@ describe("suspension and the 72-hour rule (AC-9)", () => {
   it("lets someone verified in the last 72 hours in while Planning Center is down", async () => {
     const { user, pcoPerson } = await verifiedRequester(71);
     const down = directory([pcoPerson], { unavailable: true });
-    expect(await signIn(down, google(user.email))).toMatchObject({ ok: true, landing: "home" });
+    expect(await signIn(down, planningCenter(pcoPerson.id))).toMatchObject({
+      ok: true,
+      landing: "home",
+    });
     expect(await lastAudit(user.id, "access.pco_unavailable")).toMatchObject({
       details: { usingGracePeriod: true },
     });
@@ -436,7 +448,7 @@ describe("suspension and the 72-hour rule (AC-9)", () => {
   it("turns away someone verified more than 72 hours ago while Planning Center is down", async () => {
     const { user, pcoPerson } = await verifiedRequester(73);
     const down = directory([pcoPerson], { unavailable: true });
-    expect(await signIn(down, google(user.email))).toMatchObject({
+    expect(await signIn(down, planningCenter(pcoPerson.id))).toMatchObject({
       ok: false,
       reason: "unavailable",
     });
@@ -445,8 +457,8 @@ describe("suspension and the 72-hour rule (AC-9)", () => {
   });
 
   it("treats a missing Planning Center configuration as an outage", async () => {
-    const { user } = await verifiedRequester(80);
-    expect(await signIn(null, google(user.email))).toMatchObject({
+    const { pcoPerson } = await verifiedRequester(80);
+    expect(await signIn(null, planningCenter(pcoPerson.id))).toMatchObject({
       ok: false,
       reason: "unavailable",
     });

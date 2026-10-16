@@ -15,6 +15,7 @@ export const PEOPLE = {
   kim: "Kim Former",
   stranger: "Stranger",
   pat: "Accountant Pat",
+  bo: "Bo Chair",
 } as const;
 
 /** Signs in through the real Auth.js flow with the fake provider (test-only). */

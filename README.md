@@ -6,7 +6,7 @@ A web app for Immanuel Fellowship Church to:
 2. **Approve spending during the year (Expenses).** Departments submit purchase requests and expense claims against their approved budget. The accountant approves, then the Board Chair. The church administrator then pays or purchases and records how.
 3. **Track what's left.** The app shows approved, committed, spent and remaining for every department.
 
-Sign-in is with Google or Planning Center. Only verified Group Leaders can submit. Everything runs on free tiers.
+Sign-in is with Planning Center (the Church Administrator and System Administrators can also use an emailed code). Only verified Group Leaders can submit. Everything runs on free tiers.
 
 ## Documents
 
@@ -30,7 +30,7 @@ If the two documents disagree about **behaviour**, the requirements win. If they
 | Expense approval | Accountant, then Board Chair; then the church administrator records payment | Req 6B.4–6B.5 |
 | Attachments | None, except receipts on expense claims and the admin's logo | Req FR-23, 6B.9 |
 | Emails | Every update emails the people involved; annual decisions can be held for a scheduled release | Req FR-21, FR-19a, FR-49 |
-| Sign-in | Google or Planning Center; requesters need the Group Leader custom field ("Ministry Leader" = "Yes") | Req FR-01, FR-01a |
+| Sign-in | Planning Center, plus an emailed code for the Church Administrator and System Administrators; requesters need the Group Leader custom field ("Ministry Leader" = "Yes") | Req FR-01, FR-01a |
 | Cost | Free tiers only (Resend, Netlify, Neon, GitHub Actions, Cloudflare R2) | Req 20.3 |
 | Department leaders | One Primary and up to two ranked Backup requesters per department | Req FR-38 |
 | Planning Center teams | Departments can be mapped to a Planning Center team, group or tag to keep leaders in step | Req FR-39 |

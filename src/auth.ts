@@ -1,7 +1,6 @@
 import NextAuth, { CredentialsSignin, type NextAuthConfig } from "next-auth";
 import type { Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import { getDb } from "@/db";
 import { checkEmailCode, type CodeCheckResult } from "@/domain/users/email-sign-in";
 import { resolveSignIn, type ExternalIdentity } from "@/domain/users/sign-in";
@@ -15,8 +14,11 @@ import { getPlanningCenterDirectory } from "@/lib/pco-directory";
 import { requestIpHash } from "@/lib/request-ip";
 
 /**
- * One sign-in for every role (FR-01, FR-01a, FR-37). Auth.js verifies the provider's
- * signed ID token (issuer, audience, signature, expiry: Requirements 10.1); then
+ * One sign-in for every role (FR-01, FR-01a, FR-01b, FR-37): Planning Center for
+ * everyone, and an emailed code for the Church Administrator and System Administrators,
+ * who may not be in the church's Planning Center. There is no Google sign-in (decided
+ * 2026-10-15, docs/decisions.md). Auth.js verifies Planning Center's signed ID token
+ * (issuer, audience, signature, expiry: Requirements 10.1); then
  * `resolveSignIn` decides who gets in. The session is a signed, encrypted cookie that
  * holds only our user id; roles are read from the database on every request.
  */
@@ -100,14 +102,6 @@ const EmailCodeProvider = Credentials({
 
 function providers(): Provider[] {
   const list: Provider[] = [];
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    list.push(
-      Google({
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      }),
-    );
-  }
   if (process.env.PCO_CLIENT_ID && process.env.PCO_CLIENT_SECRET) {
     list.push(PlanningCenter(process.env.PCO_CLIENT_ID, process.env.PCO_CLIENT_SECRET));
   }
@@ -127,15 +121,6 @@ function toIdentity(params: {
   const { account, profile, credentials, user } = params;
   const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
-  if (account?.provider === "google" && profile) {
-    return {
-      provider: "google",
-      subject: String(profile.sub ?? account.providerAccountId),
-      email: str(profile.email),
-      emailVerified: profile.email_verified === true,
-      name: str(profile.name),
-    };
-  }
   if (account?.provider === "planningcenter" && profile) {
     return {
       provider: "planningcenter",
@@ -158,12 +143,13 @@ function toIdentity(params: {
     };
   }
   if (account?.provider === "fake" && credentials && fakeSignInEnabled()) {
-    const provider = credentials.provider === "planningcenter" ? "planningcenter" : "google";
+    // Stands in for Planning Center, or for an emailed code that was already checked.
+    const provider = credentials.provider === "email" ? "email" : "planningcenter";
     return {
       provider,
       subject: str(credentials.subject) ?? "",
       email: str(credentials.email),
-      emailVerified: provider === "google",
+      emailVerified: provider === "email",
       name: str(credentials.name),
       organizationId: str(credentials.organizationId),
     };
