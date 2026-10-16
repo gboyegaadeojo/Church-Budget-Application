@@ -181,3 +181,19 @@ After user feedback that the sidebar was busy (a person with several roles saw a
 - **Reopen** (FR-18a) sends an Approved or Declined request back to Returned for Clarification with a required reason, adds a `reopened` decision (earlier decisions stay), and clears the current approved amounts until the next decision. No edit is used.
 - **Not yet:** second approval above a threshold (FR-34, Stage 2): every approval is final for now. Held release (FR-19a, Stage 2): each decision's `released_at` is the decision time. The reopen warning for approved expenses (FR-18a) waits for expenses (Stage 3). Decision emails wait for the outbox (step 7, marked `TODO(step 7)`).
 - **Dashboard** (`getReviewDashboard`, permission `annual.review`: accountants act, the System Administrator reads): expected departments are the active ones plus any other department with a submitted request in the cycle. Drafts show only as "Draft exists" and never reach the queue (AC-48). The queue lists Updated first, then other requests awaiting review, returned, then decided, oldest first, filtered by status group, department and search.
+
+## Planning Center "Ministry Department" field (2026-10-15)
+
+Requested by the user: a second People custom field, **Ministry Department**, decides which departments a leader can budget for. This is the People-field part of FR-39, built before Stage 2, on the FR-39 columns already in `departments`.
+
+- **Settings → Planning Center → Ministry Department:** the field name (default "Ministry Department") and a mode, stored as `pco_department_field_name` and `pco_department_mode`. Defaults apply when no row exists, so no seed migration is needed.
+  - **Off:** the field is ignored.
+  - **Suggest** (default): leaders are added to the departments their field names, and the form lists those first; other departments and **Other** stay available.
+  - **Restrict:** the form lists, and the server allows, only the departments the field names plus links the administrator or the form made earlier (minus any marked no longer listed). **Other** is hidden and refused.
+- **Matching:** a value matches a department's Planning Center value if the administrator set one (Admin → Departments → **Planning Center value**, stored as `pco_source_type = 'people_field_value'`), otherwise its name, ignoring case and spacing. A checkboxes field can name several departments. Two departments can't share a value.
+- **When:** at each sign-in after a successful Group Leader check, and in the nightly `pco-verify` job, for people with the Requester role. The Group Leader field still decides **whether** someone is a leader; this field only decides **which** department.
+- **Joining** follows FR-38: Primary if the department has none, otherwise Representative, with `source = 'pco_mapping'`. A new leader whose field names a department lands on Home instead of the waiting screen.
+- **Nothing is removed automatically.** A Planning Center link whose department is no longer listed is marked **No longer listed in Planning Center** (`pco_status = 'no_longer_leader'`) and audited; the administrator removes it. If it comes back, it is confirmed again. Links made by the administrator or the form are never changed.
+- **Outages:** the values last read are stored on the user (`pco_ministry_departments`, migration `0008`). If Planning Center is down or the field doesn't exist, nothing changes and the last known values stay in force (FR-01a).
+- **Restrict and earlier picks:** a department a leader picked on the form while the mode was Suggest stays allowed after switching to Restrict, because they already represent it; the administrator can remove the link.
+- **Not in e2e:** switching the shared mode to Restrict in a parallel browser test would affect every other test, so Restrict is covered by integration tests.

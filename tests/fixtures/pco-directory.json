@@ -1,41 +1,72 @@
 {
   "organizationId": "100",
-  "fields": [{ "id": "77", "name": "Ministry Leader", "dataType": "boolean" }],
+  "fields": [
+    {
+      "id": "77",
+      "name": "Ministry Leader",
+      "dataType": "boolean"
+    },
+    {
+      "id": "88",
+      "name": "Ministry Department",
+      "dataType": "checkboxes"
+    }
+  ],
   "people": [
     {
       "id": "1000",
       "name": "Gina Admin",
       "status": "active",
       "emails": ["gina.admin@example.org"],
-      "fieldValues": { "77": ["true"] }
+      "fieldValues": {
+        "77": ["true"]
+      }
     },
     {
       "id": "1001",
       "name": "Sam Lee",
       "status": "active",
       "emails": ["sam.lee@example.org"],
-      "fieldValues": { "77": ["true"] }
+      "fieldValues": {
+        "77": ["true"]
+      }
     },
     {
       "id": "1002",
       "name": "Ada Obi",
       "status": "active",
       "emails": ["ada.obi@example.org"],
-      "fieldValues": { "77": ["true"] }
+      "fieldValues": {
+        "77": ["true"]
+      }
     },
     {
       "id": "1003",
       "name": "Jo Member",
       "status": "active",
       "emails": ["jo.member@example.org"],
-      "fieldValues": { "77": ["false"] }
+      "fieldValues": {
+        "77": ["false"]
+      }
     },
     {
       "id": "1004",
       "name": "Kim Former",
       "status": "active",
       "emails": ["kim.former@example.org"],
-      "fieldValues": { "77": ["false"] }
+      "fieldValues": {
+        "77": ["false"]
+      }
+    },
+    {
+      "id": "1005",
+      "name": "Noah Keeper",
+      "status": "active",
+      "emails": ["noah.keeper@example.org"],
+      "fieldValues": {
+        "77": ["true"],
+        "88": ["Sanctuary Keepers Team"]
+      }
     }
   ]
 }

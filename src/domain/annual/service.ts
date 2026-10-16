@@ -18,6 +18,7 @@ import { effectiveDeadline } from "@/domain/cycles/service";
 import { tidyName } from "@/domain/departments/matching";
 import { ConflictError, parseInput, RuleError, ValidationError } from "@/domain/errors";
 import { getChurchTimeZone, readSettings } from "@/domain/settings";
+import { departmentPolicy } from "@/domain/users/ministry-departments";
 import { changedFields, writeAudit, type AuditActor } from "@/lib/audit";
 import { assertCan, type Action, type Subject } from "@/lib/authz";
 import { lineTotal, normalizeTaxRate, type TaxBreakdown } from "@/lib/money";
@@ -345,6 +346,12 @@ export async function startRequest(
     ? await tx.select().from(budgetCycles).where(eq(budgetCycles.id, input.cycleId)).limit(1)
     : [];
   if (!cycle || cycle.status !== "open") throw new RuleError(e.cycleNotOpen);
+
+  // Restrict mode: only departments the Ministry Department setting allows, and no Other.
+  const { allowed } = await departmentPolicy(tx, actor);
+  if (allowed && !(input.departmentId && allowed.has(input.departmentId))) {
+    throw new RuleError(e.notInMinistryDepartment);
+  }
 
   const department = await pickDepartment(tx, actor, actingRole, input);
   await joinDepartment(tx, actor, actingRole, department);

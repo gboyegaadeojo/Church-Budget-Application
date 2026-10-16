@@ -28,6 +28,7 @@ import { formatDateTime } from "@/lib/time-zone";
 import {
   acceptProposedAction,
   mergeProposedAction,
+  planningCenterValueAction,
   rejectProposedAction,
   removeLeaderAction,
   renameAction,
@@ -166,6 +167,27 @@ async function DepartmentContent({ params }: Pick<PageProps<"/admin/departments/
         </ActionForm>
       </Section>
 
+      {editable && (
+        <Section title={d.pcoHeading} description={d.pcoNote} id="planning-center">
+          <ActionForm action={planningCenterValueAction} aria-label={d.pcoHeading}>
+            <input type="hidden" name="id" value={department.id} />
+            <input type="hidden" name="version" value={department.version} />
+            <TextField
+              name="value"
+              label={d.pcoValue}
+              hint={d.pcoValueHint(department.name)}
+              defaultValue={
+                department.pcoSourceType === "people_field_value"
+                  ? (department.pcoSourceId ?? "")
+                  : ""
+              }
+              autoComplete="off"
+            />
+            <SubmitButton tone="secondary">{d.pcoSave}</SubmitButton>
+          </ActionForm>
+        </Section>
+      )}
+
       <Section title={d.leadersHeading} description={d.leadersHint} id="leaders">
         {leaders.length === 0 ? (
           <EmptyState>{d.noLeaders}</EmptyState>
@@ -278,6 +300,12 @@ function LeaderRow({
           <Badge tone={leader.slot === "primary" ? "info" : "neutral"}>
             {d.slotLabels[leader.slot]}
           </Badge>
+          {leader.source === "pco_mapping" &&
+            (leader.pcoStatus === "no_longer_leader" ? (
+              <Badge tone="warning">{d.noLongerListed}</Badge>
+            ) : (
+              <Badge>{d.fromPlanningCenter}</Badge>
+            ))}
         </span>
         <span className="block text-xs break-all text-fg-muted">{leader.email}</span>
       </div>

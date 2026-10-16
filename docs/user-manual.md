@@ -25,7 +25,7 @@ This manual explains how to use the app, by role. It is written from the specifi
 ### Signing in
 
 1. Open the app's web address on a computer or phone.
-2. Choose **Continue with Google**, **Continue with Planning Center**, or **Continue with email** (we email you a 6-digit code). They all reach the same account if your email matches. Staff can use any email address, such as a work or personal one.
+2. Choose **Continue with Google**, **Continue with Planning Center**, or **Continue with email** (we email you a 6-digit code). They all reach the same account if your email matches. Staff can use any email address, such as a work or personal one. If your **Ministry Department** field in Planning Center names your department, you are added to it when you sign in.
 3. Department leaders must be marked as a **Group Leader** in Planning Center: **Ministry Leader** set to **Yes** on their Planning Center profile. If you see "Your Group Leader status in Planning Center could not be confirmed", ask your ministry's Planning Center administrator.
 4. If you see "Waiting for department assignment", the System Administrator has been told and will add you.
 
@@ -204,7 +204,8 @@ You can **see everything** but cannot approve or pay unless you are also given t
 - Add departments (or paste a list), rename, deactivate. At setup, paste the church's 18 departments; nobody needs to be assigned in advance, because leaders join by picking their department.
 - Set each department's **Primary** and up to two **Backup** requesters (**Backup 1** takes over first). Giving someone a place that's taken makes its holder a Representative; moving a leader into another leader's place swaps them. Use the **No backup** filter to find gaps.
 - **Proposed** tab: departments people typed under **Other**. Choose **Add to list**, **Merge into…**, or **Reject** with a reason.
-- **Planning Center mapping**: link a department to a Planning Center Services team (for example the Media team that runs ProPresenter), a group, a group tag, or a custom field value. In **Suggest** mode, leaders found there appear as suggestions you **Add** or **Ignore**; in **Automatic** mode they are added and removed for you. Use **Sync now** to check straight away.
+- **Planning Center value**: leaders whose **Ministry Department** field in Planning Center holds the department's name are linked to it automatically (marked **From Planning Center**). If Planning Center uses a different name, type it in **Planning Center value**. A leader whose field no longer lists the department is marked **No longer listed in Planning Center**; nobody is removed automatically, so use **Remove** if they have left.
+- **Planning Center mapping** (Stage 2): link a department to a Planning Center Services team (for example the Media team that runs ProPresenter), a group, a group tag, or a custom field value. In **Suggest** mode, leaders found there appear as suggestions you **Add** or **Ignore**; in **Automatic** mode they are added and removed for you. Use **Sync now** to check straight away.
 
 ### Budget cycles
 
@@ -220,7 +221,8 @@ Tax rate (applies to new submissions only), Planning Center connection, custom f
 - **Sales tax**: type the new rate (for example 12 or 12.5) and confirm. Requests already submitted keep the rate they were submitted with.
 - **Accountants**: more than one person can have the Accountant role (give it in Users & Roles). Choose the **Primary accountant**, who gets the accountant emails; everyone else with the Accountant or Backup approver role is a backup approver. If the Primary accountant loses the role or is deactivated, choose a new one here.
 - **Church time zone**: deadlines, release times and emails use it (default America/Winnipeg).
-- **Sign-in and Planning Center**: the contact email shown to people who can't sign in, which sign-in buttons appear, the custom field and the values that count as a Group Leader, and which roles need the check. Use **Test a person** to try the field and values on someone before you save. The **Requesters failing verification** list shows who is suspended or not yet verified.
+- **Sign-in and Planning Center**: the contact email shown to people who can't sign in, which sign-in buttons appear, the custom field and the values that count as a Group Leader, and which roles need the check.
+- **Ministry Department**: the second Planning Center field, which names each leader's department, and what it does. **Off** ignores it. **Suggest** (the default) adds leaders to the departments their field names, and they can still pick another department on the form. **Restrict** lets leaders submit only for the departments their field names, plus any you assigned yourself, and hides **Other** on the form. Use **Test a person** to try the field and values on someone before you save. The **Requesters failing verification** list shows who is suspended or not yet verified.
 
 **Signing authorities**: the people who can sign church cheques. They don't need an account in the app. **Add signer** when someone can sign cheques (name, optional email, and the date they start). To fix a spelling or remove someone, open **Edit {name}**; **Remove** takes the date they stop and an optional reason. Removed signers stay on the list and on every payment they signed. When the Church Administrator records a cheque payment, she picks the two people who signed from this list, so keep at least two active; the page warns you when fewer remain.
 

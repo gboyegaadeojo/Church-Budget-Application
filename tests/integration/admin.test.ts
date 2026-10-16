@@ -956,6 +956,8 @@ describe("settings", () => {
       acceptedValues: "Yes\n\nYes",
       requireForRequesters: true,
       requireForStaff: false,
+      departmentFieldName: "Ministry Department",
+      departmentMode: "suggest",
       googleEnabled: true,
       planningCenterEnabled: true,
     };

@@ -73,6 +73,8 @@ export type SignInFormValues = {
   acceptedValues: string[];
   requireForRequesters: boolean;
   requireForStaff: boolean;
+  departmentFieldName: string;
+  departmentMode: "off" | "suggest" | "restrict";
   googleEnabled: boolean;
   planningCenterEnabled: boolean;
 };
@@ -185,6 +187,41 @@ export function SignInSettingsForm({
         />
       </fieldset>
 
+      <fieldset className="space-y-4 border-t border-border pt-4">
+        <legend className="text-base font-semibold">{s.ministryHeading}</legend>
+        <p className="text-sm text-fg-muted">{s.ministryIntro}</p>
+        {fields ? (
+          <SelectField
+            name="departmentFieldName"
+            label={s.ministryField}
+            hint={s.ministryFieldHint}
+            defaultValue={values.departmentFieldName}
+            options={withCurrent(fields, values.departmentFieldName)}
+            required
+          />
+        ) : (
+          <TextField
+            name="departmentFieldName"
+            label={s.ministryField}
+            hint={s.ministryFieldHint}
+            defaultValue={values.departmentFieldName}
+            autoComplete="off"
+            required
+          />
+        )}
+        <SelectField
+          name="departmentMode"
+          label={s.ministryMode}
+          hint={s.ministryModeHint}
+          defaultValue={values.departmentMode}
+          options={(["off", "suggest", "restrict"] as const).map((mode) => ({
+            value: mode,
+            label: s.ministryModes[mode],
+          }))}
+          required
+        />
+      </fieldset>
+
       <SubmitButton>{s.pcoSave}</SubmitButton>
 
       <fieldset className="space-y-3 border-t border-border pt-4">
@@ -280,4 +317,12 @@ function TestVerdict({
       {s.testUnavailable(reason)}
     </span>
   );
+}
+
+/** Planning Center's fields as options, keeping the saved one even if it's gone. */
+function withCurrent(fields: { name: string }[], current: string) {
+  const options = fields.map((f) => ({ value: f.name, label: f.name }));
+  return options.some((o) => o.value === current)
+    ? options
+    : [{ value: current, label: current }, ...options];
 }

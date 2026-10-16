@@ -476,7 +476,13 @@ describe("nightly pco-verify job", () => {
       pcoVerifiedAt: NOW,
     });
     const summary = await runPcoVerification(db, directory([], { unavailable: true }), NOW);
-    expect(summary).toEqual({ checked: 0, verified: 0, suspended: 0, unavailable: true });
+    expect(summary).toEqual({
+      checked: 0,
+      verified: 0,
+      suspended: 0,
+      departmentsJoined: 0,
+      unavailable: true,
+    });
     const [after] = await db.select().from(users).where(eq(users.id, user.id));
     expect(after.pcoLeaderVerified).toBe(true);
   });

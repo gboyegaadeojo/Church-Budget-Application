@@ -22,6 +22,12 @@ export const SETTING_DEFAULTS = {
   pco_leader_accepted_values: JSON.stringify(["Yes"]),
   pco_require_for_requesters: "true",
   pco_require_for_staff: "false",
+  /**
+   * The People custom field naming each leader's ministry, matched to departments, and
+   * what it does: off, suggest (join matched departments) or restrict (only those).
+   */
+  pco_department_field_name: "Ministry Department",
+  pco_department_mode: "suggest",
   signin_google_enabled: "true",
   signin_planning_center_enabled: "true",
   /** Shown on access-denied screens as who to contact (DRD 6.1a). */
@@ -106,4 +112,19 @@ export async function getChurchTimeZone(tx: Tx): Promise<string> {
   const { church_timezone } = await readSettings(tx, ["church_timezone"]);
   const zone = church_timezone.trim();
   return isValidTimeZone(zone) ? zone : fallbackTimeZone();
+}
+
+export const DEPARTMENT_FIELD_MODES = ["off", "suggest", "restrict"] as const;
+export type DepartmentFieldMode = (typeof DEPARTMENT_FIELD_MODES)[number];
+
+export type DepartmentFieldSettings = { fieldName: string; mode: DepartmentFieldMode };
+
+/** The Ministry Department field and its mode; an unknown mode reads as the default. */
+export async function getDepartmentFieldSettings(tx: Tx): Promise<DepartmentFieldSettings> {
+  const s = await readSettings(tx, ["pco_department_field_name", "pco_department_mode"]);
+  const mode = s.pco_department_mode.trim().toLowerCase();
+  return {
+    fieldName: s.pco_department_field_name.trim() || SETTING_DEFAULTS.pco_department_field_name,
+    mode: DEPARTMENT_FIELD_MODES.find((m) => m === mode) ?? "suggest",
+  };
 }

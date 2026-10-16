@@ -23,13 +23,19 @@ const OTHER = "other";
 export function StartForm({
   cycle,
   choices,
+  allowOther,
+  restricted,
 }: {
   cycle: { id: string; name: string };
   choices: DepartmentChoice[];
+  allowOther: boolean;
+  restricted: boolean;
 }) {
   const [state, formAction] = useActionState(startAction, { status: "idle" } as ActionState);
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState(() => choices.find((c) => c.yours)?.id ?? "");
+  const [selected, setSelected] = useState(
+    () => choices.find((c) => c.yours || c.fromPlanningCenter)?.id ?? "",
+  );
   const [otherName, setOtherName] = useState("");
   const ids = useId();
   const errors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
@@ -90,40 +96,53 @@ export function StartForm({
                   onChange={() => setSelected(c.id)}
                   // Named by the department alone; the badges describe it.
                   aria-labelledby={`${ids}-${c.id}-name`}
-                  aria-describedby={c.existing || c.yours ? `${ids}-${c.id}-tags` : undefined}
+                  aria-describedby={
+                    c.existing || c.yours || c.fromPlanningCenter
+                      ? `${ids}-${c.id}-tags`
+                      : undefined
+                  }
                   className="size-5 shrink-0 accent-accent"
                 />
                 <span id={`${ids}-${c.id}-name`} className="flex-1 text-sm">
                   {c.name}
                 </span>
-                {(c.existing || c.yours) && (
+                {(c.existing || c.yours || c.fromPlanningCenter) && (
                   <span id={`${ids}-${c.id}-tags`} className="flex gap-1.5">
                     {c.existing && <Badge>{s.hasBudget}</Badge>}
                     {c.yours && <Badge tone="info">{s.yours}</Badge>}
+                    {c.fromPlanningCenter && !c.yours && (
+                      <Badge tone="info">{s.fromPlanningCenter}</Badge>
+                    )}
                   </span>
                 )}
               </label>
             </li>
           ))}
           {choices.length > 0 && !anyVisible && (
-            <li className="px-3 py-2 text-sm text-fg-muted">{s.noMatches}</li>
+            <li className="px-3 py-2 text-sm text-fg-muted">
+              {restricted ? s.noMatchesRestricted : s.noMatches}
+            </li>
           )}
           {choices.length === 0 && (
-            <li className="px-3 py-2 text-sm text-fg-muted">{s.noDepartments}</li>
+            <li className="px-3 py-2 text-sm text-fg-muted">
+              {restricted ? s.restrictedEmpty : s.noDepartments}
+            </li>
           )}
-          <li>
-            <label className="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 hover:bg-surface-hover">
-              <input
-                type="radio"
-                name="department"
-                value={OTHER}
-                checked={selected === OTHER}
-                onChange={() => setSelected(OTHER)}
-                className="size-5 shrink-0 accent-accent"
-              />
-              <span className="text-sm">{s.other}</span>
-            </label>
-          </li>
+          {allowOther && (
+            <li>
+              <label className="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 hover:bg-surface-hover">
+                <input
+                  type="radio"
+                  name="department"
+                  value={OTHER}
+                  checked={selected === OTHER}
+                  onChange={() => setSelected(OTHER)}
+                  className="size-5 shrink-0 accent-accent"
+                />
+                <span className="text-sm">{s.other}</span>
+              </label>
+            </li>
+          )}
         </ul>
         {errors.departmentId && (
           <p id={`${ids}-dept-error`} className="text-sm text-danger">

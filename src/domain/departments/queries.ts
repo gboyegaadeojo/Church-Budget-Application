@@ -16,6 +16,10 @@ export type Leader = {
   type: RepresentativeType;
   slot: LeaderSlot;
   verified: boolean;
+  /** How they were linked: by the administrator, by picking it on the form, or Planning Center. */
+  source: "manual" | "form_pick" | "pco_mapping";
+  /** For Planning Center links: still listed, or no longer listed in their Ministry Department. */
+  pcoStatus: "suggested" | "confirmed" | "no_longer_leader" | "ignored" | null;
 };
 
 export type DepartmentListItem = {
@@ -40,6 +44,8 @@ async function leadersByDepartment(tx: Tx, ids: string[]): Promise<Map<string, L
       type: userDepartments.representativeType,
       backupRank: userDepartments.backupRank,
       verified: users.pcoLeaderVerified,
+      source: userDepartments.source,
+      pcoStatus: userDepartments.pcoStatus,
     })
     .from(userDepartments)
     .innerJoin(users, eq(users.id, userDepartments.userId))
