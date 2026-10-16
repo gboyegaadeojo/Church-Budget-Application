@@ -179,3 +179,29 @@ export function areaForPath(pathname: string): AreaId {
   const match = AREAS.find((a) => a.id === first);
   return match ? match.id : "home";
 }
+
+export type Crumb = { label: string; href?: string };
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Breadcrumbs (DRD 6.0) for a page below the navigation's own pages: its area (as text,
+ * since the area's first page may not be one the person can open), the nearest page from
+ * the navigation above it, and any detail page in between ("Annual Budget / Review
+ * dashboard" above a budget). The current page is left out; its heading names it.
+ * Navigation pages themselves get none: the sidebar already shows where they are.
+ */
+export function breadcrumbsFor(pathname: string): Crumb[] {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts.length < 2 || labelForHref(pathname)) return [];
+  const area = AREAS.find((a) => a.id === parts[0] && a.id !== "home");
+  const ancestors = parts.slice(0, -1).map((_, i) => `/${parts.slice(0, i + 1).join("/")}`);
+  const nearest = ancestors.findLastIndex((href) => labelForHref(href));
+  const crumbs: Crumb[] = area ? [{ label: area.label }] : [];
+  if (nearest >= 0)
+    crumbs.push({ label: labelForHref(ancestors[nearest])!, href: ancestors[nearest] });
+  for (const href of ancestors.slice(nearest + 1)) {
+    if (UUID.test(href.split("/").at(-1)!)) crumbs.push({ label: copy.nav.details, href });
+  }
+  return crumbs;
+}

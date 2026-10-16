@@ -30,6 +30,8 @@ export const copy = {
     admin: "Admin",
   },
   nav: {
+    details: "Details",
+    breadcrumbs: "Breadcrumb",
     myTasks: "My tasks",
     myDepartmentBudget: "My department's budget",
     reviewDashboard: "Review dashboard",
@@ -106,6 +108,23 @@ export const copy = {
   notFound: {
     title: "Page not found",
     body: "The page you were looking for does not exist or has moved.",
+  },
+  search: {
+    open: "Search",
+    title: "Search",
+    label: "Search budgets, departments, people and pages",
+    hint: "Type a reference number like IFC-2027-0007, a department, an item or a page. Press / or Ctrl+K to open search.",
+    close: "Close search",
+    searching: "Searching…",
+    none: "Nothing matches. Try a reference number or a department name.",
+    tooShort: "Type at least 2 characters.",
+    count: (n: number) => (n === 1 ? "1 result" : `${n} results`),
+    groups: {
+      budgets: "Annual budgets",
+      departments: "Departments",
+      people: "People",
+      pages: "Pages",
+    },
   },
   signIn: {
     title: "Sign in",
