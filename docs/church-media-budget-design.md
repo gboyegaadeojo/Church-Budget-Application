@@ -520,7 +520,7 @@ Navigation is grouped by **area**, not by role, and shows only what the person's
 | Reports | Exports allowed by the person's roles (administrator: all); **Analytics & Audit** (6.13), scoped to the person's roles |
 | Admin | Users & Roles, Departments (incl. Primary and Backup, Planning Center mapping, Proposed), Budget Cycles, Settings (tax, Planning Center, branding, email), Notifications & Audit (administrator only) |
 
-Account menu (all): theme, email preferences, Away (accountant, Board Chair, Vice-Chair), sign out. Footer: Help, Privacy.
+Account menu (all): theme, Away (accountant, Board Chair, Vice-Chair), sign out. Footer: Help, Privacy.
 
 The person's roles appear as small chips in the account menu ("Accountant · Requester: Media"), not as a role switcher. There is never a need to sign out to act in another role.
 
@@ -962,7 +962,7 @@ On request details (requester) and the review screen (accountant): a simple chro
 
 ## 6.11b Account settings
 
-Theme; email preferences (reminders, copies, accountant digest: instant or daily); accountants: Away toggle with dates and who is covering. Request and decision emails are listed as "always sent".
+Theme (in the account menu); accountants: Away toggle with dates and who is covering. There are no email preferences: every email always goes (decided 2026-10-16).
 
 ## 6.11c Help and privacy
 
@@ -1367,7 +1367,7 @@ High-fidelity designs for:
 29. Email templates (receipt, approval, clarification, decline, amendment, alerts).
 30. Print layout for an approved request.
 31. Request messages panel.
-32. Account settings and email preferences.
+32. Account settings (Away).
 33. Help and privacy notice.
 34. Start from last year's budget.
 35. Expense type chooser.

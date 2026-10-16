@@ -1224,8 +1224,7 @@ Every update to a request, decision, or budget sends an email. "Requester" means
 
 - Every email that contains amounts shows Subtotal, Sales tax (rate), and Total including tax.
 - Every email includes the request reference, department, budget year, plain-language status, what changed, what (if anything) the recipient needs to do, and a secure link that requires sign-in.
-- Request and decision emails cannot be turned off. Reminders, copies to the accountant, and the monthly summary can be turned off per user in their account settings.
-- The accountant can choose instant emails (default) or one daily digest for new submissions and revisions.
+- No email can be turned off, and every email goes straight away: there are no per-user email preferences and no digest (decided 2026-10-16, docs/decisions.md). People who turned emails off would miss ones they need.
 - Notifications must be generated from authoritative server-side events, after the database change commits.
 - Use a reliable email provider or approved church email service (see Section 20). Log attempted notifications, provider outcomes, and failures. Provide safe retry behavior without duplicating the underlying budget action.
 - Every sent email is listed on the request's history so users can see what was sent and when.
@@ -1976,7 +1975,7 @@ Requirements:
 
 One application; pages appear according to the person's roles (FR-37). Full screen designs: DRD 14.3.
 
-**Everyone:** Sign in (Google or Planning Center) · Access denied variants · Home with My tasks · Account settings (theme, email preferences, Away) · Help · Privacy notice.
+**Everyone:** Sign in (Google or Planning Center) · Access denied variants · Home with My tasks · Account settings (theme, Away) · Help · Privacy notice.
 
 **Annual Budget (Part A):** Submit annual budget (Details → Items → Preview → Confirmation) · Drafts · Start from last year · Budget details and history · Edit submitted budget · Clarification response · Messages panel · Accountant dashboard and department completion · Accountant review (approve as requested, approve a different amount, line changes, return, decline, reopen) · Decision release · Board total vs allocated.
 
@@ -2258,9 +2257,6 @@ BudgetCycle also gains `decision_email_mode` (`immediate` or `scheduled`), `deci
 
 - `user_id`
 - `theme` (`light`, `dark`, `system`)
-- `email_reminders` (boolean)
-- `email_copies` (boolean)
-- `email_digest` (`instant` or `daily`, accountants)
 - `accountant_type` (`primary` or `backup`, accountants)
 - `away_from`, `away_until` (nullable)
 
@@ -2700,7 +2696,7 @@ Build and release in stages. Each stage is usable on its own and ends with its a
 
 ## Stage 2: Annual Budget polish
 
-- Scheduled decision release (FR-19a), request messages (FR-31), backup approver and Away (FR-33), optional large-amount second approval (FR-34), copy last year (FR-35), branding (FR-30), email preferences and digest.
+- Scheduled decision release (FR-19a), request messages (FR-31), backup approver and Away (FR-33), optional large-amount second approval (FR-34), copy last year (FR-35), branding (FR-30). (Email preferences and digest were dropped on 2026-10-16: every email always goes.)
 - Planning Center team mapping (FR-39). Overview and Access tabs of the Analytics & Audit dashboard for annual budgets (FR-52).
 - Acceptance: Departments and Decision Release (release items), Notifications/Sharing, Branding, Planning Center Team Mapping, AC-128, AC-129, AC-138.
 

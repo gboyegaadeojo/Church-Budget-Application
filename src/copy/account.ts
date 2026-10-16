@@ -1,35 +1,7 @@
-/** Account settings: email preferences and Away (FR-21, FR-33, FR-38, DRD 6.11b). */
+/** Account settings and Away (FR-33, FR-38, DRD 6.11b). */
 export const accountCopy = {
   title: "Account settings",
   intro: "Your own settings. The theme is in the account menu.",
-  email: {
-    heading: "Email preferences",
-    intro: "Choose which optional emails you get. Nothing you change here affects anyone else.",
-    reminders: "Reminders",
-    remindersHint:
-      "Deadline reminders, reminders to answer the accountant's question, and the accountant's list of departments still to submit.",
-    copies: "Copies of my own decisions",
-    copiesHint:
-      "A copy for your records when you approve, decline, return or reopen a request. The department is always emailed.",
-    digest: "New submissions and revisions",
-    digestHint:
-      "One daily email arrives early each morning with everything since the last one. The review dashboard always shows them straight away.",
-    instant: "Each one as it arrives",
-    daily: "One email a day",
-    waiting: (count: number) =>
-      count === 1
-        ? "1 update is waiting for your next daily email."
-        : `${count} updates are waiting for your next daily email.`,
-    alwaysHeading: "Always sent",
-    always: [
-      "Receipts when your department submits or changes a budget",
-      "Decisions: approved, declined, returned for clarification, reopened",
-      "Messages on a request",
-      "Changes to your roles, departments and sign-in",
-    ],
-    save: "Save email preferences",
-    saved: "Email preferences saved.",
-  },
   away: {
     heading: "Away",
     intro:

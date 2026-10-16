@@ -138,8 +138,8 @@ export const users = pgTable(
 
 /**
  * A person's own settings (9.18): an approver's Away dates (FR-33), Away from `away_from`
- * until just before `away_until` (open-ended when null); and email preferences (FR-21).
- * No row means the defaults: every email, sent straight away.
+ * until just before `away_until` (open-ended when null). There are no email preferences:
+ * every email always goes (docs/decisions.md, 2026-10-16).
  */
 export const userPreferences = pgTable(
   "user_preferences",
@@ -149,12 +149,6 @@ export const userPreferences = pgTable(
       .references(() => users.id),
     awayFrom: timestamp("away_from", { withTimezone: true }),
     awayUntil: timestamp("away_until", { withTimezone: true }),
-    /** Deadline and clarification reminders, and the accountant's outstanding list. */
-    emailReminders: boolean("email_reminders").notNull().default(true),
-    /** The accountant's copies of their own decisions. */
-    emailCopies: boolean("email_copies").notNull().default(true),
-    /** Accountants: new submissions and revisions one by one, or in one daily email. */
-    emailDigest: text("email_digest").notNull().default("instant"),
     version: version(),
     updatedAt: updatedAt(),
   },
@@ -164,7 +158,6 @@ export const userPreferences = pgTable(
       sql`(${t.awayFrom} is not null or ${t.awayUntil} is null)
         and (${t.awayUntil} is null or ${t.awayUntil} > ${t.awayFrom})`,
     ),
-    check("user_preferences_email_digest", sql`${t.emailDigest} in ('instant', 'daily')`),
   ],
 );
 
@@ -831,36 +824,6 @@ export const emailOutbox = pgTable(
     index("email_outbox_request_idx").on(t.budgetRequestId, t.createdAt),
     check("email_outbox_sent_has_time", sql`(${t.status} = 'sent') = (${t.sentAt} is not null)`),
     check("email_outbox_attempts_non_negative", sql`${t.attempts} >= 0`),
-  ],
-);
-
-/**
- * Emails an accountant chose to get in one daily digest (FR-21): new submissions and
- * revisions. Each waits here instead of the outbox until the digest is queued, which
- * records the outbox row it went out in. Never deleted.
- */
-export const emailDigestItems = pgTable(
-  "email_digest_items",
-  {
-    id: id(),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id),
-    toEmail: text("to_email").notNull(),
-    template: text("template").notNull(),
-    subject: text("subject").notNull(),
-    href: text("href").notNull(),
-    budgetRequestId: uuid("budget_request_id").references(() => budgetRequests.id),
-    cycleId: uuid("cycle_id").references(() => budgetCycles.id),
-    createdAt: createdAt(),
-    digestedAt: timestamp("digested_at", { withTimezone: true }),
-    outboxId: uuid("outbox_id").references(() => emailOutbox.id),
-  },
-  (t) => [
-    index("email_digest_items_pending_idx")
-      .on(t.userId, t.createdAt)
-      .where(sql`${t.digestedAt} is null`),
-    check("email_digest_items_digested", sql`(${t.digestedAt} is null) = (${t.outboxId} is null)`),
   ],
 );
 

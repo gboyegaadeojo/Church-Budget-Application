@@ -75,7 +75,6 @@ export const copy = {
     themeLight: "Light",
     themeDark: "Dark",
     themeSystem: "System",
-    emailPreferences: "Email preferences",
     away: "Away",
     signOut: "Sign out",
     roleChip: (role: string, department?: string) => (department ? `${role}: ${department}` : role),

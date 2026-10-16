@@ -489,17 +489,6 @@ export const emailCopy = {
     action: "Check the addresses and the Resend settings.",
   },
 
-  /** The accountant's daily digest of new submissions and revisions (FR-21). */
-  accountantDigest: {
-    subject: (count: number) => `${count} budget ${plural(count, "update", "updates")} to review`,
-    heading: "Budget updates since your last digest",
-    intro:
-      "You chose one daily email for new submissions and revisions. Each is waiting on the review dashboard.",
-    listHeading: "New and updated",
-    item: (subject: string, time: string) => `${subject} (${time})`,
-    action: "Review them from the dashboard.",
-  },
-
   /** Admin → Notifications & Audit: the email log (FR-21). */
   admin: {
     title: "Notifications & Audit",
