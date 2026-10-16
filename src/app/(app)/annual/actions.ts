@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { adminCopy } from "@/copy/admin";
 import { annualCopy } from "@/copy/annual";
 import { setRepresentative } from "@/domain/departments/service";
+import { clearDepartmentAway, setDepartmentAway } from "@/domain/users/away";
+import { accountCopy } from "@/copy/account";
 import type { RequestContentInput } from "@/domain/annual/schema";
 import {
   deleteDraft,
@@ -118,5 +120,36 @@ export async function nominateBackupAction(_: ActionState, data: FormData): Prom
       return adminCopy.departments.nominate.saved(label);
     },
     { paths: ["/annual"] },
+  );
+}
+
+/** The Primary marks themselves Away; the Backups cover (FR-38, AC-119). */
+export async function setDepartmentAwayAction(
+  _: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await setDepartmentAway(tx, viewer, {
+        departmentId: form.text(data, "departmentId"),
+        from: form.text(data, "from"),
+        until: form.text(data, "until"),
+      });
+      return accountCopy.department.saved;
+    },
+    { paths: ["/annual", "/"] },
+  );
+}
+
+export async function clearDepartmentAwayAction(
+  _: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await clearDepartmentAway(tx, viewer, { departmentId: form.text(data, "departmentId") });
+      return accountCopy.department.cleared;
+    },
+    { paths: ["/annual", "/"] },
   );
 }

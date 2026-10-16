@@ -1,5 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { departments, userDepartments, userRoles, users } from "@/db/schema";
+import { departments, userDepartments, userPreferences, userRoles, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { readSettings } from "@/domain/settings";
 import type { Recipient } from "@/lib/email/outbox";
@@ -39,17 +39,81 @@ export async function usersWithRole(tx: Tx, roles: readonly Role[]): Promise<Nam
 }
 
 /**
- * "Accountant": the Primary accountant chosen in Settings (FR-33). Until one is chosen,
- * every accountant, so a submission is never announced to nobody. The backup approver
- * takes over while the Primary is away once Away arrives (FR-33, Stage 2).
+ * "Accountant" (FR-21, FR-33): the Primary accountant chosen in Settings; while they're
+ * Away, the backup approvers (everyone else with the Accountant or Backup approver role)
+ * who aren't away themselves (AC-61). Until a Primary is chosen, every accountant who
+ * isn't away. Never nobody: if everyone is away, the Primary (or every accountant).
  */
-export async function accountantRecipients(tx: Tx): Promise<NamedRecipient[]> {
+export async function accountantRecipients(
+  tx: Tx,
+  now: Date = new Date(),
+): Promise<NamedRecipient[]> {
+  return (await accountantCover(tx, now)).recipients;
+}
+
+export type AccountantCover = {
+  recipients: NamedRecipient[];
+  /** The Primary accountant, when one is chosen. */
+  primary: NamedRecipient | null;
+  /** The Primary is away, so `recipients` are covering for them. */
+  primaryAway: boolean;
+  primaryUntil: Date | null;
+};
+
+export async function accountantCover(tx: Tx, now: Date = new Date()): Promise<AccountantCover> {
+  const approvers = await usersWithRole(tx, ["accountant", "backup_approver"]);
   const accountants = await usersWithRole(tx, ["accountant"]);
-  const { primary_accountant_user_id: primary } = await readSettings(tx, [
+  const { primary_accountant_user_id: primaryId } = await readSettings(tx, [
     "primary_accountant_user_id",
   ]);
-  const chosen = accountants.find((a) => a.userId === primary);
-  return chosen ? [chosen] : accountants;
+  const away = await awayWindows(
+    tx,
+    approvers.map((a) => a.userId),
+    now,
+  );
+  const primary = accountants.find((a) => a.userId === primaryId) ?? null;
+  if (!primary) {
+    const present = accountants.filter((a) => !away.has(a.userId));
+    return {
+      recipients: present.length > 0 ? present : accountants,
+      primary: null,
+      primaryAway: false,
+      primaryUntil: null,
+    };
+  }
+  if (!away.has(primary.userId)) {
+    return { recipients: [primary], primary, primaryAway: false, primaryUntil: null };
+  }
+  const covering = approvers.filter((a) => a.userId !== primary.userId && !away.has(a.userId));
+  return {
+    recipients: covering.length > 0 ? covering : [primary],
+    primary,
+    primaryAway: covering.length > 0,
+    primaryUntil: away.get(primary.userId) ?? null,
+  };
+}
+
+/** Of these people, who is away now, with the day they're back (null: open-ended). */
+async function awayWindows(
+  tx: Tx,
+  userIds: string[],
+  now: Date,
+): Promise<Map<string, Date | null>> {
+  if (userIds.length === 0) return new Map();
+  const rows = await tx
+    .select()
+    .from(userPreferences)
+    .where(inArray(userPreferences.userId, userIds));
+  return new Map(
+    rows
+      .filter(
+        (r) =>
+          r.awayFrom !== null &&
+          r.awayFrom.getTime() <= now.getTime() &&
+          (r.awayUntil === null || now.getTime() < r.awayUntil.getTime()),
+      )
+      .map((r) => [r.userId, r.awayUntil]),
+  );
 }
 
 /** "Administrators" in FR-21's System table: everyone with the System Administrator role. */

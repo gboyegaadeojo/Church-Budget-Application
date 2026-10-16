@@ -11,12 +11,14 @@ import {
 import type { Db, Tx } from "@/db/types";
 import { queueNotice } from "@/domain/notifications/notice";
 import { readSettings } from "@/domain/settings";
+import { departmentCover } from "@/domain/users/away";
 import { appUrl } from "@/lib/email/layout";
 
 /**
  * Reminders for an unanswered clarification (FR-38, AC-118): the Primary first, a day
  * after the question; once the escalation delay has passed (Settings, default 3 days)
- * the Backups too, and the task then shows "Backup reminded". Each goes once per
+ * the Backups too (at once while the Primary is Away), and the task then shows "Backup
+ * reminded". Each goes once per
  * question, so a daily job run twice sends nothing new.
  */
 
@@ -115,7 +117,9 @@ export async function runClarificationReminders(
         now,
         content: content(m.intro(days)),
       });
-      if (days >= escalateAfter) {
+      // While the Primary is Away, the Backups are reminded from the first day (FR-38, AC-119).
+      const primaryAway = (await departmentCover(tx, q.departmentId, now)).away;
+      if (days >= escalateAfter || primaryAway) {
         summary.backups += await queueNotice(tx, {
           template: "annual.clarification_backup_reminder",
           audience: "requester",

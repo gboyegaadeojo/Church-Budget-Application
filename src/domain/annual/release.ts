@@ -519,7 +519,7 @@ export async function runScheduledReleases(
         summary.warnings += await queueNotice(tx, {
           template: "annual.release_warning",
           audience: "accountant",
-          to: await accountantRecipients(tx),
+          to: await accountantRecipients(tx, now),
           cycleId: cycle.id,
           dedupeKey: `release-warning:${cycle.id}:${releaseAt.toISOString()}`,
           now,
@@ -542,7 +542,7 @@ export async function runScheduledReleases(
       summary.summaries += await queueNotice(tx, {
         template: "annual.released",
         audience: "accountant",
-        to: await accountantRecipients(tx),
+        to: await accountantRecipients(tx, now),
         cycleId: cycle.id,
         dedupeKey: `release-done:${cycle.id}:${releaseAt.toISOString()}`,
         now,

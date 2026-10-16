@@ -217,6 +217,18 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     { ...YOUTH, annualStatus: "submitted" },
     ["no", "act", "act", "no", "no", "no", "no"],
   ],
+  [
+    "set one's own Away (FR-33; the board's comes with expenses)",
+    "account.away",
+    {},
+    ["no", "act", "act", "no", "no", "no", "no"],
+  ],
+  [
+    "set another department's Primary Away (FR-38)",
+    "department.away",
+    YOUTH,
+    ["no", "no", "no", "no", "no", "no", "act"],
+  ],
   ["see My tasks", "home.view", {}, ["act", "act", "act", "act", "act", "act", "act"]],
   [
     // Staff only (docs/decisions.md, 2026-10-16).

@@ -30,7 +30,7 @@ export async function ViewerAccountMenu() {
       name={viewer.name}
       email={viewer.email}
       roleChips={roleChips(viewer)}
-      canBeAway={hasRole(viewer, "accountant", "board_chair", "vice_chair")}
+      canBeAway={hasRole(viewer, "accountant", "backup_approver")}
     />
   );
 }
