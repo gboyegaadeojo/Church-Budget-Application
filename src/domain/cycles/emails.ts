@@ -226,7 +226,7 @@ export async function runReminders(db: Db, now: Date = new Date()): Promise<Remi
       summary.deadlinePassed += await queueNotice(tx, {
         template: "cycle.deadline_passed",
         audience: "accountant",
-        to: await accountantRecipients(tx),
+        to: await accountantRecipients(tx, now),
         cycleId: cycle.id,
         dedupeKey: `deadline-passed:${cycle.id}:${cycle.submissionDeadline.toISOString()}`,
         now,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
 import * as Menu from "@radix-ui/react-dropdown-menu";
 import { useTheme } from "next-themes";
 import { Check, LogOut, Mail, Monitor, Moon, Plane, Sun } from "lucide-react";
@@ -21,7 +22,7 @@ export type AccountMenuProps = {
   email: string;
   /** Pre-built labels such as "Accountant" or "Requester: Media". */
   roleChips: string[];
-  /** Away applies to approvers only (DRD 6.0). */
+  /** Away applies to the accountant and backup approvers (FR-33); the board's comes with expenses. */
   canBeAway: boolean;
 };
 
@@ -109,9 +110,12 @@ export function AccountMenu({ name, email, roleChips, canBeAway }: AccountMenuPr
               {a.emailPreferences}
             </ComingSoonItem>
             {canBeAway && (
-              <ComingSoonItem icon={<Plane className="size-4" aria-hidden="true" />}>
-                {a.away}
-              </ComingSoonItem>
+              <Menu.Item asChild className={itemClass}>
+                <Link href="/account#away">
+                  <Plane className="size-4" aria-hidden="true" />
+                  <span className="flex-1">{a.away}</span>
+                </Link>
+              </Menu.Item>
             )}
             <Menu.Item className={itemClass} onSelect={() => signOutForm.current?.requestSubmit()}>
               <LogOut className="size-4" aria-hidden="true" />

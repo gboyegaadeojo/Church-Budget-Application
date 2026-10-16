@@ -62,6 +62,10 @@ export type Action =
   | "department.set_primary"
   | "department.set_backup"
   | "cycle.extend_deadline"
+  /** Set one's own Away, so accountant emails go to the backup approvers (FR-33). */
+  | "account.away"
+  /** Set the department's Primary as Away, so the Backups cover (FR-38). */
+  | "department.away"
   // Everyone
   | "home.view"
   | "analytics.view";
@@ -217,6 +221,12 @@ const RULES: Record<Action, readonly Rule[]> = {
     { roles: ["requester"], check: primaryOfDepartment },
   ],
   "cycle.extend_deadline": [{ roles: ["system_admin", ...ACCOUNTANTS] }],
+  // The Board Chair's Away routes expense approvals to the Vice-Chair: Stage 3.
+  "account.away": [{ roles: ACCOUNTANTS }],
+  "department.away": [
+    { roles: ["requester"], check: primaryOfDepartment },
+    { roles: ["system_admin"] },
+  ],
 
   "home.view": [{ roles: EVERY_ROLE }],
   // Staff only, by the church's decision (docs/decisions.md, 2026-10-16): a requester sees

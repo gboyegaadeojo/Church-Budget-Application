@@ -135,6 +135,31 @@ export const users = pgTable(
   (t) => [uniqueIndex("users_email_lower_key").on(sql`lower(${t.email})`)],
 );
 
+/**
+ * A person's own settings (9.18). For now, an approver's Away dates (FR-33): Away from
+ * `away_from` until just before `away_until` (open-ended when null). Email preferences
+ * join it later in Stage 2.
+ */
+export const userPreferences = pgTable(
+  "user_preferences",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => users.id),
+    awayFrom: timestamp("away_from", { withTimezone: true }),
+    awayUntil: timestamp("away_until", { withTimezone: true }),
+    version: version(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check(
+      "user_preferences_away_dates",
+      sql`(${t.awayFrom} is not null or ${t.awayUntil} is null)
+        and (${t.awayUntil} is null or ${t.awayUntil} > ${t.awayFrom})`,
+    ),
+  ],
+);
+
 /** A person's roles; permissions are the union (Requirements 3.6). */
 export const userRoles = pgTable(
   "user_roles",

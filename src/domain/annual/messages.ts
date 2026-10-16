@@ -116,7 +116,7 @@ export async function sendMessage(
   const recipients = (
     toDepartment
       ? await departmentRepresentatives(tx, row.departmentId)
-      : await accountantRecipients(tx)
+      : await accountantRecipients(tx, now)
   ).filter((r) => r.userId !== actor.id);
   await queueNotice(tx, {
     template: toDepartment ? "annual.message.department" : "annual.message.accountant",

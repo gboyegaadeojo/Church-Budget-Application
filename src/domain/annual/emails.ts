@@ -189,7 +189,7 @@ export async function queueAnnualEmails(
   const reviewLink = { label: a.reviewRequest, href: appUrl(`/annual/review/${r.id}`) };
   const time = formatDateTime(now, ctx.zone);
   const reps = await departmentRepresentatives(tx, r.departmentId);
-  const accountants = await accountantRecipients(tx);
+  const accountants = await accountantRecipients(tx, now);
   const left = editsRemaining(r);
   const summary = { kind: "single" as const, totals: requested(r), rate: r.taxRate! };
   const out: Outgoing[] = [];

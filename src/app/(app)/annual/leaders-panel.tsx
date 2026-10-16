@@ -1,9 +1,17 @@
 "use client";
 
-import { ActionForm, SelectField, SubmitButton } from "@/components/ui/action-form";
+import { ActionForm, SelectField, SubmitButton, TextField } from "@/components/ui/action-form";
 import { Badge } from "@/components/ui/display";
+import { accountCopy } from "@/copy/account";
 import { adminCopy } from "@/copy/admin";
-import { nominateBackupAction } from "./actions";
+import {
+  clearDepartmentAwayAction,
+  nominateBackupAction,
+  setDepartmentAwayAction,
+} from "./actions";
+
+const w = accountCopy.department;
+const aw = accountCopy.away;
 
 const d = adminCopy.departments;
 const n = d.nominate;
@@ -16,10 +24,15 @@ export function LeadersPanel({
   department,
   leaders,
   candidates,
+  away,
+  today,
 }: {
   department: { id: string; name: string };
   leaders: { userId: string; name: string; slot: keyof typeof d.slotLabels }[];
   candidates: { id: string; name: string }[];
+  /** The Primary's Away (FR-38), as church-local days. */
+  away: { active: boolean; set: boolean; from: string; until: string; hasBackup: boolean };
+  today: string;
 }) {
   return (
     <section
@@ -68,6 +81,51 @@ export function LeadersPanel({
           <SubmitButton tone="secondary">{n.save}</SubmitButton>
         </ActionForm>
       )}
+
+      <div className="space-y-3 border-t border-border pt-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="font-semibold">{w.heading}</h3>
+          {away.active && <Badge tone="warning">{w.heading}</Badge>}
+        </div>
+        <p className="text-sm text-fg-muted">{w.intro}</p>
+        {!away.hasBackup ? (
+          <p className="text-sm text-fg-muted">{w.noBackup}</p>
+        ) : (
+          <ActionForm
+            action={setDepartmentAwayAction}
+            aria-label={`${department.name}: ${w.heading}`}
+          >
+            <input type="hidden" name="departmentId" value={department.id} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField
+                name="from"
+                type="date"
+                label={aw.from}
+                hint={aw.fromHint}
+                defaultValue={away.from || today}
+                required
+              />
+              <TextField
+                name="until"
+                type="date"
+                label={aw.until}
+                hint={aw.untilHint}
+                defaultValue={away.until}
+              />
+            </div>
+            <SubmitButton tone="secondary">{away.set ? aw.update : w.save}</SubmitButton>
+          </ActionForm>
+        )}
+        {away.set && (
+          <ActionForm
+            action={clearDepartmentAwayAction}
+            aria-label={`${department.name}: ${w.off}`}
+          >
+            <input type="hidden" name="departmentId" value={department.id} />
+            <SubmitButton tone="ghost">{w.off}</SubmitButton>
+          </ActionForm>
+        )}
+      </div>
     </section>
   );
 }

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { UnreadMessages } from "@/components/request-messages";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarClock, CheckCircle2, MessageCircleQuestion } from "lucide-react";
+import { CalendarClock, CheckCircle2, MessageCircleQuestion, Plane } from "lucide-react";
 import {
   AdminSkeleton,
   EmptyState,
@@ -24,7 +24,9 @@ import { leaderCandidates } from "@/domain/users/admin-queries";
 import { LeadersPanel } from "./leaders-panel";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
-import { formatDateTime } from "@/lib/time-zone";
+import { formatDate, formatDateTime, zonedDate } from "@/lib/time-zone";
+import { accountCopy } from "@/copy/account";
+import { departmentCover } from "@/domain/users/away";
 import { AnnualStatusBadge } from "./status-badge";
 
 const d = annualCopy.dashboard;
@@ -95,9 +97,30 @@ async function DashboardContent({
         (c) =>
           c.id !== viewer.id && !leaders.some((l) => l.userId === c.id && l.slot === "primary"),
       );
-      return { department: { id: dep.id, name: dep.name }, leaders, candidates };
+      const cover = await departmentCover(db, dep.id);
+      return {
+        department: { id: dep.id, name: dep.name },
+        leaders,
+        candidates,
+        away: {
+          active: cover.away,
+          set: cover.window.from !== null,
+          from: cover.window.from ? zonedDate(cover.window.from, zone) : "",
+          until: cover.window.until ? zonedDate(cover.window.until, zone) : "",
+          hasBackup: cover.backups.length > 0,
+        },
+      };
     }),
   );
+  // FR-38, AC-119: every leader sees who is covering while their Primary is away.
+  const covered = (
+    await Promise.all(
+      viewer.departments.map(async (dep) => ({
+        name: dep.name,
+        cover: await departmentCover(db, dep.id),
+      })),
+    )
+  ).filter((c) => c.cover.away && c.cover.backups.length > 0);
   const others = requests.filter((r) => r.status !== "returned");
 
   return (
@@ -202,12 +225,31 @@ async function DashboardContent({
         </section>
       )}
 
+      {covered.map(({ name, cover }) => (
+        <p
+          key={name}
+          role="note"
+          className="flex items-start gap-2 rounded-control border border-border bg-surface-2 p-3 text-sm"
+        >
+          <Plane aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-fg-muted" />
+          <span>
+            <span className="font-medium">{name}: </span>
+            {accountCopy.department.covered(
+              cover.backups.map((b) => b.name).join(" and "),
+              cover.window.until ? formatDate(zonedDate(cover.window.until, zone)) : null,
+            )}
+          </span>
+        </p>
+      ))}
+
       {leaderPanels.map((panel) => (
         <LeadersPanel
           key={panel.department.id}
           department={panel.department}
           leaders={panel.leaders.map((l) => ({ userId: l.userId, name: l.name, slot: l.slot }))}
           candidates={panel.candidates.map((c) => ({ id: c.id, name: c.name }))}
+          away={panel.away}
+          today={zonedDate(new Date(), zone)}
         />
       ))}
 

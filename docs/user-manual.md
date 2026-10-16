@@ -126,7 +126,7 @@ Each department has a **Primary requester** (accountable for the department's bu
 - All of them can do everything for the department: submit and edit the annual budget, answer questions, send messages, and submit expenses.
 - All of them see the department's tasks in My tasks. Reminders go to the Primary first. If the accountant's question is still unanswered a day later, the Primary is reminded; after 3 days (the administrator can change this), both Backups are reminded too and the task shows **Backup reminded**.
 - **Primary: choose your backups.** On **Annual Budget**, under **{Department}: leaders**, choose a verified Group Leader and **Backup 1** or **Backup 2**, then **Make Backup**. The System Administrator is told and can change it. Changing the Primary is the administrator's job.
-- **Primary: going away?** Turn on **Away** with dates. Your Backups get the reminders and the department shows who is covering.
+- **Primary: going away?** On **Annual Budget**, under your department's leaders, set **Away** with the first day away and (optionally) the day you're back. Your Backups get the reminders straight away, and everyone in the department sees "Covered by … until …". You need a Backup first. **Turn off Away** when you're back early.
 - If the Primary leaves the role, Backup 1 becomes Primary automatically, Backup 2 moves up to Backup 1, and the System Administrator is asked to fill the empty Backup place.
 
 ---
@@ -169,7 +169,7 @@ Record spending, refunds and corrections, make **budget amendments** with a reas
 
 ### Away
 
-Turn on **Away** in the account menu; the backup approver gets your emails and tasks.
+Choose **Away** in the account menu (Account settings). Give the first day away and, if you know it, the day you're back. While the Primary accountant is away, the accountant emails (new submissions, changes, answers, messages, reminders) go to the backup approvers who aren't away themselves, and the Review dashboard says who is covering. You can still sign in and work. If everyone is away, the emails keep coming to the Primary. Backup approvers can set Away too, so they aren't chosen to cover.
 
 ### Reports
 

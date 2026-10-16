@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { UnreadMessages } from "@/components/request-messages";
-import { CalendarClock, Eye } from "lucide-react";
+import { CalendarClock, Eye, Plane } from "lucide-react";
 import { BoardAllocationBar } from "@/components/board-allocation";
 import { DownloadButton } from "@/components/download-button";
 import { Badge, EmptyState, PageHeader, PermissionDenied, Section } from "@/components/ui/display";
 import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
+import { accountCopy } from "@/copy/account";
 import { annualCopy } from "@/copy/annual";
 import { exportsCopy } from "@/copy/exports";
 import { getDb } from "@/db";
@@ -16,6 +17,7 @@ import {
   type Progress,
   type QueueRow,
 } from "@/domain/annual/review-queries";
+import { accountantCover } from "@/domain/notifications/recipients";
 import { getChurchTimeZone } from "@/domain/settings";
 import { viewerAllowedTo } from "@/lib/admin-server";
 import { authorize } from "@/lib/authz";
@@ -55,9 +57,10 @@ export async function ReviewDashboardView({
     q: one(query.q) || undefined,
   };
   const db = getDb();
-  const [dashboard, zone] = await Promise.all([
+  const [dashboard, zone, cover] = await Promise.all([
     getReviewDashboard(db, viewer, filters),
     getChurchTimeZone(db),
+    accountantCover(db),
   ]);
   if (!dashboard) return <PermissionDenied />;
   const { cycle, counts, departments, queue, readOnly } = dashboard;
@@ -163,6 +166,21 @@ export async function ReviewDashboardView({
               {r.cards.declined} {counts.declined}
             </p>
           </section>
+
+          {cover.primaryAway && cover.primary && (
+            // FR-33: the dashboards say who is covering while the Primary accountant is away.
+            <p
+              role="note"
+              className="flex items-start gap-2 rounded-control border border-warning bg-warning/10 p-3 text-sm"
+            >
+              <Plane aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-warning" />
+              {accountCopy.coverage.accountant(
+                cover.primary.name,
+                cover.primaryUntil ? formatDate(zonedDate(cover.primaryUntil, zone)) : null,
+                cover.recipients.map((r) => r.name).join(", "),
+              )}
+            </p>
+          )}
 
           {dashboard.board && <BoardAllocationBar board={dashboard.board} />}
 
