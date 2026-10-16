@@ -67,7 +67,7 @@ const TRANSITIONS: Record<ExpenseEvent, Partial<Record<ExpenseStatus, ExpenseSta
   start_processing: { approved: "processing" },
   pay: { processing: "paid" },
   purchase: { processing: "purchased" },
-  close: { paid: "closed", purchased: "closed", approved: "closed" },
+  close: { paid: "closed", purchased: "closed", approved: "closed", processing: "closed" },
   cancel: { approved: "cancelled" },
 };
 
@@ -96,8 +96,15 @@ export function nextExpenseStatus(
 ): ExpenseStatus | undefined {
   const only = EVENT_TYPES[event];
   if (only && only !== type) return undefined;
-  // An approved claim is closed by being paid, never straight from Approved.
-  if (event === "close" && from === "approved" && type !== "purchase_request") return undefined;
+  // A claim is closed by being paid; only a purchase request closes from Approved or
+  // Processing, when the claim it led to is approved (FR-42, FR-45).
+  if (
+    event === "close" &&
+    (from === "approved" || from === "processing") &&
+    type !== "purchase_request"
+  ) {
+    return undefined;
+  }
   return TRANSITIONS[event][from];
 }
 

@@ -7,11 +7,12 @@ import { AdminSkeleton, Badge, PageHeader } from "@/components/ui/display";
 import { cardClass } from "@/components/ui/styles";
 import { accountCopy } from "@/copy/account";
 import { getDb } from "@/db";
-import { accountantCover } from "@/domain/notifications/recipients";
+import { accountantCover, usersWithRole } from "@/domain/notifications/recipients";
 import { getChurchTimeZone } from "@/domain/settings";
 import { getMyAway } from "@/domain/users/away";
 import { authorize } from "@/lib/authz";
 import { cn } from "@/lib/cn";
+import { hasRole, type Role } from "@/lib/roles";
 import { formatDate, zonedDate } from "@/lib/time-zone";
 import { getViewer } from "@/lib/viewer";
 import { clearAwayAction, setAwayAction } from "./actions";
@@ -39,7 +40,7 @@ async function AccountContent() {
     <>
       <PageHeader title={c.title} intro={c.intro} />
       {canBeAway ? (
-        <AwaySection userId={viewer.id} />
+        <AwaySection userId={viewer.id} roles={viewer.roles} />
       ) : (
         <p className={cn(cardClass, "text-sm text-fg-muted")}>{t.notForYou}</p>
       )}
@@ -47,9 +48,15 @@ async function AccountContent() {
   );
 }
 
-async function AwaySection({ userId }: { userId: string }) {
+async function AwaySection({ userId, roles }: { userId: string; roles: readonly Role[] }) {
   const db = getDb();
   const now = new Date();
+  const approver = hasRole({ roles }, "accountant", "backup_approver");
+  // The Board Chair's Away hands final approvals to the Vice-Chair (3.3, AC-112).
+  const chair = roles.includes("board_chair");
+  const vices = chair
+    ? (await usersWithRole(db, ["vice_chair"])).filter((v) => v.userId !== userId)
+    : [];
   const [away, zone] = await Promise.all([getMyAway(db, userId, now), getChurchTimeZone(db)]);
   const day = (d: Date) => formatDate(zonedDate(d, zone));
   const dayValue = (d: Date | null) => (d ? zonedDate(d, zone) : "");
@@ -88,11 +95,20 @@ async function AwaySection({ userId }: { userId: string }) {
             </h2>
             {away.active && <Badge tone="warning">{t.heading}</Badge>}
           </div>
-          <p className="text-sm text-fg-muted">{t.intro}</p>
+          {approver && <p className="text-sm text-fg-muted">{t.intro}</p>}
+          {chair && <p className="text-sm text-fg-muted">{t.boardIntro}</p>}
           <p className="text-sm font-medium" role="status">
             {status}
           </p>
           {away.active &&
+            chair &&
+            (vices.length > 0 ? (
+              <p className="text-sm">{t.boardCovering(vices.map((v) => v.name).join(", "))}</p>
+            ) : (
+              <p className="text-sm text-warning">{t.boardNoCover}</p>
+            ))}
+          {away.active &&
+            approver &&
             routesMyEmails &&
             (others.length > 0 ? (
               <p className="text-sm">{t.covering(others.map((o) => o.name).join(", "))}</p>

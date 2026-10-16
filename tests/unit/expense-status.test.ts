@@ -47,6 +47,7 @@ const ALLOWED: [ExpenseStatus, ExpenseEvent, ExpenseStatus, ExpenseType?][] = [
   ["paid", "close", "closed"],
   ["purchased", "close", "closed"],
   ["approved", "close", "closed", "purchase_request"],
+  ["processing", "close", "closed", "purchase_request"],
   ["approved", "cancel", "cancelled", "purchase_request"],
 ];
 

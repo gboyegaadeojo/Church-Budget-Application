@@ -17,7 +17,7 @@ export type ExpenseEmailEvent =
   | { kind: "declined"; reason: string; level: "accountant" | "board" }
   | { kind: "accountant_approved" }
   | { kind: "board_returned"; question: string }
-  | { kind: "final_approved" }
+  | { kind: "final_approved"; overBy: number }
   | { kind: "processing_started" }
   | { kind: "paid" };
 

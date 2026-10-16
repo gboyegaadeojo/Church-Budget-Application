@@ -42,7 +42,11 @@ test("the account page is axe clean on a phone, and says Away is for approvers",
   await page.setViewportSize(MOBILE);
   await signInAs(page, PEOPLE.sam);
   await page.goto("/account");
-  await expect(page.getByText("Away is for the accountant and backup approvers.")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Away is for the accountant, backup approvers, the Board Chair and the Vice-Chair.",
+    ),
+  ).toBeVisible();
   await expectAxeClean(page);
 });
 
