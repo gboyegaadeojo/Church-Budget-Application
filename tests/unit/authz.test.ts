@@ -107,6 +107,7 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     {},
     ["no", "no", "no", "no", "no", "no", "act"],
   ],
+  ["see and retry emails", "admin.notifications", {}, ["no", "no", "no", "no", "no", "no", "act"]],
   [
     "set the Primary requester",
     "department.set_primary",

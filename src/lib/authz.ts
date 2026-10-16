@@ -47,6 +47,7 @@ export type Action =
   | "admin.cycles"
   | "admin.settings"
   | "admin.pco_mapping"
+  | "admin.notifications"
   | "department.set_primary"
   | "department.set_backup"
   | "cycle.extend_deadline"
@@ -179,6 +180,8 @@ const RULES: Record<Action, readonly Rule[]> = {
   "admin.cycles": [{ roles: ["system_admin"] }],
   "admin.settings": [{ roles: ["system_admin"] }],
   "admin.pco_mapping": [{ roles: ["system_admin"] }],
+  /** Admin → Notifications & Audit: the email log and retrying failed emails (FR-21). */
+  "admin.notifications": [{ roles: ["system_admin"] }],
   "department.set_primary": [{ roles: ["system_admin"] }],
   "department.set_backup": [
     { roles: ["system_admin"] },

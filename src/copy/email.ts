@@ -376,6 +376,44 @@ export const emailCopy = {
     action: "Check the addresses and the Resend settings.",
   },
 
+  /** Admin → Notifications & Audit: the email log (FR-21). */
+  admin: {
+    title: "Notifications & Audit",
+    intro:
+      "Every email the app has sent or tried to send. Emails that can't go are retried for about three days, then shown here as Couldn't be sent.",
+    countsLabel: "Emails by status",
+    filtersLabel: "Filter emails",
+    statusFilter: "Status",
+    allStatuses: "All",
+    search: "Search subject or recipient",
+    apply: "Show",
+    clear: "Clear",
+    logHeading: "Email log",
+    empty: "No emails match.",
+    none: "No emails yet.",
+    truncated: "Showing the newest 100. Narrow the search to see older ones.",
+    columns: {
+      email: "Email",
+      to: "To",
+      status: "Status",
+      tries: "Tries",
+      when: "When",
+    },
+    queued: (time: string) => `Queued ${time}`,
+    sent: (time: string) => `Sent ${time}`,
+    nextTry: (time: string) => `Next try ${time}`,
+    retry: "Send again",
+    retryLabel: (subject: string, to: string) => `Send "${subject}" to ${to} again`,
+    retryAll: "Send all failed again",
+    retryAllHint:
+      "Use this after fixing the Resend settings. Each email gets a fresh set of retries.",
+    retried: (n: number) => `${n} ${plural(n, "email", "emails")} will be sent again.`,
+    nothingToRetry: "There are no failed emails to send again.",
+    openRequest: "Open request",
+    activityNote:
+      "The full activity log moves to Reports → Analytics & Audit in the next step; every change is already recorded.",
+  },
+
   /** The Emails section of a request's history (AC-58). */
   history: {
     heading: "Emails",

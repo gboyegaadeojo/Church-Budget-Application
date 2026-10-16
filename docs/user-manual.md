@@ -238,7 +238,7 @@ Tax rate (applies to new submissions only), Planning Center connection, custom f
 You're emailed when something needs you: a leader joins or proposes a department, a new leader is waiting for a department, a requester is suspended because Planning Center no longer lists them, Planning Center can't be reached, someone without access tries to sign in, or the Primary accountant is cleared. Once a day you also get a list of any emails that couldn't be sent after every retry.
 
 
-Emails that don't go are retried for about three days. Until the failed-emails list arrives in Admin, a failed one shows as **Couldn't be sent** under **Emails** on the budget. Check **Admin → Notifications & Audit** for failed emails once it exists, and **Reports → Analytics & Audit → Access** weekly (see the [go-live checklist](go-live-checklist.md), section 4).
+Emails that don't go are retried for about three days. **Admin → Notifications & Audit** lists every email with its status; filter by **Couldn't be sent** to see failures and the reason. After fixing an address or the Resend settings, use **Send again** on one email or **Send all failed again**. Check it, and **Reports → Analytics & Audit → Access** weekly (see the [go-live checklist](go-live-checklist.md), section 4).
 
 ---
 
