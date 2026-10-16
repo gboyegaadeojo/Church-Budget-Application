@@ -4,6 +4,7 @@ import { budgetCycles, budgetRequests } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import type { Viewer } from "@/lib/roles";
 import { backupsReminded } from "@/domain/annual/clarification-reminders";
+import { pendingFirstApproval } from "@/domain/annual/review";
 import type { Task } from "./types";
 
 const t = annualCopy.tasks;
@@ -85,19 +86,37 @@ export async function annualReviewTasks(tx: Tx, viewer: Viewer): Promise<Task[]>
     .innerJoin(budgetCycles, eq(budgetCycles.id, budgetRequests.budgetCycleId))
     .where(
       and(
-        inArray(budgetRequests.status, ["submitted", "updated", "in_review"]),
+        inArray(budgetRequests.status, [
+          "submitted",
+          "updated",
+          "in_review",
+          "awaiting_second_approval",
+        ]),
         eq(budgetCycles.status, "open"),
       ),
     );
   const mine = new Set(viewer.departments.map((d) => d.id));
+  // FR-34: a second approval is for someone other than the first approver.
+  const awaiting = rows.filter((r) => r.status === "awaiting_second_approval");
+  const firstBy = new Map<string, string>();
+  for (const r of awaiting) {
+    const first = await pendingFirstApproval(tx, r.id);
+    if (first) firstBy.set(r.id, first.approverUserId);
+  }
   return rows
     .filter((r) => !mine.has(r.departmentId))
+    .filter((r) => r.status !== "awaiting_second_approval" || firstBy.get(r.id) !== viewer.id)
     .map(
       (r) =>
         ({
           id: `annual:${r.id}:review`,
           area: "annual",
-          action: r.status === "updated" ? t.reviewUpdated : t.review,
+          action:
+            r.status === "awaiting_second_approval"
+              ? t.secondApproval
+              : r.status === "updated"
+                ? t.reviewUpdated
+                : t.review,
           item: [r.reference, r.department, r.title].filter(Boolean).join(" · "),
           amountCents: r.totalCents ?? undefined,
           waitingSince: r.status === "updated" ? r.updatedAt : (r.submittedAt ?? r.updatedAt),

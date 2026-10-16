@@ -13,6 +13,8 @@ import type { Tx } from "@/db/types";
 import {
   accountantRecipients,
   departmentRepresentatives,
+  person,
+  secondApprovers,
   usersWithRole,
 } from "@/domain/notifications/recipients";
 import { getChurchTimeZone, readSettings } from "@/domain/settings";
@@ -38,6 +40,9 @@ export type AnnualEmailEvent =
   | { kind: "review_started" }
   | { kind: "returned"; question: string }
   | { kind: "approved" }
+  /** FR-34: approved at or above the threshold; a second approver signs it off. */
+  | { kind: "awaiting_second" }
+  | { kind: "second_refused"; reason: string; firstApproverId: string }
   | { kind: "declined"; reason: string }
   | { kind: "reopened"; reason: string };
 
@@ -419,6 +424,68 @@ export async function queueAnnualEmails(
           },
         },
       );
+      break;
+    }
+
+    case "awaiting_second": {
+      const w = a.awaitingSecond;
+      const n = a.secondNeeded;
+      out.push(
+        {
+          template: "annual.awaiting_second",
+          audience: "requester",
+          to: reps,
+          content: {
+            subject: w.subject(...subjectArgs),
+            heading: w.heading,
+            status: a.statuses.awaitingSecond,
+            paragraphs: [w.intro],
+            facts: facts(ctx),
+            action: emailCopy.noAction,
+            button: requesterLink,
+          },
+        },
+        {
+          template: "annual.second_needed",
+          audience: "accountant",
+          to: await secondApprovers(
+            tx,
+            { departmentId: r.departmentId, firstApproverId: actorId },
+            now,
+          ),
+          content: {
+            subject: n.subject(...subjectArgs),
+            heading: n.heading,
+            status: a.statuses.awaitingSecond,
+            paragraphs: [n.intro(ctx.actorName, r.departmentNameSnapshot)],
+            facts: facts(ctx),
+            action: n.action,
+            button: { label: n.button, href: appUrl(`/annual/review/${r.id}`) },
+          },
+        },
+      );
+      break;
+    }
+
+    case "second_refused": {
+      const f = a.secondRefused;
+      const first = await person(tx, event.firstApproverId);
+      const to = [...first, ...accountants.filter((x) => x.userId !== event.firstApproverId)];
+      out.push({
+        template: "annual.second_refused",
+        audience: "accountant",
+        to,
+        content: {
+          subject: f.subject(...subjectArgs),
+          heading: f.heading,
+          status: a.statuses.inReview,
+          paragraphs: [f.intro(ctx.actorName)],
+          facts: facts(ctx),
+          note: { label: f.reason, text: event.reason },
+          action: f.action,
+          button: reviewLink,
+        },
+      });
       break;
     }
 

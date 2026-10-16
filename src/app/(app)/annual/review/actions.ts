@@ -3,9 +3,14 @@
 import { redirect } from "next/navigation";
 import { annualCopy } from "@/copy/annual";
 import type { DecisionInput } from "@/domain/annual/decision";
-import { decideRequest, reopenRequest, startReview } from "@/domain/annual/review";
+import {
+  decideRequest,
+  reopenRequest,
+  secondDecideRequest,
+  startReview,
+} from "@/domain/annual/review";
 import type { ActionState } from "@/lib/action-state";
-import { runForResult } from "@/lib/admin-server";
+import { form, runForResult } from "@/lib/admin-server";
 
 /**
  * Accountant review actions (FR-15 to FR-18a). The services check permissions, validate,
@@ -50,7 +55,10 @@ export async function decideAction(input: {
     { paths: pagesOf(input.id), latestHref: page(input.id) },
   );
   if (result.status !== "success") return result;
-  redirect(`${page(input.id)}?done=${DONE[result.data.kind]}`);
+  // FR-34: a large approval waits for a second sign-off.
+  const done =
+    result.data.status === "awaiting_second_approval" ? "awaiting_second" : DONE[result.data.kind];
+  redirect(`${page(input.id)}?done=${done}`);
 }
 
 export async function reopenAction(input: {
@@ -68,4 +76,26 @@ export async function reopenAction(input: {
   );
   if (result.status !== "success") return result;
   redirect(`${page(input.id)}?done=reopened`);
+}
+
+/** The second approval of a large budget: give it, or refuse it with a reason (FR-34). */
+export async function secondDecideAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const id = form.text(data, "id");
+  const kind = form.text(data, "kind");
+  const result = await runForResult(
+    async (tx, viewer) => {
+      const outcome = await secondDecideRequest(tx, viewer, {
+        id,
+        version: form.text(data, "version"),
+        idempotencyKey: form.text(data, "idempotencyKey"),
+        decision: kind === "refuse" ? { kind, note: form.text(data, "note") } : { kind },
+      });
+      return { message: "", data: outcome };
+    },
+    { paths: pagesOf(id), latestHref: page(id) },
+  );
+  if (result.status !== "success") return result;
+  redirect(
+    `${page(id)}?done=${result.data.kind === "approve" ? "second_approved" : "second_refused"}`,
+  );
 }

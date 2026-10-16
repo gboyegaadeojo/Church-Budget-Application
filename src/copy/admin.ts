@@ -323,6 +323,17 @@ export const adminCopy = {
     taxConfirmBody:
       "Drafts and new submissions use the new rate. Requests already submitted keep the rate they were submitted with.",
     taxSaved: "Sales tax rate changed.",
+    threshold: {
+      heading: "Second approval for large budgets",
+      intro:
+        "Optional. An approval at or above this total (including tax) needs a second sign-off from a different accountant or backup approver before the department is told. Leave it empty to turn it off.",
+      label: "Second approval at or above (incl. tax)",
+      hint: "For example 10,000.00. Empty: off.",
+      save: "Save",
+      saved: "Second approval threshold saved.",
+      off: "Off: every approval is final.",
+      on: (amount: string) => `On: approvals of ${amount} or more need a second sign-off.`,
+    },
     timeZoneHeading: "Church time zone",
     timeZone: "Time zone",
     timeZoneHint: "Deadlines, release times and emails use this time zone.",
@@ -435,6 +446,7 @@ export const adminCopy = {
     },
     errors: {
       taxRate: "Enter a rate between 0 and 100, with up to 2 decimals (for example 12 or 12.5).",
+      threshold: "Enter an amount like 10,000.00, or leave it empty to turn second approval off.",
       timeZone: "Choose a time zone from the list.",
       email: "Enter a valid email address, or leave it empty.",
       signInMethod: "Keep at least one sign-in method turned on.",

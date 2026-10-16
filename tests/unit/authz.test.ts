@@ -229,6 +229,12 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     YOUTH,
     ["no", "no", "no", "no", "no", "no", "act"],
   ],
+  [
+    "give the second approval of a large budget (FR-34)",
+    "annual.second_approve",
+    { ...YOUTH, annualStatus: "awaiting_second_approval" },
+    ["no", "act", "act", "no", "no", "no", "no"],
+  ],
   ["see My tasks", "home.view", {}, ["act", "act", "act", "act", "act", "act", "act"]],
   [
     // Staff only (docs/decisions.md, 2026-10-16).

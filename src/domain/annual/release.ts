@@ -115,20 +115,27 @@ export async function heldDecisions(
       ),
     )
     .orderBy(approvalDecisions.budgetRequestId, desc(approvalDecisions.createdAt));
+  // A second approval (FR-34) is the final approval of a large budget.
+  const outcome = (decision: string) =>
+    decision === "second_approved"
+      ? "approved"
+      : decision === "declined"
+        ? "declined"
+        : decision === "approved"
+          ? "approved"
+          : null;
   return latest
-    .filter(
-      (d) =>
-        d.releasedAt === null &&
-        (d.decision === "approved" || d.decision === "declined") &&
-        d.status === d.decision,
-    )
+    .filter((d) => {
+      const kind = outcome(d.decision);
+      return d.releasedAt === null && kind !== null && d.status === kind;
+    })
     .map((d) => ({
       decisionId: d.decisionId,
       requestId: d.requestId,
       cycleId: d.cycleId,
       departmentId: d.departmentId,
       department: d.department,
-      decision: d.decision as "approved" | "declined",
+      decision: outcome(d.decision) as "approved" | "declined",
       reason: d.reason,
       approverUserId: d.approverUserId,
       decidedAt: d.decidedAt,
@@ -144,10 +151,32 @@ export async function hiddenDecisions(
   tx: Tx,
   viewer: Subject,
   requestIds: string[],
+  now: Date = new Date(),
 ): Promise<Map<string, Date | null>> {
   if (requestIds.length === 0 || authorize(viewer, "annual.view_held").allowed) return new Map();
   const held = await heldDecisions(tx, { requestIds });
-  if (held.length === 0) return new Map();
+  // A large budget awaiting its second approval (FR-34) gives the decision away too, so
+  // while the cycle holds decisions it reads In Review as well.
+  const awaiting = await tx
+    .select({
+      requestId: budgetRequests.id,
+      cycleId: budgetRequests.budgetCycleId,
+      decisionEmailMode: budgetCycles.decisionEmailMode,
+      decisionReleaseAt: budgetCycles.decisionReleaseAt,
+    })
+    .from(budgetRequests)
+    .innerJoin(budgetCycles, eq(budgetCycles.id, budgetRequests.budgetCycleId))
+    .where(
+      and(
+        inArray(budgetRequests.id, requestIds),
+        eq(budgetRequests.status, "awaiting_second_approval"),
+      ),
+    );
+  const out = new Map<string, Date | null>();
+  for (const a of awaiting) {
+    if (isHolding(a, now)) out.set(a.requestId, a.decisionReleaseAt);
+  }
+  if (held.length === 0) return out;
   const cycles = await tx
     .select({ id: budgetCycles.id, releaseAt: budgetCycles.decisionReleaseAt })
     .from(budgetCycles)
@@ -158,7 +187,8 @@ export async function hiddenDecisions(
       ),
     );
   const releaseOf = new Map(cycles.map((c) => [c.id, c.releaseAt]));
-  return new Map(held.map((h) => [h.requestId, releaseOf.get(h.cycleId) ?? null]));
+  for (const h of held) out.set(h.requestId, releaseOf.get(h.cycleId) ?? null);
+  return out;
 }
 
 /**

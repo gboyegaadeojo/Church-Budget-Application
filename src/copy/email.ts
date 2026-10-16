@@ -50,6 +50,7 @@ export const emailCopy = {
       updated: "Updated",
       inReview: "In Review",
       message: "New message",
+      awaitingSecond: "Awaiting final sign-off",
       returned: "Returned for Clarification",
       approved: "Approved",
       declined: "Declined",
@@ -165,6 +166,30 @@ export const emailCopy = {
       intro: (department: string) => `${department}'s representatives were sent the reason.`,
       heldIntro: (department: string, release: string) =>
         `Decisions are held: ${department}'s representatives will be sent the reason on ${release}.`,
+    },
+    /** Second approval for large budgets (FR-34). */
+    awaitingSecond: {
+      subject: (d: string, c: string, r: string) => `Awaiting final sign-off: ${about(d, c, r)}`,
+      heading: "Approved by the accountant, awaiting final sign-off",
+      intro:
+        "The accountant has approved your budget. Because of its size, a second accountant signs it off before it's final. You'll be emailed the approved amount then.",
+    },
+    secondNeeded: {
+      subject: (d: string, c: string, r: string) => `Second approval needed: ${about(d, c, r)}`,
+      heading: "A budget needs your second approval",
+      intro: (person: string, department: string) =>
+        `${person} approved ${department}'s budget. It's at or above the second-approval amount, so it needs a second sign-off from someone else.`,
+      action:
+        "Open it, check the approved amount, and give the second approval or refuse it with a reason.",
+      button: "Review the approval",
+    },
+    secondRefused: {
+      subject: (d: string, c: string, r: string) => `Second approval refused: ${about(d, c, r)}`,
+      heading: "The second approval was refused",
+      intro: (person: string) =>
+        `${person} refused the second approval. The budget is back In Review.`,
+      reason: "Reason",
+      action: "Look at the budget again and decide.",
     },
     /** A message on a request (FR-31, AC-59). */
     message: {

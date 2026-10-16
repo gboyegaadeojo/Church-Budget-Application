@@ -7,6 +7,7 @@ import {
   setPrimaryAccountant,
   testPerson,
   updateSignInSettings,
+  updateSecondApprovalThreshold,
   updateTaxRate,
   updateTimeZone,
   type TestPersonResult,
@@ -87,6 +88,19 @@ export async function taxRateAction(_: ActionState, data: FormData): Promise<Act
         versions: form.json(data, "versions"),
       });
       return s.taxSaved;
+    },
+    { paths: [PAGE] },
+  );
+}
+
+export async function secondApprovalAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await updateSecondApprovalThreshold(tx, viewer, {
+        amount: form.text(data, "amount"),
+        versions: form.json(data, "versions"),
+      });
+      return s.threshold.saved;
     },
     { paths: [PAGE] },
   );

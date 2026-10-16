@@ -349,3 +349,19 @@ Requested by the user: a second People custom field, **Ministry Department**, de
 - **The Board Chair's Away** (Vice-Chair receives the final-approval queue, AC-112) comes with expenses in Stage 3. Until then, Away isn't offered to the board.
 - **End-to-end tests** never make anyone Away today, because that would move other tests' accountant emails while they run in parallel. They set a future Away and turn it off. AC-61 and AC-119 are integration tests.
 - **Local dev server and new tables:** `npm run dev:fake` migrated its in-memory database only at startup, so pages using a table added while it ran (messages, Away) failed with "relation does not exist" until a restart. With `--dev` it now watches `drizzle/meta/_journal.json` and applies new migrations as they land. Test and CI servers are unchanged.
+
+## Stage 2, step 4: second approval for large budgets (FR-34) (2026-10-16)
+
+- **Setting:** Admin → Settings → **Second approval for large budgets**. It's an approved total including tax, stored in cents (`second_approval_threshold`). Off when empty, which is the default. Changing it is audited (`admin.second_approval_threshold_changed`).
+- **First approval:** an approval (any of the three ways) whose approved total is at or above the threshold moves the request to **Awaiting Second Approval**.
+  - The decision is recorded with its amounts and approved lines as usual, at stage `first`, but the request carries no approved amount yet. So it isn't counted as approved anywhere (the board total, dashboards, exports, spending later).
+  - Audited as `annual.first_approved`.
+  - The department is emailed "Approved by the accountant, awaiting final sign-off" without an amount, because the amount can still change if the second approval is refused.
+  - Every other accountant and backup approver who doesn't lead the department is emailed "Second approval needed", preferring those not away, and gets a **Give the second approval** task in My tasks.
+  - The approve button says **Approve (needs second sign-off)** when the figures reach the threshold (DRD 6.7).
+- **Second approval:** by anyone with the Accountant or Backup approver role except the first approver and anyone who leads the department (`annual.second_approve` plus a service check).
+  - **Give second approval** records a `second_approved` decision with the same amounts and makes the request Approved. The department, the accountant and the Church Administrator then get the usual approval emails.
+  - **Refuse** needs a reason, records `second_refused`, and returns the request to In Review. The first approver and the accountant are emailed the reason. The department isn't emailed: nothing final happened, and their page shows In Review.
+  - Both take an idempotency key and are audited.
+- **With scheduled release (FR-19a):** the first approval isn't a final decision, so it's never held. But while the cycle holds decisions, the department sees In Review instead of Awaiting Second Approval and isn't told it's awaiting sign-off, because either would give the decision away. The second approval is the final decision: it's held and released like any approval.
+- **End-to-end tests** only change the threshold to an amount far above anything the other tests approve, because they run in parallel against one database. The approve, second-approval and refuse flows are integration tests.

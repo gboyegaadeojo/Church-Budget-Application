@@ -153,3 +153,34 @@ export async function representativesOf(
     .where(and(inArray(userDepartments.departmentId, [...departmentIds]), canSignIn))
     .orderBy(users.displayName);
 }
+
+/**
+ * Who may give a second approval (FR-34): every accountant and backup approver except the
+ * first approver and anyone who represents the department (FR-33), preferring those who
+ * aren't away; if all of them are, all of them.
+ */
+export async function secondApprovers(
+  tx: Tx,
+  input: { departmentId: string; firstApproverId: string },
+  now: Date = new Date(),
+): Promise<NamedRecipient[]> {
+  const approvers = await usersWithRole(tx, ["accountant", "backup_approver"]);
+  const representatives = new Set(
+    (
+      await tx
+        .select({ userId: userDepartments.userId })
+        .from(userDepartments)
+        .where(eq(userDepartments.departmentId, input.departmentId))
+    ).map((r) => r.userId),
+  );
+  const eligible = approvers.filter(
+    (a) => a.userId !== input.firstApproverId && !representatives.has(a.userId),
+  );
+  const away = await awayWindows(
+    tx,
+    eligible.map((a) => a.userId),
+    now,
+  );
+  const present = eligible.filter((a) => !away.has(a.userId));
+  return present.length > 0 ? present : eligible;
+}
