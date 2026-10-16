@@ -1,3 +1,4 @@
+import { AppWindow, Image as ImageIcon, Palette, Type } from "lucide-react";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ActionForm, FileField, SubmitButton, TextField } from "@/components/ui/action-form";
@@ -80,7 +81,13 @@ function ImageSection({
   const t = kind === "logo" ? b.logo : b.icon;
   const accept = kind === "logo" ? "image/png,image/jpeg,image/svg+xml" : "image/png,image/svg+xml";
   return (
-    <Section title={t.heading} description={t.intro} id={kind}>
+    <Section
+      title={t.heading}
+      description={t.intro}
+      id={kind}
+      icon={kind === "logo" ? ImageIcon : AppWindow}
+      tone={kind === "logo" ? "pink" : "teal"}
+    >
       {image ? (
         <ImagePreview image={image} alt={b.logo.alt(churchName)} square={kind === "icon"} />
       ) : (
@@ -138,7 +145,7 @@ async function BrandingContent() {
         churchName={brand.churchName}
       />
 
-      <Section title={b.names.heading} id="names">
+      <Section title={b.names.heading} id="names" icon={Type} tone="blue">
         <ActionForm action={brandNamesAction} aria-label={b.names.heading}>
           <input type="hidden" name="versions" value={JSON.stringify(nameVersions)} />
           <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
@@ -160,7 +167,13 @@ async function BrandingContent() {
         </ActionForm>
       </Section>
 
-      <Section title={b.accent.heading} description={b.accent.intro} id="accent">
+      <Section
+        title={b.accent.heading}
+        description={b.accent.intro}
+        id="accent"
+        icon={Palette}
+        tone="violet"
+      >
         <ActionForm action={accentAction} aria-label={b.accent.heading}>
           <input type="hidden" name="versions" value={JSON.stringify(accentVersions)} />
           <AccentField initial={(brand.accent ?? DEFAULT_ACCENT).toUpperCase()} />

@@ -1,3 +1,4 @@
+import { CalendarPlus, CalendarRange } from "lucide-react";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -50,7 +51,7 @@ async function CyclesContent() {
   return (
     <>
       <PageHeader title={c.title} />
-      <Section title={c.title} id="cycle-list">
+      <Section title={c.title} id="cycle-list" icon={CalendarRange} tone="blue">
         {cycles.length === 0 ? (
           <EmptyState>{c.empty}</EmptyState>
         ) : (
@@ -103,7 +104,7 @@ async function CyclesContent() {
         )}
       </Section>
 
-      <Section title={c.createHeading} id="create-cycle">
+      <Section title={c.createHeading} id="create-cycle" icon={CalendarPlus} tone="violet">
         <ActionForm action={createCycleAction} resetOnSuccess aria-label={c.createHeading}>
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField

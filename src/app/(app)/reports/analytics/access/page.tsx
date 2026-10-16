@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { Ban, LogIn, RefreshCw, ShieldAlert, UserX, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -102,7 +103,7 @@ async function AccessContent() {
       <PageHeader title={a.title} intro={t.intro} />
       <AnalyticsTabs current="access" showAccess />
 
-      <Section title={t.signIns} id="sign-ins">
+      <Section title={t.signIns} id="sign-ins" icon={LogIn} tone="blue">
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={t.signInsCaption}>
           <table className="w-full text-sm">
             <caption className="sr-only">{t.signInsCaption}</caption>
@@ -144,6 +145,8 @@ async function AccessContent() {
         title={t.failed}
         description={t.failedCounts(data.failed.last24h, data.failed.last7d)}
         id="failed"
+        icon={ShieldAlert}
+        tone="red"
       >
         <EventTable caption={t.recentFailed} events={data.failed.recent} zone={zone} />
         <Link href="/reports/analytics?quick=access" className={`${linkClass} text-sm`}>
@@ -151,11 +154,23 @@ async function AccessContent() {
         </Link>
       </Section>
 
-      <Section title={t.deniedHeading} description={t.deniedCount(data.denied.last7d)} id="denied">
+      <Section
+        title={t.deniedHeading}
+        description={t.deniedCount(data.denied.last7d)}
+        id="denied"
+        icon={Ban}
+        tone="amber"
+      >
         <EventTable caption={t.recentDenied} events={data.denied.recent} zone={zone} showPage />
       </Section>
 
-      <Section title={t.suspended} description={t.suspendedHint} id="suspended">
+      <Section
+        title={t.suspended}
+        description={t.suspendedHint}
+        id="suspended"
+        icon={UserX}
+        tone="pink"
+      >
         {data.suspended.length === 0 ? (
           <EmptyState>{t.none}</EmptyState>
         ) : (
@@ -172,7 +187,13 @@ async function AccessContent() {
         )}
       </Section>
 
-      <Section title={t.noBackup} description={t.noBackupHint} id="no-backup">
+      <Section
+        title={t.noBackup}
+        description={t.noBackupHint}
+        id="no-backup"
+        icon={Users}
+        tone="violet"
+      >
         {data.noBackup.length === 0 ? (
           <EmptyState>{t.none}</EmptyState>
         ) : (
@@ -192,7 +213,13 @@ async function AccessContent() {
         )}
       </Section>
 
-      <Section title={t.syncProblems} description={t.syncProblemsHint} id="sync-problems">
+      <Section
+        title={t.syncProblems}
+        description={t.syncProblemsHint}
+        id="sync-problems"
+        icon={RefreshCw}
+        tone="teal"
+      >
         {data.syncProblems.length === 0 ? (
           <EmptyState>{t.none}</EmptyState>
         ) : (

@@ -467,6 +467,7 @@ export const annualCopy = {
       declined: "Declined",
       totalRequested: "Total requested (incl. tax)",
       totalApproved: "Total approved (incl. tax)",
+      decided: "Decided",
     },
     departmentsHeading: "Department completion",
     departmentsCaption: "Each expected department and where its budget is",

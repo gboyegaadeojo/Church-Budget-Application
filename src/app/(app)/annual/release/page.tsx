@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { randomUUID } from "node:crypto";
 import { desc } from "drizzle-orm";
-import { CalendarClock, CheckCircle2, ChevronDown, Send } from "lucide-react";
+import { CalendarClock, CheckCircle2, ChevronDown, Send, ListChecks } from "lucide-react";
 import { ActionForm, SubmitButton, TextAreaField, TextField } from "@/components/ui/action-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -11,7 +11,9 @@ import {
   EmptyState,
   PageHeader,
   PermissionDenied,
+  IconChip,
 } from "@/components/ui/display";
+import { TONE, type Tone } from "@/components/ui/tone";
 import { cardClass, inputClass, buttonClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
 import { getDb } from "@/db";
@@ -130,18 +132,13 @@ async function ReleaseContent({ searchParams }: { searchParams: Promise<Search> 
         className={cn(cardClass, "space-y-5", holding && "border-warning")}
       >
         <div className="flex flex-wrap items-start gap-3">
-          <span
-            aria-hidden="true"
-            className={cn(
-              "grid size-10 shrink-0 place-items-center rounded-control",
-              holding ? "bg-warning/15 text-warning" : "bg-area-annual-soft text-area-annual",
-            )}
-          >
-            {holding ? <CalendarClock className="size-5" /> : <Send className="size-5" />}
-          </span>
+          <IconChip icon={holding ? CalendarClock : Send} tone={holding ? "amber" : "blue"} />
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 id="release-card" className="text-lg font-semibold">
+              <h2
+                id="release-card"
+                className="text-[17px] leading-tight font-semibold tracking-tight"
+              >
                 {r.cardHeading}
               </h2>
               <Badge tone={holding ? "warning" : "neutral"}>
@@ -160,10 +157,10 @@ async function ReleaseContent({ searchParams }: { searchParams: Promise<Search> 
         </div>
 
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label={r.progress.approved} value={counts.approved} tone="text-success" />
-          <Stat label={r.progress.declined} value={counts.declined} tone="text-danger" />
-          <Stat label={r.progress.undecided} value={counts.undecided} tone="text-warning" />
-          <Stat label={r.progress.notSubmitted} value={counts.notSubmitted} tone="text-fg-muted" />
+          <Stat label={r.progress.approved} value={counts.approved} tone="green" />
+          <Stat label={r.progress.declined} value={counts.declined} tone="red" />
+          <Stat label={r.progress.undecided} value={counts.undecided} tone="amber" />
+          <Stat label={r.progress.notSubmitted} value={counts.notSubmitted} tone="slate" />
         </dl>
 
         {!overview.canChange ? (
@@ -245,9 +242,15 @@ async function ReleaseContent({ searchParams }: { searchParams: Promise<Search> 
       </section>
 
       <section aria-labelledby="release-preview" className={cn(cardClass, "space-y-4")}>
-        <h2 id="release-preview" className="text-lg font-semibold">
-          {r.preview.heading}
-        </h2>
+        <div className="flex items-center gap-3">
+          <IconChip icon={ListChecks} tone="violet" />
+          <h2
+            id="release-preview"
+            className="text-[17px] leading-tight font-semibold tracking-tight"
+          >
+            {r.preview.heading}
+          </h2>
+        </div>
         {held.length === 0 ? (
           <p className="text-sm text-fg-muted">{r.preview.none}</p>
         ) : (
@@ -295,11 +298,14 @@ async function ReleaseContent({ searchParams }: { searchParams: Promise<Search> 
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone: string }) {
+/** One count, on its own tint, so approved, declined and waiting read apart at a glance. */
+function Stat({ label, value, tone }: { label: string; value: number; tone: Tone }) {
   return (
-    <div className="rounded-control border border-border bg-surface-2 p-3">
-      <dt className="text-xs text-fg-muted">{label}</dt>
-      <dd className={cn("tabular text-2xl font-semibold", tone)}>{value}</dd>
+    <div className={cn("rounded-[14px] p-4", TONE[tone].soft)}>
+      <dt className="text-xs font-medium text-fg-muted">{label}</dt>
+      <dd className={cn("tabular text-[28px] leading-tight font-semibold", TONE[tone].text)}>
+        {value}
+      </dd>
     </div>
   );
 }

@@ -491,3 +491,24 @@ Updated: requirements 6B.3, 6B.4, FR-43, AC-70, the new AC-139 and AC-140, DRD b
   - A new `--chart-1` token (`#2860c0` light, `#3987e5` dark) passes the palette validator on both surfaces. The dark annual blue `#7fb0ff` is right for text but too light for a mark.
 - **Export:** "Export to Excel" downloads Summary, By stage and By department sheets, with amounts as numbers in CAD format. It's audited as `annual.overview_exported`.
 - **Not yet:** budget vs actual, spending over time, the expense pipeline and payment turnaround. They need Stage 3 and 4 data and will join this tab then. The department, area and date filters come with them.
+
+## A cleaner, Apple-style look for the staff pages (2026-10-16)
+
+The church asked for a cleaner look, with colour to tell cards apart, on these pages: review dashboard, decision release, my department's budget, the Analytics & Audit Overview and Access tabs, budget cycles, settings, notifications & audit, and users & roles.
+
+- **Tokens (small departures from DRD 3.6):**
+  - Card corners are 18 px, up from 14. Control corners are 10 px, up from 8. Dialog corners are 22 px.
+  - The card shadow is softer and more diffuse, and the card hairline is lighter (`#e8e8ee`).
+  - Input borders are unchanged, so form fields keep their 3:1 boundary contrast.
+- **Colour per card:**
+  - Each card heading leads with an icon on a coloured tile (`IconChip`). The colours come from the area tokens (violet, blue, teal, amber, pink, slate) plus green and red for good and bad states (`src/components/ui/tone.ts`).
+  - Colour is never the only cue: every tile has an icon, and every card keeps its title.
+  - The area pairs are already contrast-tested. The status tints are kept light (10%) so the strong colour stays readable on them.
+- **Headline numbers** use one `StatCard` everywhere: a label, a large figure, a coloured icon tile, and an optional ring for "needs you" or the current filter. They're used on the review dashboard, Overview, and Notifications & Audit.
+- **Smaller touches:**
+  - Analytics & Audit tabs are a segmented control.
+  - Empty states are a soft grey panel instead of a dashed box.
+  - Table headers are small capitals, and rows highlight on hover.
+  - On wide screens the short settings sit two to a row.
+  - Page titles are larger and bolder.
+- **Fixed:** an out-of-date note on Notifications & Audit said the activity log "moves … in the next step". It now links to the activity log.

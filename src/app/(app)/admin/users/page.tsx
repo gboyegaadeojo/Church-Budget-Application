@@ -1,3 +1,4 @@
+import { UserPlus, Users } from "lucide-react";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -46,7 +47,7 @@ async function UsersContent({ searchParams }: Pick<PageProps<"/admin/users">, "s
     <>
       <PageHeader title={u.title} intro={u.intro} />
 
-      <Section title={u.peopleHeading} id="people">
+      <Section title={u.peopleHeading} id="people" icon={Users} tone="violet">
         <form method="get" role="search" className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-1.5">
             <label htmlFor="user-search" className="block text-sm font-medium">
@@ -72,7 +73,7 @@ async function UsersContent({ searchParams }: Pick<PageProps<"/admin/users">, "s
         {people.length === 0 ? <EmptyState>{u.empty}</EmptyState> : <UsersTable people={people} />}
       </Section>
 
-      <Section title={u.addHeading} id="add-staff">
+      <Section title={u.addHeading} id="add-staff" icon={UserPlus} tone="green">
         <ActionForm action={addStaffAction} resetOnSuccess aria-label={u.addHeading}>
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField
