@@ -50,6 +50,7 @@ Record the choice in `docs/decisions.md`.
 - [x] Department list (18 departments, Requirements FR-03). Representatives are **not** pre-loaded; leaders join by signing in and picking their department, or through Planning Center mapping
 - [ ] For each department, the Planning Center team, group or tag it maps to, if any (FR-39)
 - [x] The Planning Center custom field and accepted value for Group Leader: **"Ministry Leader" = "Yes"** (confirmed by G, 2026-10-15)
+- [ ] A **"Ministry Department"** People custom field in Planning Center, ideally checkboxes whose options match the app's department names (a different name can be set per department in Admin → Departments → Planning Center value). Choose Suggest or Restrict in Settings → Planning Center
 - [ ] Email addresses for the accountant, backup approver, Board Chair, Vice-Chair, Church Administrator, and two System Administrators. **Any email address works** (FR-01b); they sign in with Google, Planning Center, or an emailed code
 - [ ] Cheque signing authorities' names (G). They are entered in Admin → Settings → Signing authorities and can be added or removed later (FR-53)
 - [ ] Logo (PNG or SVG) and brand colour. G can change them any time in Admin → Settings → Branding (FR-30)

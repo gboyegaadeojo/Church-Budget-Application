@@ -156,6 +156,62 @@ export async function renameDepartment(
   });
 }
 
+/**
+ * The value a leader's Planning Center Ministry Department must hold to match this
+ * department, when it differs from the name (FR-39 People-field source). Blank clears
+ * it, so the name is matched again. Two departments can't share a value.
+ */
+export async function setPlanningCenterValue(
+  tx: Tx,
+  actor: Subject,
+  input: { id: string; value: string; version: unknown },
+): Promise<void> {
+  const { actingRole } = assertCan(actor, "admin.departments");
+  const { value, version } = parseInput(
+    z.object({
+      value: z
+        .string()
+        .transform(tidyName)
+        .pipe(z.string().max(MAX_NAME, d.errors.pcoValueTooLong)),
+      version: versionSchema,
+    }),
+    input,
+  );
+  const department = await loadDepartment(tx, input.id);
+  const before = department.pcoSourceType === "people_field_value" ? department.pcoSourceId : null;
+  const after = value === "" ? null : value;
+  if (before === after) return;
+  if (after) {
+    const others = await tx
+      .select({
+        name: departments.name,
+        sourceType: departments.pcoSourceType,
+        sourceId: departments.pcoSourceId,
+      })
+      .from(departments)
+      .where(and(ne(departments.id, department.id), eq(departments.status, "active")));
+    const wanted = after.toLowerCase();
+    const clash = others.find(
+      (o) =>
+        (o.sourceType === "people_field_value" ? o.sourceId! : o.name).toLowerCase() === wanted,
+    );
+    if (clash) throw new ValidationError({ value: d.errors.pcoValueTaken(clash.name) });
+  }
+  await updateDepartment(tx, department.id, version, {
+    pcoSourceType: after ? "people_field_value" : null,
+    pcoSourceId: after,
+    pcoSourceName: after,
+  });
+  await writeAudit(tx, {
+    actor: actorOf(actor, actingRole),
+    area: "admin",
+    eventType: "admin.department_pco_value_changed",
+    entity: { type: "department", id: department.id },
+    departmentId: department.id,
+    details: { before: { pcoValue: before }, after: { pcoValue: after } },
+  });
+}
+
 async function changeStatus(
   tx: Tx,
   actor: Subject,

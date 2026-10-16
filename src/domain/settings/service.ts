@@ -10,7 +10,7 @@ import { assertCan, type Subject } from "@/lib/authz";
 import { formatTaxRate, percentToTaxRate } from "@/lib/money";
 import type { PcoPerson, PlanningCenterDirectory } from "@/lib/pco";
 import { isValidTimeZone } from "@/lib/time-zone";
-import { readSettings, SETTING_DEFAULTS, type SettingKey } from "./index";
+import { DEPARTMENT_FIELD_MODES, readSettings, SETTING_DEFAULTS, type SettingKey } from "./index";
 
 /**
  * Admin → Settings: sales tax rate (FR-07a), church time zone, and sign-in and
@@ -146,6 +146,14 @@ const signInSchema = z.object({
     .pipe(z.array(z.string().max(100)).min(1, s.errors.acceptedValues).max(20)),
   requireForRequesters: z.boolean(),
   requireForStaff: z.boolean(),
+  departmentFieldName: z
+    .string()
+    .trim()
+    .min(1, s.errors.departmentFieldName)
+    .max(100, s.errors.departmentFieldName),
+  departmentMode: z
+    .string()
+    .pipe(z.enum(DEPARTMENT_FIELD_MODES, { error: s.errors.departmentMode })),
   googleEnabled: z.boolean(),
   planningCenterEnabled: z.boolean(),
 });
@@ -174,6 +182,8 @@ export async function updateSignInSettings(
       pco_leader_accepted_values: JSON.stringify(data.acceptedValues),
       pco_require_for_requesters: flag(data.requireForRequesters),
       pco_require_for_staff: flag(data.requireForStaff),
+      pco_department_field_name: data.departmentFieldName,
+      pco_department_mode: data.departmentMode,
       signin_google_enabled: flag(data.googleEnabled),
       signin_planning_center_enabled: flag(data.planningCenterEnabled),
     },

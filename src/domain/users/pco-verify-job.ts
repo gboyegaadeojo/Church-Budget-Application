@@ -6,12 +6,16 @@ import { writeAudit } from "@/lib/audit";
 import type { PlanningCenterDirectory } from "@/lib/pco";
 import type { Role } from "@/lib/roles";
 import { checkLeader } from "./leader-check";
+import { refreshMinistryDepartments } from "./ministry-departments";
+import { rolesOf } from "./sign-in";
 import { applyVerification } from "./verification";
 
 export type PcoVerifySummary = {
   checked: number;
   verified: number;
   suspended: number;
+  /** Departments leaders joined through their Ministry Department field. */
+  departmentsJoined: number;
   unavailable: boolean;
 };
 
@@ -36,7 +40,13 @@ export async function runPcoVerification(
   now: Date = new Date(),
 ): Promise<PcoVerifySummary> {
   const settings = await getSignInSettings(db);
-  const summary: PcoVerifySummary = { checked: 0, verified: 0, suspended: 0, unavailable: false };
+  const summary: PcoVerifySummary = {
+    checked: 0,
+    verified: 0,
+    suspended: 0,
+    departmentsJoined: 0,
+    unavailable: false,
+  };
 
   try {
     await directory.organizationId();
@@ -79,6 +89,15 @@ export async function runPcoVerification(
         email: user.pcoPersonId ? null : user.email,
       });
       const outcome = await applyVerification(tx, user, check, { now, actor: { kind: "job" } });
+      if (check.status === "leader" && (await rolesOf(tx, user.id)).includes("requester")) {
+        const synced = await refreshMinistryDepartments(
+          tx,
+          directory,
+          { id: user.id, pcoPersonId: check.person.id },
+          { now, actor: { kind: "job" } },
+        );
+        if (synced) summary.departmentsJoined += synced.joined.length;
+      }
       summary.checked++;
       if (check.status === "leader") summary.verified++;
       if (!outcome.requesterUsable && check.status !== "unavailable") summary.suspended++;

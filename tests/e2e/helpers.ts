@@ -10,6 +10,7 @@ export const PEOPLE = {
   gina: "Gina Admin",
   sam: "Sam Lee",
   ada: "Ada Obi",
+  noah: "Noah Keeper",
   jo: "Jo Member",
   kim: "Kim Former",
   stranger: "Stranger",

@@ -13,7 +13,12 @@ import {
 import { linkClass } from "@/components/ui/styles";
 import { adminCopy } from "@/copy/admin";
 import { getDb } from "@/db";
-import { getChurchTimeZone, getSignInSettings, readSettings } from "@/domain/settings";
+import {
+  getChurchTimeZone,
+  getDepartmentFieldSettings,
+  getSignInSettings,
+  readSettings,
+} from "@/domain/settings";
 import { settingVersions } from "@/domain/settings/service";
 import { churchToday, listSigners } from "@/domain/signers/service";
 import { accountantTeam, failingRequesters } from "@/domain/users/admin-queries";
@@ -35,6 +40,8 @@ const SIGN_IN_KEYS = [
   "pco_leader_accepted_values",
   "pco_require_for_requesters",
   "pco_require_for_staff",
+  "pco_department_field_name",
+  "pco_department_mode",
   "signin_google_enabled",
   "signin_planning_center_enabled",
 ] as const;
@@ -93,6 +100,7 @@ async function SettingsContent() {
     team,
     signers,
     today,
+    departmentField,
   ] = await Promise.all([
     readSettings(db, ["sales_tax_rate"]),
     getSignInSettings(db),
@@ -107,6 +115,7 @@ async function SettingsContent() {
     accountantTeam(db),
     listSigners(db),
     churchToday(db),
+    getDepartmentFieldSettings(db),
   ]);
 
   return (
@@ -160,6 +169,8 @@ async function SettingsContent() {
             acceptedValues: signIn.leader.acceptedValues,
             requireForRequesters: signIn.leader.requireForRequesters,
             requireForStaff: signIn.leader.requireForStaff,
+            departmentFieldName: departmentField.fieldName,
+            departmentMode: departmentField.mode,
             googleEnabled: signIn.googleEnabled,
             planningCenterEnabled: signIn.planningCenterEnabled,
           }}

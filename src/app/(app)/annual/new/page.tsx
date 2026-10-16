@@ -4,7 +4,7 @@ import { AdminSkeleton, PageHeader, PermissionDenied } from "@/components/ui/dis
 import { cardClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
 import { getDb } from "@/db";
-import { departmentChoices, getOpenCycle } from "@/domain/annual/queries";
+import { departmentPicker, getOpenCycle } from "@/domain/annual/queries";
 import { authorize } from "@/lib/authz";
 import { getViewerAllowingWaiting } from "@/lib/viewer";
 import { StartForm } from "./start-form";
@@ -44,7 +44,7 @@ async function StartContent() {
       </>
     );
   }
-  const choices = await departmentChoices(db, viewer, cycle.id);
+  const picker = await departmentPicker(db, viewer, cycle.id);
   const waiting = viewer.departments.length === 0;
 
   return (
@@ -54,7 +54,7 @@ async function StartContent() {
         intro={waiting ? s.waitingNote : s.intro}
         back={waiting ? undefined : { href: "/annual", label: annualCopy.dashboard.title }}
       />
-      <StartForm cycle={{ id: cycle.id, name: cycle.name }} choices={choices} />
+      <StartForm cycle={{ id: cycle.id, name: cycle.name }} {...picker} />
     </>
   );
 }

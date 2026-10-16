@@ -7,6 +7,7 @@ import { PlanningCenterUnavailableError, type PlanningCenterDirectory } from "@/
 import type { Role } from "@/lib/roles";
 import type { AccessDeniedReason } from "./access";
 import { checkLeader, type LeaderCheck } from "./leader-check";
+import { refreshMinistryDepartments } from "./ministry-departments";
 import { applyVerification } from "./verification";
 
 /**
@@ -204,6 +205,15 @@ export async function resolveSignIn(
       now: deps.now,
       actor: { kind: "user", userId: user.id },
     });
+    // A verified leader's Ministry Department picks their departments (FR-39 field source).
+    if (requester && check.status === "leader") {
+      await refreshMinistryDepartments(
+        tx,
+        directory,
+        { id: user.id, pcoPersonId: check.person.id },
+        { now: deps.now, actor: { kind: "user", userId: user.id } },
+      );
+    }
 
     // Staff who don't need the check still get in as staff; only the requester role stops.
     if (outcome.requesterUsable || (staff && !staffMustVerify)) {
@@ -267,6 +277,14 @@ export async function resolveSignIn(
       newAccount: true,
     },
   });
+  // A Ministry Department that names a department takes them straight there.
+  const synced = await refreshMinistryDepartments(
+    tx,
+    directory,
+    { id: created.id, pcoPersonId: check.person.id },
+    { now: deps.now, actor: { kind: "user", userId: created.id } },
+  );
+  if (synced && synced.joined.length > 0) return succeed(created.id, "home");
   // TODO(step 7): email the administrator to assign a department (FR-01a "New leaders").
   return succeed(created.id, "waiting");
 }

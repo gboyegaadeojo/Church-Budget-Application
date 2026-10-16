@@ -95,6 +95,21 @@ test.describe("Sign-in (FR-01, FR-01a, DRD 6.1, 6.1a)", () => {
     await expect(page.getByText(/You don't represent a department yet/)).toBeVisible();
   });
 
+  test("a new leader whose Ministry Department names a department lands on it", async ({
+    page,
+  }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.noah);
+    await expect(page).toHaveURL("/");
+    await page.goto("/annual/new");
+    // Suggest mode (the default): their department comes first, chosen, from Planning Center.
+    const radio = page.getByRole("radio", { name: "Sanctuary Keepers Team", exact: true });
+    await expect(radio).toBeChecked();
+    await expect(radio).toHaveAccessibleDescription(/Yours/);
+    await expect(page.getByRole("radio", { name: "Other (type your department)" })).toBeVisible();
+    await expectAxeClean(page);
+  });
+
   test("AC-10 the accountant signs in without the Planning Center field", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.pat);

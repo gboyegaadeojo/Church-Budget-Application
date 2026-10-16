@@ -3,6 +3,7 @@ import { z } from "zod";
 import { budgetCycles, budgetRequests, departments, userDepartments, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { effectiveDeadline } from "@/domain/cycles/service";
+import { departmentPolicy } from "@/domain/users/ministry-departments";
 import { authorize, type Subject } from "@/lib/authz";
 import type { TaxBreakdown } from "@/lib/money";
 import type { LineContent } from "./schema";
@@ -46,13 +47,39 @@ export type DepartmentChoice = {
   yours: boolean;
   /** This cycle's request, if one was started ("Media already has a budget…"). */
   existing: { requestId: string; startedBy: string } | null;
+  /** Named by the person's Planning Center Ministry Department. */
+  fromPlanningCenter: boolean;
 };
 
-/** Active departments for the form's picker: the person's own first, then A to Z (FR-03). */
-export async function departmentChoices(
+export type DepartmentPicker = {
+  choices: DepartmentChoice[];
+  /** Whether "Other (type your department)" is offered; not in restrict mode. */
+  allowOther: boolean;
+  /** Restrict mode, so an empty list means "ask the administrator". */
+  restricted: boolean;
+};
+
+/**
+ * Active departments for the form's picker (FR-03): the person's own and Planning
+ * Center ones first, then A to Z. In restrict mode only the departments the Ministry
+ * Department setting allows are listed, and Other is not offered.
+ */
+export async function departmentPicker(
   tx: Tx,
   actor: Subject,
   cycleId: string,
+): Promise<DepartmentPicker> {
+  const policy = await departmentPolicy(tx, actor);
+  const all = await departmentChoices(tx, actor, cycleId, policy.fromPlanningCenter);
+  const choices = policy.allowed ? all.filter((c) => policy.allowed!.has(c.id)) : all;
+  return { choices, allowOther: policy.allowed === null, restricted: policy.allowed !== null };
+}
+
+async function departmentChoices(
+  tx: Tx,
+  actor: Subject,
+  cycleId: string,
+  fromPlanningCenter: ReadonlySet<string>,
 ): Promise<DepartmentChoice[]> {
   const rows = await tx
     .select({ id: departments.id, name: departments.name })
@@ -76,9 +103,11 @@ export async function departmentChoices(
       name: r.name,
       yours: mine.has(r.id),
       existing: request ? { requestId: request.requestId, startedBy: request.startedBy } : null,
+      fromPlanningCenter: fromPlanningCenter.has(r.id),
     };
   });
-  return [...choices.filter((c) => c.yours), ...choices.filter((c) => !c.yours)];
+  const first = (c: DepartmentChoice) => c.yours || c.fromPlanningCenter;
+  return [...choices.filter(first), ...choices.filter((c) => !first(c))];
 }
 
 export type RequestView = {

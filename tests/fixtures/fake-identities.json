@@ -22,6 +22,14 @@
     "name": "Ada Obi"
   },
   {
+    "label": "Noah Keeper (new leader with a Ministry Department, Planning Center)",
+    "provider": "planningcenter",
+    "subject": "1005",
+    "email": "noah.keeper@example.org",
+    "name": "Noah Keeper",
+    "organizationId": "100"
+  },
+  {
     "label": "Jo Member (not a leader, Planning Center)",
     "provider": "planningcenter",
     "subject": "1003",

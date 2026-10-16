@@ -120,6 +120,12 @@ export const users = pgTable(
     pcoLeaderVerified: boolean("pco_leader_verified").notNull().default(false),
     pcoVerifiedAt: timestamp("pco_verified_at", { withTimezone: true }),
     pcoFieldValueSnapshot: text("pco_field_value_snapshot"),
+    /**
+     * The Ministry Department field's values as last read from Planning Center, kept so
+     * an outage leaves the last known answer in force (FR-01a, FR-39). Null: never read.
+     */
+    pcoMinistryDepartments: jsonb("pco_ministry_departments").$type<string[]>(),
+    pcoDepartmentsCheckedAt: timestamp("pco_departments_checked_at", { withTimezone: true }),
     accessStatus: accessStatusEnum("access_status").notNull().default("pending_department"),
     active: boolean("active").notNull().default(true),
     version: version(),

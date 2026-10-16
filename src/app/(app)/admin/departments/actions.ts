@@ -9,6 +9,7 @@ import {
   removeRepresentative,
   renameDepartment,
   setDepartmentActive,
+  setPlanningCenterValue,
   setRepresentative,
 } from "@/domain/departments/service";
 import type { ActionState } from "@/lib/action-state";
@@ -124,5 +125,23 @@ export async function removeLeaderAction(_: ActionState, data: FormData): Promis
       return d.leaderSaved;
     },
     { paths: [page(departmentId), LIST, "/admin/users"] },
+  );
+}
+
+export async function planningCenterValueAction(
+  _: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  const id = form.text(data, "id");
+  return runAction(
+    async (tx, viewer) => {
+      await setPlanningCenterValue(tx, viewer, {
+        id,
+        value: form.text(data, "value"),
+        version: form.text(data, "version"),
+      });
+      return d.pcoSaved;
+    },
+    { paths: [page(id)] },
   );
 }

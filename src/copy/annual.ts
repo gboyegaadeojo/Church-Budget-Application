@@ -35,6 +35,8 @@ export const annualCopy = {
     idempotencyKey: "Something went wrong. Reload the page and try again.",
     hasHistory: "This request has been submitted before, so it can't be deleted.",
     nothingChanged: "Nothing has changed, so no edit was used.",
+    notInMinistryDepartment:
+      "Your Ministry Department in Planning Center doesn't include this department. Ask the administrator to add it.",
     // Accountant review (FR-15 to FR-18a)
     notDecidable: "This request isn't waiting for a decision.",
     notReopenable: "Only approved or declined requests can be reopened.",
@@ -136,7 +138,11 @@ export const annualCopy = {
     search: "Search departments",
     searchHint: "Type to narrow the list.",
     yours: "Yours",
+    fromPlanningCenter: "From Planning Center",
+    restrictedEmpty:
+      "Your Ministry Department in Planning Center doesn't name a department here yet. Ask the administrator to add one.",
     noMatches: "No departments match. Choose Other to type yours.",
+    noMatchesRestricted: "No departments match.",
     noDepartments:
       "No departments have been set up yet. Choose Other and type your department's name.",
     other: "Other (type your department)",
