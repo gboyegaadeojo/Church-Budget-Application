@@ -29,11 +29,16 @@ export function getEmailSender(): EmailSender | null {
 export function sendOutboxAfterResponse(): void {
   const sender = getEmailSender();
   if (!sender) return;
-  after(async () => {
-    try {
-      await deliverOutbox(getDb(), sender, { limit: 25 });
-    } catch (error) {
-      console.error("Sending the email outbox failed; the scheduled job will retry", error);
-    }
-  });
+  try {
+    after(async () => {
+      try {
+        await deliverOutbox(getDb(), sender, { limit: 25 });
+      } catch (error) {
+        console.error("Sending the email outbox failed; the scheduled job will retry", error);
+      }
+    });
+  } catch (error) {
+    // Outside a request (no `after` available): the scheduled job sends them instead.
+    console.error("Could not schedule sending the email outbox", error);
+  }
 }

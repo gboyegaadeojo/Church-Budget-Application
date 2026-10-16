@@ -19,6 +19,15 @@ import { readSettings } from "@/domain/settings";
 import { writeAudit, type AuditActor } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
 import type { RepresentativeType, Role } from "@/lib/roles";
+import {
+  emailAssigned,
+  emailBackupPromoted,
+  emailProposalAccepted,
+  emailProposalMerged,
+  emailProposalRejected,
+  emailRemoved,
+  proposalRecipients,
+} from "./emails";
 import { parseNameList, tidyName } from "./matching";
 import { LEADER_SLOTS, slotOf, slotParts, type LeaderSlot } from "./slots";
 import { transitionDepartment, type DepartmentEvent } from "./status";
@@ -262,7 +271,7 @@ export async function acceptProposed(
     throw new RuleError(d.errors.exists(department.name));
   }
   await changeStatus(tx, actor, input, "accept");
-  // TODO(step 7): email the requester that their department was added (FR-03).
+  await emailProposalAccepted(tx, department);
 }
 
 /** Merge into an existing department: submissions and leaders move there. */
@@ -352,7 +361,11 @@ export async function mergeProposed(
       leadersMoved: leaders.map((l) => l.userId),
     },
   });
-  // TODO(step 7): email the requester that the submission moved (FR-03, AC-16).
+  await emailProposalMerged(tx, {
+    from: proposed.name,
+    into: target.name,
+    to: await proposalRecipients(tx, proposed),
+  });
 }
 
 /** Reject with a reason: its submissions go back to Draft to pick a listed department. */
@@ -388,7 +401,7 @@ export async function rejectProposed(
       details: { before: { status: request.status }, after: { status: next } },
     });
   }
-  // TODO(step 7): email the requester with the reason (FR-03).
+  await emailProposalRejected(tx, proposed, reason);
 }
 
 // ---------------------------------------------------------------- leaders (FR-38)
@@ -534,6 +547,14 @@ export async function setRepresentative(
         : null,
     },
   });
+  await emailAssigned(tx, { userId: person.id, department, slot });
+  if (holder) {
+    await emailAssigned(tx, {
+      userId: holder.userId,
+      department,
+      slot: swap ?? "representative",
+    });
+  }
 }
 
 /** Removes someone from a department. If they were the Primary, the Backup takes over. */
@@ -557,6 +578,7 @@ export async function removeRepresentative(
     departmentId: department.id,
     details: { person: { id: input.userId }, before: { slot: slotOfRow(row) } },
   });
+  await emailRemoved(tx, { userId: input.userId, department });
   // Removing Backup 1 moves Backup 2 up.
   await compactBackups(tx, department.id);
   if (row.representativeType === "primary") {
@@ -599,7 +621,11 @@ async function promoteBackup(tx: Tx, departmentId: string, actor: AuditActor, wh
       after: { slot: "primary" },
     },
   });
-  // TODO(step 7): email the administrator (FR-38).
+  await emailBackupPromoted(tx, {
+    userId: backup.userId,
+    department: await loadDepartment(tx, departmentId),
+    why,
+  });
 }
 
 /**

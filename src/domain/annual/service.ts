@@ -34,6 +34,7 @@ import {
 } from "./schema";
 export { totalsOf } from "./schema";
 import { canTransition, InvalidTransitionError, transition, type AnnualEvent } from "./status";
+import { emailDepartmentProposed, emailLeaderJoined } from "@/domain/departments/emails";
 import { queueAnnualEmails } from "./emails";
 
 /**
@@ -261,7 +262,7 @@ async function joinDepartment(
       source: "form_pick",
     },
   });
-  // TODO(step 7): email the administrator, who can remove them (FR-03).
+  await emailLeaderJoined(tx, { userId: actor.id, department, slot: type });
   return {
     ...actor,
     departments: [
@@ -326,7 +327,7 @@ async function pickDepartment(
     departmentId: created.id,
     details: { after: { name, status: "proposed" } },
   });
-  // TODO(step 7): email the administrator about the proposed department (FR-03, AC-14).
+  await emailDepartmentProposed(tx, { userId: actor.id, department: created });
   return created;
 }
 

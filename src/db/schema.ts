@@ -700,10 +700,18 @@ export const emailOutbox = pgTable(
     sentAt: timestamp("sent_at", { withTimezone: true }),
     providerMessageId: text("provider_message_id"),
     lastError: text("last_error"),
+    /**
+     * Set for emails that must go once only, such as a deadline reminder or the daily
+     * failure digest: a second row with the same key and address is skipped.
+     */
+    dedupeKey: text("dedupe_key"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
+    uniqueIndex("email_outbox_dedupe_key")
+      .on(t.dedupeKey, sql`lower(${t.toEmail})`)
+      .where(sql`${t.dedupeKey} is not null`),
     index("email_outbox_due_idx").on(t.status, t.nextAttemptAt),
     index("email_outbox_request_idx").on(t.budgetRequestId, t.createdAt),
     check("email_outbox_sent_has_time", sql`(${t.status} = 'sent') = (${t.sentAt} is not null)`),

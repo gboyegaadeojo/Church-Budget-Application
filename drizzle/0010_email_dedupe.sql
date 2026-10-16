@@ -1,0 +1,2 @@
+ALTER TABLE "email_outbox" ADD COLUMN "dedupe_key" text;--> statement-breakpoint
+CREATE UNIQUE INDEX "email_outbox_dedupe_key" ON "email_outbox" USING btree ("dedupe_key",lower("to_email")) WHERE "email_outbox"."dedupe_key" is not null;

@@ -167,6 +167,215 @@ export const emailCopy = {
     },
   },
 
+  /** Shared labels for notices. */
+  facts: {
+    department: "Department",
+    person: "Person",
+    email: "Email",
+    cycle: "Budget year",
+    deadline: "Deadline",
+    previousDeadline: "Previous deadline",
+    newDeadline: "New deadline",
+    roles: "Roles",
+    previousRoles: "Previous roles",
+    slot: "Role in the department",
+    reason: "Reason",
+  },
+  statuses: {
+    actionNeeded: "Action needed",
+    forYourRecords: "For your records",
+    open: "Open for submissions",
+    closed: "Closed",
+    reopened: "Reopened",
+    deadlineChanged: "Deadline changed",
+    reminder: "Reminder",
+    deadlinePassed: "Deadline passed",
+  },
+  buttons: {
+    openDepartment: "Open the department",
+    openDepartments: "Open Departments",
+    openSettings: "Open Settings",
+    openUsers: "Open Users",
+    openPerson: "Open the person",
+    startBudget: "Start your budget",
+    openBudget: "Open your budget",
+    openApp: "Open the app",
+    openDashboard: "Open the review dashboard",
+    signIn: "Sign in",
+  },
+
+  /** FR-03, FR-38: departments and their leaders. */
+  departments: {
+    leaderJoined: {
+      subject: (person: string, department: string) => `${person} joined ${department}`,
+      heading: "A leader joined a department",
+      intro: (person: string, department: string, slot: string) =>
+        `${person} picked ${department} on the budget form and is now its ${slot}.`,
+      action:
+        "Nothing, unless they shouldn't represent it. You can remove them on the department page.",
+    },
+    proposed: {
+      subject: (name: string) => `New department proposed: ${name}`,
+      heading: "A leader proposed a new department",
+      intro: (person: string, name: string) =>
+        `${person} typed "${name}", which isn't on the department list. Budgets for it can't be approved until you decide.`,
+      action:
+        "Add it to the list, merge it into an existing department, or reject it with a reason.",
+    },
+    accepted: {
+      subject: (name: string) => `${name} was added to the department list`,
+      heading: "Your department was added",
+      intro: (name: string) =>
+        `The administrator added ${name} to the department list, so its budget can now be reviewed.`,
+    },
+    merged: {
+      subject: (from: string, into: string) => `${from} is now part of ${into}`,
+      heading: "Your department was merged",
+      intro: (from: string, into: string) =>
+        `The administrator merged ${from} into ${into}. Your budget and your place as a leader moved to ${into}.`,
+    },
+    rejected: {
+      subject: (name: string) => `${name} wasn't added to the department list`,
+      heading: "Your proposed department wasn't added",
+      intro: (name: string) =>
+        `The administrator didn't add ${name}. Any budget for it is back in Draft so you can pick a listed department.`,
+      action: "Open your budget and choose a department from the list.",
+    },
+    assigned: {
+      subject: (department: string) => `You now represent ${department}`,
+      heading: "Your department role changed",
+      intro: (department: string, slot: string) => `You are now ${slot} for ${department}.`,
+    },
+    removed: {
+      subject: (department: string) => `You no longer represent ${department}`,
+      heading: "You were removed from a department",
+      intro: (department: string) =>
+        `The administrator removed you from ${department}. Its budgets stay with the department.`,
+    },
+    backupPromoted: {
+      subject: (person: string, department: string) => `${person} is now Primary for ${department}`,
+      heading: "A Backup became Primary",
+      intro: (person: string, department: string, why: string) =>
+        `${why}, so ${person}, the Backup, is now Primary for ${department}.`,
+      action: "Check the department still has the Backups it needs.",
+    },
+  },
+
+  /** FR-21 "Cycle and reminders", 4.3. */
+  cycles: {
+    opened: {
+      subject: (cycle: string) => `${cycle} budgets are open`,
+      heading: (cycle: string) => `${cycle} budget requests are open`,
+      intro: (deadline: string) => `Please submit your department's budget by ${deadline}.`,
+      action: "Start your department's budget before the deadline.",
+    },
+    reopened: {
+      subject: (cycle: string) => `${cycle} budgets are open again`,
+      heading: (cycle: string) => `${cycle} budget requests reopened`,
+      intro: (deadline: string) =>
+        `The administrator reopened submissions. The new deadline is ${deadline}.`,
+      action: "Submit or change your department's budget before the new deadline.",
+    },
+    closed: {
+      subject: (cycle: string) => `${cycle} budgets are closed`,
+      heading: (cycle: string) => `${cycle} budget requests are closed`,
+      intro: "Submissions are closed. Budgets already submitted continue through review.",
+    },
+    deadlineChanged: {
+      subject: (cycle: string, deadline: string) => `${cycle} deadline changed to ${deadline}`,
+      heading: "The budget deadline changed",
+      intro: (deadline: string) => `Your department's budget is now due by ${deadline}.`,
+      action: "Submit your department's budget before the new deadline.",
+    },
+    extended: {
+      subject: (department: string, deadline: string) =>
+        `${department} has until ${deadline} for its budget`,
+      heading: "Your department has more time",
+      intro: (department: string, deadline: string) =>
+        `${department}'s budget is now due by ${deadline}.`,
+      action: "Submit your department's budget before the new deadline.",
+    },
+    reminder: {
+      subject: (cycle: string, days: number) =>
+        days === 1 ? `${cycle} budget due tomorrow` : `${cycle} budget due in ${days} days`,
+      heading: (days: number) =>
+        days === 1 ? "Your budget is due tomorrow" : `Your budget is due in ${days} days`,
+      intro: (department: string, deadline: string) =>
+        `${department} hasn't submitted its budget yet. It's due by ${deadline}.`,
+      action: "Finish and submit your department's budget.",
+    },
+    deadlinePassed: {
+      subject: (cycle: string, count: number) =>
+        `${cycle} deadline passed: ${count} ${plural(count, "department", "departments")} outstanding`,
+      heading: "The budget deadline has passed",
+      intro: (deadline: string) =>
+        `The deadline was ${deadline}. Some departments haven't submitted a budget.`,
+      listHeading: "Not submitted",
+      action: "Follow up with these departments, or give one more time on the cycle page.",
+    },
+  },
+
+  /** FR-01a, FR-21 "System", DRD 7.5 "role change". */
+  access: {
+    staffAdded: {
+      subject: (app: string) => `You have access to ${app}`,
+      heading: "You have access",
+      intro: (app: string, church: string) =>
+        `An administrator gave you access to ${app} for ${church}. Sign in with Google or Planning Center using this email address.`,
+    },
+    rolesChanged: {
+      subject: "Your roles changed",
+      heading: "Your roles changed",
+      intro: "An administrator changed what you can do in the app.",
+      noRoles: "None",
+    },
+    newLeaderWaiting: {
+      subject: (person: string) => `${person} is waiting for a department`,
+      heading: "A new leader needs a department",
+      intro: (person: string) =>
+        `${person} signed in for the first time as a verified Group Leader, but Planning Center doesn't say which department they lead.`,
+      action: "Assign them to their department.",
+    },
+    leaderSuspended: {
+      subject: (person: string) => `${person}'s requester access is suspended`,
+      heading: "A requester is no longer a Group Leader",
+      intro: (person: string) =>
+        `Planning Center no longer lists ${person} as a Group Leader, so they can't use requester features. Their drafts and history are kept, and other roles are unaffected.`,
+      action: "Nothing, unless this is a mistake: then fix their Planning Center record.",
+    },
+    pcoUnavailable: {
+      subject: "Planning Center couldn't be reached",
+      heading: "The nightly Planning Center check didn't run",
+      intro:
+        "The app couldn't reach Planning Center, so nobody's Group Leader status changed. Leaders keep access for up to 72 hours while it's down.",
+      action:
+        "If this happens again tomorrow, check the Planning Center settings and access token.",
+    },
+    accessRequest: {
+      subject: (who: string) => `Access request: ${who}`,
+      heading: "Someone tried to sign in without access",
+      intro: (method: string) => `They signed in with ${method} but have no access.`,
+      action: "If they should have access, add them in Users. Otherwise, nothing.",
+    },
+    primaryAccountantCleared: {
+      subject: "Choose a new Primary accountant",
+      heading: "The Primary accountant was cleared",
+      intro: (person: string) =>
+        `${person} is no longer the Primary accountant, so new-submission emails go to every accountant until you choose one.`,
+      action: "Choose a Primary accountant in Settings.",
+    },
+  },
+
+  /** FR-21 "Email delivery failed after retries". */
+  failureDigest: {
+    subject: (count: number) => `${count} ${plural(count, "email", "emails")} couldn't be sent`,
+    heading: "Some emails couldn't be sent",
+    intro: "These emails failed after every retry. The changes they describe are saved.",
+    listHeading: "Not sent",
+    item: (subject: string, to: string, error: string) => `${subject} (to ${to}): ${error}`,
+    action: "Check the addresses and the Resend settings.",
+  },
+
   /** The Emails section of a request's history (AC-58). */
   history: {
     heading: "Emails",

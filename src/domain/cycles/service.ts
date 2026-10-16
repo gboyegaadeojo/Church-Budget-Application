@@ -10,6 +10,7 @@ import { assertCan, type Subject } from "@/lib/authz";
 import { normalizeTaxRate, parseCAD, percentToTaxRate } from "@/lib/money";
 import type { Role } from "@/lib/roles";
 import { zonedLocalToUtc } from "@/lib/time-zone";
+import { emailCycleStatus, emailDeadlineChanged, emailExtension } from "./emails";
 import { deadlineEditable, transitionCycle, type CycleEvent } from "./status";
 
 /**
@@ -204,7 +205,12 @@ async function changeStatus(
       },
     },
   });
-  // TODO(step 7): email representatives when a cycle opens, closes or reopens (FR-21).
+  await emailCycleStatus(
+    tx,
+    { ...cycle, submissionDeadline: set.submissionDeadline ?? cycle.submissionDeadline },
+    event,
+    reason,
+  );
 }
 
 export const openCycle = (
@@ -257,7 +263,13 @@ export async function changeDeadline(
       after: { submissionDeadline: deadline.toISOString() },
     },
   });
-  // TODO(step 7): email representatives who haven't submitted and recalculate reminders (4.3).
+  // Reminders follow the stored deadline, so the daily job picks up the new date by itself.
+  await emailDeadlineChanged(
+    tx,
+    { ...cycle, submissionDeadline: deadline },
+    cycle.submissionDeadline,
+    reason,
+  );
 }
 
 /** Gives one department its own later deadline; a new extension replaces the old one. */
@@ -318,7 +330,7 @@ export async function extendDepartment(
       after: { deadline: deadline.toISOString() },
     },
   });
-  // TODO(step 7): email that department's representatives (4.3).
+  await emailExtension(tx, cycle, department, deadline, reason);
 }
 
 /** The deadline that applies to a department: its extension if any, otherwise the cycle's (4.3). */

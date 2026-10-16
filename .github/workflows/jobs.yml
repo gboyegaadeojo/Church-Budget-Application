@@ -48,3 +48,21 @@ jobs:
           curl --fail-with-body --silent --show-error --max-time 120 \
             -X POST -H "Authorization: Bearer $JOBS_SECRET" \
             "$APP_URL/api/jobs/send-outbox"
+
+  reminders:
+    name: Deadline reminders and failed-email digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the app
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          JOBS_SECRET: ${{ secrets.JOBS_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$JOBS_SECRET" ]; then
+            echo "APP_URL or JOBS_SECRET is not set yet; skipping."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error --max-time 120 \
+            -X POST -H "Authorization: Bearer $JOBS_SECRET" \
+            "$APP_URL/api/jobs/reminders"

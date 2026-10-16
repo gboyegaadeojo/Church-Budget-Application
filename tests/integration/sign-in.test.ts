@@ -4,6 +4,7 @@ import {
   appSettings,
   auditEvents,
   budgetRequests,
+  emailOutbox,
   userDepartments,
   userRoles,
   users,
@@ -248,6 +249,19 @@ describe("Google sign-in (FR-01, FR-01a)", () => {
       reason: "not-found",
       email: "stranger@example.org",
     });
+  });
+
+  it("FR-21 tells the administrators about an access request, but not about an outage refusal", async () => {
+    const administrator = await staffUser(["system_admin"]);
+    await signIn(directory([]), google("wants.in@example.org"));
+    await signIn(directory([], { unavailable: true }), google("outage@example.org"));
+    const requests = await db
+      .select()
+      .from(emailOutbox)
+      .where(eq(emailOutbox.template, "access.request"));
+    expect(requests.map((r) => [r.toUserId, r.subject])).toEqual([
+      [administrator.id, "Access request: Google Person (wants.in@example.org)"],
+    ]);
   });
 
   it("AC-2 does not let any Google account in because it can sign in", async () => {
