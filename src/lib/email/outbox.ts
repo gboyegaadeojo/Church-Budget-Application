@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { and, asc, eq, inArray, lt, lte, or, sql } from "drizzle-orm";
 import { emailOutbox } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
+import { writeAudit } from "@/lib/audit";
 import { renderEmail, type EmailBrand, type EmailContent } from "./layout";
 import type { EmailSender } from "./sender";
 
@@ -145,8 +146,16 @@ export async function deliverOutbox(
         options.ids ? inArray(emailOutbox.id, options.ids) : undefined,
       ),
     )
-    .returning({ id: emailOutbox.id });
+    .returning({
+      id: emailOutbox.id,
+      template: emailOutbox.template,
+      toEmail: emailOutbox.toEmail,
+      budgetRequestId: emailOutbox.budgetRequestId,
+      cycleId: emailOutbox.cycleId,
+    });
   summary.failed += expired.length;
+  for (const row of expired)
+    await recordDelivery(db, row, "failed", "Expired before it could be sent");
 
   const claimed = await db.transaction(async (tx) => {
     const due = await tx
@@ -213,6 +222,7 @@ export async function deliverOutbox(
           ...(row.sensitive ? CLEARED : {}),
         })
         .where(eq(emailOutbox.id, row.id));
+      await recordDelivery(db, row, "sent");
     } else if (result.kind === "retry" && row.attempts < MAX_ATTEMPTS) {
       summary.retrying++;
       await db
@@ -237,7 +247,37 @@ export async function deliverOutbox(
           ...(row.sensitive ? CLEARED : {}),
         })
         .where(eq(emailOutbox.id, row.id));
+      await recordDelivery(db, row, "failed", result.error);
     }
   }
   return summary;
+}
+
+/**
+ * The activity log's record of an email (FR-22 "notification attempts and failures"):
+ * once when it is sent, once when it finally fails. Retries in between aren't logged;
+ * the email log (Admin → Notifications & Audit) shows every try.
+ */
+async function recordDelivery(
+  db: Db,
+  row: {
+    id: string;
+    template: string;
+    toEmail: string;
+    budgetRequestId: string | null;
+    cycleId: string | null;
+  },
+  outcome: "sent" | "failed",
+  error?: string,
+) {
+  await writeAudit(db, {
+    actor: { kind: "system" },
+    area: "admin",
+    eventType: outcome === "sent" ? "notifications.email_sent" : "notifications.email_failed",
+    entity: { type: "email_outbox", id: row.id },
+    budgetRequestId: row.budgetRequestId ?? undefined,
+    cycleId: row.cycleId ?? undefined,
+    reason: error,
+    details: { template: row.template, to: row.toEmail },
+  });
 }

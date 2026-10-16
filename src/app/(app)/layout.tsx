@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { Brand } from "@/components/app-shell/brand";
+import { Breadcrumbs } from "@/components/app-shell/breadcrumbs";
 import { Footer } from "@/components/app-shell/footer";
+import { GlobalSearch } from "@/components/app-shell/global-search";
 import {
   AccountMenuFallback,
   SidebarFallback,
@@ -36,13 +38,21 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="rounded-control md:hidden">
               <Brand />
             </Link>
-            <Suspense fallback={<AccountMenuFallback />}>
-              <ViewerAccountMenu />
-            </Suspense>
+            <div className="flex items-center gap-2">
+              <GlobalSearch />
+              <Suspense fallback={<AccountMenuFallback />}>
+                <ViewerAccountMenu />
+              </Suspense>
+            </div>
           </header>
 
           <main id="main" tabIndex={-1} className="flex-1 px-4 py-6 outline-none lg:px-8 lg:py-8">
-            <div className="mx-auto w-full max-w-7xl">{children}</div>
+            <div className="mx-auto w-full max-w-7xl">
+              <Suspense fallback={null}>
+                <Breadcrumbs />
+              </Suspense>
+              {children}
+            </div>
           </main>
 
           <Footer />

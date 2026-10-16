@@ -6,6 +6,14 @@ import { AreaIcon } from "@/components/app-shell/area-icon";
 import { copy } from "@/copy/en-CA";
 import { daysWaiting, getMyTasks, type Task } from "@/domain/tasks";
 import { formatCAD } from "@/lib/money";
+import { activityCopy, activityLabel } from "@/copy/activity";
+import { annualCopy } from "@/copy/annual";
+import { getDb } from "@/db";
+import { listActivity } from "@/domain/analytics/activity";
+import { getChurchTimeZone } from "@/domain/settings";
+import { authorize } from "@/lib/authz";
+import type { Viewer } from "@/lib/roles";
+import { formatDateTime } from "@/lib/time-zone";
 import { getViewer } from "@/lib/viewer";
 
 const h = copy.home;
@@ -70,12 +78,7 @@ async function HomeContent() {
           body={h.atAGlanceEmpty}
           icon={<LayoutGrid className="size-5 text-fg-muted" aria-hidden="true" />}
         />
-        <EmptySection
-          id="recent-activity-heading"
-          title={h.recentActivity}
-          body={h.recentActivityEmpty}
-          icon={<Activity className="size-5 text-fg-muted" aria-hidden="true" />}
-        />
+        <RecentActivity viewer={viewer} />
       </div>
     </>
   );
@@ -148,5 +151,63 @@ function HomeSkeleton() {
         <div className="h-28 animate-pulse rounded-card bg-surface-2" />
       </div>
     </div>
+  );
+}
+
+/** Recent activity on what the person is involved in (FR-37), from the activity log. */
+async function RecentActivity({ viewer }: { viewer: Viewer }) {
+  const db = getDb();
+  const [{ items }, zone] = await Promise.all([
+    listActivity(db, viewer, { recent: true }, { pageSize: 6 }),
+    getChurchTimeZone(db),
+  ]);
+  const reviews = authorize(viewer, "annual.review").allowed;
+  return (
+    <section
+      aria-labelledby="recent-activity-heading"
+      className="space-y-3 rounded-card border border-border bg-surface p-5 shadow-card"
+    >
+      <div className="flex items-center gap-2">
+        <Activity className="size-5 text-fg-muted" aria-hidden="true" />
+        <h2 id="recent-activity-heading" className="text-lg font-semibold">
+          {h.recentActivity}
+        </h2>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-sm text-fg-muted">{activityCopy.recentEmpty}</p>
+      ) : (
+        <ul className="divide-y divide-border text-sm">
+          {items.map((e) => (
+            <li key={e.id} className="py-2">
+              <p>
+                <span className="font-medium">{e.actor?.name ?? activityCopy.system}</span>{" "}
+                <span className="text-fg-muted">·</span> {activityLabel(e.eventType)}
+                {e.request && (
+                  <>
+                    {" "}
+                    <Link
+                      href={reviews ? `/annual/review/${e.request.id}` : `/annual/${e.request.id}`}
+                      className="font-medium text-accent underline-offset-4 hover:underline"
+                    >
+                      {e.request.reference || e.request.title || annualCopy.dashboard.untitled}
+                    </Link>
+                  </>
+                )}
+              </p>
+              <p className="text-xs text-fg-muted">
+                {formatDateTime(e.at, zone)}
+                {e.department ? ` · ${e.department.name}` : ""}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Link
+        href="/reports/analytics"
+        className="inline-flex min-h-11 items-center text-sm font-medium text-accent underline-offset-4 hover:underline lg:min-h-9"
+      >
+        {activityCopy.recentAll}
+      </Link>
+    </section>
   );
 }

@@ -257,10 +257,16 @@ Emails that don't go are retried for about three days. **Admin → Notifications
 **Reports → Analytics & Audit** has three tabs. What you see depends on your roles; requesters see their own department only.
 
 - **Overview:** headline numbers (approved, committed, spent, remaining, waiting approvals) and charts. Use the filter bar (cycle, department, area, dates). Click a bar to see the items behind it, then click an item to open it. **Chart / Table** switches to a table; **Export** downloads Excel.
-- **Activity:** every action on the platform: who did it, in which role, when, on what, and why. Use the quick views (Today, Decisions this week, Money changes, Sign-ins and access, Settings and roles, Failed emails), search, or filters. Click a row to see before and after values.
+- **Activity** (available now): every action on the platform: who did it, in which role, when, on what, and why. Use the quick views (Today, Decisions this week, Money changes, Failed sign-ins and access denied, Settings and role changes, Emails that failed), search (a reference number, person or department), or the filters (person, role, area, kind of event, department, cycle, dates). **Show the details** on a row shows the before and after values, with changes marked. **Export to Excel** downloads the filtered log; the export is recorded too. Pages hold 50 events.
+  - Who sees what: the System Administrator sees everything; the accountant and backup approver see the budget, expense and spending log; the Church Administrator the spending log; department leaders their own departments' activity. Everyone sees what they did themselves.
+  - Each budget has its own **Activity on this budget** page, linked from the budget.
 - **Access** (System Administrator): failed sign-ins, access denied attempts, Planning Center problems, and departments without a Backup, each with a link to fix it.
 
+The Overview and Access tabs arrive with the next stage.
+
 The address keeps your filters, so you can bookmark a view or send the link to a colleague who has the same access.
+
+**Finding things:** **Search** in the top bar (or press **/** or **Ctrl+K**) finds a budget by reference number, title, department or item, a department, a page, and (for the System Administrator) a person. Use the arrow keys and Enter, or click. Pages below the main ones show **breadcrumbs** above the title, such as "Annual Budget / Review dashboard", to step back up. **Home** shows **Recent activity** on your budgets and tasks.
 
 ---
 

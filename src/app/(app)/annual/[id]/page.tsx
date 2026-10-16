@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { EmailHistory } from "@/components/email-history";
+import { RequestActivityLink } from "@/components/request-activity";
 import { ComparisonSummary, FinancialSummary } from "@/components/financial-summary";
 import { AdminSkeleton, PageHeader } from "@/components/ui/display";
 import { buttonClass, cardClass } from "@/components/ui/styles";
@@ -129,6 +130,7 @@ async function RequestContent({
       </div>
 
       {emails && <EmailHistory emails={emails} zone={zone} />}
+      <RequestActivityLink requestId={request.id} />
     </>
   );
 }
