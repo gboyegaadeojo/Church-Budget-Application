@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import ExcelJS from "exceljs";
 import {
   DESKTOP,
   expectAxeClean,
@@ -259,4 +260,58 @@ test.describe("Accountant review (Stage 1 step 6)", () => {
       await expectNoHorizontalScroll(page);
     });
   }
+});
+
+test.describe("Excel exports (FR-20, DRD 6.10)", () => {
+  test("AC-92 AC-95 the accountant downloads one request from the dashboard", async ({
+    page,
+    browser,
+  }) => {
+    await submitAsSam(browser, "Adult Sunday School");
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.pat);
+    await page.goto("/annual/review");
+    const downloading = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Download Adult Sunday School as Excel" }).click();
+    const download = await downloading;
+    expect(download.suggestedFilename()).toMatch(
+      /^FY2027_Adult_Sunday_School_IFC-2027-\d{4}\.xlsx$/,
+    );
+    await expect(page.getByText(`Downloaded ${download.suggestedFilename()}.`)).toBeVisible();
+
+    const book = new ExcelJS.Workbook();
+    await book.xlsx.readFile(await download.path());
+    const summary = book.getWorksheet("Summary")!;
+    // Row 6 is the request: $1,025.00 + $123.00 = $1,148.00, as on screen.
+    expect(summary.getRow(6).getCell(11).value).toBe(1148);
+    expect(summary.getRow(6).getCell(3).value).toBe("Adult Sunday School");
+  });
+
+  for (const [name, size] of [
+    ["360 px", MOBILE],
+    ["1440 px", DESKTOP],
+  ] as const) {
+    test(`AC-93 the Reports page exports the whole cycle, axe clean at ${name}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(size);
+      await signInAs(page, PEOPLE.pat);
+      await page.goto("/reports");
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expect(page.getByText("What's in the workbook")).toBeVisible();
+      await expectNoHorizontalScroll(page);
+      await expectAxeClean(page);
+      const downloading = page.waitForEvent("download");
+      await page.getByRole("button", { name: "Download Excel" }).click();
+      expect((await downloading).suggestedFilename()).toBe("FY2027_Annual_Budgets.xlsx");
+    });
+  }
+
+  test("AC-4 a department leader can't export", async ({ page }) => {
+    await signInAs(page, PEOPLE.sam);
+    await page.goto("/reports");
+    await expect(page.getByText("There are no reports for your roles yet.")).toBeVisible();
+    const response = await page.request.get("/api/exports/annual");
+    expect(response.status()).toBe(403);
+  });
 });

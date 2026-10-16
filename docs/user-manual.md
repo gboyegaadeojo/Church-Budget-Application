@@ -166,6 +166,12 @@ Turn on **Away** in the account menu; the backup approver gets your emails and t
 
 **Reports** for Excel exports, and **Reports → Analytics & Audit** for charts and the activity log (section 9).
 
+- **One budget:** **Download Excel** at the top of its review screen, or the **Excel** button on its row in the Review dashboard's department list.
+- **What you're looking at:** **Export this view** on the Review dashboard downloads the cycle with the status and department you filtered by (the search box isn't applied).
+- **Any combination:** **Reports** has the cycle, department and status filters, and explains what's in the workbook before you download.
+
+Every workbook has a **Summary** sheet (one row per budget, requested and approved subtotal, sales tax and total, the difference, who approved it and when, and a Total row) and a **Line Items** sheet (each item as requested and as approved, with the reason for any change). A one-budget workbook ends with its Subtotal, Sales tax and Total. When a different total was approved, an **Overall adjustment** row makes the approved items add up to it. Amounts are the app's own figures to the cent, as numbers you can sum. Drafts are never included. Each download is recorded in the activity log.
+
 ---
 
 ## 6. Board Chair and Vice-Chair

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { CheckCircle2, Eye, ShieldAlert } from "lucide-react";
+import { DownloadButton } from "@/components/download-button";
 import { EmailHistory } from "@/components/email-history";
 import { ComparisonSummary, FinancialSummary } from "@/components/financial-summary";
 import { AdminSkeleton, PageHeader } from "@/components/ui/display";
@@ -13,6 +14,7 @@ import { isHttpUrl } from "@/domain/annual/schema";
 import { requestEmails } from "@/domain/notifications/history";
 import { getChurchTimeZone } from "@/domain/settings";
 import { viewerAllowedTo } from "@/lib/admin-server";
+import { authorize } from "@/lib/authz";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
 import { formatDateTime } from "@/lib/time-zone";
@@ -79,6 +81,9 @@ async function ReviewContent({
         back={{ href: "/annual/review", label: r.back }}
       >
         <AnnualStatusBadge status={view.status} />
+        {authorize(viewer, "annual.export_all").allowed && (
+          <DownloadButton href={`/api/exports/annual?request=${view.id}`} />
+        )}
       </PageHeader>
 
       {done && (

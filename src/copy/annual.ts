@@ -321,6 +321,7 @@ export const annualCopy = {
       requested: "Requested",
       approved: "Approved",
       action: "Next step",
+      download: "Excel",
       reference: "Reference",
       requester: "Requester",
     },
