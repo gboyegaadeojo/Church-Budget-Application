@@ -44,6 +44,8 @@
   --area-reports-soft: #fce7f0;
   --area-admin: #4a5568;
   --area-admin-soft: #eceef3;
+  /* Chart marks (FR-52): one series, checked with the dataviz validator (OKLCH band, 3:1). */
+  --chart-1: #2860c0;
   color-scheme: light;
 }
 
@@ -81,11 +83,14 @@
     --area-reports-soft: #36162b;
     --area-admin: #b4bfcf;
     --area-admin-soft: #1d212b;
+    /* Darker than --area-annual: a mark needs the 0.48–0.67 lightness band, text doesn't. */
+    --chart-1: #3987e5;
     color-scheme: dark;
   }
 }
 
 @theme inline {
+  --color-chart-1: var(--chart-1);
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
