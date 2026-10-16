@@ -1,9 +1,10 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { and, asc, eq, inArray, lt, lte, or, sql } from "drizzle-orm";
-import { emailOutbox } from "@/db/schema";
+import { emailDigestItems, emailOutbox } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
 import { writeAudit } from "@/lib/audit";
 import { renderEmail, type EmailBrand, type EmailContent } from "./layout";
+import { routeByPreference } from "./preferences";
 import type { EmailSender } from "./sender";
 
 /**
@@ -51,20 +52,43 @@ export function trackQueuedEmails<T>(
 }
 
 /**
- * One row per distinct address, each with the same rendered email. Returns how many rows
+ * One row per distinct address, each with the same rendered email, after each person's
+ * email preferences: someone who turned this kind of email off gets nothing, and an
+ * accountant on the daily digest gets a digest item instead. Returns how many outbox rows
  * were added (fewer than the recipients when a dedupe key was already used).
  */
 export async function enqueueEmail(tx: Tx, email: QueuedEmail): Promise<number> {
+  return (await enqueueEmailIds(tx, email)).length;
+}
+
+/** As enqueueEmail, returning the new outbox rows' ids. */
+export async function enqueueEmailIds(tx: Tx, email: QueuedEmail): Promise<string[]> {
   const seen = new Set<string>();
-  const recipients = email.to.filter((r) => {
+  const unique = email.to.filter((r) => {
     const key = r.email.trim().toLowerCase();
     if (!key || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
-  if (recipients.length === 0) return 0;
+  if (unique.length === 0) return [];
   const rendered = renderEmail(email.content, email.brand);
   const now = email.now ?? new Date();
+  const { now: recipients, digest } = await routeByPreference(tx, email.template, unique);
+  if (digest.length > 0) {
+    await tx.insert(emailDigestItems).values(
+      digest.map((r) => ({
+        userId: r.userId!,
+        toEmail: r.email.trim(),
+        template: email.template,
+        subject: rendered.subject,
+        href: email.content.button.href,
+        budgetRequestId: email.budgetRequestId ?? null,
+        cycleId: email.cycleId ?? null,
+        createdAt: now,
+      })),
+    );
+  }
+  if (recipients.length === 0) return [];
   const inserted = await tx
     .insert(emailOutbox)
     .values(
@@ -89,8 +113,9 @@ export async function enqueueEmail(tx: Tx, email: QueuedEmail): Promise<number> 
     .onConflictDoNothing()
     .returning({ id: emailOutbox.id });
   const store = queuedInAction.getStore();
-  if (store) store.ids.push(...inserted.map((r) => r.id));
-  return inserted.length;
+  const ids = inserted.map((r) => r.id);
+  if (store) store.ids.push(...ids);
+  return ids;
 }
 
 // ---------------------------------------------------------------- delivery

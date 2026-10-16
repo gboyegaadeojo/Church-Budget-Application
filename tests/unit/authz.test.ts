@@ -230,6 +230,18 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     ["no", "act", "act", "no", "no", "no", "no"],
   ],
   [
+    "FR-21 change one's own email reminders",
+    "account.email_preferences",
+    {},
+    ["act", "act", "act", "act", "act", "act", "act"],
+  ],
+  [
+    "FR-21 turn off copies or choose the daily digest",
+    "account.accountant_emails",
+    {},
+    ["no", "act", "act", "no", "no", "no", "no"],
+  ],
+  [
     "set another department's Primary Away (FR-38)",
     "department.away",
     YOUTH,

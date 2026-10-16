@@ -7,7 +7,6 @@ import { useTheme } from "next-themes";
 import { Check, LogOut, Mail, Monitor, Moon, Plane, Sun } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
 import { copy } from "@/copy/en-CA";
-import { cn } from "@/lib/cn";
 
 const a = copy.account;
 
@@ -38,7 +37,10 @@ function initials(name: string): string {
 const itemClass =
   "flex min-h-11 cursor-default select-none items-center gap-3 rounded-control px-3 text-sm outline-none data-[disabled]:text-fg-muted data-[highlighted]:bg-surface-hover lg:min-h-9";
 
-/** Account menu (DRD 6.0): roles as chips, theme choice, and sign out. No role switcher. */
+/**
+ * Account menu (DRD 6.0): roles as chips, theme choice, email preferences, Away, and sign
+ * out. No role switcher.
+ */
 export function AccountMenu({ name, email, roleChips, canBeAway }: AccountMenuProps) {
   const { theme, setTheme } = useTheme();
   // Sign out posts this form, which lives outside the menu so it survives the menu closing.
@@ -106,9 +108,12 @@ export function AccountMenu({ name, email, roleChips, canBeAway }: AccountMenuPr
 
             <Menu.Separator className="my-1 h-px bg-border" />
 
-            <ComingSoonItem icon={<Mail className="size-4" aria-hidden="true" />}>
-              {a.emailPreferences}
-            </ComingSoonItem>
+            <Menu.Item asChild className={itemClass}>
+              <Link href="/account#email">
+                <Mail className="size-4" aria-hidden="true" />
+                <span className="flex-1">{a.emailPreferences}</span>
+              </Link>
+            </Menu.Item>
             {canBeAway && (
               <Menu.Item asChild className={itemClass}>
                 <Link href="/account#away">
@@ -125,16 +130,5 @@ export function AccountMenu({ name, email, roleChips, canBeAway }: AccountMenuPr
         </Menu.Portal>
       </Menu.Root>
     </>
-  );
-}
-
-/** Placeholder until the feature exists: visible, announced as unavailable, not actionable. */
-function ComingSoonItem({ icon, children }: { icon: React.ReactNode; children: string }) {
-  return (
-    <Menu.Item disabled className={cn(itemClass)}>
-      {icon}
-      <span className="flex-1">{children}</span>
-      <span className="text-xs">{a.comingSoon}</span>
-    </Menu.Item>
   );
 }

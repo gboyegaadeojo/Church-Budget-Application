@@ -78,7 +78,6 @@ export const copy = {
     emailPreferences: "Email preferences",
     away: "Away",
     signOut: "Sign out",
-    comingSoon: "Coming soon",
     roleChip: (role: string, department?: string) => (department ? `${role}: ${department}` : role),
     moreDepartments: (count: number) =>
       count === 1 ? "+1 more department" : `+${count} more departments`,
