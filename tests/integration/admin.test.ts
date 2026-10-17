@@ -135,11 +135,13 @@ describe("permissions", () => {
     await expect(
       run((tx) => updateTaxRate(tx, accountant, { percent: "13", versions: {} })),
     ).rejects.toBeInstanceOf(ForbiddenError);
+    // Creating a cycle is open to finance and board staff, but not the Church Administrator.
+    const office = await person(["church_admin"]);
     await expect(
       run((tx) =>
         createCycle(
           tx,
-          accountant,
+          office,
           {
             name: "FY2099",
             budgetYear: 2099,
@@ -150,6 +152,34 @@ describe("permissions", () => {
         ),
       ),
     ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("the accountant, backup approver, Board Chair and Vice-Chair create cycles; opening stays with the administrator", async () => {
+    const roles: Role[] = ["accountant", "backup_approver", "board_chair", "vice_chair"];
+    for (const [i, role] of roles.entries()) {
+      const creator = await person([role]);
+      const year = 2090 + i;
+      const created = await run((tx) =>
+        createCycle(
+          tx,
+          creator,
+          {
+            name: `FY${year}`,
+            budgetYear: year,
+            startDate: `${year}-01-01`,
+            submissionDeadline: `${year - 1}-11-30T17:00`,
+          },
+          { now: NOW },
+        ),
+      );
+      const [row] = await db.select().from(budgetCycles).where(eq(budgetCycles.id, created.id));
+      expect(row).toMatchObject({ status: "draft", createdByUserId: creator.id });
+      const [event] = await audits("admin.cycle_created", created.id);
+      expect(event).toMatchObject({ actorUserId: creator.id, actingRole: role });
+      await expect(
+        run((tx) => openCycle(tx, creator, { id: created.id, version: row.version }, { now: NOW })),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    }
   });
 });
 

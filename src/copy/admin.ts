@@ -335,6 +335,9 @@ export const adminCopy = {
   },
   cycles: {
     title: "Budget Cycles",
+    /** Annual Budget → Budget cycles, for finance and board staff (decided 2026-10-17). */
+    staffIntro:
+      "Create the next budget year. It starts as a draft; the System Administrator opens it, which emails every department, and manages its deadline.",
     columns: {
       name: "Cycle",
       year: "Budget year",

@@ -100,6 +100,7 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
   ["manage departments", "admin.departments", {}, ["no", "no", "no", "no", "no", "no", "act"]],
   ["manage users and roles", "admin.users", {}, ["no", "no", "no", "no", "no", "no", "act"]],
   ["configure cycles", "admin.cycles", {}, ["no", "no", "no", "no", "no", "no", "act"]],
+  ["create a budget cycle", "cycles.create", {}, ["no", "act", "act", "act", "act", "no", "act"]],
   ["change the sales tax rate", "admin.settings", {}, ["no", "no", "no", "no", "no", "no", "act"]],
   [
     "AC-101 change the logo and colour",

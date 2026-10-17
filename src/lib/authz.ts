@@ -71,6 +71,8 @@ export type Action =
   | "admin.users"
   | "admin.departments"
   | "admin.cycles"
+  /** Create a budget cycle (decided 2026-10-17): finance and board staff, and the administrator. */
+  | "cycles.create"
   | "admin.settings"
   /** Settings → Branding: the logo upload, names and accent colour (FR-30, AC-101). */
   | "admin.branding"
@@ -270,6 +272,8 @@ const RULES: Record<Action, readonly Rule[]> = {
   "admin.users": [{ roles: ["system_admin"] }],
   "admin.departments": [{ roles: ["system_admin"] }],
   "admin.cycles": [{ roles: ["system_admin"] }],
+  // Opening, closing and deadlines stay with admin.cycles: opening emails every department.
+  "cycles.create": [{ roles: [...ACCOUNTANTS, ...BOARD, "system_admin"] }],
   "admin.settings": [{ roles: ["system_admin"] }],
   "admin.branding": [{ roles: ["system_admin"] }],
   "admin.pco_mapping": [{ roles: ["system_admin"] }],

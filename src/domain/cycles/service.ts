@@ -98,7 +98,7 @@ export async function createCycle(
   input: z.input<typeof createSchema>,
   { now = new Date() }: Options = {},
 ): Promise<{ id: string; name: string }> {
-  const { actingRole } = assertCan(actor, "admin.cycles");
+  const { actingRole } = assertCan(actor, "cycles.create");
   const data = parseInput(createSchema, input);
   const deadline = await futureDeadline(tx, data.submissionDeadline, "submissionDeadline", now);
 

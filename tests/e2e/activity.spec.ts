@@ -152,7 +152,9 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
         .click();
       await expect(page).toHaveURL(/\/reports\/analytics\/access$/);
       await expect(page.getByRole("region", { name: "Sign-ins per day" })).toBeVisible();
-      await expect(page.getByRole("region", { name: "Failed sign-ins" })).toBeVisible();
+      await expect(
+        page.getByRole("region", { name: "Failed sign-ins", exact: true }),
+      ).toBeVisible();
       await expect(
         page.getByRole("region", { name: "Departments without a Backup" }),
       ).toBeVisible();

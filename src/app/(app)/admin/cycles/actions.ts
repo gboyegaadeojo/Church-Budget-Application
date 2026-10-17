@@ -30,7 +30,7 @@ export async function createCycleAction(_: ActionState, data: FormData): Promise
       });
       return c.created(name);
     },
-    { paths: [LIST] },
+    { paths: [LIST, "/annual/cycles"] },
   );
 }
 
