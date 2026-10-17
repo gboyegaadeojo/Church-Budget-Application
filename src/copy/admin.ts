@@ -58,6 +58,26 @@ export const adminCopy = {
     rolesHint:
       "When someone leaves, remove their role or deactivate them, then give the role to the new person. Their past decisions stay in the history under their name.",
     rolesSaved: "Roles saved.",
+    submitter: {
+      heading: "Expense submitter",
+      intro:
+        "Let this person submit expenses for a department they don't lead, for example a volunteer who buys for Media. They see and change only what they submit. They need the Requester role.",
+      department: "Department",
+      choose: "Choose a department",
+      add: "Add",
+      remove: "Remove",
+      removeTitle: (department: string) => `Stop expense submissions for ${department}?`,
+      removeBody: "What they already submitted stays as it is.",
+      added: (department: string) => `They can now submit expenses for ${department}.`,
+      removed: (department: string) => `They can no longer submit expenses for ${department}.`,
+      none: "Not an expense submitter for any department.",
+      since: (date: string) => `Since ${date}`,
+      errors: {
+        needsRequester: "Give them the Requester role first.",
+        alreadyRepresents: "They already lead this department, so they can submit for it.",
+        inactiveDepartment: "Choose an active department.",
+      },
+    },
     removeOwnAdminTitle: "Remove your own System Administrator role?",
     removeOwnAdminBody:
       "You will lose access to Admin as soon as you save. Another System Administrator will need to give it back.",

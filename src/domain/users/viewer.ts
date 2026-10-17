@@ -1,5 +1,5 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
-import { departments, userDepartments, users } from "@/db/schema";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { departments, expenseSubmitters, userDepartments, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { readSettings } from "@/domain/settings";
 import type { Role, Viewer } from "@/lib/roles";
@@ -43,12 +43,30 @@ export async function loadViewer(
     )
     .orderBy(asc(departments.name));
 
+  // Expense submitter (6B.2): departments they may submit expenses for, not represent.
+  const submitterOf = await tx
+    .select({ id: departments.id, name: departments.name })
+    .from(expenseSubmitters)
+    .innerJoin(departments, eq(departments.id, expenseSubmitters.departmentId))
+    .where(
+      and(
+        eq(expenseSubmitters.userId, user.id),
+        isNull(expenseSubmitters.removedAt),
+        eq(departments.status, "active"),
+      ),
+    )
+    .orderBy(asc(departments.name));
+  const expenseDepartments = submitterOf.filter((d) => !represented.some((r) => r.id === d.id));
+
   if (roles.length === 0) {
     return { ok: false, reason: suspended ? "suspended" : "not-allowed" };
   }
   // A verified leader with no department yet waits for the administrator (FR-01a),
   // except on the annual form's first step, where they may pick one (FR-03, FR-38).
-  if (isWaitingForDepartment({ roles, departments: represented }) && !options.allowWaiting) {
+  if (
+    isWaitingForDepartment({ roles, departments: represented, expenseDepartments }) &&
+    !options.allowWaiting
+  ) {
     return { ok: false, reason: "waiting" };
   }
 
@@ -60,13 +78,22 @@ export async function loadViewer(
       email: user.email,
       roles,
       departments: roles.includes("requester") ? represented : [],
+      expenseDepartments: roles.includes("requester") ? expenseDepartments : [],
     },
   };
 }
 
-/** A requester and nothing else, representing no department yet (FR-01a "waiting"). */
-export function isWaitingForDepartment(viewer: Pick<Viewer, "roles" | "departments">): boolean {
+/**
+ * A requester and nothing else, representing no department yet and not an Expense
+ * submitter for one (FR-01a "waiting", 6B.2).
+ */
+export function isWaitingForDepartment(
+  viewer: Pick<Viewer, "roles" | "departments" | "expenseDepartments">,
+): boolean {
   return (
-    viewer.roles.length === 1 && viewer.roles[0] === "requester" && viewer.departments.length === 0
+    viewer.roles.length === 1 &&
+    viewer.roles[0] === "requester" &&
+    viewer.departments.length === 0 &&
+    (viewer.expenseDepartments?.length ?? 0) === 0
   );
 }

@@ -117,6 +117,14 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   // Administration
   "admin.user_added": { label: "Added a staff member", group: "settings" },
   "admin.roles_changed": { label: "Changed someone's roles", group: "settings" },
+  "admin.expense_submitter_added": {
+    label: "Let someone submit expenses for a department",
+    group: "settings",
+  },
+  "admin.expense_submitter_removed": {
+    label: "Stopped someone submitting expenses for a department",
+    group: "settings",
+  },
   "admin.user_deactivated": { label: "Deactivated an account", group: "settings" },
   "admin.user_reactivated": { label: "Reactivated an account", group: "settings" },
   "admin.department_added": { label: "Added a department", group: "settings" },

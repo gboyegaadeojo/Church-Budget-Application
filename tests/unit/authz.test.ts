@@ -513,3 +513,30 @@ describe("assertCan", () => {
     }
   });
 });
+
+describe("Expense submitter (6B.2)", () => {
+  const volunteer: Subject = {
+    ...who(["requester"], [], "vol"),
+    expenseDepartments: [{ id: "media", name: "Media" }],
+  };
+
+  it("submits only for the departments given", () => {
+    expect(authorize(volunteer, "expense.submit", OWN).allowed).toBe(true);
+    expect(authorize(volunteer, "expense.submit", YOUTH).allowed).toBe(false);
+  });
+
+  it("sees and changes only what they submitted", () => {
+    const theirs = { ...OWN, requesterUserId: "vol" };
+    const leaders = { ...OWN, requesterUserId: "leader" };
+    expect(authorize(volunteer, "expense.view", theirs).allowed).toBe(true);
+    expect(authorize(volunteer, "expense.submit", theirs).allowed).toBe(true);
+    expect(authorize(volunteer, "expense.view", leaders).allowed).toBe(false);
+    expect(authorize(volunteer, "expense.submit", leaders).allowed).toBe(false);
+  });
+
+  it("gets nothing else of the department", () => {
+    expect(authorize(volunteer, "annual.view", OWN).allowed).toBe(false);
+    expect(authorize(volunteer, "expense.cancel", OWN).allowed).toBe(false);
+    expect(authorize(volunteer, "spending.view", OWN).allowed).toBe(false);
+  });
+});

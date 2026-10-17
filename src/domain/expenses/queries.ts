@@ -53,7 +53,8 @@ export async function expenseStartOptions(
   viewer: Subject,
   now: Date = new Date(),
 ): Promise<StartDepartment[]> {
-  const mine = viewer.departments.filter(
+  // Departments they represent, and those they submit for as an Expense submitter (6B.2).
+  const mine = [...viewer.departments, ...(viewer.expenseDepartments ?? [])].filter(
     (d) => authorize(viewer, "expense.submit", { departmentId: d.id }).allowed,
   );
   if (mine.length === 0) return [];
@@ -207,7 +208,10 @@ export async function getExpenseView(
   const decision = authorize(viewer, "expense.view", authzContextOf(row));
   if (!decision.allowed) return null;
   const represents = viewer.departments.some((d) => d.id === row.departmentId);
-  if (row.status === "draft" && !represents && !hasRole(viewer, "system_admin")) return null;
+  const theirs = row.requesterUserId === viewer.id;
+  if (row.status === "draft" && !represents && !theirs && !hasRole(viewer, "system_admin")) {
+    return null;
+  }
 
   const [cycle] = await tx
     .select({ id: budgetCycles.id, name: budgetCycles.name, budgetYear: budgetCycles.budgetYear })
@@ -243,8 +247,8 @@ export async function getExpenseView(
         .where(eq(expenseSubmissions.id, row.linkedPurchaseRequestId))
     : [];
   const decisions = await decisionsOf(tx, row.id);
-  const actsForDepartment =
-    represents && authorize(viewer, "expense.submit", { departmentId: row.departmentId }).allowed;
+  // A representative, or the Expense submitter who submitted it (6B.2).
+  const actsForDepartment = authorize(viewer, "expense.submit", authzContextOf(row)).allowed;
   const canEdit = actsForDepartment && isExpenseEditable(row.status);
 
   return {
@@ -409,7 +413,7 @@ export async function listMyExpenses(
   filters: ExpenseListFilters = {},
 ): Promise<ExpenseListRow[]> {
   const ids = viewer.departments.map((d) => d.id);
-  if (ids.length === 0) return [];
+  if (ids.length === 0 && (viewer.expenseDepartments?.length ?? 0) === 0) return [];
   const zone = await getChurchTimeZone(tx);
   const rows = await tx
     .select(listColumns)
@@ -418,7 +422,7 @@ export async function listMyExpenses(
     .where(
       and(
         or(
-          inArray(expenseSubmissions.departmentId, ids),
+          ids.length > 0 ? inArray(expenseSubmissions.departmentId, ids) : undefined,
           eq(expenseSubmissions.requesterUserId, viewer.id),
         ),
         listFilterConditions(filters, zone),

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ActionForm, SubmitButton } from "@/components/ui/action-form";
+import { ActionForm, SelectField, SubmitButton } from "@/components/ui/action-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   AdminSkeleton,
@@ -15,15 +15,17 @@ import {
 import { linkClass } from "@/components/ui/styles";
 import { adminCopy } from "@/copy/admin";
 import { getDb } from "@/db";
+import { listDepartments } from "@/domain/departments/queries";
 import { getChurchTimeZone } from "@/domain/settings";
 import { suggestPlanningCenterPeople, type PcoCandidate } from "@/domain/users/admin";
 import { getUserDetail } from "@/domain/users/admin-queries";
+import { submitterDepartmentsOf } from "@/domain/users/expense-submitters";
 import { viewerAllowedTo } from "@/lib/admin-server";
 import { PlanningCenterUnavailableError } from "@/lib/pco";
 import { getPlanningCenterDirectory } from "@/lib/pco-directory";
 import type { Viewer } from "@/lib/roles";
 import { formatDateTime } from "@/lib/time-zone";
-import { setActiveAction } from "../actions";
+import { addSubmitterAction, removeSubmitterAction, setActiveAction } from "../actions";
 import { PcoLink } from "./pco-link";
 import { UserStatusBadge } from "../status-badge";
 import { RolesForm } from "./roles-form";
@@ -50,7 +52,16 @@ async function UserContent({ params }: Pick<PageProps<"/admin/users/[id]">, "par
   const detail = await getUserDetail(db, id);
   if (!detail) notFound();
   const { user, roles, departments } = detail;
-  const zone = await getChurchTimeZone(db);
+  const [zone, submitterOf, active] = await Promise.all([
+    getChurchTimeZone(db),
+    submitterDepartmentsOf(db, viewer, user.id),
+    listDepartments(db, "active"),
+  ]);
+  const canAddSubmitter = active.filter(
+    (d) =>
+      !departments.some((mine) => mine.id === d.id) &&
+      !(submitterOf ?? []).some((s) => s.id === d.id),
+  );
   const activeFormId = `active-${user.id}`;
 
   return (
@@ -128,6 +139,59 @@ async function UserContent({ params }: Pick<PageProps<"/admin/users/[id]">, "par
               </li>
             ))}
           </ul>
+        )}
+      </Section>
+
+      <Section title={u.submitter.heading} id="expense-submitter">
+        <p className="text-sm text-fg-muted">{u.submitter.intro}</p>
+        {(submitterOf ?? []).length === 0 ? (
+          <EmptyState>{u.submitter.none}</EmptyState>
+        ) : (
+          <ul className="divide-y divide-border text-sm">
+            {(submitterOf ?? []).map((d) => {
+              const formId = `submitter-${d.id}`;
+              return (
+                <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span>
+                    <Link href={`/admin/departments/${d.id}`} className={linkClass}>
+                      {d.name}
+                    </Link>
+                    <span className="ml-2 text-fg-muted">
+                      {u.submitter.since(formatDateTime(d.since, zone))}
+                    </span>
+                  </span>
+                  <ActionForm action={removeSubmitterAction} id={formId}>
+                    <input type="hidden" name="userId" value={user.id} />
+                    <input type="hidden" name="departmentId" value={d.id} />
+                    <ConfirmDialog
+                      formId={formId}
+                      trigger={u.submitter.remove}
+                      title={u.submitter.removeTitle(d.name)}
+                      body={u.submitter.removeBody}
+                      confirmLabel={u.submitter.remove}
+                    />
+                  </ActionForm>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {canAddSubmitter.length > 0 && (
+          <ActionForm
+            action={addSubmitterAction}
+            className="flex flex-wrap items-end gap-3"
+            aria-label={u.submitter.heading}
+          >
+            <input type="hidden" name="userId" value={user.id} />
+            <SelectField
+              name="departmentId"
+              label={u.submitter.department}
+              placeholder={u.submitter.choose}
+              options={canAddSubmitter.map((d) => ({ value: d.id, label: d.name }))}
+              required
+            />
+            <SubmitButton tone="secondary">{u.submitter.add}</SubmitButton>
+          </ActionForm>
         )}
       </Section>
     </>

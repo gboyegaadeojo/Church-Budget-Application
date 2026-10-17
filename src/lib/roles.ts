@@ -35,6 +35,11 @@ export type Viewer = {
   roles: readonly Role[];
   /** Departments the person represents (requester role). */
   departments: readonly Department[];
+  /**
+   * Departments the person may submit expenses for without representing them: the
+   * Expense submitter permission (6B.2). Only their own submissions are theirs to see.
+   */
+  expenseDepartments?: readonly { id: string; name: string }[];
 };
 
 export function hasRole(viewer: Pick<Viewer, "roles">, ...roles: Role[]): boolean {

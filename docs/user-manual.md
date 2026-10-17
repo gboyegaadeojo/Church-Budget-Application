@@ -255,6 +255,7 @@ You can **see everything** but cannot approve or pay unless you are also given t
 **Admin → Users & Roles**: add people, assign roles and departments, deactivate people who leave. Keep at least two System Administrators.
 
 - **Link each staff member's Planning Center profile** so they can sign in: open their page and, under **Planning Center profile**, choose **Link to {name}** for the person with their email address, or search by name. Check it's the right person: Planning Center sign-in never links accounts by email on its own, because people can change the email on their own profile. Department leaders don't need this; they're linked when they first sign in.
+- **Expense submitter:** to let someone who doesn't lead a department submit expenses for it (for example a volunteer who buys for Media), open their page and, under **Expense submitter**, choose the department and **Add**. They need the Requester role and must be a verified Group Leader in Planning Center, like every requester. They see and change only what they submit; the department's leaders see it too and get its emails. **Remove** stops new submissions; what they already submitted stays.
 
 ### Departments
 

@@ -228,7 +228,8 @@ export async function removeReceipt(
 export function canSeeReceipts(viewer: Subject, row: ExpenseRow): boolean {
   if (!authorize(viewer, "expense.view", authzContextOf(row)).allowed) return false;
   const represents = viewer.departments.some((d) => d.id === row.departmentId);
-  return row.status !== "draft" || represents || hasRole(viewer, "system_admin");
+  const theirs = row.requesterUserId === viewer.id;
+  return row.status !== "draft" || represents || theirs || hasRole(viewer, "system_admin");
 }
 
 /** The claim's current receipt files, for someone allowed to see them. */
