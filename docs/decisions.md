@@ -891,3 +891,18 @@ The church asked for hover feedback that makes it obvious what's under the point
 - **Links** get a soft accent background, a thicker underline and a deeper colour.
 - **Navigation:** the item under the pointer takes the tint and the accent colour.
 - Colour is never the only cue: the border, shadow, underline or lift changes with it. With reduced motion there's no lift (transitions are already shortened).
+
+## Annual Budget → Departments for the accountant (2026-10-17)
+
+The Departments item in the accountant's Annual Budget menu (DRD 6.0) was still a "coming soon" placeholder, the last one in the app. The review dashboard already has the department completion table, so this page adds what the accountant couldn't see anywhere: who leads each department and how to reach them.
+
+- **Who:** `annual.review` (accountant, backup approver; the System Administrator reads it).
+- **What, per department and budget year:**
+  - the Primary and Backups as email links, plus how many other leaders;
+  - "No leader yet" or "No backup" warnings;
+  - the Primary's Away status and who covers;
+  - the budget status, requested and approved totals, and Remaining;
+  - an extended deadline when there is one.
+- **Same figures as elsewhere:** the department rows come from `getReviewDashboard`, Remaining from `budgetFigures`.
+- **Read-only:** leaders are changed in Admin → Departments.
+- The unused `ComingSoon` component is removed.

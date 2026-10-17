@@ -316,3 +316,24 @@ test.describe("Excel exports (FR-20, DRD 6.10)", () => {
     expect(response.status()).toBe(403);
   });
 });
+
+test.describe("Annual Budget → Departments (DRD 6.0)", () => {
+  test("the accountant sees each department's leaders and budget, axe clean at 360 and 1440 px", async ({
+    page,
+  }) => {
+    await signInAs(page, PEOPLE.pat);
+    for (const size of [MOBILE, DESKTOP]) {
+      await page.setViewportSize(size);
+      await page.goto("/annual/departments");
+      await expect(page.getByRole("heading", { level: 1, name: "Departments" })).toBeVisible();
+      await page.getByLabel("Budget year", { exact: true }).selectOption({ label: "FY2026" });
+      await page.getByRole("button", { name: "Show" }).click();
+      const table = page.getByRole("table", { name: "Departments, their leaders and budgets" });
+      const media = table.getByRole("row").filter({ hasText: "Media Team" });
+      await expect(media.getByRole("link", { name: /Email Gina Admin/ })).toBeVisible();
+      await expect(media.getByText("$30,000.00").first()).toBeVisible();
+      await expectNoHorizontalScroll(page);
+      await expectAxeClean(page);
+    }
+  });
+});

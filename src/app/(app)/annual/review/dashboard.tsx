@@ -405,7 +405,7 @@ function QueueTable({
   );
 }
 
-function progressLabel(progress: Progress) {
+export function progressLabel(progress: Progress) {
   if (progress === "not_submitted" || progress === "draft_exists") {
     return <Badge>{r.progress[progress]}</Badge>;
   }
