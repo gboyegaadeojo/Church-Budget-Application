@@ -154,6 +154,7 @@ Each department has a **Primary requester** (accountable for the department's bu
    - **Review queue**: every submitted budget, changed ones (**Updated**) first. Drafts never appear here.
    - **Department completion**: every department with its representative, status (**Not submitted**, **Draft exists**, or the budget's status), totals and next step.
    - Budgets waiting for you also appear in **My tasks** on Home.
+   - **Annual Budget → Departments** lists every department with its leaders (Primary and Backups, each an email link), whether the Primary is away and who covers, its budget status, requested and approved amounts, what is left to spend, and any deadline extension. Leaders are changed by the System Administrator.
    - When the cycle has a board-approved church total, a bar shows how much is allocated so far, for example "Allocated $140,000.00 of $150,000.00 board total · $10,000.00 left to allocate".
 2. Open a budget with **Review**. Opening it marks it **In Review**. You see the details, the items, the revision history (what changed in each version) and earlier decisions. Then choose:
    - **Approve as requested**;

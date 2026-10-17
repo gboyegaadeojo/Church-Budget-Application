@@ -448,6 +448,38 @@ export const annualCopy = {
   },
 
   /** Accountant dashboard and review (FR-13 to FR-18a, DRD 6.6 and 6.7). */
+  /** Annual Budget → Departments (accountant): who leads each department and where it stands. */
+  departmentsPage: {
+    title: "Departments",
+    intro:
+      "Every department, who leads it and how to reach them, and where its budget stands this year. Leaders are changed in Admin → Departments.",
+    cycle: "Budget year",
+    show: "Show",
+    caption: "Departments, their leaders and budgets",
+    columns: {
+      department: "Department",
+      leaders: "Leaders",
+      status: "Budget",
+      requested: "Requested",
+      approved: "Approved",
+      remaining: "Remaining",
+      deadline: "Deadline",
+    },
+    primary: "Primary",
+    backup: (n: number) => `Backup ${n}`,
+    others: (n: number) => (n === 1 ? "1 other leader" : `${n} other leaders`),
+    noLeader: "No leader yet",
+    noBackup: "No backup",
+    away: (names: string, until: string | null) =>
+      until ? `Primary away until ${until}; ${names} covering` : `Primary away; ${names} covering`,
+    awayNoCover: "Primary away; nobody covering",
+    extended: (when: string) => `Extended to ${when}`,
+    usual: "Cycle deadline",
+    noCycle: "No budget cycle yet.",
+    empty: "No departments yet.",
+    open: (department: string) => `Open ${department}'s budget`,
+    email: (name: string) => `Email ${name}`,
+  },
   review: {
     board: {
       heading: "Board-approved church total",
