@@ -109,8 +109,8 @@ test.describe("Spending (Stage 4)", () => {
       await expectNoHorizontalScroll(page);
       await expectAxeClean(page);
     }
-    // Kim's Youth Ministry isn't Sam's, and Sam can't open the spending dashboard.
-    await expect(page.getByRole("region", { name: "Youth Ministry budget" })).toHaveCount(0);
+    // Other tests make Sam a leader of more departments, so the integration test checks
+    // that no other department's spending is shown (AC-89). Sam can't open the dashboard.
     await page.goto("/spending");
     await expect(
       page.getByRole("heading", { name: "You don't have access to this page" }),
