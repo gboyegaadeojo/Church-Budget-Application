@@ -69,6 +69,8 @@ export const annualCopy = {
     returnNoteRequired: "Write what the department needs to clarify.",
     declineReasonRequired: "Give a reason for declining.",
     reopenReasonRequired: "Give a reason for reopening.",
+    reopenHasExpenses: (committed: string, spent: string, pending: string) =>
+      `Expenses rely on this budget (committed ${committed}, spent ${spent}, waiting for approval ${pending}). Confirm the warning to reopen it.`,
     noteTooLong: "Keep the note to 2,000 characters or fewer.",
     boardReferenceTooLong: "Keep the board reference to 200 characters or fewer.",
     adjustmentReasonTooLong: "Keep the reason to 500 characters or fewer.",
@@ -608,6 +610,9 @@ export const annualCopy = {
     reopenBody:
       "It goes back to the department as Returned for Clarification, so they can change and resubmit it. No edit is used. The current decision stays in the history.",
     reopenReason: "Reason for reopening",
+    reopenExpensesWarning: (committed: string, spent: string, pending: string) =>
+      `Expenses already rely on this budget: ${committed} committed, ${spent} spent and ${pending} waiting for approval. While it's reopened the department has no approved budget, so new expenses can't be started, and the new decision will change what the department has available.`,
+    reopenExpensesConfirm: "I understand the new decision will change the department's available budget.",
     historyHeading: "Revision history",
     decisionsHeading: "Decisions",
     noDecisions: "No decisions yet.",

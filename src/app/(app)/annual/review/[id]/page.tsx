@@ -177,7 +177,7 @@ async function ReviewContent({
               <FinancialSummary totals={view.totals} rate={view.rate} heading={r.requested} />
             )}
             <HelpPanel topic="tax" />
-            {view.canReopen && <ReopenControl id={view.id} version={view.version} />}
+            {view.canReopen && <ReopenControl id={view.id} version={view.version} expenses={view.reopenExpenses} />}
           </section>
 
           <div className={cn(cardClass, "space-y-4")}>

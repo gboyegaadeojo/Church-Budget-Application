@@ -3,7 +3,7 @@
 import { useEffect, useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { boardWarning } from "@/components/board-allocation";
 import { ComparisonSummary } from "@/components/financial-summary";
 import { buttonClass, inputClass } from "@/components/ui/styles";
@@ -542,17 +542,33 @@ function LineEditor({
 }
 
 /** Reopen an approved or declined budget, with a reason (FR-18a, DRD 6.7a). */
-export function ReopenControl({ id, version }: { id: string; version: number }) {
+export function ReopenControl({
+  id,
+  version,
+  expenses,
+}: {
+  id: string;
+  version: number;
+  /** Expenses that rely on this budget: the accountant must confirm the warning. */
+  expenses?: { committed: number; spent: number; pending: number } | null;
+}) {
   const ids = useId();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
   const [key, setKey] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function confirm() {
     startTransition(async () => {
-      const result = await reopenAction({ id, version, idempotencyKey: key, reason });
+      const result = await reopenAction({
+        id,
+        version,
+        idempotencyKey: key,
+        reason,
+        confirmExpenses: expenses ? confirmed : undefined,
+      });
       if (result?.status === "error") {
         setError(result.fieldErrors?.reason ?? result.message);
       }
@@ -567,6 +583,7 @@ export function ReopenControl({ id, version }: { id: string; version: number }) 
         if (next) {
           setKey(crypto.randomUUID());
           setError(null);
+          setConfirmed(false);
         }
         setOpen(next);
       }}
@@ -579,6 +596,30 @@ export function ReopenControl({ id, version }: { id: string; version: number }) 
           <AlertDialog.Description className="text-sm text-fg-muted">
             {r.reopenBody}
           </AlertDialog.Description>
+          {expenses && (
+            <div className="space-y-3 rounded-control border border-warning bg-warning/10 p-3 text-sm">
+              <p className="flex items-start gap-2">
+                <AlertTriangle
+                  className="mt-0.5 size-4 shrink-0 text-warning"
+                  aria-hidden="true"
+                />
+                {r.reopenExpensesWarning(
+                  formatCAD(expenses.committed),
+                  formatCAD(expenses.spent),
+                  formatCAD(expenses.pending),
+                )}
+              </p>
+              <label className="flex min-h-11 items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                  className="mt-0.5 size-5 shrink-0 accent-accent"
+                />
+                {r.reopenExpensesConfirm}
+              </label>
+            </div>
+          )}
           <div className="space-y-1.5">
             <label htmlFor={`${ids}-reason`} className="block text-sm font-medium">
               {r.reopenReason}
@@ -605,7 +646,7 @@ export function ReopenControl({ id, version }: { id: string; version: number }) 
             <button
               type="button"
               onClick={confirm}
-              disabled={pending}
+              disabled={pending || (!!expenses && !confirmed)}
               aria-busy={pending || undefined}
               className={buttonClass("primary")}
             >
