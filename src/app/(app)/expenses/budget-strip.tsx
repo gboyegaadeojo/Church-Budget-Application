@@ -1,4 +1,7 @@
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, PiggyBank } from "lucide-react";
+import { IconChip } from "@/components/ui/display";
+import { cardClass } from "@/components/ui/styles";
+import { TONE, type Tone } from "@/components/ui/tone";
 import { expensesCopy } from "@/copy/expenses";
 import type { BudgetFigures } from "@/domain/expenses/budget";
 import { cn } from "@/lib/cn";
@@ -35,35 +38,60 @@ export function BudgetStrip({
   showPending?: boolean;
   className?: string;
 }) {
-  const items = [
-    { label: b.available, value: formatCAD(figures.available) },
-    { label: b.committed, value: formatCAD(figures.committed) },
-    ...(showPending ? [{ label: b.pending, value: formatCAD(figures.pending) }] : []),
-    { label: b.spent, value: formatCAD(figures.spent) },
+  const items: { label: string; value: React.ReactNode; tone: Tone; strong?: boolean }[] = [
+    { label: b.available, value: formatCAD(figures.available), tone: "blue" },
+    { label: b.committed, value: formatCAD(figures.committed), tone: "amber" },
+    ...(showPending
+      ? [{ label: b.pending, value: formatCAD(figures.pending), tone: "violet" as Tone }]
+      : []),
+    { label: b.spent, value: formatCAD(figures.spent), tone: "pink" },
+    {
+      label: b.remaining,
+      value: <RemainingText cents={figures.remaining} />,
+      tone: figures.remaining < 0 ? "red" : "green",
+      strong: true,
+    },
   ];
+  // How much of Available is spoken for: a picture only, the figures carry the meaning.
+  const used =
+    figures.available > 0
+      ? Math.min(100, Math.max(0, ((figures.committed + figures.spent) / figures.available) * 100))
+      : 0;
   return (
     <section
       aria-label={`${b.heading}: ${department}`}
-      className={cn("space-y-3 rounded-card border border-border bg-surface-2 p-4", className)}
+      className={cn(cardClass, "space-y-4 p-5 sm:p-5", className)}
     >
-      <p className="text-sm font-semibold">{department}</p>
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:flex sm:flex-wrap sm:gap-x-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <IconChip icon={PiggyBank} tone="green" size="sm" />
+        <p className="min-w-0 flex-1 text-[17px] font-semibold tracking-tight">
+          {department} · {b.heading}
+        </p>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
+        <div
+          className={cn("h-full rounded-full", figures.remaining < 0 ? "bg-danger" : TONE.blue.bar)}
+          style={{ width: `${used}%` }}
+        />
+      </div>
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {items.map((item) => (
-          <div key={item.label}>
-            <dt className="text-xs text-fg-muted">{item.label}</dt>
-            <dd className="tabular font-medium">{item.value}</dd>
+          <div key={item.label} className={cn("rounded-[12px] px-3 py-2.5", TONE[item.tone].soft)}>
+            <dt className={cn("text-xs font-semibold", TONE[item.tone].text)}>{item.label}</dt>
+            <dd className={cn("tabular", item.strong ? "font-bold" : "font-semibold")}>
+              {item.value}
+            </dd>
           </div>
         ))}
-        <div>
-          <dt className="text-xs text-fg-muted">{b.remaining}</dt>
-          <dd className="tabular font-semibold">
-            <RemainingText cents={figures.remaining} />
-          </dd>
-        </div>
         {after !== undefined && (
-          <div>
-            <dt className="text-xs text-fg-muted">{b.remainingAfter}</dt>
-            <dd className="tabular font-semibold" aria-live="polite">
+          <div
+            className={cn(
+              "rounded-[12px] border-2 px-3 py-2",
+              after < 0 ? "border-danger" : "border-accent",
+            )}
+          >
+            <dt className="text-xs font-semibold text-fg-muted">{b.remainingAfter}</dt>
+            <dd className="tabular font-bold" aria-live="polite">
               <RemainingText cents={after} />
             </dd>
           </div>

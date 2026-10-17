@@ -78,11 +78,15 @@ export function ReceiptUploader({
   expenseId,
   receipts,
   error,
+  kind = "receipts",
 }: {
   expenseId: string;
   receipts: ReceiptItem[];
   error?: string;
+  /** A claim's receipts, or a purchase request's attachments (quote, invoice, photo). */
+  kind?: "receipts" | "attachments";
 }) {
+  const words = kind === "attachments" ? { ...r, ...expensesCopy.attachments } : r;
   const ids = useId();
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -162,13 +166,8 @@ export function ReceiptUploader({
   const accept = "image/jpeg,image/png,image/heic,image/heif,application/pdf,.heic,.heif";
 
   return (
-    <section className="space-y-3" aria-labelledby={`${ids}-heading`}>
-      <div>
-        <h3 id={`${ids}-heading`} className="text-base font-semibold">
-          {r.heading}
-        </h3>
-        <p className="text-sm text-fg-muted">{r.intro}</p>
-      </div>
+    <div className="space-y-3">
+      <p className="text-sm text-fg-muted">{words.intro}</p>
       {error && (
         <p role="alert" className="text-sm text-danger">
           {error}
@@ -176,7 +175,7 @@ export function ReceiptUploader({
       )}
 
       {receipts.length === 0 ? (
-        <p className="text-sm text-fg-muted">{r.none}</p>
+        <p className="text-sm text-fg-muted">{words.none}</p>
       ) : (
         <ul className="divide-y divide-border rounded-control border border-border">
           {receipts.map((item) => {
@@ -308,10 +307,10 @@ export function ReceiptUploader({
             value={progress}
             max={100}
             className="mt-1 h-1.5 w-full"
-            aria-label={r.heading}
+            aria-label={words.heading}
           />
         )}
       </div>
-    </section>
+    </div>
   );
 }

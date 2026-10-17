@@ -2,7 +2,7 @@ import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { expensesCopy } from "@/copy/expenses";
-import { expenseReceiptFiles, users } from "@/db/schema";
+import { expenseReceiptFiles, expenseSubmissions, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { actorOf } from "@/domain/annual/service";
 import { parseInput, RuleError, ValidationError } from "@/domain/errors";
@@ -13,8 +13,9 @@ import { auditBase, authzContextOf, canOn, loadExpense, type ExpenseRow } from "
 import { isExpenseEditable } from "./status";
 
 /**
- * Receipt files on expense claims (6B.9): up to 5 per claim, 10 MB each, JPG, PNG or
- * PDF (HEIC photos are converted to JPG in the browser first). The browser uploads to
+ * Receipt files on expense claims (6B.9), and attachments on purchase requests (a quote,
+ * an invoice or a product photo; decided 2026-10-17): up to 5 per expense, 10 MB each,
+ * JPG, PNG or PDF (HEIC photos are converted to JPG in the browser first). The browser uploads to
  * private storage through a signed link; the server then reads the file, checks its
  * real type from its first bytes and its size, and records it. Files are never deleted:
  * removing one marks it removed, and it's kept for the retention period.
@@ -80,10 +81,9 @@ async function activeFiles(tx: Tx, expenseId: string) {
     .orderBy(asc(expenseReceiptFiles.uploadedAt));
 }
 
-/** The department may change a claim's receipts while it may change the claim (FR-44). */
+/** The department may change an expense's files while it may change the expense (FR-44). */
 function assertAttachable(actor: Subject, row: ExpenseRow) {
   const { actingRole } = canOn(actor, "expense.submit", row);
-  if (row.type !== "expense_claim") throw new RuleError(e.receiptsClaimsOnly);
   if (!isExpenseEditable(row.status)) throw new RuleError(e.notEditable);
   return actingRole;
 }
@@ -232,7 +232,7 @@ export function canSeeReceipts(viewer: Subject, row: ExpenseRow): boolean {
   return row.status !== "draft" || represents || theirs || hasRole(viewer, "system_admin");
 }
 
-/** The claim's current receipt files, for someone allowed to see them. */
+/** The expense's current files, for someone allowed to see them. */
 export async function listReceipts(
   tx: Tx,
   viewer: Subject,
@@ -253,14 +253,27 @@ export async function listReceipts(
     .orderBy(asc(expenseReceiptFiles.uploadedAt));
   const out: ReceiptFileView[] = [];
   for (const { file, name } of rows) {
-    const [other] = await tx
-      .select({ expenseId: expenseReceiptFiles.expenseSubmissionId })
-      .from(expenseReceiptFiles)
-      .where(
-        and(eq(expenseReceiptFiles.sha256, file.sha256), isNull(expenseReceiptFiles.removedAt)),
-      )
-      .limit(2)
-      .then((r) => r.filter((x) => x.expenseId !== expenseId));
+    // FR-47: the same receipt on another claim. A purchase request's quote may well come
+    // back as its claim's receipt, so attachments aren't compared.
+    const [other] =
+      row.type === "expense_claim"
+        ? await tx
+            .select({ expenseId: expenseReceiptFiles.expenseSubmissionId })
+            .from(expenseReceiptFiles)
+            .innerJoin(
+              expenseSubmissions,
+              eq(expenseSubmissions.id, expenseReceiptFiles.expenseSubmissionId),
+            )
+            .where(
+              and(
+                eq(expenseReceiptFiles.sha256, file.sha256),
+                isNull(expenseReceiptFiles.removedAt),
+                eq(expenseSubmissions.type, "expense_claim"),
+              ),
+            )
+            .limit(2)
+            .then((r) => r.filter((x) => x.expenseId !== expenseId))
+        : [];
     out.push({
       id: file.id,
       fileName: file.fileName,

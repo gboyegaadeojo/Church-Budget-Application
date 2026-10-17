@@ -115,8 +115,8 @@ You can submit expenses once your department's annual budget is approved and the
 
 1. Go to **Expenses → New expense** and pick the type.
 2. Choose the department and the **budget year** it's charged to (this year's is chosen for you). The **budget strip** shows Available, Committed, Spent and Remaining, and, once you enter amounts, **Remaining after this**.
-3. Enter the title and why it is needed.
-4. **Purchase request:** add items with their prices before tax (the app adds the 12% sales tax), optionally pick the annual budget item it comes from, and choose **How it will be bought**: the Church Administrator buys it on the church account, you buy it and submit a claim, or the supplier invoices the church.
+3. The form has numbered steps, each on its own card. **Step 1, What and why:** the title and why it is needed (up to 4,000 characters).
+4. **Purchase request:** add items with their prices before tax (the app adds the 12% sales tax), optionally pick the annual budget item it comes from, and choose **How it will be bought**: the Church Administrator buys it on the church account, you buy it and submit a claim, or the supplier invoices the church. Under **Attachments** you can add a quote, invoice or photo of what you're buying (optional; up to 5 photos or PDFs, 10 MB each).
 5. **Expense claim:** add one line per receipt (date, store, what you bought, amount paid including tax, receipt number). No tax is added: the receipt already includes it. Then:
    - If you bought something you asked for beforehand, **link the approved purchase request**, so the money set aside for it is released.
    - Choose **who should be paid**: you, someone else (their name, and their email for an e-transfer), or **Church card** if nothing is owed. Then choose cheque or e-transfer. Never enter bank account numbers.

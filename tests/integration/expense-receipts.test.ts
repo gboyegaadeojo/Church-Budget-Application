@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { auditEvents, expenseReceiptFiles, expenseSubmissions } from "@/db/schema";
@@ -137,7 +138,7 @@ describe("adding receipts (AC-81)", () => {
     ).rejects.toThrow(RuleError);
   });
 
-  it("only on claims, and only by the department", async () => {
+  it("only by the department", async () => {
     const world = await expenseWorld(db);
     const expenseId = await claimDraft(world);
     const stranger = await person(db, ["requester"]);
@@ -151,6 +152,10 @@ describe("adding receipts (AC-81)", () => {
         }),
       ),
     ).rejects.toThrow(ForbiddenError);
+  });
+
+  it("a purchase request takes attachments; its quote isn't a duplicate of the claim's receipt", async () => {
+    const world = await expenseWorld(db);
     const { expenseId: purchase } = await run((tx) =>
       startExpense(tx, world.requester, {
         type: "purchase_request",
@@ -158,16 +163,19 @@ describe("adding receipts (AC-81)", () => {
         cycleId: world.cycle.id,
       }),
     );
-    await expect(
-      run((tx) =>
-        prepareReceiptUpload(tx, world.requester, {
-          expenseId: purchase,
-          fileName: "r.jpg",
-          size: 10,
-          contentType: "image/jpeg",
-        }),
-      ),
-    ).rejects.toThrow(RuleError);
+    const quoteBytes = new TextEncoder().encode(`%PDF-1.7 quote ${randomUUID()}`);
+    await attach(world, purchase, quoteBytes, "quote.pdf");
+    const claim = await claimDraft(world);
+    await attach(world, claim, quoteBytes, "receipt.pdf");
+    const [quote] = await listReceipts(db, world.requester, purchase);
+    const [receipt] = await listReceipts(db, world.requester, claim);
+    expect(quote).toMatchObject({ fileName: "quote.pdf", duplicateOf: null });
+    expect(receipt).toMatchObject({ fileName: "receipt.pdf", duplicateOf: null });
+    // The same file on a second claim is still flagged (FR-47).
+    const second = await claimDraft(world);
+    await attach(world, second, quoteBytes, "again.pdf");
+    const [again] = await listReceipts(db, world.requester, second);
+    expect(again.duplicateOf).toBe(claim);
   });
 
   it("counts a receipt for submission instead of a no-receipt reason", async () => {

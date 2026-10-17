@@ -38,8 +38,7 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
   const mode: ExpenseEditorMode =
     expense.status === "draft" ? "draft" : expense.status === "returned" ? "respond" : "edit";
   const c = expense.content;
-  const receipts =
-    expense.type === "expense_claim" ? await listReceipts(db, viewer, expense.id) : [];
+  const receipts = await listReceipts(db, viewer, expense.id);
 
   return (
     <ExpenseEditor
@@ -61,18 +60,17 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
         question: expense.question,
       }}
       receipts={
-        expense.type === "expense_claim" ? (
-          <ReceiptUploader
-            expenseId={expense.id}
-            receipts={receipts.map((r) => ({
-              id: r.id,
-              fileName: r.fileName,
-              contentType: r.contentType,
-              sizeBytes: r.sizeBytes,
-              duplicate: r.duplicateOf !== null,
-            }))}
-          />
-        ) : undefined
+        <ReceiptUploader
+          expenseId={expense.id}
+          kind={expense.type === "expense_claim" ? "receipts" : "attachments"}
+          receipts={receipts.map((r) => ({
+            id: r.id,
+            fileName: r.fileName,
+            contentType: r.contentType,
+            sizeBytes: r.sizeBytes,
+            duplicate: r.duplicateOf !== null,
+          }))}
+        />
       }
       initial={{
         title: c.title,

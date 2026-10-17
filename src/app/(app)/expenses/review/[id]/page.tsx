@@ -55,7 +55,9 @@ async function ReviewContent({
   const decidable = ACCOUNTANT_WAITING.includes(expense.status);
   const amount = expense.approved?.total ?? expense.totals.total;
   const [receipts, warnings, zone] = await Promise.all([
-    expense.type === "expense_claim" ? listReceipts(db, viewer, id) : null,
+    listReceipts(db, viewer, id).then((files) =>
+      expense.type === "expense_claim" || files.length > 0 ? files : null,
+    ),
     warningsFor(db, row, decidable ? amount : 0),
     getChurchTimeZone(db),
   ]);

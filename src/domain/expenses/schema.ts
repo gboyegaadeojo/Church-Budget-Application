@@ -25,7 +25,7 @@ const e = expensesCopy.errors;
 
 export const LIMITS = {
   title: 120,
-  justification: 2_000,
+  justification: 4_000,
   itemName: 200,
   link: 2_000,
   vendor: 120,

@@ -15,7 +15,7 @@ Read the relevant FRs and the DRD screen section before starting any feature. If
 2. **Money is integer cents.** Never use floating point for money. All amounts go through `src/lib/money.ts`.
 3. **The server is authoritative.** Recalculate every total, tax and balance on the server, and ignore client-sent totals.
 4. **Permissions are checked on the server** for every route and action, in one place (`src/lib/authz.ts`). Hiding UI is not security. A user's permissions are the union of their roles (Requirements 3.6). The System Administrator can **read everything** but cannot perform money actions without the matching role.
-5. **No file uploads** except receipts on expense claims (6B.9) and the admin's logo (FR-30). Reject multipart bodies everywhere else.
+5. **No file uploads** except receipts on expense claims (6B.9), optional attachments on purchase requests (a quote, invoice or photo; docs/decisions.md 2026-10-17) and the admin's logo (FR-30). Reject multipart bodies everywhere else.
 6. **Nothing is deleted** that holds financial history. Void, supersede or version it. Audit every change (FR-22).
 7. **Emails go through the outbox.** Write an `email_outbox` row in the same transaction as the business change, and send after commit. Never send inside the transaction, and never block the action on email success.
 8. **Status changes go through one state machine per entity** (`src/domain/*/status.ts`). Reject invalid transitions on the server.

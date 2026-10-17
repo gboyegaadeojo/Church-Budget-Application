@@ -4,9 +4,27 @@ import { useEffect, useId, useMemo, useRef, useState, useTransition } from "reac
 import Link from "next/link";
 import { useFieldArray, useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Calculator,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  Paperclip,
+  PenLine,
+  Plus,
+  Receipt,
+  ShoppingCart,
+  Store,
+  Trash2,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import { FinancialSummary } from "@/components/financial-summary";
 import { FormMessage } from "@/components/ui/action-form";
+import { IconChip } from "@/components/ui/display";
+import { TONE, type Tone } from "@/components/ui/tone";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { buttonClass, cardClass, inputClass, textareaClass } from "@/components/ui/styles";
 import { adminCopy } from "@/copy/admin";
@@ -39,6 +57,7 @@ import { BudgetStrip, OverBudgetWarning } from "../../budget-strip";
 
 const f = expensesCopy.form;
 const p = expensesCopy.preview;
+const sections = expensesCopy.sections;
 
 export type ExpenseEditorMode = "draft" | "edit" | "respond";
 
@@ -222,11 +241,14 @@ export function ExpenseEditor({
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-[32px] leading-tight font-bold tracking-tight">{title}</h1>
-        <p className="text-sm text-fg-muted">
-          {info.department} · {info.cycleName}
-        </p>
+      <header className="flex flex-wrap items-center gap-4">
+        <IconChip icon={claim ? Receipt : FileText} tone={claim ? "amber" : "teal"} />
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-[32px] leading-tight font-bold tracking-tight">{title}</h1>
+          <p className="text-sm text-fg-muted">
+            {info.department} · {info.cycleName}
+          </p>
+        </div>
       </header>
 
       {mode === "respond" && info.question && (
@@ -246,8 +268,12 @@ export function ExpenseEditor({
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-        <div className={cn(cardClass, "min-w-0 space-y-6")}>
-          <h2 ref={headingRef} tabIndex={-1} className="text-xl font-semibold outline-none">
+        <div className={cn("min-w-0 space-y-6", step === "preview" && cardClass)}>
+          <h2
+            ref={headingRef}
+            tabIndex={-1}
+            className={cn("text-xl font-semibold outline-none", step === "form" && "sr-only")}
+          >
             {step === "form" ? f.details : p.heading}
           </h2>
           {problem && step === "form" && (
@@ -261,42 +287,95 @@ export function ExpenseEditor({
           )}
 
           {step === "form" ? (
-            <form noValidate onSubmit={(e) => e.preventDefault()} className="space-y-8">
-              <DetailsFields form={form} values={values} />
+            <form noValidate onSubmit={(e) => e.preventDefault()} className="space-y-6">
+              <FormSection
+                step={1}
+                icon={PenLine}
+                tone="violet"
+                title={sections.details.title}
+                intro={sections.details.intro}
+              >
+                <DetailsFields form={form} values={values} />
+              </FormSection>
               {claim ? (
                 <>
-                  <LinesFields form={form} />
-                  <LinkedField form={form} linkable={info.linkable} />
-                  <PayeeFields form={form} values={values} />
-                  {receipts}
-                  <NoReceiptFields form={form} values={values} />
+                  <FormSection
+                    step={2}
+                    icon={Receipt}
+                    tone="teal"
+                    title={sections.lines.title}
+                    intro={f.linesIntro}
+                  >
+                    <LinesFields form={form} />
+                    <LinkedField form={form} linkable={info.linkable} />
+                  </FormSection>
+                  <FormSection step={3} icon={Wallet} tone="amber" title={sections.payee.title}>
+                    <PayeeFields form={form} values={values} />
+                  </FormSection>
+                  <FormSection step={4} icon={Paperclip} tone="pink" title={sections.files.title}>
+                    {receipts}
+                    <NoReceiptFields form={form} values={values} />
+                  </FormSection>
                 </>
               ) : (
                 <>
-                  <ItemsFields form={form} values={values} info={info} />
-                  <HowBoughtField form={form} />
+                  <FormSection
+                    step={2}
+                    icon={ShoppingCart}
+                    tone="teal"
+                    title={sections.items.title}
+                    intro={f.itemsIntro(`${taxRateToPercent(info.rate)}%`)}
+                  >
+                    <ItemsFields form={form} values={values} info={info} />
+                  </FormSection>
+                  <FormSection
+                    step={3}
+                    icon={Store}
+                    tone="amber"
+                    title={sections.howBought.title}
+                    intro={sections.howBought.intro}
+                  >
+                    <HowBoughtField form={form} />
+                  </FormSection>
+                  <FormSection
+                    step={4}
+                    icon={Paperclip}
+                    tone="pink"
+                    title={sections.attachments.title}
+                  >
+                    {receipts}
+                  </FormSection>
                 </>
               )}
-              {late && (
-                <Explanation
-                  form={form}
-                  name="lateExplanation"
-                  label={f.lateExplanation}
-                  warning={f.lateWarning(info.claimDeadlineDays)}
-                />
-              )}
-              {overBy > 0 && (
-                <div className="space-y-3">
-                  <OverBudgetWarning department={info.department} overBy={overBy} />
-                  <Explanation
-                    form={form}
-                    name="overBudgetExplanation"
-                    label={f.overBudgetExplanation}
-                  />
+              {(late || overBy > 0) && (
+                <div className={cn(cardClass, "space-y-5 border-warning")}>
+                  {late && (
+                    <Explanation
+                      form={form}
+                      name="lateExplanation"
+                      label={f.lateExplanation}
+                      warning={f.lateWarning(info.claimDeadlineDays)}
+                    />
+                  )}
+                  {overBy > 0 && (
+                    <div className="space-y-3">
+                      <OverBudgetWarning department={info.department} overBy={overBy} />
+                      <Explanation
+                        form={form}
+                        name="overBudgetExplanation"
+                        label={f.overBudgetExplanation}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
-              <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <div
+                className={cn(
+                  cardClass,
+                  "flex flex-col-reverse gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-4",
+                )}
+              >
                 {mode === "draft" ? (
                   <div className="flex flex-wrap items-center gap-3">
                     <button
@@ -353,12 +432,19 @@ export function ExpenseEditor({
           )}
         </div>
 
-        <aside aria-label={f.summary} className={cn(cardClass, "space-y-4 lg:sticky lg:top-20")}>
+        <aside
+          aria-label={f.summary}
+          className={cn(cardClass, "space-y-4 border-t-4 border-t-accent lg:sticky lg:top-20")}
+        >
+          <div className="flex items-center gap-3">
+            <IconChip icon={Calculator} tone="violet" size="sm" />
+            <p className="text-[17px] font-semibold tracking-tight">{f.summary}</p>
+          </div>
           {claim ? (
             <dl className="text-sm">
               <div className="flex items-baseline justify-between gap-4">
                 <dt className="font-semibold">{f.totalPaid}</dt>
-                <dd className="tabular text-xl font-semibold">{formatCAD(totals.total)}</dd>
+                <dd className="tabular text-2xl font-bold">{formatCAD(totals.total)}</dd>
               </div>
             </dl>
           ) : (
@@ -369,6 +455,58 @@ export function ExpenseEditor({
 
       {mode === "draft" && step === "form" && <DeleteDraft id={info.id} version={version} />}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------- layout
+
+/** One item or receipt line: a tinted card with its number. */
+const ROW = "rounded-[14px] border border-border bg-surface-2/60 p-4";
+
+function RowNumber({ n, label }: { n: number; label: string }) {
+  return (
+    <p className="flex items-center gap-2 text-sm font-semibold" aria-hidden="true">
+      <span className="inline-flex size-6 items-center justify-center rounded-full bg-area-expenses-soft text-xs text-area-expenses">
+        {n}
+      </span>
+      {label}
+    </p>
+  );
+}
+
+/** A numbered card for one part of the form, its colour and icon telling it apart. */
+function FormSection({
+  step,
+  icon,
+  tone,
+  title,
+  intro,
+  children,
+}: {
+  step: number;
+  icon: LucideIcon;
+  tone: Tone;
+  title: string;
+  intro?: string;
+  children: React.ReactNode;
+}) {
+  const id = useId();
+  return (
+    <section aria-labelledby={id} className={cn(cardClass, "space-y-5")}>
+      <div className="flex items-start gap-3">
+        <IconChip icon={icon} tone={tone} />
+        <div className="min-w-0 space-y-0.5">
+          <p className={cn("text-xs font-semibold tracking-wide uppercase", TONE[tone].text)}>
+            {sections.step(step)}
+          </p>
+          <h3 id={id} className="text-[17px] leading-tight font-semibold tracking-tight">
+            {title}
+          </h3>
+          {intro && <p className="text-sm text-fg-muted">{intro}</p>}
+        </div>
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -506,13 +644,7 @@ function ItemsFields({
   const listError =
     form.formState.errors.items?.message ?? form.formState.errors.items?.root?.message;
   return (
-    <section className="space-y-3" aria-labelledby="items-heading">
-      <div>
-        <h3 id="items-heading" className="text-base font-semibold">
-          {f.items}
-        </h3>
-        <p className="text-sm text-fg-muted">{f.itemsIntro(`${taxRateToPercent(info.rate)}%`)}</p>
-      </div>
+    <div className="space-y-3">
       {listError && (
         <p role="alert" className="text-sm text-danger">
           {listError}
@@ -523,9 +655,10 @@ function ItemsFields({
           const v = values.items?.[i] ?? BLANK_ITEM;
           const total = itemTotalOf(v.quantity ?? "", v.unitPrice ?? "");
           return (
-            <li key={field.id} className="rounded-control border border-border p-3">
+            <li key={field.id} className={ROW}>
               <fieldset className="min-w-0 space-y-3">
                 <legend className="sr-only">{f.item(i + 1)}</legend>
+                <RowNumber n={i + 1} label={f.item(i + 1)} />
                 <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_5rem_9rem]">
                   <RowInput form={form} name={`items.${i}.name`} label={f.itemName} />
                   <RowInput
@@ -584,12 +717,12 @@ function ItemsFields({
             focusName: `items.${items.fields.length}.name`,
           })
         }
-        className={buttonClass("ghost", "text-accent")}
+        className={buttonClass("secondary")}
       >
         <Plus className="size-4" aria-hidden="true" />
         {f.addItem}
       </button>
-    </section>
+    </div>
   );
 }
 
@@ -621,21 +754,24 @@ function RadioCards({
   name,
   legend,
   options,
+  hideLegend = false,
 }: FormProps & {
   name: "howBought" | "payeeKind" | "paymentPreference";
   legend: string;
   options: readonly { value: string; label: string }[];
+  /** The section card already says it, so the legend is for screen readers only. */
+  hideLegend?: boolean;
 }) {
   const ids = useId();
   const error = form.formState.errors[name]?.message;
   return (
     <fieldset className="space-y-2" aria-describedby={error ? `${ids}-error` : undefined}>
-      <legend className="text-sm font-medium">{legend}</legend>
+      <legend className={hideLegend ? "sr-only" : "text-sm font-medium"}>{legend}</legend>
       <div className="grid gap-2 sm:grid-cols-3">
         {options.map((o) => (
           <label
             key={o.value}
-            className="flex min-h-11 cursor-pointer items-center gap-3 rounded-control border border-border-strong px-3 py-2 text-sm has-checked:border-accent has-checked:ring-1 has-checked:ring-accent"
+            className="flex min-h-12 cursor-pointer items-center gap-3 rounded-[12px] border border-border-strong bg-surface px-3 py-2.5 text-sm transition-colors duration-fast hover:bg-surface-hover has-checked:border-accent has-checked:bg-accent/5 has-checked:font-medium has-checked:ring-1 has-checked:ring-accent"
           >
             <input
               type="radio"
@@ -658,6 +794,7 @@ function HowBoughtField({ form }: FormProps) {
       form={form}
       name="howBought"
       legend={f.howBought}
+      hideLegend
       options={HOW_BOUGHT.map((v) => ({ value: v, label: expensesCopy.howBought[v] }))}
     />
   );
@@ -668,13 +805,7 @@ function LinesFields({ form }: FormProps) {
   const listError =
     form.formState.errors.lines?.message ?? form.formState.errors.lines?.root?.message;
   return (
-    <section className="space-y-3" aria-labelledby="lines-heading">
-      <div>
-        <h3 id="lines-heading" className="text-base font-semibold">
-          {f.lines}
-        </h3>
-        <p className="text-sm text-fg-muted">{f.linesIntro}</p>
-      </div>
+    <div className="space-y-3">
       {listError && (
         <p role="alert" className="text-sm text-danger">
           {listError}
@@ -682,9 +813,10 @@ function LinesFields({ form }: FormProps) {
       )}
       <ol className="space-y-3">
         {lines.fields.map((field, i) => (
-          <li key={field.id} className="rounded-control border border-border p-3">
+          <li key={field.id} className={ROW}>
             <fieldset className="min-w-0 space-y-3">
               <legend className="sr-only">{f.line(i + 1)}</legend>
+              <RowNumber n={i + 1} label={f.line(i + 1)} />
               <div className="grid gap-3 sm:grid-cols-[10rem_minmax(0,1fr)_9rem]">
                 <RowInput form={form} name={`lines.${i}.date`} label={f.date} type="date" />
                 <RowInput form={form} name={`lines.${i}.vendor`} label={f.vendor} />
@@ -725,12 +857,12 @@ function LinesFields({ form }: FormProps) {
             focusName: `lines.${lines.fields.length}.date`,
           })
         }
-        className={buttonClass("ghost", "text-accent")}
+        className={buttonClass("secondary")}
       >
         <Plus className="size-4" aria-hidden="true" />
         {f.addLine}
       </button>
-    </section>
+    </div>
   );
 }
 
