@@ -612,7 +612,8 @@ export const annualCopy = {
     reopenReason: "Reason for reopening",
     reopenExpensesWarning: (committed: string, spent: string, pending: string) =>
       `Expenses already rely on this budget: ${committed} committed, ${spent} spent and ${pending} waiting for approval. While it's reopened the department has no approved budget, so new expenses can't be started, and the new decision will change what the department has available.`,
-    reopenExpensesConfirm: "I understand the new decision will change the department's available budget.",
+    reopenExpensesConfirm:
+      "I understand the new decision will change the department's available budget.",
     historyHeading: "Revision history",
     decisionsHeading: "Decisions",
     noDecisions: "No decisions yet.",

@@ -599,10 +599,7 @@ export function ReopenControl({
           {expenses && (
             <div className="space-y-3 rounded-control border border-warning bg-warning/10 p-3 text-sm">
               <p className="flex items-start gap-2">
-                <AlertTriangle
-                  className="mt-0.5 size-4 shrink-0 text-warning"
-                  aria-hidden="true"
-                />
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
                 {r.reopenExpensesWarning(
                   formatCAD(expenses.committed),
                   formatCAD(expenses.spent),
