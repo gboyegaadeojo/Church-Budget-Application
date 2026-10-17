@@ -160,6 +160,13 @@ export const expenseEmailCopy = {
     intro: (name: string) => `${name} cancelled it. The money set aside is back in the budget.`,
     reason: "Reason",
   },
+  carriedOver: {
+    subject: (r: string, d: string) => `Carried into next year: ${about(r, d)}`,
+    heading: "The purchase request moved to next year's budget",
+    intro: (name: string, from: string, to: string) =>
+      `${name} closed ${from} and carried this approved purchase request into ${to}. The money set aside now comes from the ${to} budget. It's still approved, so the purchase can go ahead.`,
+    reason: "Reason",
+  },
   processing: {
     subject: (r: string, d: string) => `Being processed: ${about(r, d)}`,
     heading: "Your expense is being processed",

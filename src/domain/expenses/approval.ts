@@ -17,6 +17,7 @@ import type { Role } from "@/lib/roles";
 import { budgetFigures, impactOf, linkedCommitment } from "./budget";
 import { approvedFiguresFor } from "./decision";
 import { checkSpendingAlerts } from "@/domain/spending/alerts";
+import { assertSpendingOpen } from "@/domain/spending/service";
 import { queueExpenseEmails } from "./emails";
 import {
   auditBase,
@@ -102,6 +103,7 @@ async function chargeClaim(
   approved: TaxBreakdown,
   now: Date,
 ) {
+  await assertSpendingOpen(tx, row.budgetCycleId);
   const [entry] = await tx
     .insert(spendingEntries)
     .values({

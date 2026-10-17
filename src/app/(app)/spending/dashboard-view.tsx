@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   BookOpen,
+  CalendarCheck,
   Lock,
   PiggyBank,
   Plus,
@@ -79,15 +80,23 @@ export function DashboardView({
   return (
     <>
       <PageHeader title={title} intro={intro}>
-        {dashboard.canRecord && cycle && !cycle.locked && (
-          <Link
-            href={`/spending/record?cycle=${cycle.id}`}
-            className={buttonClass("primary", "ml-auto")}
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            {d.record}
-          </Link>
-        )}
+        <div className="ml-auto flex flex-wrap gap-2">
+          {dashboard.canLock && cycle && (
+            <Link
+              href={`/spending/year-end?cycle=${cycle.id}`}
+              className={buttonClass("secondary")}
+            >
+              <CalendarCheck className="size-4" aria-hidden="true" />
+              {spendingCopy.yearEnd.link}
+            </Link>
+          )}
+          {dashboard.canRecord && cycle && !cycle.locked && (
+            <Link href={`/spending/record?cycle=${cycle.id}`} className={buttonClass("primary")}>
+              <Plus className="size-4" aria-hidden="true" />
+              {d.record}
+            </Link>
+          )}
+        </div>
       </PageHeader>
 
       {dashboard.cycles.length > 1 && (

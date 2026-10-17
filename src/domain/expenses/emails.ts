@@ -43,6 +43,8 @@ export type ExpenseEmailEvent =
   | { kind: "clarification_answered" }
   | { kind: "withdrawn"; from: ExpenseStatus }
   | { kind: "cancelled"; reason: string }
+  /** FR-46: moved into the next year's budget at the year-end lock. */
+  | { kind: "carried_over"; reason: string; from: string; to: string }
   | { kind: "review_started" }
   | { kind: "returned"; question: string; level: "accountant" | "board" }
   | { kind: "declined"; reason: string; level: "accountant" | "board" }
@@ -658,6 +660,30 @@ export async function queueExpenseEmails(
           content,
         });
       }
+      break;
+    }
+
+    case "carried_over": {
+      const content: EmailContent = {
+        subject: x.carriedOver.subject(ref, dept),
+        heading: x.carriedOver.heading,
+        status: x.statuses.approved,
+        paragraphs: [x.carriedOver.intro(ctx.actorName, event.from, event.to)],
+        facts: facts(ctx),
+        note: { label: x.carriedOver.reason, text: event.reason },
+        summary: summaryOf(ctx, current, x.approvedHeading),
+        action: noAction,
+        button: view,
+      };
+      out.push(
+        { template: "expenses.carried_over", audience: "requester", to: requesterTo, content },
+        {
+          template: "expenses.carried_over.church_admin",
+          audience: "church_admin",
+          to: await churchAdmins(tx),
+          content,
+        },
+      );
       break;
     }
 

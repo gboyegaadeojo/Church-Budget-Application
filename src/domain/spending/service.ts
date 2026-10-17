@@ -55,6 +55,19 @@ function assertOpen(cycle: Cycle) {
   if (cycle.spendingLockedAt) throw new RuleError(e.locked(cycle.name));
 }
 
+/**
+ * Refuses when the cycle's spending is locked (FR-29, AC-90). Expenses call this before
+ * they add or change a spending entry, so a locked year's ledger stays as it was.
+ */
+export async function assertSpendingOpen(tx: Tx, cycleId: string): Promise<void> {
+  const [cycle] = await tx
+    .select({ name: budgetCycles.name, lockedAt: budgetCycles.spendingLockedAt })
+    .from(budgetCycles)
+    .where(eq(budgetCycles.id, cycleId))
+    .for("share");
+  if (cycle?.lockedAt) throw new RuleError(e.locked(cycle.name));
+}
+
 async function loadEntry(tx: Tx, id: string): Promise<EntryRow> {
   const [row] = z.uuid().safeParse(id).success
     ? await tx.select().from(spendingEntries).where(eq(spendingEntries.id, id)).for("update")

@@ -1024,6 +1024,15 @@ export const expenseSubmissions = pgTable(
     paymentPreference: paymentPreferenceEnum("payment_preference"),
     /** 6B.9: no receipt, and why (the accountant sees it). */
     noReceiptReason: text("no_receipt_reason"),
+    /**
+     * FR-46: an approved purchase request carried into the next year's budget at the
+     * year-end lock. `budgetCycleId` is then the new year; this keeps the one it left.
+     */
+    carriedOverFromCycleId: uuid("carried_over_from_cycle_id").references(
+      (): AnyPgColumn => budgetCycles.id,
+    ),
+    carryOverReason: text("carry_over_reason"),
+    carriedOverAt: timestamp("carried_over_at", { withTimezone: true }),
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
     approvedAt: timestamp("approved_at", { withTimezone: true }),
     closedAt: timestamp("closed_at", { withTimezone: true }),
