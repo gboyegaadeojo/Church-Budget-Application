@@ -57,6 +57,7 @@ export const AREAS: readonly AreaDef[] = [
       { href: "/annual/review", label: n.reviewDashboard, act: ACCOUNTANTS },
       { href: "/annual/departments", label: n.departments, act: ACCOUNTANTS },
       { href: "/annual/release", label: n.decisionRelease, act: ACCOUNTANTS },
+      { href: "/annual/cycles", label: n.budgetCycles, act: [...ACCOUNTANTS, ...BOARD] },
       { href: "/annual/all", label: n.allBudgets, act: [], view: ["system_admin"] },
     ],
   },

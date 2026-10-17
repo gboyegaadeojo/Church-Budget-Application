@@ -152,7 +152,9 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
         .click();
       await expect(page).toHaveURL(/\/reports\/analytics\/access$/);
       await expect(page.getByRole("region", { name: "Sign-ins per day" })).toBeVisible();
-      await expect(page.getByRole("region", { name: "Failed sign-ins" })).toBeVisible();
+      await expect(
+        page.getByRole("region", { name: "Failed sign-ins", exact: true }),
+      ).toBeVisible();
       await expect(
         page.getByRole("region", { name: "Departments without a Backup" }),
       ).toBeVisible();
@@ -197,7 +199,7 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
     for (const size of [MOBILE, DESKTOP]) {
       await page.setViewportSize(size);
       await page.goto("/reports/analytics/overview");
-      await page.getByLabel("Budget cycle").selectOption({ label: "FY2026" });
+      await page.getByLabel("Budget cycle", { exact: true }).selectOption({ label: "FY2026" });
       await page.getByRole("button", { name: "Show" }).click();
       await expect(page.getByRole("heading", { name: "Spending and expenses" })).toBeVisible();
       await expect(page.getByRole("list", { name: "Budget used by department" })).toBeVisible();

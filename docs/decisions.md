@@ -866,3 +866,12 @@ The church wants people to see how the app works, as each kind of staff and as a
 - The fake identities and Planning Center directory are now imported as modules rather than read from disk, so a deployed build includes them.
 - **Also fixed:** a requester's sidebar showed two items both called "My department's budget"; the Spending one is now **My department's spending**.
 - **Test note:** with the demo banner in the app layout, Next.js sometimes streams the not-found page's `noindex` tag twice under the full e2e run (never alone, and not from the banner's own output, which is empty off the demo). Two identical tags still mean "don't index", so the test now checks that the tag is there rather than that there's exactly one.
+
+## Finance and board staff create budget cycles (2026-10-17)
+
+The church asked that the accountant, the Board Chair and the Vice-Chair can create a new budget cycle; backup approvers too, as they hold every accountant power.
+
+- **New permission `cycles.create`:** accountant, backup approver, Board Chair, Vice-Chair and System Administrator. The Church Administrator and requesters can't.
+- **Where:** **Annual Budget → Budget cycles** lists the cycles and has the same create form as Admin → Budget Cycles (shared components). A new cycle starts as a **draft**, audited with who created it and in which role.
+- **What stays with the System Administrator (`admin.cycles`):** opening, closing and reopening a cycle, deadlines and extensions, and decision-email timing. Opening a cycle emails every department representative, so it stays one deliberate step by the administrator. On the staff page the cycles aren't links to the admin page.
+- **Not built (parked by the church, 2026-10-17):** church-wide budgets with no leader (maintenance, utilities and the like), recorded by the Church Administrator. Proposed approach, when wanted: a leaderless "church operations" budget set by the accountant, spending recorded with categories and receipt photos, reusing the spending ledger, reports and lock.
