@@ -714,3 +714,9 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 | AC-134, AC-135 | expense-payment.test | admin.spec |
 | AC-139 | expense-board.test | — |
 | AC-140 | expense-review.test | — |
+
+## FR-48: search and filters on every expense list (2026-10-16)
+
+- **One filter set** (`src/domain/expenses/list-filters.ts`) for Review queue, Awaiting my approval, All expenses, My expenses and Ready to process: search (reference, title, payee, department), department, type, status, **submitted from/to** and **amount from/to**.
+- Dates compare the day submitted in the church's time zone. The amount is the approved amount once there is one, otherwise the amount asked. Amounts are read as cents with `parseCAD`, never floats.
+- The form is a plain GET, so filters stay in the address (DRD 6.0) and work without JavaScript. Anything that doesn't parse (a date like 2026-02-31, "abc" as an amount) is ignored rather than refused.

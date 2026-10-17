@@ -17,21 +17,24 @@ import {
   myDepartmentBudgets,
   type ExpenseListRow,
 } from "@/domain/expenses/queries";
+import { hasListFilters, parseListFilters } from "@/domain/expenses/list-filters";
+import { EXPENSE_STATUSES } from "@/domain/expenses/status";
 import { hasRole } from "@/lib/roles";
 import { getViewer } from "@/lib/viewer";
 import { BudgetStrip } from "../budget-strip";
 import { ExpenseTable } from "../expense-table";
+import { ExpenseFilterForm } from "../filter-form";
 
 const m = expensesCopy.mine;
 
 export const metadata: Metadata = { title: m.title };
 
 /** The requester's expenses and their departments' budgets (FR-48, DRD 6.9a). */
-export default function MyExpensesPage() {
+export default function MyExpensesPage({ searchParams }: PageProps<"/expenses/mine">) {
   return (
     <div className="space-y-6">
       <Suspense fallback={<AdminSkeleton />}>
-        <MyExpensesContent />
+        <MyExpensesContent searchParams={searchParams} />
       </Suspense>
     </div>
   );
@@ -51,12 +54,18 @@ function needs(row: ExpenseListRow): string {
   return expensesCopy.status[row.status].explain;
 }
 
-async function MyExpensesContent() {
+async function MyExpensesContent({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const filters = parseListFilters(await searchParams);
+  const filtered = hasListFilters(filters);
   const viewer = await getViewer();
   if (!hasRole(viewer, "requester")) return <PermissionDenied />;
   const db = getDb();
   const [rows, budgets] = await Promise.all([
-    listMyExpenses(db, viewer),
+    listMyExpenses(db, viewer, filters),
     myDepartmentBudgets(db, viewer),
   ]);
   // Things waiting for the department come first.
@@ -87,7 +96,15 @@ async function MyExpensesContent() {
       )}
 
       <Section title={m.title} icon={Receipt} tone="teal">
-        {sorted.length === 0 ? (
+        <ExpenseFilterForm
+          basePath="/expenses/mine"
+          filters={filters}
+          departments={viewer.departments.map((d) => ({ id: d.id, name: d.name }))}
+          statuses={EXPENSE_STATUSES}
+        />
+        {sorted.length === 0 && filtered ? (
+          <EmptyState>{expensesCopy.review.emptyFiltered}</EmptyState>
+        ) : sorted.length === 0 ? (
           <EmptyState>
             {m.empty}{" "}
             <Link href="/expenses/new" className={linkClass}>

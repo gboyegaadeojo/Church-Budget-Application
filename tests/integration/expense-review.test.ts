@@ -5,9 +5,9 @@ import { expenseDecisions, expenseSubmissions } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
 import { RuleError } from "@/domain/errors";
 import { budgetFigures } from "@/domain/expenses/budget";
-import { getExpenseView } from "@/domain/expenses/queries";
+import { getExpenseView, listMyExpenses } from "@/domain/expenses/queries";
 import { accountantDecide, startExpenseReview } from "@/domain/expenses/review";
-import { accountantQueue, warningsFor } from "@/domain/expenses/review-queries";
+import { accountantQueue, allExpenses, warningsFor } from "@/domain/expenses/review-queries";
 import { editExpense, loadExpense } from "@/domain/expenses/service";
 import { ForbiddenError } from "@/lib/authz";
 import { createTestDb, type TestDb } from "./helpers/db";
@@ -255,5 +255,40 @@ describe("the queue (FR-48)", () => {
     expect(queue?.waitingCents).toBe(100_800);
     expect(await accountantQueue(db, world.requester)).toBeNull();
     expect(await accountantQueue(db, world.office)).toBeNull();
+  });
+});
+
+describe("search and filters on every list (FR-48)", () => {
+  it("narrows by amount, submitted date and search, and ignores what doesn't parse", async () => {
+    const world = await expenseWorld(db);
+    const { expenseId } = await submitted(db, world, "purchase_request"); // $1,008.00
+    const ids = async (filters: Parameters<typeof accountantQueue>[2]) =>
+      (
+        await accountantQueue(db, world.accountant, { department: world.media.id, ...filters })
+      )?.rows.map((r) => r.id);
+
+    expect(await ids({ min: "1,000", max: "$1,008.00" })).toEqual([expenseId]);
+    expect(await ids({ min: "1008.01" })).toEqual([]);
+    expect(await ids({ max: "999" })).toEqual([]);
+    expect(await ids({ min: "not money" })).toEqual([expenseId]);
+
+    expect(await ids({ from: "2000-01-01", to: "2999-12-31" })).toEqual([expenseId]);
+    expect(await ids({ from: "2999-01-01" })).toEqual([]);
+    expect(await ids({ to: "2000-01-01" })).toEqual([]);
+    expect(await ids({ from: "2026-02-31" })).toEqual([expenseId]);
+
+    const row = await loadExpense(db, expenseId);
+    expect(await ids({ q: row.referenceNumber! })).toEqual([expenseId]);
+    expect(await ids({ q: "no such expense 100%" })).toEqual([]);
+
+    const all = await allExpenses(db, world.accountant, {
+      department: world.media.id,
+      status: "submitted",
+      max: "2000",
+    });
+    expect(all?.rows.map((r) => r.id)).toEqual([expenseId]);
+    expect(
+      (await listMyExpenses(db, world.requester, { q: row.referenceNumber!, min: "5,000" })).length,
+    ).toBe(0);
   });
 });
