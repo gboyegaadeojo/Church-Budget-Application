@@ -261,10 +261,10 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     ["no", "act", "act", "no", "no", "no", "no"],
   ],
   [
-    "set one's own Away (FR-33; the board's comes with expenses)",
+    "set one's own Away (FR-33; the Board Chair's goes to the Vice-Chair, AC-112)",
     "account.away",
     {},
-    ["no", "act", "act", "no", "no", "no", "no"],
+    ["no", "act", "act", "act", "act", "no", "no"],
   ],
   [
     "set another department's Primary Away (FR-38)",

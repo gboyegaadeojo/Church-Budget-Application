@@ -25,7 +25,12 @@ export const accountCopy = {
     covering: (names: string) => `While you're away, accountant emails go to ${names}.`,
     noCover:
       "Nobody else has the Accountant or Backup approver role, so emails keep coming to you. Ask the administrator to add a backup approver.",
-    notForYou: "Away is for the accountant and backup approvers.",
+    notForYou: "Away is for the accountant, backup approvers, the Board Chair and the Vice-Chair.",
+    boardIntro:
+      "While you're away, expenses waiting for the Board Chair's final approval go to the Vice-Chair, with the emails and tasks.",
+    boardCovering: (names: string) => `While you're away, final approvals go to ${names}.`,
+    boardNoCover:
+      "Nobody has the Vice-Chair role, so final approvals keep coming to you. Ask the administrator to add the Vice-Chair.",
   },
   department: {
     heading: "Away",

@@ -78,6 +78,23 @@ const PEOPLE = [
     leader: false,
   },
   {
+    // The board, linked so Planning Center sign-in reaches them (expense final approval).
+    email: "cleo.chair@example.org",
+    name: "Cleo Chair",
+    pcoPersonId: "1008",
+    roles: ["board_chair"],
+    departments: [],
+    leader: false,
+  },
+  {
+    email: "vic.vice@example.org",
+    name: "Vic Vice",
+    pcoPersonId: "1009",
+    roles: ["vice_chair"],
+    departments: [],
+    leader: false,
+  },
+  {
     // Not in Planning Center: signs in with an emailed code (FR-01b).
     email: "carol.office@outlook.com",
     name: "Carol Office",

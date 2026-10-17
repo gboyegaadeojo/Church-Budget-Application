@@ -70,5 +70,21 @@
     "email": "bo.chair@example.org",
     "name": "Bo Chair",
     "organizationId": "100"
+  },
+  {
+    "label": "Cleo Chair (Board Chair, Planning Center, linked)",
+    "provider": "planningcenter",
+    "subject": "1008",
+    "email": "cleo.chair@example.org",
+    "name": "Cleo Chair",
+    "organizationId": "100"
+  },
+  {
+    "label": "Vic Vice (Vice-Chair, Planning Center, linked)",
+    "provider": "planningcenter",
+    "subject": "1009",
+    "email": "vic.vice@example.org",
+    "name": "Vic Vice",
+    "organizationId": "100"
   }
 ]

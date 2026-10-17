@@ -259,8 +259,8 @@ const RULES: Record<Action, readonly Rule[]> = {
     { roles: ["requester"], check: primaryOfDepartment },
   ],
   "cycle.extend_deadline": [{ roles: ["system_admin", ...ACCOUNTANTS] }],
-  // The Board Chair's Away routes expense approvals to the Vice-Chair: Stage 3.
-  "account.away": [{ roles: ACCOUNTANTS }],
+  // The Board Chair's Away routes expense final approvals to the Vice-Chair (3.3, AC-112).
+  "account.away": [{ roles: [...ACCOUNTANTS, ...BOARD] }],
   "department.away": [
     { roles: ["requester"], check: primaryOfDepartment },
     { roles: ["system_admin"] },

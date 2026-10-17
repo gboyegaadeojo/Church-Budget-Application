@@ -602,3 +602,21 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
   - **No receipt**, with the reason.
   - **A claim above the purchase request it closes** (FR-42).
 - **Conflicts (AC-72):** someone who leads the department, submitted the expense or is its payee sees the screen read-only, with the reason. The queue marks those rows. Each decision records the remaining balance at that moment.
+
+## Stage 3 step 5: the Board Chair's final approval, Away and the Vice-Chair (6B.4, 3.3) (2026-10-16)
+
+- **Pages:**
+  - **Awaiting my approval** (`/expenses/awaiting-approval`): the same queue layout as the accountant's.
+  - **Decision screen** (`/expenses/awaiting-approval/{id}`): the accountant's approved amount and note first, then the same warnings the accountant saw, worked out again now (FR-43, AC-140), then **Give final approval**, **Approve a smaller amount** (including tax, never more than the accountant approved: AC-75), **Return to accountant** (back to In Review) or **Decline**. It works on a phone.
+- **Who decides (3.3, AC-112):**
+  - **The Board Chair**, unless they lead the department, submitted the expense or are its payee. A Chair who is Away can still decide if they sign in.
+  - **The Vice-Chair**, only while no Board Chair can: every Chair is Away or conflicted. Otherwise the Vice-Chair's screen says the Chair gives this approval, and the server refuses.
+  - Each decision records the role used (Board Chair or Vice-Chair).
+  - The board sees an expense only once it reaches them, and keeps seeing it afterwards. One the accountant declined never reaches them.
+- **Away for the board:** Account → Away is now offered to the Board Chair and the Vice-Chair (`account.away`). The Chair's Away hands their queue, emails and tasks to the Vice-Chair (`boardCover` in `src/domain/notifications/recipients.ts`). Never nobody: if everyone is away, those who aren't conflicted.
+- **Final approval charges the budget (FR-42, AC-73):**
+  - A purchase request becomes Committed.
+  - A claim gets its own spending entry (date of its latest receipt, payee, reference) and becomes Spent, so the ledger includes it without re-typing (AC-80).
+  - A claim linked to a purchase request closes that request and releases its commitment (AC-67), including one the Church Administrator had started processing.
+  - Remaining may go below zero (FR-43, AC-139); the over-budget emails come with step 7.
+- **Test data:** two linked board members, Cleo Chair (Board Chair) and Vic Vice (Vice-Chair). End-to-end tests never set Cleo Away, because the board tests share one database; Away is covered by integration tests.

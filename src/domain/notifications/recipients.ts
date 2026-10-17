@@ -184,3 +184,51 @@ export async function secondApprovers(
   const present = eligible.filter((a) => !away.has(a.userId));
   return present.length > 0 ? present : eligible;
 }
+
+export type BoardCover = {
+  /** Who gives the final approval now: Board Chairs, or the Vice-Chair covering. */
+  recipients: NamedRecipient[];
+  /** No Board Chair can decide it (away or conflicted), so the Vice-Chair does (3.3). */
+  viceCovering: boolean;
+};
+
+/**
+ * Who gives an expense its final approval (3.3, FR-33, AC-112): the Board Chair, unless
+ * they're Away, lead the department, submitted it or are paid by it; then the Vice-Chair
+ * (who must not be conflicted either). Never nobody: if every Vice-Chair is away too,
+ * those who aren't conflicted.
+ */
+export async function boardCover(
+  tx: Tx,
+  expense: { departmentId: string; payeeUserId: string | null; requesterUserId: string },
+  now: Date = new Date(),
+): Promise<BoardCover> {
+  const chairs = await usersWithRole(tx, ["board_chair"]);
+  const vices = await usersWithRole(tx, ["vice_chair"]);
+  const leaders = new Set(
+    (
+      await tx
+        .select({ userId: userDepartments.userId })
+        .from(userDepartments)
+        .where(eq(userDepartments.departmentId, expense.departmentId))
+    ).map((r) => r.userId),
+  );
+  const free = (p: NamedRecipient) =>
+    !leaders.has(p.userId) &&
+    p.userId !== expense.payeeUserId &&
+    p.userId !== expense.requesterUserId;
+  const away = await awayWindows(
+    tx,
+    [...chairs, ...vices].map((p) => p.userId),
+    now,
+  );
+  const present = (p: NamedRecipient) => free(p) && !away.has(p.userId);
+  const chairsNow = chairs.filter(present);
+  if (chairsNow.length > 0) return { recipients: chairsNow, viceCovering: false };
+  // A person holding both roles is covering as the Chair would; leave them out here.
+  const vicesNow = vices.filter((v) => present(v) && !chairs.some((c) => c.userId === v.userId));
+  if (vicesNow.length > 0) return { recipients: vicesNow, viceCovering: true };
+  const anyFree = [...chairs, ...vices].filter(free);
+  const unique = [...new Map(anyFree.map((p) => [p.userId, p])).values()];
+  return { recipients: unique, viceCovering: !chairs.some(free) };
+}

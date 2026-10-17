@@ -70,7 +70,19 @@ export function authzContextOf(row: ExpenseRow): AuthzContext {
     departmentId: row.departmentId,
     payeeUserId: row.payeeUserId ?? undefined,
     requesterUserId: row.requesterUserId,
-    sentToBoard: !["draft", "submitted", "in_review", "returned", "withdrawn"].includes(row.status),
+    // Reached the Board Chair: waiting for them or past them. A decline counts only if the
+    // accountant had approved it first (the board declined it).
+    sentToBoard:
+      [
+        "awaiting_board",
+        "approved",
+        "processing",
+        "paid",
+        "purchased",
+        "closed",
+        "cancelled",
+      ].includes(row.status) ||
+      (row.status === "declined" && row.approvedTotalCents !== null),
   };
 }
 

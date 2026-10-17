@@ -5,6 +5,7 @@ import { daysSetting, getChurchTimeZone } from "@/domain/settings";
 import { authorize, type Action, type Subject } from "@/lib/authz";
 import { sumCents } from "@/lib/money";
 import { zonedDate } from "@/lib/time-zone";
+import { boardPermission } from "./board";
 import { budgetFigures, impactOf, linkedCommitment, type BudgetFigures } from "./budget";
 import { toListRow, type ExpenseListRow } from "./queries";
 import { daysBetween, isLateClaim } from "./schema";
@@ -75,6 +76,8 @@ async function queueFor(
     waiting: readonly ExpenseStatus[];
     filters: QueueFilters;
     now: Date;
+    /** A finer check than the action, e.g. the Vice-Chair only while covering. */
+    canDecide?: (row: ExpenseRow) => Promise<boolean>;
   },
 ): Promise<Queue | null> {
   const access = authorize(viewer, options.queueAction);
@@ -120,7 +123,9 @@ async function queueFor(
       daysWaiting: full.submittedAt
         ? Math.max(0, daysBetween(zonedDate(full.submittedAt, zone), today))
         : 0,
-      canDecide: authorize(viewer, options.decideAction, authzContextOf(full)).allowed,
+      canDecide: options.canDecide
+        ? await options.canDecide(full)
+        : authorize(viewer, options.decideAction, authzContextOf(full)).allowed,
     });
   }
   const filtered = f.overBudget === "yes" ? rows.filter((r) => r.overBy > 0) : rows;
@@ -172,6 +177,7 @@ export function boardQueue(
     waiting: ["awaiting_board"],
     filters,
     now,
+    canDecide: async (row) => (await boardPermission(tx, viewer, row, now)).allowed,
   });
 }
 
