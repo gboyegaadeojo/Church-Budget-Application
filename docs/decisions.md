@@ -620,3 +620,25 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
   - A claim linked to a purchase request closes that request and releases its commitment (AC-67), including one the Church Administrator had started processing.
   - Remaining may go below zero (FR-43, AC-139); the over-budget emails come with step 7.
 - **Test data:** two linked board members, Cleo Chair (Board Chair) and Vic Vice (Vice-Chair). End-to-end tests never set Cleo Away, because the board tests share one database; Away is covered by integration tests.
+
+## Stage 3 step 6: processing and payment (6B.5, FR-42) (2026-10-16)
+
+- **Pages:**
+  - **Ready to process** (`/expenses/ready`, Church Administrator and accountant; the System Administrator reads only). Approved expenses, oldest final approval first, with payee, amount, days waiting, the requester's payment preference or how it's bought, and status. Each row has **Start processing** and **Record payment**. Above the list: what's waiting, the total, the amount owed to people, and the oldest. Below it: what was paid in the last 30 days.
+  - **Record payment** (`/expenses/ready/{id}`). The DRD calls for a dialog. A page is used instead, because the form changes with the method and is long on a phone. The method is preselected from the requester's preference.
+- **What each method needs (AC-76):**
+  - Cheque: the cheque number and two different signers, both on the active signing-authorities list on the date paid. With fewer than two active, a cheque can't be recorded and the form says why (AC-135). Removed signers aren't offered, and their names stay on past payments (AC-134).
+  - Church card: the last 4 digits, the transaction reference and who bought it.
+  - Cash: who received it, and "Receipt signed".
+  - E-transfer: the reference (the payee's address is shown).
+  - Supplier invoice (EFT): the invoice number and the supplier. The supplier is stored in `purchased_by`.
+  - Other: what it was.
+  - Every method: the date paid (not in the future) and the amount paid. The amount defaults to the approved amount; a different amount needs a note.
+  - The confirm button names the amount and method ("Record $168.00 paid by e-transfer").
+- **Recording a payment finishes the expense:**
+  - A claim becomes **Paid**. A church-card claim, where nothing was owed, becomes **Closed** straight away.
+  - A purchase request becomes **Purchased**. Its commitment ends and its own spending entry is made, dated the day paid.
+  - A claim's spending entry, made at final approval, gains the method and reference. If the amount paid differs, the entry takes the amount paid, so Spent is what was actually paid. Both changes are audited.
+  - An Approved expense is put in Processing first, so **Start processing** is optional.
+- **Not processed here:** a purchase request the requester buys themselves ("I'll buy it and submit a claim"). It stays Committed until their linked claim is approved, or until it's cancelled.
+- **Nobody records a payment to themselves** (the payee check in `expense.pay`).
