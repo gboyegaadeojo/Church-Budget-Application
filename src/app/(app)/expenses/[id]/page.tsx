@@ -60,8 +60,10 @@ async function ExpenseContent({
   ]);
   if (!expense) return <ExpenseNotFound />;
   const done = DONE.find((d) => d === query.done);
-  const receipts =
-    expense.type === "expense_claim" ? await listReceipts(db, viewer, expense.id) : null;
+  const receipts = await listReceipts(db, viewer, expense.id);
+  // A purchase request's attachments are optional, so its list shows only when it has some.
+  const showFiles = expense.type === "expense_claim" || receipts.length > 0;
+  const fileKind = expense.type === "expense_claim" ? "receipts" : "attachments";
   const payment = await paymentOf(db, expense.id);
   const pending = ["draft", ...PENDING_STATUSES].includes(expense.status);
   const thread = await getExpenseThread(db, viewer, expense.id);
@@ -123,7 +125,7 @@ async function ExpenseContent({
             </section>
           )}
           <ExpenseLines expense={expense} />
-          {receipts && <ReceiptList expenseId={expense.id} receipts={receipts} />}
+          {showFiles && <ReceiptList expenseId={expense.id} receipts={receipts} kind={fileKind} />}
           {payment && (
             <section className="space-y-1 rounded-control border border-success p-4 text-sm">
               <h2 className="font-semibold">{expensesCopy.payment.paidHeading}</h2>

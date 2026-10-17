@@ -147,7 +147,11 @@ export function ReviewView({
           {top}
           {receipts && (
             <div className={cardClass}>
-              <ReceiptList expenseId={expense.id} receipts={receipts} />
+              <ReceiptList
+                expenseId={expense.id}
+                receipts={receipts}
+                kind={expense.type === "expense_claim" ? "receipts" : "attachments"}
+              />
             </div>
           )}
           <section aria-labelledby="impact-heading" className={cn(cardClass, "space-y-3")}>

@@ -23,7 +23,7 @@ export const expensesCopy = {
     titleRequired: "Give the expense a title.",
     titleTooLong: "Keep the title to 120 characters or fewer.",
     justificationRequired: "Explain why this is needed.",
-    justificationTooLong: "Keep the justification to 2,000 characters or fewer.",
+    justificationTooLong: "Keep the justification to 4,000 characters or fewer.",
     itemsRequired: "Add at least one item.",
     linesRequired: "Add at least one receipt line.",
     tooManyLines: "Add up to 100 lines.",
@@ -100,7 +100,6 @@ export const expensesCopy = {
     invoiceNumberRequired: "Enter the invoice number.",
     supplierRequired: "Enter the supplier.",
     methodOtherRequired: "Say how it was paid.",
-    receiptsClaimsOnly: "Receipts can only be added to expense claims.",
     receiptFileName: "The file needs a name.",
     receiptEmpty: "That file is empty.",
     receiptTooLarge: "That file is over 10 MB. Take a smaller photo or scan, and try again.",
@@ -354,6 +353,29 @@ export const expensesCopy = {
     level: { accountant: "Accountant", board: "Board Chair" },
     vice: "Vice-Chair",
     requested: "Requested",
+  },
+
+  /** Attachments on purchase requests: a quote, invoice or product photo (2026-10-17). */
+  attachments: {
+    heading: "Attachments",
+    intro:
+      "Optional: a quote, invoice or photo of what you're buying. Up to 5 files, 10 MB each: JPG, PNG, HEIC photos or PDF.",
+    none: "No attachments added yet.",
+  },
+
+  /** The form's numbered section cards (DRD 6.9a). */
+  sections: {
+    details: { title: "What and why", intro: "A short title and the reason for this expense." },
+    items: { title: "Items" },
+    howBought: {
+      title: "How it will be bought",
+      intro: "Who buys it decides what happens after approval.",
+    },
+    lines: { title: "Receipts" },
+    payee: { title: "Who gets paid", intro: "Never enter bank account numbers here." },
+    files: { title: "Receipt files" },
+    attachments: { title: "Attachments" },
+    step: (n: number) => `Step ${n}`,
   },
 
   /** Receipts on claims (6B.9). */
