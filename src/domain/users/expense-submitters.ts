@@ -13,8 +13,8 @@ import { rolesOfUser } from "./admin";
  * The Expense submitter permission (6B.2): the administrator lets someone who isn't a
  * department representative (for example a volunteer who buys for Media) submit expenses
  * for the departments they're given, and only those. They see and change only what they
- * submitted. They need the Requester role, so they're checked in Planning Center like
- * every requester (FR-01a). A removal is recorded, not deleted, and both are audited.
+ * submitted. They need the Requester role (so they're checked in Planning Center like
+ * every requester, FR-01a), or are the Church Administrator submitting for a department. A removal is recorded, not deleted, and both are audited.
  */
 
 const s = adminCopy.users.submitter;
@@ -63,7 +63,8 @@ export async function addExpenseSubmitter(
   const person = await loadPerson(tx, input.userId);
   const department = await loadDepartment(tx, input.departmentId);
   if (department.status !== "active") throw new RuleError(s.errors.inactiveDepartment);
-  if (!(await rolesOfUser(tx, person.id)).includes("requester")) {
+  const roles = await rolesOfUser(tx, person.id);
+  if (!roles.includes("requester") && !roles.includes("church_admin")) {
     throw new RuleError(s.errors.needsRequester);
   }
   const [represents] = await tx

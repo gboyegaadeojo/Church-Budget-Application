@@ -25,7 +25,8 @@ export default function NewExpensePage() {
 
 async function NewExpenseContent() {
   const viewer = await getViewer();
-  if (!hasRole(viewer, "requester")) return <PermissionDenied />;
+  const submitter = (viewer.expenseDepartments?.length ?? 0) > 0;
+  if (!hasRole(viewer, "requester") && !submitter) return <PermissionDenied />;
   const options = await expenseStartOptions(getDb(), viewer);
   const withBudget = options.filter((d) => d.cycles.length > 0);
   return (

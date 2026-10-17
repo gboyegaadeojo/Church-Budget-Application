@@ -167,7 +167,12 @@ export async function globalSearch(
 
   // Pages the person's navigation has.
   const lower = q.toLowerCase();
-  const pages = [...navigationFor(viewer.roles).flatMap((a) => a.items), ...FOOTER_LINKS];
+  const pages = [
+    ...navigationFor(viewer.roles, {
+      expenseSubmitter: (viewer.expenseDepartments?.length ?? 0) > 0,
+    }).flatMap((a) => a.items),
+    ...FOOTER_LINKS,
+  ];
   const seen = new Set<string>();
   for (const page of pages) {
     if (seen.has(page.href) || !page.label.toLowerCase().includes(lower)) continue;

@@ -6,7 +6,8 @@ import { RuleError } from "@/domain/errors";
 import { expenseStartOptions, getExpenseView, listMyExpenses } from "@/domain/expenses/queries";
 import { addExpenseSubmitter, removeExpenseSubmitter } from "@/domain/users/expense-submitters";
 import { loadViewer } from "@/domain/users/viewer";
-import { ForbiddenError } from "@/lib/authz";
+import { authzContextOf, loadExpense } from "@/domain/expenses/service";
+import { authorize, ForbiddenError } from "@/lib/authz";
 import type { Viewer } from "@/lib/roles";
 import { createTestDb, type TestDb } from "./helpers/db";
 import { expenseWorld, person, submitted } from "./helpers/expenses";
@@ -84,11 +85,11 @@ describe("Expense submitter (6B.2)", () => {
   it("needs the Requester role, an active department, and isn't for leaders", async () => {
     const world = await expenseWorld(db);
     const admin = await person(db, ["system_admin"]);
-    const office = await insertUser(db, { accessStatus: "active" });
-    await db.insert(userRoles).values({ userId: office.id, role: "church_admin" });
+    const board = await insertUser(db, { accessStatus: "active" });
+    await db.insert(userRoles).values({ userId: board.id, role: "board_chair" });
     await expect(
       db.transaction((tx) =>
-        addExpenseSubmitter(tx, admin, { userId: office.id, departmentId: world.media.id }),
+        addExpenseSubmitter(tx, admin, { userId: board.id, departmentId: world.media.id }),
       ),
     ).rejects.toThrow(RuleError);
     await expect(
@@ -112,5 +113,24 @@ describe("Expense submitter (6B.2)", () => {
         addExpenseSubmitter(tx, world.accountant, { userId: vol.id, departmentId: world.media.id }),
       ),
     ).rejects.toThrow(ForbiddenError);
+  });
+
+  it("lets the Church Administrator submit for a department, but not pay their own", async () => {
+    const world = await expenseWorld(db);
+    const admin = await person(db, ["system_admin"]);
+    const office = await insertUser(db, { accessStatus: "active" });
+    await db.insert(userRoles).values({ userId: office.id, role: "church_admin" });
+    await db.transaction((tx) =>
+      addExpenseSubmitter(tx, admin, { userId: office.id, departmentId: world.media.id }),
+    );
+    const me = await viewerOf(office.id);
+    expect(me.expenseDepartments?.map((d) => d.id)).toEqual([world.media.id]);
+    expect((await expenseStartOptions(db, me)).map((o) => o.id)).toEqual([world.media.id]);
+
+    const { expenseId } = await submitted(db, { ...world, requester: me }, "expense_claim");
+    const row = await loadExpense(db, expenseId);
+    // FR-47: they don't record a payment for an expense they submitted.
+    expect(authorize(me, "expense.pay", authzContextOf(row)).allowed).toBe(false);
+    expect(authorize(world.office, "expense.pay", authzContextOf(row)).allowed).toBe(true);
   });
 });

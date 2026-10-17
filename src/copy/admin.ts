@@ -61,7 +61,7 @@ export const adminCopy = {
     submitter: {
       heading: "Expense submitter",
       intro:
-        "Let this person submit expenses for a department they don't lead, for example a volunteer who buys for Media. They see and change only what they submit. They need the Requester role.",
+        "Let this person submit expenses for a department they don't lead, for example a volunteer who buys for Media. They see and change only what they submit. They need the Requester role, or can be the Church Administrator submitting for a department.",
       department: "Department",
       choose: "Choose a department",
       add: "Add",
@@ -73,7 +73,7 @@ export const adminCopy = {
       none: "Not an expense submitter for any department.",
       since: (date: string) => `Since ${date}`,
       errors: {
-        needsRequester: "Give them the Requester role first.",
+        needsRequester: "Give them the Requester or Church Administrator role first.",
         alreadyRepresents: "They already lead this department, so they can submit for it.",
         inactiveDepartment: "Choose an active department.",
       },

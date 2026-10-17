@@ -172,6 +172,9 @@ const notOwnDepartmentOrPayee: Check = (s, ctx) =>
 
 const notPayee: Check = (s, ctx) => (ctx.payeeUserId === s.id ? "conflict_of_interest" : null);
 
+const notPayeeOrSubmitter: Check = (s, ctx) =>
+  ctx.payeeUserId === s.id || ctx.requesterUserId === s.id ? "conflict_of_interest" : null;
+
 const approvedOnly: Check = (_s, ctx) =>
   ctx.annualStatus && isApproved(ctx.annualStatus) ? null : "not_approved";
 
@@ -234,7 +237,8 @@ const RULES: Record<Action, readonly Rule[]> = {
     { roles: [...ACCOUNTANTS, "church_admin"] },
     { roles: ["system_admin"], readOnly: true },
   ],
-  "expense.submit": [{ roles: ["requester"], check: submitsFor }],
+  // The Church Administrator submits only as an Expense submitter for a department (6B.2).
+  "expense.submit": [{ roles: ["requester", "church_admin"], check: submitsFor }],
   "expense.review_queue": [{ roles: ACCOUNTANTS }, { roles: ["system_admin"], readOnly: true }],
   "expense.first_approve": [{ roles: ACCOUNTANTS, check: notOwnDepartmentOrPayee }],
   "expense.board_queue": [{ roles: BOARD }, { roles: ["system_admin"], readOnly: true }],
@@ -244,7 +248,8 @@ const RULES: Record<Action, readonly Rule[]> = {
     { roles: [...ACCOUNTANTS, "church_admin"] },
     { roles: ["system_admin"], readOnly: true },
   ],
-  "expense.pay": [{ roles: [...ACCOUNTANTS, "church_admin"], check: notPayee }],
+  // Nobody records a payment to themselves or for an expense they submitted (FR-47).
+  "expense.pay": [{ roles: [...ACCOUNTANTS, "church_admin"], check: notPayeeOrSubmitter }],
   "expense.cancel": [{ roles: ["requester"], check: ownDepartment }, { roles: ACCOUNTANTS }],
   "expense.export": [{ roles: [...ACCOUNTANTS, "church_admin", "system_admin"] }],
   "expense.message_send": [

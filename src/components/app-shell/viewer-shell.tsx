@@ -15,12 +15,25 @@ import { Sidebar } from "./sidebar";
 
 export async function ViewerSidebar() {
   const [viewer, brand] = await Promise.all([getViewer(), currentBrandView()]);
-  return <Sidebar areas={navigationFor(viewer.roles)} brand={brand} />;
+  return (
+    <Sidebar
+      areas={navigationFor(viewer.roles, {
+        expenseSubmitter: (viewer.expenseDepartments?.length ?? 0) > 0,
+      })}
+      brand={brand}
+    />
+  );
 }
 
 export async function ViewerBottomBar() {
   const viewer = await getViewer();
-  return <BottomBar areas={navigationFor(viewer.roles)} />;
+  return (
+    <BottomBar
+      areas={navigationFor(viewer.roles, {
+        expenseSubmitter: (viewer.expenseDepartments?.length ?? 0) > 0,
+      })}
+    />
+  );
 }
 
 export async function ViewerAccountMenu() {

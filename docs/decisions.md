@@ -749,7 +749,7 @@ The church asked that the "approval needed" email go to both approvers at the sa
 - **What they can do:** start and submit expenses for the departments they're given, and see, change, withdraw and answer questions on what **they** submitted, nothing else of the department (no annual budget, no other people's expenses, no cancelling an approved purchase request, no spending). `authz.ts` has one rule, `submitsFor`, for `expense.submit` and `expense.view`.
 - **Leaders still see everything** their department submits, and get its emails (AC-141), so a volunteer's claim is never hidden from the department.
 - **Access:** being given a department lets a verified person who was waiting for one sign in (FR-01a). Removing the last one puts them back to waiting.
-- **Not built:** "the Church Administrator submits a claim on behalf of another person" (6B.2 table). The Church Administrator can be made an Expense submitter for a department if needed, and any claim can already name someone else as the payee.
+- **The Church Administrator submits on behalf of a department** (6B.2 table; confirmed by the church 2026-10-16) by being made an Expense submitter for it: the Requester role isn't needed for them. New expense and My expenses appear in their navigation. They never record the payment for an expense they submitted (`expense.pay` now refuses the submitter as well as the payee, FR-47); another payer does.
 
 ## Home: At a glance (FR-37, DRD 6.0) (2026-10-16)
 

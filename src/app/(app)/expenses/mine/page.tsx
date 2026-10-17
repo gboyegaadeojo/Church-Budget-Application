@@ -62,7 +62,8 @@ async function MyExpensesContent({
   const filters = parseListFilters(await searchParams);
   const filtered = hasListFilters(filters);
   const viewer = await getViewer();
-  if (!hasRole(viewer, "requester")) return <PermissionDenied />;
+  const submitter = (viewer.expenseDepartments?.length ?? 0) > 0;
+  if (!hasRole(viewer, "requester") && !submitter) return <PermissionDenied />;
   const db = getDb();
   const [rows, budgets] = await Promise.all([
     listMyExpenses(db, viewer, filters),
