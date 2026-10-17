@@ -103,6 +103,12 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "spending.entry_corrected": { label: "Corrected a spending entry", group: "money" },
   "spending.entry_voided": { label: "Voided a spending entry", group: "money" },
   "spending.budget_amended": { label: "Amended a department's budget", group: "money" },
+  "spending.period_locked": { label: "Locked a year's spending", group: "decisions" },
+  "spending.period_reopened": { label: "Reopened a year's spending", group: "decisions" },
+  "expenses.carried_over": {
+    label: "Carried a purchase request into next year",
+    group: "money",
+  },
   // Sign-in and access
   "access.sign_in_succeeded": { label: "Signed in", group: "access" },
   "access.sign_in_failed": { label: "Sign-in refused", group: "access" },
@@ -252,6 +258,7 @@ export const MONEY_EVENT_TYPES = [
   "spending.entry_corrected",
   "spending.entry_voided",
   "spending.budget_amended",
+  "expenses.carried_over",
 ];
 
 export const activityCopy = {

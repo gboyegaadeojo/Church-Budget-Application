@@ -31,6 +31,22 @@ export const spendingEmailCopy = {
       `${d} has gone over its ${cycle} budget. You'll get this once per budget year.`,
     action: "Follow up with the department, or amend the budget if the board agreed.",
   },
+  locked: {
+    subject: (cycle: string) => `${cycle} spending is locked`,
+    heading: "A year's spending is locked",
+    status: "Locked",
+    intro: (cycle: string) =>
+      `The accountant locked ${cycle} spending for year-end. Its entries can no longer be added, corrected or voided.`,
+    action: "Nothing. Ask the accountant if something for that year still needs recording.",
+  },
+  reopened: {
+    subject: (cycle: string) => `${cycle} spending is open again`,
+    heading: "A year's spending was reopened",
+    status: "Reopened",
+    intro: (cycle: string) =>
+      `The accountant reopened ${cycle} spending. Its entries can be recorded and changed again.`,
+    action: "Record or correct what the accountant asked for.",
+  },
   amendment: {
     subject: (d: string) => `${d}'s budget was amended`,
     heading: "Your department's budget was amended",

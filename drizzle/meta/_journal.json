@@ -169,6 +169,13 @@
       "when": 1792210894185,
       "tag": "0023_spending_foundations",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792242382790,
+      "tag": "0024_year_end_lock",
+      "breakpoints": true
     }
   ]
 }

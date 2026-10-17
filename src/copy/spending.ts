@@ -116,6 +116,73 @@ export const spendingCopy = {
     latest: (shown: number, all: number) => `The latest ${shown} of ${all} entries.`,
     seeAll: "See all entries",
   },
+  yearEnd: {
+    title: "Year-end",
+    intro:
+      "Lock a year's spending once its money has settled. After that nobody can add, correct or void its entries, and no new expenses go to that year.",
+    link: "Year-end",
+    back: "Spending dashboard",
+    lockedBanner: (when: string, by: string | null) =>
+      by ? `Locked on ${when} by ${by}.` : `Locked on ${when}.`,
+    openBanner: "Spending for this year is open.",
+    checklist: "Before you lock",
+    awaitingDecision: "Waiting for a decision",
+    awaitingDecisionNone: "No expenses are waiting for a decision.",
+    awaitingPayment: "Approved but not yet paid or bought",
+    awaitingPaymentNone: "Nothing is waiting to be paid or bought.",
+    settleFirst:
+      "Decide or pay these first. Approving or paying them adds spending to this year, which can't happen once it's locked.",
+    lock: "Lock spending",
+    lockTitle: (cycle: string) => `Lock ${cycle} spending?`,
+    lockBody:
+      "Nobody can add, correct or void entries for this year until you reopen it. The Church Administrators are emailed.",
+    locked: (cycle: string) => `${cycle} spending is locked.`,
+    reopenHeading: "Reopen spending",
+    reopenIntro:
+      "Reopen the year to change its entries. Give a reason; it's kept in the activity log.",
+    reopenReason: "Reason for reopening",
+    reopen: "Reopen spending",
+    reopened: (cycle: string) => `${cycle} spending is open again.`,
+    openPurchases: "Approved purchase requests not yet bought",
+    openPurchasesIntro: (next: string) =>
+      `Cancel each one that won't go ahead, or carry it into ${next} so its money is set aside from next year's budget.`,
+    openPurchasesNoNext: (year: number) =>
+      `Cancel each one that won't go ahead. To carry one over, the administrator first creates the ${year} budget cycle.`,
+    openPurchasesNone: "No approved purchase requests are still open.",
+    openPurchasesAfterLock:
+      "After you lock, approved purchase requests not yet bought are listed here to cancel or carry over.",
+    carryReason: "Reason for carrying it over",
+    carry: (next: string) => `Carry into ${next}`,
+    carried: (next: string) => `Carried into ${next}.`,
+    noNextBudget: (next: string) =>
+      `The department has no approved ${next} budget yet, so this can't be carried over.`,
+    cancel: "Open to cancel",
+    carriedIn: (from: string) => `Carried in from ${from}`,
+    columns: {
+      expense: "Expense",
+      department: "Department",
+      status: "Status",
+      amount: "Amount",
+    },
+    errors: {
+      alreadyLocked: (cycle: string) => `${cycle} spending is already locked.`,
+      notLocked: (cycle: string) => `${cycle} spending isn't locked.`,
+      notSettled: (decision: number, payment: number) => {
+        const parts = [
+          decision ? `${decision} waiting for a decision` : "",
+          payment ? `${payment} waiting to be paid or bought` : "",
+        ].filter(Boolean);
+        return `This year still has expenses ${parts.join(" and ")}. Settle them before locking.`;
+      },
+      notCarriable:
+        "Only an approved purchase request that hasn't been bought can be carried over.",
+      lockFirst: (cycle: string) => `Lock ${cycle} spending before carrying anything over.`,
+      noNextCycle: (year: number) =>
+        `There's no ${year} budget cycle yet. The administrator creates it first.`,
+      noNextBudget: (department: string, next: string) =>
+        `${department} has no approved ${next} budget yet, so this can't be carried over.`,
+    },
+  },
   ledgerFilters: {
     heading: "Filters",
     search: "Search payee, description or reference",

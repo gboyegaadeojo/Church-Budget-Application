@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { spendingCopy } from "@/copy/spending";
 import { amendBudget } from "@/domain/spending/amendments";
 import { correctEntry, recordEntry, voidEntry } from "@/domain/spending/service";
+import { carryOver, lockSpending, reopenSpending } from "@/domain/spending/year-end";
 import { formatCAD } from "@/lib/money";
 import type { ActionState } from "@/lib/action-state";
 import { form, runAction, runForResult } from "@/lib/admin-server";
@@ -102,5 +103,51 @@ export async function amendBudgetAction(_: ActionState, data: FormData): Promise
       return spendingCopy.amend.saved(formatCAD(availableCents));
     },
     { paths: [...PATHS, `/spending/departments/${departmentId}`] },
+  );
+}
+
+const YEAR_END = [...PATHS, "/spending/year-end", "/expenses"];
+
+export async function lockSpendingAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await lockSpending(tx, viewer, {
+        cycleId: form.text(data, "cycleId"),
+        version: form.text(data, "version"),
+        idempotencyKey: form.text(data, "idempotencyKey"),
+      });
+      return spendingCopy.yearEnd.locked(form.text(data, "cycleName"));
+    },
+    { paths: YEAR_END },
+  );
+}
+
+export async function reopenSpendingAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await reopenSpending(tx, viewer, {
+        cycleId: form.text(data, "cycleId"),
+        version: form.text(data, "version"),
+        reason: form.text(data, "reason"),
+      });
+      return spendingCopy.yearEnd.reopened(form.text(data, "cycleName"));
+    },
+    { paths: YEAR_END },
+  );
+}
+
+export async function carryOverAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const id = form.text(data, "id");
+  return runAction(
+    async (tx, viewer) => {
+      await carryOver(tx, viewer, {
+        id,
+        version: form.text(data, "version"),
+        reason: form.text(data, "reason"),
+        idempotencyKey: form.text(data, "idempotencyKey"),
+      });
+      return spendingCopy.yearEnd.carried(form.text(data, "nextName"));
+    },
+    { paths: [...YEAR_END, `/expenses/${id}`] },
   );
 }

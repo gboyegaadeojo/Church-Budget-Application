@@ -117,6 +117,31 @@ test.describe("Spending (Stage 4)", () => {
     ).toBeVisible();
   });
 
+  // Locking would stop other tests recording FY2026 spending, so the lock, reopen and
+  // carry-over are covered by integration tests (AC-90, FR-46).
+  test("FR-29 the accountant opens Year-end, axe clean at 360 and 1440 px", async ({ page }) => {
+    await signInAs(page, PEOPLE.pat);
+    await page.goto("/spending");
+    await page.getByLabel("Budget year", { exact: true }).selectOption({ label: "FY2026" });
+    await page.getByRole("button", { name: "Show" }).click();
+    await page.getByRole("link", { name: "Year-end" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Year-end · FY2026" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Before you lock" })).toBeVisible();
+    for (const size of [MOBILE, DESKTOP]) {
+      await page.setViewportSize(size);
+      await expectNoHorizontalScroll(page);
+      await expectAxeClean(page);
+    }
+  });
+
+  test("FR-29 only the accountant opens Year-end", async ({ page }) => {
+    await signInAs(page, PEOPLE.cleo);
+    await page.goto("/spending/year-end");
+    await expect(
+      page.getByRole("heading", { name: "You don't have access to this page" }),
+    ).toBeVisible();
+  });
+
   test("the Board Chair reads Budget vs actual without changing anything", async ({ page }) => {
     await signInAs(page, PEOPLE.cleo);
     await page.goto("/spending/budget-vs-actual");

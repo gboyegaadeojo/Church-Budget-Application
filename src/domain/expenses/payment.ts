@@ -12,6 +12,7 @@ import { assertCan, type Subject } from "@/lib/authz";
 import { parseCAD } from "@/lib/money";
 import { zonedDate } from "@/lib/time-zone";
 import { checkSpendingAlerts } from "@/domain/spending/alerts";
+import { assertSpendingOpen } from "@/domain/spending/service";
 import { queueExpenseEmails } from "./emails";
 import { isIsoDate } from "./schema";
 import {
@@ -294,6 +295,7 @@ async function recordSpending(
   reference: string | null,
   now: Date,
 ) {
+  await assertSpendingOpen(tx, row.budgetCycleId);
   const base = { departmentId: row.departmentId, cycleId: row.budgetCycleId };
   if (row.type === "expense_claim") {
     const [entry] = await tx

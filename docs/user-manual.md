@@ -192,6 +192,13 @@ Each department has a **Primary requester** (accountable for the department's bu
 
 Record spending, refunds and corrections, make **budget amendments** with a reason, and **lock** the spending year at year-end (**Spending** area).
 
+**Year-end.** On the Spending dashboard, choose the year and then **Year-end**.
+
+1. **Before you lock** lists the year's expenses still waiting for a decision, and the ones approved but not yet paid or bought. Decide or pay them first; **Lock spending** appears once both lists are empty.
+2. **Lock spending** asks you to confirm. Then nobody (you included) can record, correct or void that year's spending, and no new expenses can be started for it. Viewing and exporting still work. The Church Administrators are emailed.
+3. After locking, **Approved purchase requests not yet bought** lists the ones still open. For each, either **Open to cancel** (on the expense page) or give a reason and **Carry into** next year. Carrying over moves the money set aside into next year's budget; the request stays approved with its reference, and the department's leaders and the Church Administrators are emailed. Next year's budget cycle, and the department's approved budget in it, must exist first.
+4. To change something after locking, **Reopen spending** with a reason. It's kept in the activity log.
+
 ### Away
 
 Choose **Away** in the account menu (Account settings). Give the first day away and, if you know it, the day you're back. While the Primary accountant is away, the accountant emails (new submissions, changes, answers, messages, reminders) go to the backup approvers who aren't away themselves, and the Review dashboard says who is covering. You can still sign in and work. If everyone is away, the emails keep coming to the Primary. Backup approvers can set Away too, so they aren't chosen to cover.
