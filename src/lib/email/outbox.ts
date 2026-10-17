@@ -24,6 +24,8 @@ export type QueuedEmail = {
   content: EmailContent;
   brand: EmailBrand;
   budgetRequestId?: string;
+  /** The expense it's about (Part B), for its email history. */
+  expenseSubmissionId?: string;
   cycleId?: string;
   /** For emails that must go once only: a repeat with this key skips addresses already queued. */
   dedupeKey?: string;
@@ -79,6 +81,7 @@ export async function enqueueEmail(tx: Tx, email: QueuedEmail): Promise<number> 
         textBody: rendered.text,
         htmlBody: rendered.html,
         budgetRequestId: email.budgetRequestId ?? null,
+        expenseSubmissionId: email.expenseSubmissionId ?? null,
         cycleId: email.cycleId ?? null,
         dedupeKey: email.dedupeKey ?? null,
         expiresAt: email.expiresAt ?? null,

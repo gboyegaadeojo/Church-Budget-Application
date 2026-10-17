@@ -642,3 +642,23 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
   - An Approved expense is put in Processing first, so **Start processing** is optional.
 - **Not processed here:** a purchase request the requester buys themselves ("I'll buy it and submit a claim"). It stays Committed until their linked claim is approved, or until it's cancelled.
 - **Nobody records a payment to themselves** (the payee check in `expense.pay`).
+
+## Stage 3 step 7: expense emails, reminders and My tasks (FR-49, FR-37) (2026-10-16)
+
+- **Every FR-49 event emails the people in its row** (`src/domain/expenses/emails.ts`, queued in the same transaction, sent after commit, with the expense linked on each outbox row).
+  - "Requester" means the person who submitted it, plus the payee when that's someone else. The department's other leaders aren't copied: expenses are personal claims and purchases, unlike the department's one annual budget. They see them in My expenses.
+  - "Board Chair" means whoever gives the final approval now: the Chair, or the Vice-Chair covering, whose email says why they're receiving it. The board's own decisions are copied to the person who made them.
+  - The **Church Administrator** gets "Approved, ready for processing", except for a purchase the requester buys themselves, and a notice when an approved purchase request is cancelled.
+  - **"Over budget after approval"** goes when the Board Chair's final approval takes the department below zero: a notice to the requester and alerts to the accountant and the Church Administrator. Stage 4 adds the once-per-cycle alerts of FR-28.
+  - Amounts use the shared layout. Purchase requests show Subtotal / Sales tax / Total, and Requested against Approved after the final approval. Claims show **Total paid (incl. tax)** with no tax line, a new summary kind in the layout (their receipts include tax). The paid email adds the method, date and reference.
+- **Reminders** (the daily `reminders` job):
+  - Waiting for the Board Chair more than 7 days (`board_reminder_days`): each Board Chair, or Vice-Chair covering, gets a list of theirs, and the accountant a list of all.
+  - Approved but not processed after 14 days: the accountant and the Church Administrator.
+  - An approved purchase request the requester buys, not claimed after 60 days: the requester, and the Church Administrator a list.
+  - Each repeats at most once a week while still waiting (a weekly dedupe key), so running the job twice sends nothing new.
+- **My tasks** (`src/domain/tasks/expenses.ts`):
+  - Department: drafts the person started, questions to answer, and approved purchases to buy and claim.
+  - Accountant: expenses to review, not their own department, claim or payee.
+  - Board: final approvals, the Vice-Chair only while covering.
+  - Church Administrator and accountant: payments to record.
+  - Each task leaves the list once the step is done (AC-109).

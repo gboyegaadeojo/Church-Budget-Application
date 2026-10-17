@@ -5,6 +5,9 @@ import { DESKTOP, expectAxeClean, MOBILE, PEOPLE, signInAs } from "./helpers";
 /* The accountant's first approval (Stage 3; 6B.4 level 1, DRD 6.9a). */
 
 test.describe("Expense review: accountant (Stage 3)", () => {
+  // Each test signs in as several people in turn; under the full parallel run that takes time.
+  test.describe.configure({ timeout: 90_000 });
+
   test("AC-69 AC-73 approve a different amount and send to the Board Chair", async ({
     page,
     browser,

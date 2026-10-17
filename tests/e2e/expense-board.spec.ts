@@ -24,6 +24,9 @@ async function accountantApproves(browser: Browser, id: string) {
 }
 
 test.describe("Expense review: Board Chair (Stage 3)", () => {
+  // Each test signs in as several people in turn; under the full parallel run that takes time.
+  test.describe.configure({ timeout: 90_000 });
+
   test("AC-73 AC-74 final approval on a phone charges the budget", async ({ page, browser }) => {
     const { id, reference } = await submitPurchase(browser, "Monitor speakers");
     await accountantApproves(browser, id);
