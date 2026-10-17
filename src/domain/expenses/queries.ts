@@ -29,6 +29,7 @@ import {
   COMMITTED_STATUSES,
   ENDED_WITHOUT_CHARGE,
   isExpenseEditable,
+  PENDING_STATUSES,
   type ExpenseStatus,
   type ExpenseType,
 } from "./status";
@@ -230,9 +231,7 @@ export async function getExpenseView(
   const figures = await budgetFigures(tx, row.budgetCycleId, row.departmentId);
   const releasesCents = await linkedCommitment(tx, row.linkedPurchaseRequestId);
   // Until charged, what it would do now; once charged, it's already in the figures.
-  const charged = !["draft", "submitted", "in_review", "returned", "awaiting_board"].includes(
-    row.status,
-  );
+  const charged = row.status !== "draft" && !PENDING_STATUSES.includes(row.status);
   const amount = row.approvedTotalCents ?? totals.total;
   const impact = charged ? impactOf(figures, 0) : impactOf(figures, amount, releasesCents);
 

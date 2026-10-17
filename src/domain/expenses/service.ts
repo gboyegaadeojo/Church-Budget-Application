@@ -70,19 +70,9 @@ export function authzContextOf(row: ExpenseRow): AuthzContext {
     departmentId: row.departmentId,
     payeeUserId: row.payeeUserId ?? undefined,
     requesterUserId: row.requesterUserId,
-    // Reached the Board Chair: waiting for them or past them. A decline counts only if the
-    // accountant had approved it first (the board declined it).
-    sentToBoard:
-      [
-        "awaiting_board",
-        "approved",
-        "processing",
-        "paid",
-        "purchased",
-        "closed",
-        "cancelled",
-      ].includes(row.status) ||
-      (row.status === "declined" && row.approvedTotalCents !== null),
+    // The Board Chair is asked at submission, alongside the accountant (6B.4 as changed
+    // 2026-10-16), so the board sees every expense from then on, never a draft.
+    sentToBoard: row.status !== "draft",
   };
 }
 

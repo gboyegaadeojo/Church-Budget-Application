@@ -28,6 +28,7 @@ export const expenseEmailCopy = {
     inReview: "In Review",
     returned: "Returned for Clarification",
     awaitingBoard: "Awaiting Board Chair",
+    awaitingAccountant: "Awaiting accountant",
     approved: "Approved",
     processing: "Processing",
     paid: "Paid",
@@ -49,14 +50,17 @@ export const expenseEmailCopy = {
   receipt: {
     subject: (r: string, d: string) => `Received: ${about(r, d)}`,
     heading: "Your expense was submitted",
-    intro: "The accountant reviews it first, then the Board Chair. You'll be emailed at each step.",
-    action: "Nothing for now. You can still change it until the accountant starts reviewing it.",
+    intro:
+      "The accountant and the Board Chair are both asked to approve it. You'll be emailed once both have approved, or if either has a question.",
+    action: "Nothing for now. You can still change it until the review starts.",
   },
   newSubmission: {
     subject: (r: string, d: string) => `New expense to review: ${about(r, d)}`,
-    heading: "A new expense is waiting for you",
+    heading: "An expense needs your approval",
     intro: (department: string, name: string) => `${name} submitted an expense for ${department}.`,
-    action: "Review it and decide: approve and send to the Board Chair, return it, or decline it.",
+    together:
+      "The accountant and the Board Chair are asked at the same time and can approve in either order. It's approved once you both approve; if your amounts differ, the lower one is approved.",
+    action: "Review it and decide: approve, approve a smaller amount, return it, or decline it.",
   },
   updated: {
     subject: (r: string, d: string) => `Updated: ${about(r, d)}`,
@@ -70,17 +74,26 @@ export const expenseEmailCopy = {
   },
   reviewStarted: {
     subject: (r: string, d: string) => `In review: ${about(r, d)}`,
-    heading: "The accountant is reviewing your expense",
-    intro: "It can't be changed now. If something needs to change, the accountant will return it.",
+    heading: "Your expense is being reviewed",
+    intro: "It can't be changed now. If something needs to change, it will be returned to you.",
   },
   returned: {
     subject: (r: string, d: string) => `Question about ${about(r, d)}`,
     heading: "The accountant has a question",
+    headingBy: (role: string) => `The ${role} has a question`,
     question: "Question",
     action: "Answer the question and send the expense back. You can change it while you do.",
     button: "Respond",
-    copyHeading: "You returned an expense",
-    copyIntro: (department: string) => `${department} has been asked to clarify.`,
+    copyHeading: "An expense was returned",
+    copyIntro: (department: string, name: string) =>
+      `${name} asked ${department} to clarify. Both approvals are needed again once they answer.`,
+  },
+  approvedOne: {
+    subject: (r: string, d: string) => `You approved ${about(r, d)}`,
+    heading: "You approved an expense",
+    waitingForBoard: "It's approved once the Board Chair approves too.",
+    waitingForAccountant: "It's approved once the accountant approves too.",
+    lower: "If the two approved amounts differ, the lower one is approved.",
   },
   accountantApproved: {
     subject: (r: string, d: string) => `Approved by the accountant: ${about(r, d)}`,
@@ -91,11 +104,9 @@ export const expenseEmailCopy = {
   },
   boardNeeded: {
     subject: (r: string, d: string) => `Approval needed: ${about(r, d)}`,
-    heading: "An expense needs your final approval",
-    intro: (name: string, amount: string) => `${name} (accountant) approved ${amount}.`,
+    heading: "An expense needs your approval",
     covering: "You're receiving this because the Board Chair is away or can't decide this one.",
-    action:
-      "Give final approval, approve a smaller amount, return it to the accountant, or decline it.",
+    action: "Approve it, approve a smaller amount, return it to the department, or decline it.",
   },
   boardReturned: {
     subject: (r: string, d: string) => `The Board Chair has a question: ${about(r, d)}`,
@@ -113,8 +124,8 @@ export const expenseEmailCopy = {
     claimIntro:
       "The Church Administrator will process the payment. You'll be emailed when it's paid.",
     churchCardIntro: "The Church Administrator will record the church card purchase.",
-    copyHeading: "Final approval given",
-    copyIntro: (name: string) => `${name} gave the final approval.`,
+    copyHeading: "Expense approved",
+    copyIntro: (name: string) => `${name} gave the second approval, so it's approved.`,
   },
   readyForProcessing: {
     subject: (r: string, d: string) => `Approved, ready for processing: ${about(r, d)}`,
@@ -162,21 +173,18 @@ export const expenseEmailCopy = {
     copyHeading: "A payment was recorded",
   },
   reminders: {
-    board: {
+    approval: {
       subject: (n: number) =>
         n === 1
-          ? "1 expense is waiting for your approval"
-          : `${n} expenses are waiting for your approval`,
-      heading: "Expenses waiting for your final approval",
-      intro: (days: number) => `These have waited more than ${days} days.`,
-      accountantSubject: (n: number) =>
-        n === 1
-          ? "1 expense has waited for the Board Chair"
-          : `${n} expenses have waited for the Board Chair`,
-      accountantHeading: "Expenses waiting for the Board Chair",
-      action: "Open each one and decide.",
-      accountantAction: "Nothing, unless you want to follow up with the Board Chair.",
-      button: "Awaiting my approval",
+          ? "Reminder: 1 expense is waiting for your approval"
+          : `Reminder: ${n} expenses are waiting for your approval`,
+      heading: "Expenses waiting for your approval",
+      intro: (days: number) =>
+        `These have waited more than ${days} days for your approval. You'll get this reminder each day until you decide.`,
+      action:
+        "Open each one and decide: approve, approve a smaller amount, return it or decline it.",
+      accountantButton: "Review queue",
+      boardButton: "Awaiting my approval",
     },
     payment: {
       subject: (n: number) =>

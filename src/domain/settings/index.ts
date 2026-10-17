@@ -51,8 +51,8 @@ export const SETTING_DEFAULTS = {
   unclaimed_purchase_reminder_days: "60",
   /** FR-49 reminders: approved but not processed (accountant, Church Administrator). */
   payment_reminder_days: "14",
-  /** FR-49 reminders: waiting for the Board Chair (Board Chair, accountant). */
-  board_reminder_days: "7",
+  /** FR-49 reminders: an approval still needed after this many days, then daily. */
+  approval_reminder_days: "5",
 } as const;
 
 /** A whole-number-of-days setting, or its default when the stored value is unusable. */
@@ -62,7 +62,7 @@ export async function daysSetting(
     | "claim_deadline_days"
     | "unclaimed_purchase_reminder_days"
     | "payment_reminder_days"
-    | "board_reminder_days",
+    | "approval_reminder_days",
 ): Promise<number> {
   const { [key]: value } = await readSettings(tx, [key]);
   const days = Number.parseInt(value, 10);

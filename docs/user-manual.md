@@ -125,7 +125,7 @@ You can submit expenses once your department's annual budget is approved and the
 
 ### What happens next
 
-- The accountant approves first, then the Board Chair (or Vice-Chair). After final approval, the Church Administrator pays or buys and records how. You and every other leader of the department get an email at each step, and **My expenses** shows a tracker with where it is.
+- The accountant and the Board Chair (or Vice-Chair) are asked at the same time and can approve in either order. Once both have approved, the Church Administrator pays or buys and records how. You and every other leader of the department get an email at each step, and **My expenses** shows a tracker with where it is.
 - You can **change** the expense until the accountant starts reviewing it, or **withdraw** it. If the accountant returns it with a question, change it and send your answer.
 - An approved purchase request you buy yourself stays set aside until you submit the claim linked to it. If it won't go ahead, **cancel** it with a reason so the money goes back to the budget.
 
@@ -164,9 +164,9 @@ Each department has a **Primary requester** (accountable for the department's bu
 4. **Decision release** (Annual Budget → Decision release) chooses how departments hear about approvals and declines:
    - **Send immediately** (the usual): each department is emailed when you confirm.
    - **Hold and release on a date:** choose the date and time (church time) and, if you like, one message for every email ("Thank you for your work this year…"). Decide every department; they keep seeing **In Review** and get nothing until then. Questions are never held. All the emails go out within 15 minutes of the time. You're warned the day before if some departments aren't decided, and budgets decided after the time go straight out.
-   - The page shows Approved, Declined, Undecided and Not submitted, and who gets which email. **Release now** sends everything held at once; **Cancel schedule** goes back to sending immediately and sends what's held. A banner on every review screen reminds you while decisions are held.
+   - The page shows Approved, Declined, Undecided and Not submitted, and who gets which email. **Release now** sends everything held at once, even after the release time if the emails haven't gone yet; **Cancel schedule** goes back to sending immediately and sends what's held. A banner on every review screen reminds you while decisions are held.
 5. **Second approval for large budgets** (if the administrator has turned it on): when an approval reaches the set amount, the button reads **Approve (needs second sign-off)**. After you confirm, the budget is **Awaiting Second Approval** and the department is told it's awaiting final sign-off. Another accountant or backup approver (not you, and nobody who leads the department) gets a task: they open it and choose **Give second approval**, or **Refuse** with a reason, which sends it back to In Review for you.
-6. **Reopen** an approved or declined budget with a reason if the board reconsiders. It goes back to the department as Returned for Clarification, without using one of its edits, and the earlier decision stays in the history.
+6. **Reopen** an approved or declined budget with a reason if the board reconsiders. It goes back to the department as Returned for Clarification, without using one of its edits, and the earlier decision stays in the history. If expenses already rely on an approved budget, the dialog shows how much is committed, spent and waiting, and you tick a box to confirm before it reopens.
 7. You're emailed when a budget is submitted, changed or answered if you are the Primary accountant (every accountant is, until one is chosen in Settings). **Emails** at the bottom of the review screen lists every email sent about the budget, copies included.
 8. You cannot decide a budget for a department you represent; the page says so, and another accountant or the backup approver decides it.
 9. **Messages** at the bottom of the review screen: write to the department's representatives (each message emails all of them), and read their replies. The review queue shows "1 new message" on a budget until you open it. Use **Return for clarification** when you need the department to change the budget; a message doesn't.
@@ -207,12 +207,12 @@ Every workbook has a **Summary** sheet (one row per budget, requested and approv
 
 ## 6. Board Chair and Vice-Chair
 
-1. When the accountant approves an expense, you get an email and a task: **Final approval**.
-2. Open it from the email or **Expenses → Awaiting my approval**. You see the amount, the accountant's note, receipts, and the department's remaining budget. If it takes the department over budget, a warning shows by how much, with the requester's explanation; your final approval is what charges it, and the department then shows as over budget.
-3. Choose **Give final approval**, **Approve a smaller amount** (including tax, with a reason), **Return to accountant** with a question, or **Decline** with a reason.
-4. Final approval charges the budget. The requester and the Church Administrator are emailed.
+1. When an expense is submitted, you and the accountant are both emailed at the same time, and it's in your tasks: **Expense to approve**. Either of you can approve first.
+2. Open it from the email or **Expenses → Awaiting my approval**. You see the amount, the accountant's approval and note if they've already approved, receipts, and the department's remaining budget. If it takes the department over budget, a warning shows by how much, with the requester's explanation; the second approval is what charges it, and the department then shows as over budget.
+3. Choose **Approve**, **Approve a smaller amount** (including tax, with a reason), **Return for clarification** to the department with a question, or **Decline** with a reason.
+4. Once both of you have approved, the budget is charged, and the requester and the Church Administrator are emailed. If your amounts differ, the lower one is approved.
 5. The Chair can turn on **Away** (account menu); the Vice-Chair then gets the emails and tasks. The Vice-Chair also decides when the Chair represents the department, submitted it, or is the payee. Otherwise the Vice-Chair's screen says the Chair decides it. Decisions show who made them, and in which role.
-6. Expenses waiting more than 7 days are listed in a reminder email.
+6. If you haven't decided an expense within 5 days, you get a reminder email every day until you do. The accountant gets the same daily reminder for expenses waiting on them.
 
 These screens are designed for a phone.
 

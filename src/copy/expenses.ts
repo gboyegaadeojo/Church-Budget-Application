@@ -67,8 +67,6 @@ export const expensesCopy = {
     amountZeroDecision: "An approved amount must be more than $0.00. To approve nothing, decline.",
     amountAboveRequested: (amount: string) =>
       `The approved amount can't be more than the ${amount} asked for.`,
-    amountAboveAccountant: (amount: string) =>
-      `The Board Chair can't approve more than the ${amount} the accountant approved.`,
     differentAmountNoteRequired: "Say why the amount is different.",
     returnNoteRequired: "Write what the department needs to clarify.",
     boardReturnNoteRequired: "Write your question for the accountant.",
@@ -125,16 +123,24 @@ export const expensesCopy = {
     draft: { label: "Draft", explain: "Not submitted yet." },
     submitted: {
       label: "Submitted",
-      explain: "Waiting for the accountant. You can still make changes.",
+      explain:
+        "Waiting for the accountant and the Board Chair to approve it. You can still make changes.",
     },
-    in_review: { label: "In Review", explain: "The accountant is reviewing it." },
+    in_review: {
+      label: "In Review",
+      explain: "The accountant and the Board Chair are reviewing it.",
+    },
     returned: {
       label: "Returned for Clarification",
-      explain: "The accountant has a question. Please respond.",
+      explain: "An approver has a question. Please respond.",
     },
     awaiting_board: {
       label: "Awaiting Board Chair",
-      explain: "Approved by the accountant; waiting for the Board Chair's final approval.",
+      explain: "The accountant has approved it; waiting for the Board Chair's approval.",
+    },
+    awaiting_accountant: {
+      label: "Awaiting accountant",
+      explain: "The Board Chair has approved it; waiting for the accountant's approval.",
     },
     approved: {
       label: "Approved",
@@ -423,10 +429,11 @@ export const expensesCopy = {
   /** The approvers' screens (6B.4, DRD 6.9a). */
   review: {
     queueTitle: "Expense review queue",
-    queueIntro: "Purchase requests and claims waiting for the accountant's approval.",
+    queueIntro:
+      "Purchase requests and claims waiting for your approval. The Board Chair is asked at the same time.",
     boardTitle: "Awaiting my approval",
     boardIntro:
-      "Expenses the accountant has approved, waiting for the Board Chair's final approval.",
+      "Purchase requests and claims waiting for your approval. The accountant is asked at the same time; either of you can approve first.",
     stats: {
       waiting: "Waiting for a decision",
       total: "Total waiting",
@@ -462,6 +469,12 @@ export const expensesCopy = {
     remainingAfter: "Remaining if approved",
     accountantApproved: (amount: string, name: string) =>
       `The accountant (${name}) approved ${amount}.`,
+    boardApproved: (amount: string, name: string) =>
+      `The Board Chair (${name}) approved ${amount}.`,
+    otherNote: "Their note",
+    lowerWins:
+      "Your approval completes it. If you approve a different amount, the lower of the two is approved.",
+    alreadyApproved: "You've approved it. It's waiting for the other approval.",
     accountantNote: "Accountant's note",
     overNow: (department: string, amount: string) =>
       `This takes ${department} over budget by ${amount}.`,
@@ -479,13 +492,12 @@ export const expensesCopy = {
       default: "View only.",
     },
     decisionHeading: "Your decision",
-    approve: "Approve and send to Board Chair",
-    approveDifferent: "Approve a different amount and send to Board Chair",
+    approve: "Approve",
+    approveDifferent: "Approve a smaller amount",
     returnToRequester: "Return for clarification",
     decline: "Decline",
-    finalApprove: "Give final approval",
+    finalApprove: "Approve",
     approveSmaller: "Approve a smaller amount",
-    returnToAccountant: "Return to accountant",
     amount: "Approved total (incl. tax)",
     amountHint: (max: string) => `Up to ${max}. The tax is worked out inside it.`,
     split: (subtotal: string, tax: string) => `${subtotal} before tax + ${tax} tax`,
@@ -494,32 +506,29 @@ export const expensesCopy = {
     question: "Your question",
     confirm: "Confirm",
     confirmTitle: {
-      approve: "Approve and send to the Board Chair?",
-      approve_different_amount: "Approve this amount and send to the Board Chair?",
+      approve: "Approve this expense?",
+      approve_different_amount: "Approve this smaller amount?",
       return: "Return to the department?",
       decline: "Decline this expense?",
-      final_approve: "Give final approval?",
+      final_approve: "Approve this expense?",
       approve_smaller: "Approve this smaller amount?",
-      board_return: "Return to the accountant?",
+      board_return: "Return to the department?",
       board_decline: "Decline this expense?",
     },
     confirmBody: {
-      approve:
-        "The Board Chair is emailed for the final approval. The budget isn't charged until then.",
-      return: "The department is emailed your question and can change the expense.",
+      firstOfTwo:
+        "It's approved once the other approver approves too. The budget isn't charged until then, and the department isn't emailed yet.",
+      secondOfTwo:
+        "This is the second approval: it's approved now, the budget is charged, and the department and the Church Administrator are emailed. If the amounts differ, the lower one is approved.",
+      return:
+        "The department is emailed your question and can change the expense. Both approvals are needed again once they answer.",
       decline: "The department is emailed the reason. This ends the process.",
-      final: "The budget is charged now. The department and the Church Administrator are emailed.",
-      board_return: "The accountant is emailed your question; the expense goes back to In Review.",
     },
     done: {
-      approve: "Approved and sent to the Board Chair.",
-      approve_different_amount: "Approved and sent to the Board Chair.",
+      waiting: "Approved. It's waiting for the other approval.",
+      fully_approved: "Approved. Both approvals are given, and the department has been emailed.",
       return: "Returned to the department.",
       decline: "Declined.",
-      final_approve: "Final approval given.",
-      approve_smaller: "Final approval given for the smaller amount.",
-      board_return: "Returned to the accountant.",
-      board_decline: "Declined.",
     },
     history: "Decisions",
     by: (name: string, role: string) => `${name} (${role})`,
@@ -638,7 +647,7 @@ export const expensesCopy = {
     respond: "Answer the accountant's question",
     buyAndClaim: "Buy it, then submit a claim",
     review: "Expense to review",
-    finalApproval: "Final approval needed",
+    finalApproval: "Expense to approve",
     recordPayment: "Record payment",
     open: "Open",
     review_: "Review",

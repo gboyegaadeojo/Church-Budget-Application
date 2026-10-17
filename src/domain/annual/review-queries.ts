@@ -20,6 +20,7 @@ import { sumCents } from "@/lib/money";
 import { getRequestView, type RequestView } from "./queries";
 import { lineRowsOf } from "./service";
 import { canTransition, isApproved, type AnnualStatus } from "./status";
+import { expenseUseOf, type ExpenseUse } from "@/domain/expenses/budget";
 
 /**
  * What the accountant sees: the dashboard (FR-13, FR-14, DRD 6.6) and one request under
@@ -430,6 +431,8 @@ export type ReviewView = Omit<RequestView, "lines"> & {
   /** The person may decide now; otherwise why not (DRD 6.7 conflict-of-interest text). */
   canDecide: boolean;
   canReopen: boolean;
+  /** Expenses that rely on this approved budget: reopening asks to confirm (FR-18a). */
+  reopenExpenses: ExpenseUse | null;
   blockedReason: DenyReason | null;
   /** FR-34: the approved total that needs a second sign-off; null when it's off. */
   secondThreshold: number | null;
@@ -551,6 +554,10 @@ export async function getReviewView(
     release: await cycleRelease(tx, base.cycle.id),
     canDecide: decide.allowed && decidable,
     canReopen: reopen.allowed && canTransition(base.status, "reopen"),
+    reopenExpenses:
+      reopen.allowed && canTransition(base.status, "reopen") && isApproved(base.status)
+        ? await expenseUseOf(tx, base.cycle.id, base.department.id)
+        : null,
     blockedReason: decide.allowed ? null : decide.reason,
     secondThreshold: await secondApprovalThreshold(tx),
     second: awaitingSecond

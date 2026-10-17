@@ -7,6 +7,7 @@ import { expensesCopy } from "@/copy/expenses";
 import type { ExpenseView } from "@/domain/expenses/queries";
 import type { ReceiptFileView } from "@/domain/expenses/receipts";
 import type { ExpenseWarnings } from "@/domain/expenses/review-queries";
+import { PENDING_STATUSES } from "@/domain/expenses/status";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
 import { formatDateTime } from "@/lib/time-zone";
@@ -47,7 +48,7 @@ export function ReviewView({
 }) {
   const amount = expense.approved?.total ?? expense.totals.total;
   const c = expense.content;
-  const pending = ["submitted", "in_review", "returned", "awaiting_board"].includes(expense.status);
+  const pending = PENDING_STATUSES.includes(expense.status);
   return (
     <>
       <PageHeader title={expense.title || expensesCopy.mine.untitled} back={back}>

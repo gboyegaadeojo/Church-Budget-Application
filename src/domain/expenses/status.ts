@@ -2,6 +2,10 @@
  * Expense submission status machine (FR-45). Every status change goes through
  * `transition`; the server rejects anything else. Purchase requests and expense claims
  * share the machine; a few events are for one type only (`EVENT_TYPES`).
+ *
+ * The two approvals run side by side (decided 2026-10-16): the accountant and the Board
+ * Chair are both asked at submission and either may decide first. The first approval
+ * moves it to "waiting for the other"; the second makes it Approved.
  */
 
 export const EXPENSE_STATUSES = [
@@ -10,6 +14,7 @@ export const EXPENSE_STATUSES = [
   "in_review",
   "returned",
   "awaiting_board",
+  "awaiting_accountant",
   "approved",
   "processing",
   "paid",
@@ -31,16 +36,14 @@ export type ExpenseEvent =
   | "respond"
   /** The requester withdraws it before any approval (FR-44). */
   | "withdraw"
-  /** The accountant opens it for review; editing stops (FR-44). */
+  /** Either approver opens it for review; editing stops (FR-44). */
   | "start_review"
-  /** The accountant asks the requester a question. */
+  /** Either approver asks the requester a question; both approve again afterwards. */
   | "return"
-  /** The accountant's approval: it goes to the Board Chair (6B.4). */
-  | "approve"
-  /** The Board Chair sends it back to the accountant with a question. */
-  | "board_return"
-  /** The Board Chair's (or Vice-Chair's) final approval: the budget is charged. */
-  | "final_approve"
+  /** The accountant's approval: final if the Board Chair has already approved. */
+  | "accountant_approve"
+  /** The Board Chair's (or Vice-Chair's) approval: final if the accountant has approved. */
+  | "board_approve"
   /** Either level declines, with a reason. */
   | "decline"
   /** The Church Administrator starts the payment or purchase (6B.5). */
@@ -59,11 +62,10 @@ const TRANSITIONS: Record<ExpenseEvent, Partial<Record<ExpenseStatus, ExpenseSta
   respond: { returned: "submitted" },
   withdraw: { submitted: "withdrawn", returned: "withdrawn" },
   start_review: { submitted: "in_review" },
-  return: { in_review: "returned" },
-  approve: { in_review: "awaiting_board" },
-  board_return: { awaiting_board: "in_review" },
-  final_approve: { awaiting_board: "approved" },
-  decline: { in_review: "declined", awaiting_board: "declined" },
+  return: { in_review: "returned", awaiting_board: "returned", awaiting_accountant: "returned" },
+  accountant_approve: { in_review: "awaiting_board", awaiting_accountant: "approved" },
+  board_approve: { in_review: "awaiting_accountant", awaiting_board: "approved" },
+  decline: { in_review: "declined", awaiting_board: "declined", awaiting_accountant: "declined" },
   start_processing: { approved: "processing" },
   pay: { processing: "paid" },
   purchase: { processing: "purchased" },
@@ -138,7 +140,34 @@ export const PENDING_STATUSES: readonly ExpenseStatus[] = [
   "in_review",
   "returned",
   "awaiting_board",
+  "awaiting_accountant",
 ];
+
+/** Still waiting for the accountant's approval in this round. */
+export const ACCOUNTANT_WAITING: readonly ExpenseStatus[] = [
+  "submitted",
+  "in_review",
+  "awaiting_accountant",
+];
+
+/** Still waiting for the Board Chair's (or Vice-Chair's) approval in this round. */
+export const BOARD_WAITING: readonly ExpenseStatus[] = ["submitted", "in_review", "awaiting_board"];
+
+/** Both approvals given, at any later step. */
+export const FULLY_APPROVED: readonly ExpenseStatus[] = [
+  "approved",
+  "processing",
+  "paid",
+  "purchased",
+  "closed",
+  "cancelled",
+];
+
+/** Whether this level has approved in the current round. */
+export function levelApproved(status: ExpenseStatus, level: "accountant" | "board"): boolean {
+  if (FULLY_APPROVED.includes(status)) return true;
+  return level === "accountant" ? status === "awaiting_board" : status === "awaiting_accountant";
+}
 
 /** Both approvals given, not yet finished: an open purchase request is Committed (FR-25). */
 export const COMMITTED_STATUSES: readonly ExpenseStatus[] = ["approved", "processing"];

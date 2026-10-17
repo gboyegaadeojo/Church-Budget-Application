@@ -152,11 +152,14 @@ describe("over budget at final approval (FR-43, AC-139)", () => {
 });
 
 describe("returning and declining", () => {
-  it("returns to the accountant: In Review again, budget untouched", async () => {
+  it("returns to the department: both approvals are needed again, budget untouched", async () => {
     const world = await expenseWorld(db);
     const id = await awaitingBoard(world, "purchase_request");
     await board(world.chair, id, { kind: "return", note: "Is there a cheaper model?" });
-    expect((await loadExpense(db, id)).status).toBe("in_review");
+    expect(await loadExpense(db, id)).toMatchObject({
+      status: "returned",
+      approvedTotalCents: null,
+    });
     expect((await budgetFigures(db, world.cycle.id, world.media.id)).committed).toBe(0);
   });
 
@@ -167,10 +170,66 @@ describe("returning and declining", () => {
     expect((await loadExpense(db, id)).status).toBe("declined");
   });
 
-  it("can't decide before the accountant has", async () => {
+  it("declines before the accountant has decided", async () => {
     const world = await expenseWorld(db);
     const { expenseId } = await submitted(db, world, "purchase_request");
-    await expect(board(world.chair, expenseId, { kind: "approve" })).rejects.toThrow();
+    await board(world.chair, expenseId, { kind: "decline", note: "Not this year." });
+    expect((await loadExpense(db, expenseId)).status).toBe("declined");
+  });
+});
+
+describe("the two approvals in either order (AC-142, AC-143)", () => {
+  it("AC-142: the Board Chair can approve first; the accountant's approval completes it", async () => {
+    const world = await expenseWorld(db);
+    const { expenseId: id } = await submitted(db, world, "purchase_request");
+    const first = await board(world.chair, id, { kind: "approve" });
+    expect(first.status).toBe("awaiting_accountant");
+    // Not charged until both have approved (AC-73).
+    expect((await budgetFigures(db, world.cycle.id, world.media.id)).committed).toBe(0);
+    // The board can't approve twice.
+    await expect(board(world.chair, id, { kind: "approve" })).rejects.toThrow(RuleError);
+
+    await accountantApproves(world, id);
+    expect(await loadExpense(db, id)).toMatchObject({ status: "approved" });
+    expect((await budgetFigures(db, world.cycle.id, world.media.id)).committed).toBe(100_800);
+  });
+
+  it("AC-143: the lower of the two approved amounts is final, whichever comes first", async () => {
+    const world = await expenseWorld(db);
+    // The board approves less first; the accountant then approves as asked.
+    const { expenseId: a } = await submitted(db, world, "purchase_request");
+    await board(world.chair, a, { kind: "approve_smaller", amount: "500.00", note: "One only" });
+    await accountantApproves(world, a);
+    expect(await loadExpense(db, a)).toMatchObject({
+      status: "approved",
+      approvedSubtotalCents: 44_643,
+      approvedTaxCents: 5_357,
+      approvedTotalCents: 50_000,
+    });
+
+    // The accountant approves less first; the board then approves as asked.
+    const { expenseId: b } = await submitted(db, world, "purchase_request");
+    const row = await loadExpense(db, b);
+    await run((tx) =>
+      accountantDecide(tx, world.accountant, {
+        id: b,
+        version: row.version,
+        idempotencyKey: randomUUID(),
+        decision: { kind: "approve_different_amount", amount: "600.00", note: "Smaller kit" },
+      }),
+    );
+    const result = await board(world.chair, b, { kind: "approve" });
+    expect(result).toMatchObject({ status: "approved", approved: { total: 60_000 } });
+
+    // Each approver's own amount is kept on their decision.
+    const decisions = await db
+      .select()
+      .from(expenseDecisions)
+      .where(eq(expenseDecisions.expenseSubmissionId, b));
+    expect(decisions.map((d) => [d.level, d.approvedTotalCents]).sort()).toEqual([
+      ["accountant", 60_000],
+      ["board", 100_800],
+    ]);
   });
 });
 
