@@ -134,13 +134,6 @@
       "when": 1792190926555,
       "tag": "0018_expenses",
       "breakpoints": true
-    },
-    {
-      "idx": 19,
-      "version": "7",
-      "when": 1792207231646,
-      "tag": "0019_expense_submitters",
-      "breakpoints": true
     }
   ]
 }
