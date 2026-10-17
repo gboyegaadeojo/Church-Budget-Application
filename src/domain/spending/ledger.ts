@@ -81,6 +81,8 @@ export async function getLedger(
   viewer: Subject,
   cycleId?: string,
   filters: LedgerFilters = {},
+  /** Exports take every row; the screen shows the latest 1,000. */
+  { all = false }: { all?: boolean } = {},
 ): Promise<Ledger | null> {
   const access = authorize(viewer, "spending.view");
   if (!access.allowed) return null;
@@ -102,7 +104,7 @@ export async function getLedger(
   if (!chosen) {
     return { ...base, cycleId: null, rows: [], spentCents: 0, departments: [], people: [] };
   }
-  const raw = await tx
+  const query = tx
     .select({
       entry: spendingEntries,
       department: departments.name,
@@ -115,7 +117,8 @@ export async function getLedger(
     .leftJoin(expenseSubmissions, eq(expenseSubmissions.id, spendingEntries.expenseSubmissionId))
     .where(and(eq(spendingEntries.budgetCycleId, chosen), ...conditions(filters)))
     .orderBy(desc(spendingEntries.spentOn), asc(spendingEntries.createdAt))
-    .limit(1000);
+    .$dynamic();
+  const raw = await (all ? query : query.limit(1000));
   const rows: LedgerRow[] = raw.map(({ entry, department, expenseReference, enteredBy }) => ({
     id: entry.id,
     spentOn: entry.spentOn,

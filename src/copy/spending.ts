@@ -54,6 +54,7 @@ export const spendingCopy = {
     noCycle: "There's no budget cycle yet.",
     locked: (when: string) => `Spending is locked since ${when}. Nothing can be added or changed.`,
     record: "Record spending",
+    export: "Export to Excel",
     ledger: "Ledger",
     open: (department: string) => `Open ${department}`,
     usedOf: (used: string) => `${used} used`,

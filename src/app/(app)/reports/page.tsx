@@ -16,6 +16,7 @@ import { cn } from "@/lib/cn";
 import { getViewer } from "@/lib/viewer";
 import { AnnualExportForm } from "./annual-export-form";
 import { ExpenseExportForm } from "./expense-export-form";
+import { SpendingExportForm } from "./spending-export-form";
 
 const p = exportsCopy.page;
 const title = labelForHref("/reports") ?? p.title;
@@ -24,8 +25,7 @@ export const metadata: Metadata = { title };
 
 /**
  * Reports & exports (FR-20, DRD 6.10): one card per report in its area's colour, each
- * saying what it holds before the download. Reports still to come are shown, greyed, with
- * the stage that brings them.
+ * saying what it holds before the download.
  */
 export default function ReportsPage() {
   return (
@@ -41,11 +41,12 @@ async function ReportsContent() {
   const viewer = await getViewer();
   const canExportAnnual = authorize(viewer, "annual.export_all").allowed;
   const canExportExpenses = authorize(viewer, "expense.export").allowed;
+  const canExportSpending = authorize(viewer, "spending.export").allowed;
   const seesActivity = authorize(viewer, "analytics.view").allowed;
 
   const db = getDb();
   const [cycles, departmentRows] =
-    canExportAnnual || canExportExpenses
+    canExportAnnual || canExportExpenses || canExportSpending
       ? await Promise.all([
           db
             .select({ id: budgetCycles.id, name: budgetCycles.name, status: budgetCycles.status })
@@ -64,7 +65,7 @@ async function ReportsContent() {
   return (
     <>
       <PageHeader title={title} intro={p.intro} />
-      {!canExportAnnual && !canExportExpenses && (
+      {!canExportAnnual && !canExportExpenses && !canExportSpending && (
         <p className="text-sm text-fg-muted">{p.nothingForYou}</p>
       )}
 
@@ -145,6 +146,41 @@ async function ReportsContent() {
           </ReportCard>
         )}
 
+        {canExportSpending && defaultCycle && (
+          <ReportCard
+            id="spending-export"
+            area="spending"
+            title={exportsCopy.spending.heading}
+            intro={exportsCopy.spending.intro}
+            className="md:col-span-2 xl:col-span-3"
+          >
+            <details className="group rounded-control border border-border text-sm">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 font-medium [&::-webkit-details-marker]:hidden">
+                {p.sheetsHeading}
+                <ChevronDown
+                  aria-hidden="true"
+                  className="ml-auto size-4 text-fg-muted transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <ul className="list-disc space-y-1 border-t border-border py-3 pr-3 pl-8 text-fg-muted">
+                {exportsCopy.spending.sheets.map((sheet) => (
+                  <li key={sheet.name}>
+                    <span className="font-medium text-fg">{sheet.name}:</span> {sheet.columns}
+                  </li>
+                ))}
+              </ul>
+            </details>
+            <SpendingExportForm
+              cycles={cycles.map((c) => ({
+                id: c.id,
+                label: `${c.name} (${cycleStatus[c.status] ?? c.status})`,
+              }))}
+              departments={departmentRows}
+              defaultCycleId={defaultCycle.id}
+            />
+          </ReportCard>
+        )}
+
         {seesActivity && (
           <ReportCard
             id="activity-report"
@@ -159,17 +195,6 @@ async function ReportsContent() {
             </Link>
           </ReportCard>
         )}
-
-        {p.later.map((report) => (
-          <ReportCard
-            key={report.area}
-            id={`${report.area}-report`}
-            area={report.area}
-            title={report.title}
-            intro={report.intro}
-            soon={report.stage}
-          />
-        ))}
       </div>
     </>
   );

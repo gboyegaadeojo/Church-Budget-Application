@@ -69,6 +69,7 @@ export type Dashboard = {
   canRecord: boolean;
   canAmend: boolean;
   canLock: boolean;
+  canExport: boolean;
 };
 
 const EMPTY_TOTALS = {
@@ -102,6 +103,7 @@ export async function spendingDashboard(
     canRecord: authorize(viewer, "spending.record").allowed,
     canAmend: authorize(viewer, "spending.amend").allowed,
     canLock: authorize(viewer, "spending.lock").allowed,
+    canExport: authorize(viewer, "spending.export").allowed,
   };
   const threshold = await nearLimitThreshold(tx);
   if (!chosen) return { cycles, cycle: null, rows: [], totals: EMPTY_TOTALS, threshold, ...flags };

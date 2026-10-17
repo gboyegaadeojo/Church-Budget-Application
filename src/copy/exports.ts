@@ -30,16 +30,65 @@ export const exportsCopy = {
     activityIntro:
       "Who did what and when, with filters and its own Excel export, on Analytics & Audit.",
     activityOpen: "Open Analytics & Audit",
-    later: [
+    nothingForYou: "There are no reports for your roles.",
+  },
+  /** The spending workbook (FR-26 Export, AC-91). */
+  spending: {
+    heading: "Spending and budget vs actual",
+    intro:
+      "Each department's budget against what was spent, every spending entry, and the amendments, for a budget year.",
+    sheets: [
       {
-        area: "spending",
-        title: "Spending and budget vs actual",
-        intro: "Spending entries, refunds and what's left of each department's budget.",
-        stage: "Coming in Stage 4",
+        name: "Budget vs Actual",
+        columns:
+          "one row per department: approved, amendments, available, committed, spent, remaining, percentage used, status, unbudgeted spending and last entry date, with a Total row that matches the Spending dashboard.",
+      },
+      {
+        name: "Ledger",
+        columns:
+          "every spending entry: date paid, department, payee, description, type, amount (refunds negative), payment method, reference, expense, status (voided entries stay, at zero in the total) and who entered it.",
+      },
+      {
+        name: "Amendments",
+        columns:
+          "every budget amendment: date, department, amount before tax, tax, total, tax rate, reason, board reference and who made it.",
       },
     ],
-    nothingForYou:
-      "There are no reports for your roles yet. Spending reports arrive with spending tracking.",
+    workbookTitle: (cycle: string) => `Spending, ${cycle}`,
+    locked: "Spending for this year is locked.",
+    ledgerTotal: "Total spent (voided entries not counted)",
+    sheetNames: { budget: "Budget vs Actual", ledger: "Ledger", amendments: "Amendments" },
+    columns: {
+      department: "Department",
+      approved: "Approved",
+      amendments: "Amendments",
+      available: "Available",
+      committed: "Committed",
+      spent: "Spent",
+      remaining: "Remaining",
+      used: "Used",
+      status: "Status",
+      unbudgeted: "Unbudgeted spending",
+      lastEntry: "Last entry",
+      date: "Date paid",
+      payee: "Payee",
+      description: "Description",
+      type: "Type",
+      amount: "Amount",
+      method: "Payment method",
+      reference: "Reference",
+      expense: "Expense",
+      entryStatus: "Status",
+      enteredBy: "Entered by",
+      createdAt: "Date",
+      beforeTax: "Before tax",
+      tax: "Tax",
+      total: "Total (incl. tax)",
+      rate: "Tax rate",
+      reason: "Reason",
+      boardReference: "Board reference",
+      by: "By",
+    },
   },
   /** The expense workbook (FR-50). */
   expenses: {

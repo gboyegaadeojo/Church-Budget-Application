@@ -94,6 +94,7 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "expenses.paid": { label: "Recorded a payment", group: "money" },
   "expenses.purchased": { label: "Recorded a purchase", group: "money" },
   "expenses.exported": { label: "Exported expenses to Excel", group: "exports" },
+  "spending.exported": { label: "Exported spending to Excel", group: "exports" },
   "spending.entry_from_expense": {
     label: "Spending recorded from an expense",
     group: "money",
