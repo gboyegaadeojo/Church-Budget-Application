@@ -56,7 +56,7 @@ export const annualCopy = {
     // Scheduled release (FR-19a)
     releaseAtRequired: "Choose the date and time the decisions go out.",
     releaseAtInvalid: "Enter a date and time, like 2026-12-01 09:00.",
-    releaseAtFuture: "Choose a time in the future, or use Release now.",
+    releaseAtFuture: "Choose a time in the future.",
     releaseMessageTooLong: "Keep the message under 1,000 characters.",
     notHolding: "Decisions for this cycle aren't being held.",
     releaseCycleNotOpen: "Decisions can only be held for an open cycle.",
@@ -132,7 +132,8 @@ export const annualCopy = {
       scheduled: "Hold and release on a date",
     },
     modeHints: {
-      immediate: "Each approval or decline is emailed when you confirm it.",
+      immediate:
+        "Each approval or decline is emailed to the department when you confirm it, so there's nothing to release later. To send every decision together instead, hold them until a date.",
       scheduled:
         "Decide every department first; all the decisions go out together at the time you choose. Questions (Return for clarification) are never held.",
     },
@@ -142,6 +143,8 @@ export const annualCopy = {
         `Decisions are held until ${when}. Departments won't see them before then.`,
       released: (when: string) =>
         `Decisions were released on ${when}. Decisions made now are sent straight away.`,
+      overdue: (when: string, n: number) =>
+        `The release time (${when}) has passed, but ${n === 1 ? "1 decision hasn't" : `${n} decisions haven't`} been sent yet. Use Release now to send ${n === 1 ? "it" : "them"}.`,
     },
     releaseAt: "Release date and time",
     releaseAtHint: (zone: string) => `Church time (${zone}). Emails go within 15 minutes of it.`,
