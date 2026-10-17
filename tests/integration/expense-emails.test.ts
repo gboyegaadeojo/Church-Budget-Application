@@ -241,28 +241,55 @@ describe("the whole way through (AC-79)", () => {
 });
 
 describe("reminders (FR-49)", () => {
-  it("reminds the board after 7 days, the office after 14, and once a week only", async () => {
+  it("AC-144: reminds each approver daily after 5 days, until they decide", async () => {
     const world = await expenseWorld(db);
-    const { expenseId: waiting } = await submitted(db, world, "purchase_request");
-    await act(waiting, (tx, input) =>
-      accountantDecide(tx, world.accountant, { ...input, decision: { kind: "approve" } }),
-    );
-    const later = new Date(Date.now() + 8 * 86_400_000);
-    const first = await runExpenseReminders(db, later);
-    expect(first.board).toBeGreaterThan(0);
-    const again = await runExpenseReminders(db, later);
-    expect(again.board).toBe(0);
-    const reminded = await db
-      .select({ to: emailOutbox.toEmail })
-      .from(emailOutbox)
-      .where(like(emailOutbox.template, "expenses.reminder.board%"));
-    expect(reminded.map((r) => r.to)).toContain(world.chair.email);
+    const { expenseId: id } = await submitted(db, world, "purchase_request");
+    const day = (n: number) => new Date(Date.now() + n * 86_400_000);
+    const remindersTo = async (email: string) =>
+      (
+        await db
+          .select({ key: emailOutbox.dedupeKey })
+          .from(emailOutbox)
+          .where(
+            and(
+              like(emailOutbox.template, "expenses.reminder.approval%"),
+              eq(emailOutbox.toEmail, email),
+            ),
+          )
+      ).length;
 
-    await act(waiting, (tx, input) =>
+    // Day 4: not yet.
+    await runExpenseReminders(db, day(4));
+    expect(await remindersTo(world.chair.email)).toBe(0);
+    expect(await remindersTo(world.accountant.email)).toBe(0);
+
+    // Day 6: both approvers are reminded; running again the same day sends nothing new.
+    expect((await runExpenseReminders(db, day(6))).approval).toBeGreaterThan(0);
+    expect(await remindersTo(world.chair.email)).toBe(1);
+    expect(await remindersTo(world.accountant.email)).toBe(1);
+    await runExpenseReminders(db, day(6));
+    expect(await remindersTo(world.chair.email)).toBe(1);
+
+    // The next day, again.
+    await runExpenseReminders(db, day(7));
+    expect(await remindersTo(world.chair.email)).toBe(2);
+    expect(await remindersTo(world.accountant.email)).toBe(2);
+
+    // Once the Board Chair approves, only the accountant is still reminded.
+    await act(id, (tx, input) =>
       boardDecide(tx, world.chair, { ...input, decision: { kind: "approve" } }),
     );
-    const muchLater = new Date(Date.now() + 20 * 86_400_000);
-    expect((await runExpenseReminders(db, muchLater)).payment).toBeGreaterThan(0);
+    await runExpenseReminders(db, day(8));
+    expect(await remindersTo(world.chair.email)).toBe(2);
+    expect(await remindersTo(world.accountant.email)).toBe(3);
+
+    // Approved: no more approval reminders; the office is reminded to process it later.
+    await act(id, (tx, input) =>
+      accountantDecide(tx, world.accountant, { ...input, decision: { kind: "approve" } }),
+    );
+    await runExpenseReminders(db, day(9));
+    expect(await remindersTo(world.accountant.email)).toBe(3);
+    expect((await runExpenseReminders(db, day(30))).payment).toBeGreaterThan(0);
   });
 
   it("reminds a requester whose approved purchase isn't bought or claimed after 60 days", async () => {

@@ -100,7 +100,7 @@ describe("migration", () => {
       claim_deadline_days: "90",
       unclaimed_purchase_reminder_days: "60",
       payment_reminder_days: "14",
-      board_reminder_days: "7",
+      approval_reminder_days: "5",
     });
   });
 });
