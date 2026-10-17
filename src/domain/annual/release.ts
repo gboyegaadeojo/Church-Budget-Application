@@ -462,7 +462,8 @@ export type ReleaseNowResult = { released: number; releasedAt: string };
 
 /**
  * Release now (AC-19): every held decision goes out at once, and the release time
- * becomes now, so decisions made afterwards are sent immediately.
+ * becomes now, so decisions made afterwards are sent immediately. It works while
+ * decisions are held, including after a release time the job hasn't reached yet.
  */
 export async function releaseNow(
   tx: Tx,
@@ -476,7 +477,11 @@ export async function releaseNow(
   const { actingRole } = assertCan(actor, "annual.release");
   const version = parseVersion(input.version);
   const cycle = await loadCycle(tx, input.cycleId);
-  if (!isHolding(cycle, now)) throw new RuleError(e.notHolding);
+  // Also once the release time has passed but the 15-minute job hasn't run yet: the
+  // decisions are still held, and the accountant can send them without waiting.
+  if (!isHolding(cycle, now) && (await heldDecisions(tx, { cycleId: cycle.id })).length === 0) {
+    throw new RuleError(e.notHolding);
+  }
   const by = userActor(actor, actingRole);
 
   await bumpCycle(tx, cycle, version, actor.id, { decisionReleaseAt: now });

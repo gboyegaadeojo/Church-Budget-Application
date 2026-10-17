@@ -24,7 +24,7 @@ import { decideRequest, reopenRequest } from "@/domain/annual/review";
 import { getReviewView } from "@/domain/annual/review-queries";
 import type { RequestContentInput } from "@/domain/annual/schema";
 import { saveDraft, startRequest, submitRequest } from "@/domain/annual/service";
-import { ValidationError } from "@/domain/errors";
+import { RuleError, ValidationError } from "@/domain/errors";
 import { globalSearch } from "@/domain/search";
 import { loadViewer } from "@/domain/users/viewer";
 import { ForbiddenError, type Subject } from "@/lib/authz";
@@ -324,6 +324,34 @@ describe("Release now and Cancel schedule (AC-19)", () => {
     const result = await decide(c.requestId, { kind: "approve_as_requested" }, later);
     expect(result.heldUntil).toBeNull();
     expect(await emailsAbout(c.requestId, "annual.approved")).toHaveLength(1);
+  });
+
+  it("AC-19 Release now still works after the release time if the job hasn't run", async () => {
+    const cycle = await newCycle();
+    const a = await submitted(cycle.id);
+    await hold(cycle.id);
+    await decide(a.requestId, { kind: "approve_as_requested" });
+
+    // Past Dec 1, 9:00 a.m., but the 15-minute job never ran (as on a local server).
+    const after = new Date("2026-12-01T16:00:00Z");
+    const overview = await run((tx) => getReleaseOverview(tx, accountant, cycle.id, after));
+    expect(overview!.holding).toBe(false);
+    expect(overview!.held.map((h) => h.requestId)).toEqual([a.requestId]);
+
+    const input = { cycleId: cycle.id, version: await cycleVersion(cycle.id) };
+    const result = await run((tx) =>
+      releaseNow(tx, accountant, { ...input, idempotencyKey: randomUUID() }, { now: after }),
+    );
+    expect(result.released).toBe(1);
+    expect(await emailsAbout(a.requestId, "annual.approved")).toHaveLength(1);
+
+    // Once nothing is held, there's nothing to release.
+    const again = { cycleId: cycle.id, version: await cycleVersion(cycle.id) };
+    await expect(
+      run((tx) =>
+        releaseNow(tx, accountant, { ...again, idempotencyKey: randomUUID() }, { now: after }),
+      ),
+    ).rejects.toThrow(RuleError);
   });
 
   it("Cancel schedule sends what's held and goes back to sending immediately", async () => {

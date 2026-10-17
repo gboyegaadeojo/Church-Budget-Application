@@ -66,6 +66,7 @@ export async function reopenAction(input: {
   version: number;
   idempotencyKey: string;
   reason: string;
+  confirmExpenses?: boolean;
 }): Promise<ActionState> {
   const result = await runForResult(
     async (tx, viewer) => ({
