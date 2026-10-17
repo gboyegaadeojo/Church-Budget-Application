@@ -743,6 +743,14 @@ The church asked that the "approval needed" email go to both approvers at the sa
 - Dates compare the day submitted in the church's time zone. The amount is the approved amount once there is one, otherwise the amount asked. Amounts are read as cents with `parseCAD`, never floats.
 - The form is a plain GET, so filters stay in the address (DRD 6.0) and work without JavaScript. Anything that doesn't parse (a date like 2026-02-31, "abc" as an amount) is ignored rather than refused.
 
+## Expense submitter permission (6B.2) (2026-10-16)
+
+- **Model:** a new `expense_submitters` table (person, department, who added it, when; removals recorded with who and when, never deleted). Not a new role: the person holds the **Requester** role, so they're checked in Planning Center like every requester (Requirements 10.x "including Expense submitters"), and the System Administrator adds departments on their user page. Both changes are audited (`admin.expense_submitter_added`, `admin.expense_submitter_removed`).
+- **What they can do:** start and submit expenses for the departments they're given, and see, change, withdraw and answer questions on what **they** submitted, nothing else of the department (no annual budget, no other people's expenses, no cancelling an approved purchase request, no spending). `authz.ts` has one rule, `submitsFor`, for `expense.submit` and `expense.view`.
+- **Leaders still see everything** their department submits, and get its emails (AC-141), so a volunteer's claim is never hidden from the department.
+- **Access:** being given a department lets a verified person who was waiting for one sign in (FR-01a). Removing the last one puts them back to waiting.
+- **Not built:** "the Church Administrator submits a claim on behalf of another person" (6B.2 table). The Church Administrator can be made an Expense submitter for a department if needed, and any claim can already name someone else as the payee.
+
 ## Home: At a glance (FR-37, DRD 6.0) (2026-10-16)
 
 - One card per role the person holds, each linking to its work (`src/domain/home/glance.ts`):

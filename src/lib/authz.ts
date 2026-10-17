@@ -13,7 +13,7 @@ import type { Role, Viewer } from "./roles";
  * `assertCan` before doing anything.
  */
 
-export type Subject = Pick<Viewer, "id" | "roles" | "departments">;
+export type Subject = Pick<Viewer, "id" | "roles" | "departments" | "expenseDepartments">;
 
 export type Action =
   // Annual budgets (Part A)
@@ -145,6 +145,17 @@ function represents(subject: Subject, departmentId: string | undefined): boolean
 const ownDepartment: Check = (s, ctx) =>
   represents(s, ctx.departmentId) ? null : "not_department_representative";
 
+/**
+ * 6B.2: a representative, or an Expense submitter for the department. A submitter acts
+ * only on what they submitted (a new expense has no submitter yet).
+ */
+const submitsFor: Check = (s, ctx) => {
+  if (represents(s, ctx.departmentId)) return null;
+  const given = s.expenseDepartments?.some((d) => d.id === ctx.departmentId) ?? false;
+  const theirs = ctx.requesterUserId === undefined || ctx.requesterUserId === s.id;
+  return given && theirs ? null : "not_department_representative";
+};
+
 const primaryOfDepartment: Check = (s, ctx) =>
   s.departments.some((d) => d.id === ctx.departmentId && d.representativeType === "primary")
     ? null
@@ -214,7 +225,7 @@ const RULES: Record<Action, readonly Rule[]> = {
   ],
 
   "expense.view": [
-    { roles: ["requester"], check: ownDepartment },
+    { roles: ["requester"], check: submitsFor },
     { roles: [...ACCOUNTANTS, "church_admin"] },
     { roles: BOARD, check: sentToBoard, readOnly: true },
     { roles: ["system_admin"], readOnly: true },
@@ -223,7 +234,7 @@ const RULES: Record<Action, readonly Rule[]> = {
     { roles: [...ACCOUNTANTS, "church_admin"] },
     { roles: ["system_admin"], readOnly: true },
   ],
-  "expense.submit": [{ roles: ["requester"], check: ownDepartment }],
+  "expense.submit": [{ roles: ["requester"], check: submitsFor }],
   "expense.review_queue": [{ roles: ACCOUNTANTS }, { roles: ["system_admin"], readOnly: true }],
   "expense.first_approve": [{ roles: ACCOUNTANTS, check: notOwnDepartmentOrPayee }],
   "expense.board_queue": [{ roles: BOARD }, { roles: ["system_admin"], readOnly: true }],
@@ -237,7 +248,7 @@ const RULES: Record<Action, readonly Rule[]> = {
   "expense.cancel": [{ roles: ["requester"], check: ownDepartment }, { roles: ACCOUNTANTS }],
   "expense.export": [{ roles: [...ACCOUNTANTS, "church_admin", "system_admin"] }],
   "expense.message_send": [
-    { roles: ["requester"], check: ownDepartment },
+    { roles: ["requester"], check: submitsFor },
     { roles: ACCOUNTANTS },
     { roles: BOARD, check: sentToBoard },
     { roles: ["church_admin"] },

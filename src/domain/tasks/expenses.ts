@@ -1,4 +1,4 @@
-import { and, inArray, or } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { expensesCopy } from "@/copy/expenses";
 import { expenseSubmissions } from "@/db/schema";
 import type { Tx } from "@/db/types";
@@ -21,7 +21,8 @@ const t = expensesCopy.tasks;
  */
 export function canHaveExpenseTasks(viewer: Viewer): boolean {
   return (
-    (viewer.roles.includes("requester") && viewer.departments.length > 0) ||
+    (viewer.roles.includes("requester") &&
+      viewer.departments.length + (viewer.expenseDepartments?.length ?? 0) > 0) ||
     hasRole(viewer, "accountant", "backup_approver", "board_chair", "vice_chair", "church_admin")
   );
 }
@@ -52,6 +53,13 @@ export async function expenseTasks(
           inArray(expenseSubmissions.status, ["draft", "returned", "approved"]),
         )
       : undefined,
+    // An Expense submitter (6B.2): what they submitted themselves.
+    (viewer.expenseDepartments?.length ?? 0) > 0
+      ? and(
+          eq(expenseSubmissions.requesterUserId, viewer.id),
+          inArray(expenseSubmissions.status, ["draft", "returned", "approved"]),
+        )
+      : undefined,
     accountant ? inArray(expenseSubmissions.status, [...ACCOUNTANT_WAITING]) : undefined,
     boardMember ? inArray(expenseSubmissions.status, [...BOARD_WAITING]) : undefined,
     payer ? inArray(expenseSubmissions.status, ["approved", "processing"]) : undefined,
@@ -71,7 +79,9 @@ export async function expenseTasks(
       item: label(r),
       ...(amountCents ? { amountCents } : {}),
     };
-    const ours = mine.includes(r.departmentId);
+    const ours =
+      mine.includes(r.departmentId) ||
+      ((viewer.expenseDepartments?.length ?? 0) > 0 && r.requesterUserId === viewer.id);
     if (ours && r.status === "draft" && r.requesterUserId === viewer.id) {
       tasks.push({
         ...base,

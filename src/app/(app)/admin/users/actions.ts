@@ -11,6 +11,7 @@ import {
   unlinkPlanningCenterPerson,
   type PcoCandidate,
 } from "@/domain/users/admin";
+import { addExpenseSubmitter, removeExpenseSubmitter } from "@/domain/users/expense-submitters";
 import type { ActionState } from "@/lib/action-state";
 import { form, runAction } from "@/lib/admin-server";
 import { PlanningCenterUnavailableError, type PlanningCenterDirectory } from "@/lib/pco";
@@ -60,6 +61,36 @@ export async function setActiveAction(_: ActionState, data: FormData): Promise<A
       return active ? u.reactivated(name) : u.deactivated(name);
     },
     { paths: ["/admin/users", `/admin/users/${userId}`] },
+  );
+}
+
+// ---------------------------------------------------------------- Expense submitter (6B.2)
+
+export async function addSubmitterAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const userId = form.text(data, "userId");
+  return runAction(
+    async (tx, viewer) => {
+      const { department } = await addExpenseSubmitter(tx, viewer, {
+        userId,
+        departmentId: form.text(data, "departmentId"),
+      });
+      return u.submitter.added(department);
+    },
+    { paths: [`/admin/users/${userId}`] },
+  );
+}
+
+export async function removeSubmitterAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const userId = form.text(data, "userId");
+  return runAction(
+    async (tx, viewer) => {
+      const { department } = await removeExpenseSubmitter(tx, viewer, {
+        userId,
+        departmentId: form.text(data, "departmentId"),
+      });
+      return u.submitter.removed(department);
+    },
+    { paths: [`/admin/users/${userId}`] },
   );
 }
 

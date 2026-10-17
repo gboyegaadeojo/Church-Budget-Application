@@ -99,7 +99,10 @@ async function MyExpensesContent({
         <ExpenseFilterForm
           basePath="/expenses/mine"
           filters={filters}
-          departments={viewer.departments.map((d) => ({ id: d.id, name: d.name }))}
+          departments={[...viewer.departments, ...(viewer.expenseDepartments ?? [])].map((d) => ({
+            id: d.id,
+            name: d.name,
+          }))}
           statuses={EXPENSE_STATUSES}
         />
         {sorted.length === 0 && filtered ? (

@@ -1,5 +1,5 @@
-import { and, eq, ne } from "drizzle-orm";
-import { userDepartments, users } from "@/db/schema";
+import { and, eq, isNull, ne } from "drizzle-orm";
+import { expenseSubmitters, userDepartments, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { promoteBackupsWhenPrimaryLeaves } from "@/domain/departments/service";
 import { writeAudit, type AuditActor } from "@/lib/audit";
@@ -22,7 +22,14 @@ async function hasDepartments(tx: Tx, userId: string): Promise<boolean> {
     .from(userDepartments)
     .where(eq(userDepartments.userId, userId))
     .limit(1);
-  return rows.length > 0;
+  if (rows.length > 0) return true;
+  // An Expense submitter has departments too (6B.2).
+  const given = await tx
+    .select({ id: expenseSubmitters.id })
+    .from(expenseSubmitters)
+    .where(and(eq(expenseSubmitters.userId, userId), isNull(expenseSubmitters.removedAt)))
+    .limit(1);
+  return given.length > 0;
 }
 
 /** Whether another account already holds this Planning Center person. */

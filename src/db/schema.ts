@@ -214,6 +214,36 @@ export const departments = pgTable(
   ],
 );
 
+/**
+ * Expense submitters (6B.2): someone who isn't a department representative (for example a
+ * volunteer who buys for Media) may submit expenses for the departments they're given.
+ * A removal is recorded, not deleted, so past assignments stay in the history.
+ */
+export const expenseSubmitters = pgTable(
+  "expense_submitters",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    departmentId: uuid("department_id")
+      .notNull()
+      .references(() => departments.id),
+    assignedByUserId: uuid("assigned_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    createdAt: createdAt(),
+    removedAt: timestamp("removed_at", { withTimezone: true }),
+    removedByUserId: uuid("removed_by_user_id").references(() => users.id),
+  },
+  (t) => [
+    uniqueIndex("expense_submitters_active_key")
+      .on(t.userId, t.departmentId)
+      .where(sql`${t.removedAt} is null`),
+    index("expense_submitters_department_idx").on(t.departmentId),
+  ],
+);
+
 /** Who represents which department, as Primary, Backup or Representative (FR-38). */
 export const userDepartments = pgTable(
   "user_departments",
