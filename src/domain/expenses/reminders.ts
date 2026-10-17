@@ -7,14 +7,14 @@ import { emailBrand } from "@/domain/notifications/notice";
 import {
   accountantRecipients,
   boardCover,
-  person,
   usersWithRole,
   type NamedRecipient,
 } from "@/domain/notifications/recipients";
 import { daysSetting } from "@/domain/settings";
 import { appUrl } from "@/lib/email/layout";
-import { enqueueEmail } from "@/lib/email/outbox";
+import { enqueueEmail, type Recipient } from "@/lib/email/outbox";
 import { formatCAD } from "@/lib/money";
+import { requesterGroup } from "./emails";
 import { isProcessable } from "./payment";
 
 /**
@@ -50,7 +50,7 @@ async function queueList(
   input: {
     template: string;
     audience: "board" | "accountant" | "church_admin" | "requester";
-    to: NamedRecipient[];
+    to: Recipient[];
     subject: string;
     heading: string;
     intro: string;
@@ -200,7 +200,7 @@ export async function runExpenseReminders(
       summary.unclaimed += await queueList(tx, {
         template: "expenses.reminder.unclaimed",
         audience: "requester",
-        to: await person(tx, e.requesterUserId),
+        to: await requesterGroup(tx, e),
         subject: u.subject(e.referenceNumber ?? ""),
         heading: u.heading,
         intro: u.intro(unclaimedDays),
