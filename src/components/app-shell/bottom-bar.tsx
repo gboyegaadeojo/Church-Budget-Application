@@ -102,7 +102,7 @@ function MoreSheet({ areas, pathname }: { areas: NavArea[]; pathname: string }) 
             </div>
             <Dialog.Close
               aria-label={copy.nav.closeMenu}
-              className="grid size-11 shrink-0 place-items-center rounded-full text-fg-muted transition-colors duration-fast hover:bg-surface-hover hover:text-fg"
+              className="grid size-11 shrink-0 place-items-center rounded-full text-fg-muted transition-colors duration-fast hover:bg-surface-hover hover:text-accent"
             >
               <X className="size-5" aria-hidden="true" />
             </Dialog.Close>

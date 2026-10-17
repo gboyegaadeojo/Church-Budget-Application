@@ -875,3 +875,19 @@ The church asked that the accountant, the Board Chair and the Vice-Chair can cre
 - **Where:** **Annual Budget → Budget cycles** lists the cycles and has the same create form as Admin → Budget Cycles (shared components). A new cycle starts as a **draft**, audited with who created it and in which role.
 - **What stays with the System Administrator (`admin.cycles`):** opening, closing and reopening a cycle, deadlines and extensions, and decision-email timing. Opening a cycle emails every department representative, so it stays one deliberate step by the administrator. On the staff page the cycles aren't links to the admin page.
 - **Not built (parked by the church, 2026-10-17):** church-wide budgets with no leader (maintenance, utilities and the like), recorded by the Church Administrator. Proposed approach, when wanted: a leaderless "church operations" budget set by the accountant, spending recorded with categories and receipt photos, reusing the spending ledger, reports and lock.
+
+## Bolder hover states (2026-10-17)
+
+The church asked for hover feedback that makes it obvious what's under the pointer. This goes beyond DRD 5.x's subtle hovers.
+
+- **Hover tint:** `--surface-hover` now carries a little of the accent (light `#ebe6fa`, dark `#272140`), so every row, menu item and ghost control that used it reads as "this one". Text, muted text and the accent all stay at 4.5:1 or more on it in both themes (tested in `tests/unit/area-colours.test.ts`).
+- **Buttons:**
+  - Primary deepens and gains a shadow.
+  - Secondary's border and label turn accent over the tint.
+  - Ghost takes the tint and accent.
+  - Danger fills red with a contrasting label (tested in both themes).
+  - Every button presses down 1 px when clicked.
+- **Cards that are links** (`interactiveCardClass`: the Home "At a glance" cards and other linked stat cards) lift 2 px with an accent outline and a larger shadow. The expense type and form choice cards outline in the accent.
+- **Links** get a soft accent background, a thicker underline and a deeper colour.
+- **Navigation:** the item under the pointer takes the tint and the accent colour.
+- Colour is never the only cue: the border, shadow, underline or lift changes with it. With reduced motion there's no lift (transitions are already shortened).

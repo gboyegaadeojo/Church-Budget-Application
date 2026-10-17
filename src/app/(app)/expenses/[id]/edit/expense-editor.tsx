@@ -771,7 +771,7 @@ function RadioCards({
         {options.map((o) => (
           <label
             key={o.value}
-            className="flex min-h-12 cursor-pointer items-center gap-3 rounded-[12px] border border-border-strong bg-surface px-3 py-2.5 text-sm transition-colors duration-fast hover:bg-surface-hover has-checked:border-accent has-checked:bg-accent/5 has-checked:font-medium has-checked:ring-1 has-checked:ring-accent"
+            className="flex min-h-12 cursor-pointer items-center gap-3 rounded-[12px] border border-border-strong bg-surface px-3 py-2.5 text-sm transition-colors duration-fast hover:border-accent hover:bg-surface-hover has-checked:border-accent has-checked:bg-accent/5 has-checked:font-medium has-checked:ring-1 has-checked:ring-accent"
           >
             <input
               type="radio"

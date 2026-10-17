@@ -61,3 +61,24 @@ describe.each([
     expect(contrast(rgb(t["fg-muted"]), panel)).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+/** The hover tint (decided 2026-10-17): text, muted text and the accent stay readable on it. */
+describe.each([
+  ["light", ":root"],
+  ["dark", ".dark"],
+])("hover tint in the %s theme", (_, selector) => {
+  const t = tokens(selector);
+  it.each(["fg", "fg-muted", "accent"])("%s reaches 4.5:1 on surface-hover", (name) => {
+    expect(contrast(rgb(t[name]), rgb(t["surface-hover"]))).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe.each([
+  ["light", ":root"],
+  ["dark", ".dark"],
+])("the danger button's hover in the %s theme", (_, selector) => {
+  const t = tokens(selector);
+  it("fills with danger and keeps its label at 4.5:1", () => {
+    expect(contrast(rgb(t["on-accent"]), rgb(t.danger))).toBeGreaterThanOrEqual(4.5);
+  });
+});

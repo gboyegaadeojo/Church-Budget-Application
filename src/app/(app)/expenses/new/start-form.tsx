@@ -41,7 +41,7 @@ export function StartExpenseForm({ departments }: { departments: StartDepartment
             <label
               key={t}
               className={cn(
-                "flex cursor-pointer items-start gap-3 rounded-card border p-4 transition-colors duration-fast hover:bg-surface-hover has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent",
+                "flex cursor-pointer items-start gap-3 rounded-card border p-4 transition-colors duration-fast hover:border-accent hover:bg-surface-hover has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent",
                 type === t ? "border-accent ring-2 ring-accent" : "border-border-strong",
               )}
             >
