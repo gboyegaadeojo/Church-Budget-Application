@@ -33,7 +33,13 @@ import {
   type RequestContentInput,
 } from "./schema";
 export { totalsOf } from "./schema";
-import { canTransition, InvalidTransitionError, transition, type AnnualEvent } from "./status";
+import {
+  canTransition,
+  InvalidTransitionError,
+  isRequesterEditable,
+  transition,
+  type AnnualEvent,
+} from "./status";
 import { emailDepartmentProposed, emailLeaderJoined } from "@/domain/departments/emails";
 import { queueAnnualEmails } from "./emails";
 
@@ -153,6 +159,17 @@ async function replaceLines(tx: Tx, requestId: string, lines: readonly LineConte
 export async function currentTaxRate(tx: Tx): Promise<string> {
   const { sales_tax_rate } = await readSettings(tx, ["sales_tax_rate"]);
   return normalizeTaxRate(sales_tax_rate);
+}
+
+/**
+ * Whether a department's request can still be changed by its representatives: a draft or
+ * a returned request always, a submitted one while it has edits left, never once decided.
+ */
+export function canStillEdit(
+  row: Pick<RequestRow, "status" | "editCount" | "extraEditsAllowed">,
+): boolean {
+  if (row.status === "draft" || row.status === "returned") return true;
+  return isRequesterEditable(row.status) && editsRemaining(row) > 0;
 }
 
 export function editsRemaining(row: Pick<RequestRow, "editCount" | "extraEditsAllowed">): number {
@@ -335,6 +352,11 @@ export type StartResult = {
   requestId: string;
   departmentId: string;
   existing: boolean;
+  /**
+   * Where an existing request opens: a draft or a returned request in the editor; a
+   * submitted or decided one on its page, to review before using one of its edits.
+   */
+  open: "edit" | "view";
   /** Started from an earlier cycle's request (FR-35): which one. */
   copied?: { cycleName: string; reference: string | null } | null;
 };
@@ -365,7 +387,12 @@ export async function startRequest(
   await joinDepartment(tx, actor, actingRole, department);
 
   const [existing] = await tx
-    .select({ id: budgetRequests.id })
+    .select({
+      id: budgetRequests.id,
+      status: budgetRequests.status,
+      editCount: budgetRequests.editCount,
+      extraEditsAllowed: budgetRequests.extraEditsAllowed,
+    })
     .from(budgetRequests)
     .where(
       and(
@@ -374,7 +401,14 @@ export async function startRequest(
       ),
     )
     .limit(1);
-  if (existing) return { requestId: existing.id, departmentId: department.id, existing: true };
+  if (existing) {
+    return {
+      requestId: existing.id,
+      departmentId: department.id,
+      existing: true,
+      open: existing.status === "draft" || existing.status === "returned" ? "edit" : "view",
+    };
+  }
 
   const [created] = await tx
     .insert(budgetRequests)
@@ -398,7 +432,13 @@ export async function startRequest(
   const copied = input.fromLastYear
     ? await copyLastYear(tx, actor, actingRole, { requestId: created.id, department, cycle })
     : null;
-  return { requestId: created.id, departmentId: department.id, existing: false, copied };
+  return {
+    requestId: created.id,
+    departmentId: department.id,
+    existing: false,
+    open: "edit",
+    copied,
+  };
 }
 
 /**

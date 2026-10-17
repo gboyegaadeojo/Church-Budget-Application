@@ -236,7 +236,9 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await evangelism.check();
     await expect(sam.getByRole("button", { name: "Continue" })).toHaveCount(0);
     await expect(
-      sam.getByText("Evangelism Team already has a budget started by Gina Admin."),
+      sam.getByText(
+        /Evangelism Team has already submitted its budget \(Submitted\)\. A department submits one budget a year/,
+      ),
     ).toBeVisible();
     await sam.getByRole("button", { name: "Open it" }).click();
     await sam.waitForURL(url);

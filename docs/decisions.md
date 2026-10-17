@@ -837,3 +837,12 @@ The church asked that the "approval needed" email go to both approvers at the sa
   - Every chart has a "Show as a table" view and hover titles.
 - **Export:** "Export spending to Excel" downloads the spending workbook (step 7) for those with `spending.export`; the board reads but doesn't export, as on Budget vs actual. A separate label from the annual "Export to Excel".
 - **Not built:** the department, area and date-range filters FR-52 lists (one cycle filter covers the page), and turnaround by approval level with the slowest items for expenses (the annual list of budgets waiting longest stays).
+
+## One annual budget per department: where an existing one opens (2026-10-17)
+
+The church asked that once a department has a budget for the year, its other leaders can't submit another, only work on that one while it can change, and that picking a department with a budget already submitted leads them to it.
+
+- **Already enforced** (rule 1, FR-32): one request per department per cycle, by the service and a unique index; **Submit annual budget** appears only for a department without one; a leader of several departments can start one for each that has none.
+- **New: where it opens.** Picking a department that already has a budget on the start form says what that budget allows and opens it there: a **draft** or a **returned** budget opens in the editor (**Continue it**); a **submitted, updated or in-review** budget opens on its page (**Open it**), to review before using one of its two shared edits (Edit is one click away while edits are left); an **approved, declined or closed** budget opens on its page to view only. Opening a submitted budget on its page rather than in the editor keeps people from spending an edit by accident.
+- The note on the form names the status and the edits left, or says a decided budget can't be changed.
+- Picking a department still makes the person one of its leaders (FR-03, FR-38), so they can review it, as before.

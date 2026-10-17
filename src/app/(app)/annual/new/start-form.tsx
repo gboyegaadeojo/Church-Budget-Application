@@ -203,7 +203,7 @@ export function StartForm({
 
       {chosen?.existing && (
         <div role="status" className="rounded-control border border-info p-4 text-sm">
-          {s.existing(chosen.name, chosen.existing.startedBy)}
+          {existingNote(chosen.name, chosen.existing)}
         </div>
       )}
 
@@ -228,10 +228,26 @@ export function StartForm({
 
       <div className="flex justify-end">
         <SubmitButton className="w-full sm:w-auto">
-          {chosen?.existing ? s.openIt : s.continue}
+          {chosen?.existing ? existingAction(chosen.existing) : s.continue}
         </SubmitButton>
       </div>
       <FormMessage state={state} />
     </form>
   );
+}
+
+type Existing = NonNullable<DepartmentChoice["existing"]>;
+
+/** What a person picking a department that already has a budget can do with it. */
+function existingNote(department: string, existing: Existing): string {
+  if (existing.status === "draft") return s.existingDraft(department, existing.startedBy);
+  if (existing.status === "returned") return s.existingReturned(department);
+  const status = annualCopy.status[existing.status].label;
+  return existing.editable
+    ? s.existingEditable(department, status, existing.editsLeft)
+    : s.existingLocked(department, status);
+}
+
+function existingAction(existing: Existing): string {
+  return existing.status === "draft" || existing.status === "returned" ? s.continueIt : s.openIt;
 }
