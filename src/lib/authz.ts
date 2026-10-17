@@ -248,7 +248,7 @@ const RULES: Record<Action, readonly Rule[]> = {
   "expense.cancel": [{ roles: ["requester"], check: ownDepartment }, { roles: ACCOUNTANTS }],
   "expense.export": [{ roles: [...ACCOUNTANTS, "church_admin", "system_admin"] }],
   "expense.message_send": [
-    { roles: ["requester"], check: ownDepartment },
+    { roles: ["requester"], check: submitsFor },
     { roles: ACCOUNTANTS },
     { roles: BOARD, check: sentToBoard },
     { roles: ["church_admin"] },
