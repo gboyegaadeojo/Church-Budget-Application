@@ -11,7 +11,14 @@ import { cancelPurchaseRequest, loadExpense, withdrawExpense } from "@/domain/ex
 import { expenseTasks } from "@/domain/tasks/expenses";
 import type { Viewer } from "@/lib/roles";
 import { createTestDb, type TestDb } from "./helpers/db";
-import { CLAIM, expenseWorld, PURCHASE, submitted, type ExpenseWorld } from "./helpers/expenses";
+import {
+  CLAIM,
+  expenseWorld,
+  person,
+  PURCHASE,
+  submitted,
+  type ExpenseWorld,
+} from "./helpers/expenses";
 
 /** The expense emails (FR-49, AC-74, AC-79), reminders and My tasks (FR-37). */
 
@@ -119,6 +126,24 @@ describe("the whole way through (AC-79)", () => {
     expect(paid.textBody).toContain("E-transfer");
     expect(paid.textBody).toContain("X1");
     expect(paid.textBody).toContain("Total paid (incl. tax): $168.00");
+  });
+
+  it("AC-141: every leader of the department gets the requester's emails", async () => {
+    const world = await expenseWorld(db);
+    const backup = await person(db, ["requester"], [world.media.id]);
+    const leaders = [world.requester.email, backup.email].sort();
+    const { expenseId: id } = await submitted(db, world, "purchase_request");
+    expect((await emailsOf(id)).get("expenses.submitted.receipt")).toEqual(leaders);
+
+    await act(id, (tx, input) =>
+      accountantDecide(tx, world.accountant, {
+        ...input,
+        decision: { kind: "return", note: "Which store?" },
+      }),
+    );
+    expect((await emailsOf(id)).get("expenses.returned")).toEqual(leaders);
+    // The leader who didn't submit isn't sent the accountant's copy.
+    expect((await emailsOf(id)).get("expenses.returned.accountant")).not.toContain(backup.email);
   });
 
   it("emails returns, the board's question and declines to the right people", async () => {
