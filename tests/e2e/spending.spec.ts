@@ -37,7 +37,8 @@ test.describe("Spending (Stage 4)", () => {
     await page.setViewportSize(DESKTOP);
     await page.goto("/spending/ledger");
     await page.getByLabel("Budget cycle").selectOption({ label: "FY2026" });
-    await page.getByRole("button", { name: "Show" }).click();
+    await page.getByLabel("Search payee, description or reference").fill(payee);
+    await page.getByRole("button", { name: "Apply" }).click();
     await expect(page.getByRole("link", { name: `${payee} second` })).toBeVisible();
     await page.getByRole("link", { name: payee, exact: true }).click();
 
@@ -60,5 +61,32 @@ test.describe("Spending (Stage 4)", () => {
     await expect(
       page.getByRole("heading", { name: "You don't have access to this page" }),
     ).toBeVisible();
+  });
+
+  test("FR-26 the dashboard shows each department, axe clean at 360 and 1440 px", async ({
+    page,
+  }) => {
+    await signInAs(page, PEOPLE.pat);
+    for (const size of [MOBILE, DESKTOP]) {
+      await page.setViewportSize(size);
+      await page.goto("/spending");
+      await page.getByLabel("Budget year", { exact: true }).selectOption({ label: "FY2026" });
+      await page.getByRole("button", { name: "Show" }).click();
+      await expect(page.getByRole("link", { name: "Media Team", exact: true })).toBeVisible();
+      await expectAxeClean(page);
+    }
+    await page.getByRole("link", { name: "Media Team", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Media Team · FY2026" })).toBeVisible();
+    // The accountant can amend; amending is covered by integration tests (AC-84).
+    await expect(page.getByRole("button", { name: "Amend budget" })).toBeVisible();
+    await expectAxeClean(page);
+  });
+
+  test("the Board Chair reads Budget vs actual without changing anything", async ({ page }) => {
+    await signInAs(page, PEOPLE.cleo);
+    await page.goto("/spending/budget-vs-actual");
+    await expect(page.getByRole("heading", { name: "Budget vs actual" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Record spending" })).toHaveCount(0);
+    await expectAxeClean(page);
   });
 });
