@@ -715,6 +715,13 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 | AC-139 | expense-board.test | — |
 | AC-140 | expense-review.test | — |
 
+
+
+## Release now after the release time (FR-19a, AC-19) (2026-10-16)
+
+- **Problem found:** once the release time passed, the page stopped offering **Release now** and **Cancel schedule**, but the held decisions weren't sent until the 15-minute `release-decisions` job ran. That job is called only by GitHub Actions, so on a local server it never runs, and in production it can lag by up to 15 minutes. The page listed the held decisions with no way to send them, and the past-time error still said "use Release now".
+- **Fix:** Release now works whenever decisions are held, including after the release time. The page says the time has passed and how many haven't been sent, and offers Release now. With nothing held it's still refused. The past-time error now just asks for a future time. The Send immediately hint explains that each decision is emailed as it's confirmed, so there's nothing to release later.
+
 ## Department leaders receive every expense email (FR-49, AC-141) (2026-10-16)
 
 - The church asked that every leader of a department (Primary, Backups and other representatives) receive the chain of emails the requester receives, so everyone is aware of purchases. This reverses the Stage 3 step 7 rule that copied only the submitter and the payee.
