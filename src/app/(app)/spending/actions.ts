@@ -2,7 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { spendingCopy } from "@/copy/spending";
+import { amendBudget } from "@/domain/spending/amendments";
 import { correctEntry, recordEntry, voidEntry } from "@/domain/spending/service";
+import { formatCAD } from "@/lib/money";
 import type { ActionState } from "@/lib/action-state";
 import { form, runAction, runForResult } from "@/lib/admin-server";
 
@@ -81,4 +83,24 @@ export async function voidEntryAction(_: ActionState, data: FormData): Promise<A
   );
   if (result.status !== "success") return result;
   redirect(`/spending/entries/${id}?done=voided`);
+}
+
+export async function amendBudgetAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const departmentId = form.text(data, "departmentId");
+  return runAction(
+    async (tx, viewer) => {
+      const { availableCents } = await amendBudget(tx, viewer, {
+        cycleId: form.text(data, "cycleId"),
+        departmentId,
+        direction: form.text(data, "direction"),
+        amount: form.text(data, "amount"),
+        reason: form.text(data, "reason"),
+        boardReference: form.text(data, "boardReference"),
+        confirmNegative: form.checked(data, "confirmNegative"),
+        idempotencyKey: form.text(data, "idempotencyKey"),
+      });
+      return spendingCopy.amend.saved(formatCAD(availableCents));
+    },
+    { paths: [...PATHS, `/spending/departments/${departmentId}`] },
+  );
 }

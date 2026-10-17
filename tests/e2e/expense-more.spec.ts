@@ -14,9 +14,14 @@ test.describe("Expenses across the app (Stage 3)", () => {
   test("AC-79 the requester gets a receipt email with the reference", async ({ page, browser }) => {
     const { reference } = await submitPurchase(browser, "Receipt email check");
     await signInAs(page, PEOPLE.sam);
-    const response = await page.request.get("/api/test/emails?to=sam.lee@example.org");
-    const { emails } = (await response.json()) as { emails: { subject: string }[] };
-    expect(emails.map((e) => e.subject)).toContain(`Received: ${reference} (Media Team)`);
+    // Emails go out just after the change commits, so wait for it.
+    await expect
+      .poll(async () => {
+        const response = await page.request.get("/api/test/emails?to=sam.lee@example.org");
+        const { emails } = (await response.json()) as { emails: { subject: string }[] };
+        return emails.map((e) => e.subject);
+      })
+      .toContain(`Received: ${reference} (Media Team)`);
   });
 
   test("AC-109 the accountant's My tasks lists an expense to review", async ({ page, browser }) => {
@@ -49,7 +54,7 @@ test.describe("Expenses across the app (Stage 3)", () => {
     await signInAs(page, PEOPLE.pat);
     await page.goto("/spending/ledger");
     await page.getByLabel("Budget cycle").selectOption({ label: "FY2026" });
-    await page.getByRole("button", { name: "Show" }).click();
+    await page.getByRole("button", { name: "Apply" }).click();
     await expect(page.getByRole("link", { name: reference })).toBeVisible();
     await expectAxeClean(page);
   });
