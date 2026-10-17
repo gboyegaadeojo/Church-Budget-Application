@@ -3,7 +3,7 @@ import { ArrowLeft, Inbox, ShieldAlert, type LucideIcon } from "lucide-react";
 import { adminCopy } from "@/copy/admin";
 import { copy } from "@/copy/en-CA";
 import { cn } from "@/lib/cn";
-import { cardClass } from "./styles";
+import { cardClass, interactiveCardClass } from "./styles";
 import { TONE, type Tone } from "./tone";
 
 export type { Tone } from "./tone";
@@ -175,7 +175,7 @@ export function StatCard({
     cardClass,
     "flex flex-col gap-3 p-5 sm:p-5",
     (emphasis || current) && "ring-2 ring-accent ring-offset-0",
-    href && "transition-shadow duration-fast hover:shadow-overlay",
+    href && interactiveCardClass,
   );
   return href ? (
     <Link href={href} className={className} aria-current={current ? "true" : undefined}>

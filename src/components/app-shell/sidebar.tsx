@@ -77,7 +77,7 @@ export function Sidebar({ areas, brand }: { areas: NavArea[]; brand: BrandView }
           onClick={toggle}
           aria-label={collapsed ? copy.nav.expandSidebar : copy.nav.collapseSidebar}
           aria-expanded={!collapsed}
-          className="flex min-h-10 items-center gap-2 rounded-control px-2 text-sm text-fg-muted transition-colors duration-fast hover:bg-surface-hover hover:text-fg"
+          className="flex min-h-10 items-center gap-2 rounded-control px-2 text-sm text-fg-muted transition-colors duration-fast hover:bg-surface-hover hover:text-accent"
         >
           {collapsed ? (
             <PanelLeftOpen className="size-5" aria-hidden="true" />

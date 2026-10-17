@@ -63,7 +63,10 @@ function AreaLink({ area, item, active }: { area: AreaId; item: NavItem; active:
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className={cn(rowClass, active ? cn(s.soft, s.text) : "text-fg hover:bg-surface-hover")}
+      className={cn(
+        rowClass,
+        active ? cn(s.soft, s.text) : "text-fg hover:bg-surface-hover hover:text-accent",
+      )}
     >
       <AreaBadge area={area} className={cn(active && "bg-surface")} />
       <span className="flex-1 truncate">{item.label}</span>
@@ -100,7 +103,7 @@ function AreaGroup({
         aria-expanded={open}
         aria-controls={id}
         onClick={onToggle}
-        className={cn(rowClass, open ? s.text : "text-fg hover:bg-surface-hover")}
+        className={cn(rowClass, open ? s.text : "text-fg hover:bg-surface-hover hover:text-accent")}
       >
         <AreaBadge area={area.id} className={cn(open && "bg-surface")} />
         <span className="flex-1 truncate text-left">{area.label}</span>
@@ -175,7 +178,7 @@ export function PageLink({
         "flex min-h-11 items-center gap-2.5 rounded-control px-2.5 text-sm transition-colors duration-fast ease-standard lg:min-h-9",
         active
           ? cn("bg-surface font-medium shadow-card", s.text)
-          : "text-fg-muted hover:bg-surface hover:text-fg",
+          : "text-fg-muted hover:bg-surface-hover hover:text-accent",
         className,
       )}
     >
