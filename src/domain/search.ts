@@ -1,6 +1,14 @@
 import { and, asc, desc, eq, exists, ilike, isNull, ne, or } from "drizzle-orm";
 import { annualCopy } from "@/copy/annual";
-import { budgetLineItems, budgetRequests, departments, users } from "@/db/schema";
+import {
+  budgetLineItems,
+  budgetRequests,
+  departments,
+  expenseSubmissions,
+  users,
+} from "@/db/schema";
+import { expensesCopy } from "@/copy/expenses";
+import { authzContextOf } from "@/domain/expenses/service";
 import type { Tx } from "@/db/types";
 import { FOOTER_LINKS, navigationFor } from "@/domain/navigation";
 import { authorize, type Subject } from "@/lib/authz";
@@ -12,7 +20,7 @@ import { hiddenDecisions } from "@/domain/annual/release";
  * budget is checked with the same `annual.view` rule as its page.
  */
 
-export type SearchGroup = "budgets" | "departments" | "people" | "pages";
+export type SearchGroup = "budgets" | "expenses" | "departments" | "people" | "pages";
 export type SearchResult = { group: SearchGroup; label: string; detail?: string; href: string };
 
 const PER_GROUP = 6;
@@ -78,6 +86,39 @@ export async function globalSearch(
       href: reviews && b.status !== "draft" ? `/annual/review/${b.id}` : `/annual/${b.id}`,
     });
     if (results.length >= PER_GROUP) break;
+  }
+
+  // Expenses: by reference, title or department, each checked like its page (Part B).
+  const expenses = await tx
+    .select()
+    .from(expenseSubmissions)
+    .where(
+      or(
+        ilike(expenseSubmissions.referenceNumber, pattern),
+        ilike(expenseSubmissions.title, pattern),
+        ilike(expenseSubmissions.departmentNameSnapshot, pattern),
+      ),
+    )
+    .orderBy(desc(expenseSubmissions.updatedAt))
+    .limit(40);
+  const reviewsExpenses = authorize(viewer, "expense.review_queue").allowed;
+  let expenseCount = 0;
+  for (const e of expenses) {
+    if (expenseCount >= PER_GROUP) break;
+    if (!authorize(viewer, "expense.view", authzContextOf(e)).allowed) continue;
+    const ours = viewer.departments.some((d) => d.id === e.departmentId);
+    // A draft stays with its department (and the System Administrator, who reads all).
+    if (e.status === "draft" && !ours && !viewer.roles.includes("system_admin")) continue;
+    expenseCount++;
+    results.push({
+      group: "expenses",
+      label: [e.referenceNumber, e.title].filter(Boolean).join(" · ") || expensesCopy.mine.untitled,
+      detail: `${e.departmentNameSnapshot} · ${expensesCopy.status[e.status].label}`,
+      href:
+        reviewsExpenses && !ours && e.status !== "draft"
+          ? `/expenses/review/${e.id}`
+          : `/expenses/${e.id}`,
+    });
   }
 
   // Departments: where each role works with them.

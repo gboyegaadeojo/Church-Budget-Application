@@ -66,8 +66,13 @@ export const AREAS: readonly AreaDef[] = [
       { href: "/expenses/mine", label: n.myExpenses, act: ["requester"] },
       { href: "/expenses/review", label: n.reviewQueue, act: ACCOUNTANTS },
       { href: "/expenses/awaiting-approval", label: n.awaitingMyApproval, act: BOARD },
-      { href: "/expenses/ready", label: n.readyToProcess, act: ["church_admin", "accountant"] },
-      { href: "/expenses/all", label: n.allExpenses, act: [], view: ["system_admin"] },
+      { href: "/expenses/ready", label: n.readyToProcess, act: ["church_admin", ...ACCOUNTANTS] },
+      {
+        href: "/expenses/all",
+        label: n.allExpenses,
+        act: ["church_admin", ...ACCOUNTANTS],
+        view: ["system_admin"],
+      },
     ],
   },
   {

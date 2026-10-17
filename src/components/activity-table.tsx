@@ -4,6 +4,7 @@ import { AREA_STYLE, AreaBadge } from "@/components/app-shell/area-icon";
 import { linkClass } from "@/components/ui/styles";
 import { activityCopy as a, activityLabel } from "@/copy/activity";
 import { annualCopy } from "@/copy/annual";
+import { expensesCopy } from "@/copy/expenses";
 import { copy } from "@/copy/en-CA";
 import type { ActivityItem, AuditAreaName } from "@/domain/analytics/activity";
 import type { AreaId } from "@/domain/navigation";
@@ -85,6 +86,11 @@ export function ActivityTable({
   // review screen; anyone else the read-only budget page.
   const leads = (departmentId: string | undefined) =>
     departmentId !== undefined && viewer.departments.some((d) => d.id === departmentId);
+  const reviewsExpenses = authorize(viewer, "expense.review_queue").allowed;
+  const expenseHref = (e: ActivityItem) =>
+    reviewsExpenses && !leads(e.department?.id)
+      ? `/expenses/review/${e.expense!.id}`
+      : `/expenses/${e.expense!.id}`;
   const requestHref = (e: ActivityItem) =>
     reviews && !leads(e.department?.id)
       ? `/annual/review/${e.request!.id}`
@@ -103,6 +109,14 @@ export function ActivityTable({
               {" · "}
               <Link href={requestHref(e)} className={linkClass}>
                 {e.request.reference || e.request.title || annualCopy.dashboard.untitled}
+              </Link>
+            </>
+          )}
+          {showItem && e.expense && (
+            <>
+              {" · "}
+              <Link href={expenseHref(e)} className={linkClass}>
+                {e.expense.reference || e.expense.title || expensesCopy.mine.untitled}
               </Link>
             </>
           )}

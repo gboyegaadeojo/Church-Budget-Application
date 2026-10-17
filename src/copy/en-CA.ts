@@ -110,7 +110,7 @@ export const copy = {
   search: {
     open: "Search",
     title: "Search",
-    label: "Search budgets, departments, people and pages",
+    label: "Search budgets, expenses, departments, people and pages",
     hint: "Type a reference number like IFC-2027-0007, a department, an item or a page. Press / or Ctrl+K to open search.",
     close: "Close search",
     searching: "Searching…",
@@ -119,6 +119,7 @@ export const copy = {
     count: (n: number) => (n === 1 ? "1 result" : `${n} results`),
     groups: {
       budgets: "Annual budgets",
+      expenses: "Expenses",
       departments: "Departments",
       people: "People",
       pages: "Pages",

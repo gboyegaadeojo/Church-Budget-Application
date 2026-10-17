@@ -255,3 +255,62 @@ export async function warningsFor(
     aboveCommitmentBy: commitment > 0 && amountCents > commitment ? amountCents - commitment : 0,
   };
 }
+
+// ---------------------------------------------------------------- all expenses (FR-48)
+
+export type AllFilters = QueueFilters & { q?: string };
+
+/**
+ * Every submitted expense (and each person's own drafts are on My expenses), for the
+ * accountant, the Church Administrator and the System Administrator (read-only), with
+ * search and filters (FR-48).
+ */
+export async function allExpenses(
+  tx: Tx,
+  viewer: Subject,
+  filters: AllFilters = {},
+): Promise<{
+  rows: ExpenseListRow[];
+  departments: { id: string; name: string }[];
+  readOnly: boolean;
+} | null> {
+  const access = authorize(viewer, "expense.view_all");
+  if (!access.allowed) return null;
+  const q = filters.q?.trim().slice(0, 100);
+  const pattern = q ? `%${q.replace(/[\%_]/g, (c) => `\${c}`)}%` : null;
+  const rows = await tx
+    .select(listColumns)
+    .from(expenseSubmissions)
+    .innerJoin(budgetCycles, eq(budgetCycles.id, expenseSubmissions.budgetCycleId))
+    .where(
+      and(
+        ne(expenseSubmissions.status, "draft"),
+        filters.department ? eq(expenseSubmissions.departmentId, filters.department) : undefined,
+        filters.type && (EXPENSE_TYPES as readonly string[]).includes(filters.type)
+          ? eq(expenseSubmissions.type, filters.type as (typeof EXPENSE_TYPES)[number])
+          : undefined,
+        filters.status && (EXPENSE_STATUSES as readonly string[]).includes(filters.status)
+          ? eq(expenseSubmissions.status, filters.status as ExpenseStatus)
+          : undefined,
+        pattern
+          ? or(
+              sql`${expenseSubmissions.referenceNumber} ilike ${pattern}`,
+              sql`${expenseSubmissions.title} ilike ${pattern}`,
+              sql`${expenseSubmissions.payeeName} ilike ${pattern}`,
+              sql`${expenseSubmissions.departmentNameSnapshot} ilike ${pattern}`,
+            )
+          : undefined,
+      ),
+    )
+    .orderBy(sql`${expenseSubmissions.submittedAt} desc nulls last`)
+    .limit(500);
+  const departments = await tx
+    .selectDistinct({
+      id: expenseSubmissions.departmentId,
+      name: expenseSubmissions.departmentNameSnapshot,
+    })
+    .from(expenseSubmissions)
+    .where(ne(expenseSubmissions.status, "draft"))
+    .orderBy(asc(expenseSubmissions.departmentNameSnapshot));
+  return { rows: rows.map(toListRow), departments, readOnly: access.readOnly };
+}

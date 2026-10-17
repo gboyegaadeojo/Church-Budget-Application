@@ -1,6 +1,6 @@
 /**
  * Help and Privacy (FR-36, DRD 6.11c). Kept in step with docs/user-manual.md. Covers what
- * the app does today; expenses and spending tracking get their guides when they arrive.
+ * the app does today; spending tracking gets its guide when it arrives (Stage 4).
  */
 
 export type HelpGuide = { id: string; title: string; who: string; steps: string[] };
@@ -12,7 +12,7 @@ export const helpCopy = {
   yourGuides: "Guides for your roles",
   otherGuides: "Other roles",
   faqHeading: "Common questions",
-  laterNote: "Expenses and spending tracking are coming later; their guides will appear here.",
+  laterNote: "Spending tracking is coming later; its guide will appear here.",
 
   guides: [
     {
@@ -31,6 +31,19 @@ export const helpCopy = {
       ],
     },
     {
+      id: "requester-expenses",
+      title: "Department leaders: spend your budget",
+      who: "requester",
+      steps: [
+        "Once your annual budget is approved, Expenses → New expense. Choose Purchase request to ask before you buy, or Expense claim to be paid back for something you've bought. Then choose the department and the budget year.",
+        "The budget strip shows what's Available, Committed, Spent and Remaining, and what's left after this expense.",
+        "Purchase request: add items with prices before tax (the app adds the sales tax) and choose how it will be bought.",
+        "Expense claim: one line per receipt with the amount you paid including tax, who should be paid and how (cheque or e-transfer), and a photo or PDF of each receipt (Take photo works on a phone). If you bought something you asked for beforehand, link the purchase request.",
+        "Going over budget? You'll see by how much. Explain why it's needed and you can still submit; the accountant and the Board Chair decide.",
+        "Preview, then Confirm submission. You can change it until the accountant starts reviewing, or withdraw it. Every step is emailed, and My expenses shows where each one is.",
+      ],
+    },
+    {
       id: "accountant",
       title: "Accountant and backup approver: review budgets",
       who: "accountant",
@@ -45,6 +58,8 @@ export const helpCopy = {
         "Download Excel from a budget, from the dashboard, or from Reports for the whole cycle.",
         "You can't decide a budget for a department you lead; another accountant or the backup approver does.",
         "Going away? Choose Away in the account menu: accountant emails go to the backup approvers until the day you're back.",
+        "Expenses → Review queue: open a purchase request or claim to see its items or receipts, the receipt files and the budget now and after. Warnings show if it takes the department over budget, matches another claim or is late.",
+        "Approve and send to the Board Chair, approve a different amount (including tax), return it with a question, or decline it. The budget isn't charged until the Board Chair's final approval.",
       ],
     },
     {
@@ -52,7 +67,10 @@ export const helpCopy = {
       title: "Board Chair and Vice-Chair",
       who: "board_chair",
       steps: [
-        "Your part comes with expenses: the Board Chair (or the Vice-Chair when the Chair is away) gives final approval to expenses after the accountant. Until then there's nothing you need to do in the app.",
+        "After the accountant approves an expense, you're emailed and it's in My tasks. Open it from the email or Expenses → Awaiting my approval; it works on a phone.",
+        "You see the accountant's approved amount and note, the receipts, and the department's budget. If it takes the department over budget, it says by how much, with the requester's explanation.",
+        "Give final approval, approve a smaller amount (including tax), return it to the accountant with a question, or decline it with a reason. Your final approval is what charges the budget.",
+        "Going away? Choose Away in the account menu: final approvals go to the Vice-Chair. The Vice-Chair also decides when the Chair leads the department or is being paid.",
       ],
     },
     {
@@ -61,7 +79,9 @@ export const helpCopy = {
       who: "church_admin",
       steps: [
         "Sign in with Planning Center, or choose Continue with email if you're not in the church's Planning Center: we email you a 6-digit code.",
-        "Recording payments and spending comes with expenses and spending tracking.",
+        "Expenses → Ready to process lists everything with both approvals, oldest first. Start processing tells the requester it's being done.",
+        "Pay or buy it outside the app, then Record payment: how it was paid, the date and the amount, with the cheque number and two signers, card digits, e-transfer reference or invoice number. The requester and payee are emailed.",
+        "Spending → Ledger shows what's been spent, including every approved expense. Reports → Expenses and payments downloads the payments for bank reconciliation.",
       ],
     },
     {
@@ -113,7 +133,8 @@ export const helpCopy = {
       id: "spending",
       question: "How is spending recorded?",
       answer: [
-        "Spending tracking isn't in the app yet. When it arrives, the Church Administrator records what's spent against each department's approved budget, and departments see what's left.",
+        "Approved expense claims and purchases are added to the spending ledger automatically, so departments see what's left on the budget strip and in My expenses.",
+        "Recording other spending, refunds and corrections comes with spending tracking.",
       ],
     },
     {

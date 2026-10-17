@@ -107,18 +107,27 @@ Spend against your approved annual budget with two kinds of submission:
 | **Purchase request** | Before buying: "May we buy 2 microphones?" Approval sets the money aside (Committed). |
 | **Expense claim** | After buying: "I paid $112.00, please pay me back." Attach receipts. Submit within 90 days of buying. |
 
+You can submit expenses once your department's annual budget is approved and the decision has reached you.
+
 ### Submit an expense
 
 1. Go to **Expenses → New expense** and pick the type.
-2. Choose the department. The **budget strip** shows Available, Committed, Spent and Remaining.
+2. Choose the department and the **budget year** it's charged to (this year's is chosen for you). The **budget strip** shows Available, Committed, Spent and Remaining, and, once you enter amounts, **Remaining after this**.
 3. Enter the title and why it is needed.
-4. Purchase request: add items (before tax) and choose **How it will be bought**. Expense claim: add receipt lines (amount paid including tax), choose who is paid and how (cheque or e-transfer), and attach photos or PDFs of the receipts.
-5. If it would take the department over budget, you'll see a warning with the amount. You can still submit: explain why it's needed, and the accountant and the Board Chair decide. If it's approved, the department shows as over budget.
-6. Preview and **Confirm submission**.
+4. **Purchase request:** add items with their prices before tax (the app adds the 12% sales tax), optionally pick the annual budget item it comes from, and choose **How it will be bought**: the Church Administrator buys it on the church account, you buy it and submit a claim, or the supplier invoices the church.
+5. **Expense claim:** add one line per receipt (date, store, what you bought, amount paid including tax, receipt number). No tax is added: the receipt already includes it. Then:
+   - If you bought something you asked for beforehand, **link the approved purchase request**, so the money set aside for it is released.
+   - Choose **who should be paid**: you, someone else (their name, and their email for an e-transfer), or **Church card** if nothing is owed. Then choose cheque or e-transfer. Never enter bank account numbers.
+   - Add the **receipts**: up to 5 photos or PDFs, 10 MB each. On a phone, **Take photo** opens the camera; iPhone photos are converted automatically. If you have no receipt, tick **No receipt available** and say why.
+   - Receipts more than 90 days old need a short explanation.
+6. If it would take the department over budget, you'll see a warning with the amount. You can still submit: explain why it's needed, and the accountant and the Board Chair decide. If it's approved, the department shows as over budget.
+7. **Save draft** keeps it for later. **Preview**, then **Confirm submission**. You get a receipt by email with the reference number, like EXP-2026-0042.
 
 ### What happens next
 
-The accountant approves first, then the Board Chair (or Vice-Chair). After final approval, the Church Administrator pays or buys and records how. You get an email at each step, and **My expenses** shows a tracker with where it is.
+- The accountant approves first, then the Board Chair (or Vice-Chair). After final approval, the Church Administrator pays or buys and records how. You get an email at each step, and **My expenses** shows a tracker with where it is.
+- You can **change** the expense until the accountant starts reviewing it, or **withdraw** it. If the accountant returns it with a question, change it and send your answer.
+- An approved purchase request you buy yourself stays set aside until you submit the claim linked to it. If it won't go ahead, **cancel** it with a reason so the money goes back to the budget.
 
 ---
 
@@ -164,8 +173,17 @@ Each department has a **Primary requester** (accountable for the department's bu
 
 ### Expenses (first approval)
 
-1. **Expenses → Review queue**. Open a submission to see items, receipts, and the budget before and after. If it takes the department over budget, a warning shows by how much, with the requester's explanation.
-2. Choose **Approve and send to Board Chair**, **Approve a different amount**, **Return for clarification**, or **Decline**.
+1. **Expenses → Review queue** shows what's waiting, the total, how many are over budget and the oldest. Filter by department, type, status or over budget only. New ones are also in My tasks.
+2. Open a submission to see its items or receipt lines, the receipt files, and the department's Remaining now and if approved. Opening it marks it In Review, so the department can't change it any more.
+3. Warnings show above your decision:
+   - it takes the department over budget (by how much, worked out now, with the requester's explanation);
+   - a receipt line matches another claim;
+   - a receipt is old;
+   - there's no receipt;
+   - a claim is more than the purchase request it closes.
+4. Choose **Approve and send to Board Chair**, **Approve a different amount** (one total including tax, never more than asked, with a reason), **Return for clarification** with a question, or **Decline** with a reason. Approving doesn't charge the budget: the Board Chair's final approval does.
+5. You can't decide an expense for a department you lead, one you submitted, or one that pays you; the screen says so.
+6. **Expenses → All expenses** lists every expense with search and filters. **Reports → Expenses and payments** downloads them.
 
 ### Spending
 
@@ -192,7 +210,9 @@ Every workbook has a **Summary** sheet (one row per budget, requested and approv
 1. When the accountant approves an expense, you get an email and a task: **Final approval**.
 2. Open it from the email or **Expenses → Awaiting my approval**. You see the amount, the accountant's note, receipts, and the department's remaining budget. If it takes the department over budget, a warning shows by how much, with the requester's explanation; your final approval is what charges it, and the department then shows as over budget.
 3. Choose **Give final approval**, **Approve a smaller amount** (including tax, with a reason), **Return to accountant** with a question, or **Decline** with a reason.
-4. The Chair can turn on **Away**; the Vice-Chair then gets the tasks. The Vice-Chair also decides when the Chair represents the department or is the payee. Decisions show who made them.
+4. Final approval charges the budget. The requester and the Church Administrator are emailed.
+5. The Chair can turn on **Away** (account menu); the Vice-Chair then gets the emails and tasks. The Vice-Chair also decides when the Chair represents the department, submitted it, or is the payee. Otherwise the Vice-Chair's screen says the Chair decides it. Decisions show who made them, and in which role.
+6. Expenses waiting more than 7 days are listed in a reminder email.
 
 These screens are designed for a phone.
 
@@ -202,10 +222,19 @@ These screens are designed for a phone.
 
 ### Pay or buy approved expenses
 
-1. You get an email "Approved, ready for processing" and a task. Open **Expenses → Ready to process** (oldest first).
+1. You get an email "Approved, ready for processing" and a task. Open **Expenses → Ready to process** (oldest first). It shows the total waiting, how much is owed to people, and what was paid in the last 30 days.
 2. Select **Start processing**. The requester is told.
-3. Pay or buy outside the app, then select **Record payment**: how it was paid (cheque, church card, cash, e-transfer, supplier invoice, other), date, amount paid including tax, reference (cheque number and the two signers, card last 4 digits, and so on), and notes.
-4. Confirm. The requester is emailed, and the department's spending updates automatically.
+3. Pay or buy outside the app, then select **Record payment**. Choose how it was paid; the form asks for what that needs:
+   - **Cheque:** the cheque number and the two signers, from the active signing authorities. With fewer than two, a cheque can't be recorded; ask the administrator.
+   - **Church card:** the last 4 digits, the transaction reference and who bought it.
+   - **Cash:** who received it, and whether the receipt was signed.
+   - **E-transfer:** the reference.
+   - **Supplier invoice (EFT):** the invoice number and the supplier.
+   - **Other:** what it was.
+   - Then the date paid and the amount (the approved amount unless it differs, which needs a note).
+4. Confirm with the button, which names the amount and method. The requester and payee are emailed. A claim shows as Paid (a church-card claim, with nothing owed, as Closed), and a purchase as Purchased.
+5. **Spending → Ledger** shows the spending entry for each approved claim and purchase, with how it was paid. Nothing needs typing twice.
+6. Approved expenses not processed after 14 days are listed in a reminder email.
 
 ### Record other spending
 

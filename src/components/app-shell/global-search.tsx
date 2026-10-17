@@ -11,7 +11,7 @@ import type { SearchGroup, SearchResult } from "@/domain/search";
 import { cn } from "@/lib/cn";
 
 const s = copy.search;
-const GROUPS: SearchGroup[] = ["budgets", "departments", "people", "pages"];
+const GROUPS: SearchGroup[] = ["budgets", "expenses", "departments", "people", "pages"];
 
 /** Whether a key press happened while typing, so "/" types a slash there. */
 function typing(target: EventTarget | null): boolean {
