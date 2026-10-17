@@ -10,6 +10,7 @@ import { getDb } from "@/db";
 import { getExpenseView, type ExpenseView } from "@/domain/expenses/queries";
 import { paymentOf } from "@/domain/expenses/payment";
 import { listReceipts } from "@/domain/expenses/receipts";
+import { PENDING_STATUSES } from "@/domain/expenses/status";
 import { getChurchTimeZone } from "@/domain/settings";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
@@ -60,9 +61,7 @@ async function ExpenseContent({
   const receipts =
     expense.type === "expense_claim" ? await listReceipts(db, viewer, expense.id) : null;
   const payment = await paymentOf(db, expense.id);
-  const pending = ["draft", "submitted", "in_review", "returned", "awaiting_board"].includes(
-    expense.status,
-  );
+  const pending = ["draft", ...PENDING_STATUSES].includes(expense.status);
 
   return (
     <>

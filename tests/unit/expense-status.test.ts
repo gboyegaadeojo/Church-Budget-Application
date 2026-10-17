@@ -5,6 +5,7 @@ import {
   EXPENSE_TYPES,
   InvalidExpenseTransitionError,
   isExpenseEditable,
+  levelApproved,
   transitionExpense,
   type ExpenseEvent,
   type ExpenseStatus,
@@ -17,9 +18,8 @@ const EVENTS: ExpenseEvent[] = [
   "withdraw",
   "start_review",
   "return",
-  "approve",
-  "board_return",
-  "final_approve",
+  "accountant_approve",
+  "board_approve",
   "decline",
   "start_processing",
   "pay",
@@ -36,11 +36,16 @@ const ALLOWED: [ExpenseStatus, ExpenseEvent, ExpenseStatus, ExpenseType?][] = [
   ["returned", "withdraw", "withdrawn"],
   ["submitted", "start_review", "in_review"],
   ["in_review", "return", "returned"],
-  ["in_review", "approve", "awaiting_board"],
-  ["awaiting_board", "board_return", "in_review"],
-  ["awaiting_board", "final_approve", "approved"],
+  ["awaiting_board", "return", "returned"],
+  ["awaiting_accountant", "return", "returned"],
+  // The two approvals in either order (AC-142).
+  ["in_review", "accountant_approve", "awaiting_board"],
+  ["awaiting_board", "board_approve", "approved"],
+  ["in_review", "board_approve", "awaiting_accountant"],
+  ["awaiting_accountant", "accountant_approve", "approved"],
   ["in_review", "decline", "declined"],
   ["awaiting_board", "decline", "declined"],
+  ["awaiting_accountant", "decline", "declined"],
   ["approved", "start_processing", "processing"],
   ["processing", "pay", "paid", "expense_claim"],
   ["processing", "purchase", "purchased", "purchase_request"],
@@ -81,11 +86,17 @@ describe("expense status machine (FR-45)", () => {
     expect(canTransitionExpense("approved", "close", "expense_claim")).toBe(false);
   });
 
-  it("lets nothing skip the Board Chair (6B.4)", () => {
+  it("reaches Approved only from one approval plus the other level's (6B.4)", () => {
     for (const type of EXPENSE_TYPES) {
       for (const from of EXPENSE_STATUSES) {
-        if (from === "awaiting_board") continue;
-        expect(canTransitionExpense(from, "final_approve", type)).toBe(false);
+        for (const event of EVENTS) {
+          if (!canTransitionExpense(from, event, type)) continue;
+          if (transitionExpense(from, event, type) !== "approved") continue;
+          expect([
+            ["awaiting_board", "board_approve"],
+            ["awaiting_accountant", "accountant_approve"],
+          ]).toContainEqual([from, event]);
+        }
       }
     }
   });
@@ -93,5 +104,18 @@ describe("expense status machine (FR-45)", () => {
   it("is editable only before review starts, or when returned (FR-44, AC-71)", () => {
     const editable = EXPENSE_STATUSES.filter(isExpenseEditable);
     expect(editable).toEqual(["draft", "submitted", "returned"]);
+  });
+
+  it("AC-142: needs both approvals, in either order, and the same level can't approve twice", () => {
+    for (const type of EXPENSE_TYPES) {
+      expect(canTransitionExpense("awaiting_board", "accountant_approve", type)).toBe(false);
+      expect(canTransitionExpense("awaiting_accountant", "board_approve", type)).toBe(false);
+      expect(canTransitionExpense("submitted", "board_approve", type)).toBe(false);
+    }
+    expect(levelApproved("awaiting_board", "accountant")).toBe(true);
+    expect(levelApproved("awaiting_board", "board")).toBe(false);
+    expect(levelApproved("awaiting_accountant", "board")).toBe(true);
+    expect(levelApproved("in_review", "accountant")).toBe(false);
+    expect(levelApproved("paid", "board")).toBe(true);
   });
 });

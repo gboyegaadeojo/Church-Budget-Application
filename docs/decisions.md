@@ -715,6 +715,8 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 | AC-139 | expense-board.test | — |
 | AC-140 | expense-review.test | — |
 
+
+
 ## Release now after the release time (FR-19a, AC-19) (2026-10-16)
 
 - **Problem found:** once the release time passed, the page stopped offering **Release now** and **Cancel schedule**, but the held decisions weren't sent until the 15-minute `release-decisions` job ran. That job is called only by GitHub Actions, so on a local server it never runs, and in production it can lag by up to 15 minutes. The page listed the held decisions with no way to send them, and the past-time error still said "use Release now".
@@ -725,6 +727,17 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 - The church asked that every leader of a department (Primary, Backups and other representatives) receive the chain of emails the requester receives, so everyone is aware of purchases. This reverses the Stage 3 step 7 rule that copied only the submitter and the payee.
 - "Requester" in FR-49 is now the submitter, the payee if different, and every department leader (`requesterGroup` in `src/domain/expenses/emails.ts`), each address once. It covers the receipt, updates, review started, questions, decisions, processing, payment, the over-budget notice and the unclaimed-purchase reminder.
 - Leaders already received the annual budget emails (FR-21), so both parts now behave the same.
+
+## The two expense approvals run side by side (6B.4, FR-45, FR-49; AC-142, AC-143) (2026-10-16)
+
+The church asked that the "approval needed" email go to both approvers at the same time, not one after the other, and that the department and the Church Administrator hear only once both have approved.
+
+- **Either order.** At submission the accountant and the Board Chair (or the Vice-Chair covering, 3.3) are both emailed **Approval needed**. Either may open it (which starts the review, FR-44) and decide first. The first approval moves it to **Awaiting Board Chair** or **Awaiting accountant** (a new status, migration `0019`); the second makes it **Approved** and charges the budget (FR-42, AC-73). One decision service serves both (`src/domain/expenses/approval.ts`).
+- **The lower amount wins (AC-143).** Each approver approves as asked or a smaller amount, never more than asked. The Board Chair is no longer capped by the accountant's amount. When the second approval lands, the approved amount is the lower of the two, re-split into subtotal and tax as before (FR-16). Each decision keeps its own amount. The expense's `approved_total` holds the lowest so far, but the budget counts it only from Approved on.
+- **Returns go to the department.** Either approver can return it with a question; the earlier approval is cleared, and both approve again after the department answers. "Return to accountant" is gone. Old `expenses.board_returned` events still read correctly in the activity log.
+- **Emails.** After one approval only the approver gets a copy; "Approved by the accountant, waiting for the Board Chair" is no longer sent. After both, the department gets "Your expense has been approved", the Church Administrator "Approved, ready for processing", and both approvers a copy. Returns and declines copy both approvers. Updates before review and a withdrawal before review also reach the board.
+- **Who sees what.** The board sees an expense from submission (never a draft). My tasks, the queues and the tracker show each level separately: the accountant's queue waits on Submitted, In Review and Awaiting accountant; the board's on Submitted, In Review and Awaiting Board Chair.
+- The daily 5-day reminders for approvers follow in the next change.
 
 ## FR-48: search and filters on every expense list (2026-10-16)
 

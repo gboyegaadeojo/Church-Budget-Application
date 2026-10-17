@@ -257,12 +257,12 @@ The accountant is responsible for reviewing and deciding on departmental budget 
 
 ## 3.3 Board Chair (expense second approver)
 
-The Chairman of the Board of Directors gives the second, final approval on expense submissions (Part B), after the accountant.
+The Chairman of the Board of Directors is one of the two approvers on expense submissions (Part B). The Board Chair and the accountant are asked at the same time and can approve in either order (decided by the church 2026-10-16).
 
 ### Permissions
 
-- See expense submissions that the accountant has approved and that are waiting for the Board Chair.
-- Approve, approve a smaller amount (including tax), return to the accountant with a question, or decline with a reason.
+- See expense submissions from the moment they are submitted.
+- Approve, approve a smaller amount (including tax), return to the department with a question, or decline with a reason.
 - See the department's annual budget, committed, spent, and remaining, and the accountant's notes.
 - Exchange messages on the submission (FR-31).
 - Set Away; while away, the **Vice-Chair** (role: backup board approver, assigned by the administrator) receives the Board Chair's queue.
@@ -1576,26 +1576,29 @@ The administrator can optionally give the **Expense submitter** permission to a 
 
 ## 6B.4 Two-level approval workflow
 
-Every expense submission (purchase request and expense claim, any amount) needs two approvals.
+Every expense submission (purchase request and expense claim, any amount) needs two approvals: the accountant's and the Board Chair's (or Vice-Chair's). **Both are asked at the same time, at submission, and can decide in either order** (decided by the church 2026-10-16). The first approval moves it to **Awaiting Board Chair** or **Awaiting accountant**; the second makes it **Approved**. Either approver can return it to the requester (both approvals are needed again after the requester answers) or decline it. If the two approved amounts differ, **the lower one is the approved amount**; neither approver can approve more than was asked.
 
-**Level 1: Accountant**
+**The accountant**
 
 1. Open the Expenses review queue (filters: department, type, status, amount, date, over-budget).
 2. Open a submission: details, items/receipts, receipt files, budget impact (Remaining before and after), linked purchase request, history, messages.
-3. Choose: **Approve and send to Board Chair**, **Approve a different amount and send to Board Chair** (one total incl. tax with a reason; tax worked out inside it as in FR-16), **Return for clarification** (to the requester), or **Decline** (reason required, ends the process).
-4. On approval, the status becomes **Awaiting Board Chair**; the Board Chair is emailed; the requester is emailed "Approved by the accountant, waiting for the Board Chair".
+3. Choose: **Approve**, **Approve a smaller amount** (one total incl. tax with a reason; tax worked out inside it as in FR-16), **Return for clarification** (to the requester), or **Decline** (reason required, ends the process).
 
-**Level 2: Board Chair**
+**The Board Chair**
 
-5. The Board Chair opens their queue (email link or dashboard) and sees the submission, the accountant's approved amount and note, the budget impact, and receipts. An over-budget submission shows the same over-budget warning and explanation the accountant saw (FR-43).
-6. Choose: **Give final approval**, **Approve a smaller amount** (incl. tax, with reason), **Return to accountant** with a question (status back to In Review; the accountant can then ask the requester), or **Decline** (reason required).
-7. On final approval, the status becomes **Approved**, and:
+4. The Board Chair is emailed **Approval needed** at submission, at the same time as the accountant, and opens their queue (email link or dashboard). They see the submission, the accountant's approval and note if the accountant has already approved, the budget impact, and receipts. An over-budget submission shows the same over-budget warning and explanation the accountant sees (FR-43).
+5. Choose: **Approve**, **Approve a smaller amount** (incl. tax, with reason), **Return for clarification** (to the requester), or **Decline** (reason required).
+
+**When both have approved**
+
+6. After one approval, only the approver gets a copy; the requester and the Church Administrator are not emailed yet.
+7. On the second approval, the status becomes **Approved**, and:
    - the requester (and payee, if different) receives **"Your expense has been approved"** with the final amount;
    - the **Church Administrator** receives **"Approved, ready for processing"** with what to pay or buy, the payee, payment preference, and a link;
    - the accountant receives a copy;
    - the budget updates (Committed for purchase requests, Spent for claims; FR-42).
 
-The Board Chair cannot raise the amount above what the accountant approved.
+Neither approver can approve more than was asked; the lower of the two approved amounts is final.
 
 ## 6B.5 Processing and payment (Church Administrator)
 
@@ -1682,7 +1685,8 @@ Claims already paid on the church card by the requester are recorded by the Chur
 | Submitted | Waiting for the accountant. Editable by the requester. |
 | In Review | The accountant is reviewing. |
 | Returned for Clarification | The accountant has a question. |
-| Awaiting Board Chair | Approved by the accountant; waiting for the Board Chair's final approval. |
+| Awaiting Board Chair | Approved by the accountant; waiting for the Board Chair's approval. |
+| Awaiting accountant | Approved by the Board Chair; waiting for the accountant's approval. |
 | Approved | Both approvals given. Ready for the Church Administrator to process. |
 | Processing | The Church Administrator is preparing the cheque, payment, or purchase. |
 | Paid | Expense claim: money paid to the payee (method recorded). |
@@ -1692,7 +1696,7 @@ Claims already paid on the church card by the requester are recorded by the Chur
 | Withdrawn | Withdrawn by the requester before approval. |
 | Declined | Not approved; reason given. |
 
-Valid transitions: Draft → Submitted → In Review → (Returned for Clarification → Submitted) | Declined | Awaiting Board Chair; Awaiting Board Chair → Approved | Declined | In Review (returned to accountant); Approved → Processing → Paid | Purchased → Closed; Approved (purchase request) → Cancelled, or → Closed when a linked claim is paid; Submitted → Withdrawn. Enforced on the server. FR-34 (amount threshold) does not apply to expenses, because every expense already has two approvals.
+Valid transitions: Draft → Submitted → In Review (either approver opens it) → Awaiting Board Chair (accountant approved) | Awaiting accountant (Board Chair approved) | Returned for Clarification | Declined; Awaiting Board Chair → Approved (Board Chair approves) | Returned | Declined; Awaiting accountant → Approved (accountant approves) | Returned | Declined; Returned for Clarification → Submitted; Approved → Processing → Paid | Purchased → Closed; Approved (purchase request) → Cancelled, or → Closed when a linked claim is paid; Submitted → Withdrawn. Enforced on the server. FR-34 (amount threshold) does not apply to expenses, because every expense already has two approvals.
 
 ## FR-46: Claim Deadlines and Year-End
 
@@ -1719,14 +1723,13 @@ Same rules as FR-21 (every update emails the people involved). **Requester** mea
 
 | Event | Requester (+ payee if different) | Accountant | Board Chair | Church Administrator |
 |---|---|---|---|---|
-| Submitted | Receipt | New submission | — | — |
-| Edited before review | Updated receipt | Update notice | — | — |
+| Submitted | Receipt | **Approval needed** | **Approval needed** (same time) | — |
+| Edited before review | Updated receipt | Update notice | Update notice | — |
 | Review started | Notice | — | — | — |
-| Returned for clarification | Question and link | Copy | — | — |
-| Approved by accountant | "Approved by the accountant, waiting for the Board Chair" | Copy | **Approval needed** | — |
-| Returned to accountant by Board Chair | — | Board Chair's question | Copy | — |
-| **Final approval by Board Chair** | **"Your expense has been approved"** with final amount | Copy | Copy | **"Approved, ready for processing"** |
-| Declined (either level) | Reason and who declined | Copy | Copy (if they declined) | — |
+| Returned for clarification (either approver) | Question and link | Copy | Copy | — |
+| One approval given | — | Copy (if they approved) | Copy (if they approved) | — |
+| **Both approvals given** | **"Your expense has been approved"** with final amount | Copy | Copy | **"Approved, ready for processing"** |
+| Declined (either level) | Reason and who declined | Copy | Copy | — |
 | Withdrawn or cancelled | Confirmation | Notice | Notice (if it was waiting for them) | Notice (if approved) |
 | Processing started | "Being processed" | — | — | — |
 | Paid / Purchased | How and when it was paid, reference | Copy | — | Copy |
@@ -2582,12 +2585,14 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 - **AC-70** A submission that exceeds Remaining shows the requester the over-budget warning, requires an over-budget explanation, can still be submitted, and shows the overage and explanation to the accountant and to the Board Chair (or Vice-Chair) when they decide.
 - **AC-139** After the Board Chair gives final approval to an expense that exceeds Remaining, the department's Remaining is below zero, shown as "Over budget by $X", and its status is Over budget.
 - **AC-140** The over-budget figure an approver sees is worked out at the time of their decision, including expenses approved since the submission.
+- **AC-142** The accountant and the Board Chair are both emailed "Approval needed" at submission and can approve in either order; the expense is Approved only once both have approved.
+- **AC-143** If the two approvers approve different amounts, the lower one is the approved amount, whichever approved first; each approver's own amount stays on their decision.
 - **AC-141** Every leader of the department receives each expense email the requester receives (receipt, questions, decisions, processing, payment, over-budget notice and reminders), once per address.
 - **AC-71** A requester can edit a submission until review starts, and cannot after.
 - **AC-72** An approver cannot approve their own claim or one for their own department.
-- **AC-73** After the accountant approves, the status is Awaiting Board Chair, the Board Chair is emailed, and the budget is not yet charged.
-- **AC-74** Only after the Board Chair's final approval does the requester get "Your expense has been approved" and the Church Administrator get "Approved, ready for processing".
-- **AC-75** The Board Chair can approve a smaller amount but not a larger one than the accountant approved.
+- **AC-73** After one approval (either approver), the status is Awaiting Board Chair or Awaiting accountant, and the budget is not yet charged.
+- **AC-74** Only after both approvals does the requester get "Your expense has been approved" and the Church Administrator get "Approved, ready for processing".
+- **AC-75** Either approver can approve a smaller amount but not more than was asked.
 - **AC-76** Recording a cheque payment requires the cheque number and two signers; recording church card, cash, e-transfer, or supplier EFT requires the matching fields.
 - **AC-77** An approved claim appears in the Church Administrator's Ready to process queue; recording payment emails the payee and requester with the method and date.
 - **AC-78** A department without an approved annual budget cannot submit expenses.

@@ -89,22 +89,17 @@ export async function submitClaim(browser: Browser, title: string) {
   return { id, reference };
 }
 
-/** The accountant (Pat) and then the Board Chair (Cleo) approve it. */
+/** The accountant (Pat) and the Board Chair (Cleo) both approve it (either order works). */
 export async function approveBoth(browser: Browser, id: string) {
-  for (const [who, path, button, done] of [
-    [PEOPLE.pat, `/expenses/review/${id}`, "Approve and send to Board Chair", /\?done=approve$/],
-    [
-      PEOPLE.cleo,
-      `/expenses/awaiting-approval/${id}`,
-      "Give final approval",
-      /\?done=final_approve$/,
-    ],
+  for (const [who, path, done] of [
+    [PEOPLE.pat, `/expenses/review/${id}`, /\?done=waiting$/],
+    [PEOPLE.cleo, `/expenses/awaiting-approval/${id}`, /\?done=fully_approved$/],
   ] as const) {
     const context = await browser.newContext({ viewport: DESKTOP });
     const page = await context.newPage();
     await signInAs(page, who);
     await page.goto(path);
-    await page.getByRole("button", { name: button }).click();
+    await page.getByRole("button", { name: "Approve", exact: true }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Confirm" }).click();
     await page.waitForURL(done);
     await context.close();

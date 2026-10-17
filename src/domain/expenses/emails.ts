@@ -1,4 +1,4 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { expenseEmailCopy as x } from "@/copy/expense-email";
 import { emailCopy } from "@/copy/email";
 import { expensesCopy } from "@/copy/expenses";
@@ -44,10 +44,11 @@ export type ExpenseEmailEvent =
   | { kind: "withdrawn"; from: ExpenseStatus }
   | { kind: "cancelled"; reason: string }
   | { kind: "review_started" }
-  | { kind: "returned"; question: string }
+  | { kind: "returned"; question: string; level: "accountant" | "board" }
   | { kind: "declined"; reason: string; level: "accountant" | "board" }
-  | { kind: "accountant_approved" }
-  | { kind: "board_returned"; question: string }
+  /** One of the two approvals; the other is still needed. */
+  | { kind: "approved_one"; level: "accountant" | "board" }
+  /** The second approval: the expense is Approved. */
   | { kind: "final_approved"; overBy: number }
   | { kind: "processing_started" }
   | { kind: "paid" };
@@ -221,11 +222,20 @@ export async function requesterGroup(
 
 const churchAdmins = (tx: Tx) => usersWithRole(tx, ["church_admin"]);
 
-async function latestDecision(tx: Tx, expenseId: string) {
+async function latestDecision(tx: Tx, expenseId: string, level?: "accountant" | "board") {
   const [d] = await tx
-    .select({ actingRole: expenseDecisions.actingRole, reason: expenseDecisions.reason })
+    .select({
+      actingRole: expenseDecisions.actingRole,
+      reason: expenseDecisions.reason,
+      decidedByUserId: expenseDecisions.decidedByUserId,
+    })
     .from(expenseDecisions)
-    .where(eq(expenseDecisions.expenseSubmissionId, expenseId))
+    .where(
+      and(
+        eq(expenseDecisions.expenseSubmissionId, expenseId),
+        level ? eq(expenseDecisions.level, level) : undefined,
+      ),
+    )
     .orderBy(desc(expenseDecisions.createdAt))
     .limit(1);
   return d ?? null;
@@ -252,6 +262,8 @@ export async function queueExpenseEmails(
   const current = approved(e) ?? requested(e);
   const requesterTo = await requesterGroup(tx, e);
   const accountants = () => accountantRecipients(tx, now);
+  // Whoever gives the board's approval now: the Chair, or the Vice-Chair covering.
+  const board = () => boardCover(tx, e, now);
   const noAction = emailCopy.noAction;
   const out: Outgoing[] = [];
 
@@ -283,7 +295,7 @@ export async function queueExpenseEmails(
             subject: x.newSubmission.subject(ref, dept),
             heading: x.newSubmission.heading,
             status: x.statuses.submitted,
-            paragraphs: [x.newSubmission.intro(dept, ctx.actorName)],
+            paragraphs: [x.newSubmission.intro(dept, ctx.actorName), x.newSubmission.together],
             facts: facts(ctx, [
               { label: x.facts.requester, value: ctx.requesterName },
               ...payeeFacts(ctx),
@@ -295,6 +307,32 @@ export async function queueExpenseEmails(
           },
         },
       );
+      {
+        const cover = await board();
+        out.push({
+          template: "expenses.board_needed",
+          audience: "board",
+          to: cover.recipients,
+          content: {
+            subject: x.boardNeeded.subject(ref, dept),
+            heading: x.boardNeeded.heading,
+            status: x.statuses.submitted,
+            paragraphs: [
+              x.newSubmission.intro(dept, ctx.actorName),
+              x.newSubmission.together,
+              ...(cover.viceCovering ? [x.boardNeeded.covering] : []),
+            ],
+            facts: facts(ctx, [
+              { label: x.facts.requester, value: ctx.requesterName },
+              ...payeeFacts(ctx),
+            ]),
+            summary: asked,
+            lines,
+            action: x.boardNeeded.action,
+            button: decide,
+          },
+        });
+      }
       break;
     }
 
@@ -325,6 +363,12 @@ export async function queueExpenseEmails(
           to: await accountants(),
           content: { ...content, action: x.newSubmission.action, button: review },
         },
+        {
+          template: answered ? "expenses.answered.board" : "expenses.edited.board",
+          audience: "board",
+          to: (await board()).recipients,
+          content: { ...content, action: x.boardNeeded.action, button: decide },
+        },
       );
       break;
     }
@@ -349,6 +393,18 @@ export async function queueExpenseEmails(
 
     case "returned": {
       const note = { label: x.returned.question, text: event.question };
+      const decided = await latestDecision(tx, e.id);
+      const role = decided ? (ROLE_NAMES[decided.actingRole] ?? decided.actingRole) : "";
+      const copy: EmailContent = {
+        subject: x.returned.subject(ref, dept),
+        heading: x.returned.copyHeading,
+        status: x.statuses.returned,
+        paragraphs: [x.returned.copyIntro(dept, ctx.actorName)],
+        facts: facts(ctx),
+        note,
+        action: noAction,
+        button: view,
+      };
       out.push(
         {
           template: "expenses.returned",
@@ -356,136 +412,63 @@ export async function queueExpenseEmails(
           to: requesterTo,
           content: {
             subject: x.returned.subject(ref, dept),
-            heading: x.returned.heading,
+            heading: event.level === "accountant" ? x.returned.heading : x.returned.headingBy(role),
             status: x.statuses.returned,
             facts: facts(ctx),
             note,
             summary: asked,
             action: x.returned.action,
-            button: { label: x.returned.button, href: appUrl(`/expenses/${e.id}/edit`) },
+            button: { label: x.returned.button, href: appUrl("/expenses/" + e.id + "/edit") },
           },
         },
         {
           template: "expenses.returned.accountant",
           audience: "accountant",
           to: await accountants(),
-          content: {
-            subject: x.returned.subject(ref, dept),
-            heading: x.returned.copyHeading,
-            status: x.statuses.returned,
-            paragraphs: [x.returned.copyIntro(dept)],
-            facts: facts(ctx),
-            note,
-            action: noAction,
-            button: review,
-          },
+          content: { ...copy, button: review },
+        },
+        {
+          template: "expenses.returned.board",
+          audience: "board",
+          to: (await board()).recipients,
+          content: copy,
         },
       );
       break;
     }
 
-    case "accountant_approved": {
-      const summary = summaryOf(ctx, current, x.approvedHeading);
-      const cover = await boardCover(tx, e, now);
-      const decision = await latestDecision(tx, e.id);
-      const note = decision?.reason
-        ? { label: expensesCopy.review.accountantNote, text: decision.reason }
-        : undefined;
-      out.push(
-        {
-          template: "expenses.accountant_approved",
-          audience: "requester",
-          to: requesterTo,
-          content: {
-            subject: x.accountantApproved.subject(ref, dept),
-            heading: x.accountantApproved.heading,
-            status: x.statuses.awaitingBoard,
-            paragraphs: [x.accountantApproved.intro],
-            facts: facts(ctx),
-            summary,
-            action: noAction,
-            button: view,
-          },
+    case "approved_one": {
+      // Only the person who approved hears now; the department and the office hear once
+      // both have approved (decided 2026-10-16).
+      const a = x.approvedOne;
+      out.push({
+        template: "expenses.approved_one." + event.level,
+        audience: event.level === "accountant" ? "accountant" : "board",
+        to: await person(tx, actorId),
+        content: {
+          subject: a.subject(ref, dept),
+          heading: a.heading,
+          status:
+            event.level === "accountant" ? x.statuses.awaitingBoard : x.statuses.awaitingAccountant,
+          paragraphs: [
+            event.level === "accountant" ? a.waitingForBoard : a.waitingForAccountant,
+            a.lower,
+          ],
+          facts: facts(ctx, [{ label: x.facts.requester, value: ctx.requesterName }]),
+          summary: summaryOf(ctx, current, x.approvedHeading),
+          action: noAction,
+          button: event.level === "accountant" ? review : view,
         },
-        {
-          template: "expenses.accountant_approved.accountant",
-          audience: "accountant",
-          to: await accountants(),
-          content: {
-            subject: x.accountantApproved.subject(ref, dept),
-            heading: x.accountantApproved.copyHeading,
-            status: x.statuses.awaitingBoard,
-            paragraphs: [x.accountantApproved.copyIntro],
-            facts: facts(ctx, [{ label: x.facts.approvedBy, value: ctx.actorName }]),
-            summary,
-            note,
-            action: noAction,
-            button: review,
-          },
-        },
-        {
-          template: "expenses.board_needed",
-          audience: "board",
-          to: cover.recipients,
-          content: {
-            subject: x.boardNeeded.subject(ref, dept),
-            heading: x.boardNeeded.heading,
-            status: x.statuses.awaitingBoard,
-            paragraphs: [
-              x.boardNeeded.intro(ctx.actorName, formatCAD(current.total)),
-              ...(cover.viceCovering ? [x.boardNeeded.covering] : []),
-            ],
-            facts: facts(ctx, [
-              { label: x.facts.requester, value: ctx.requesterName },
-              ...payeeFacts(ctx),
-            ]),
-            summary,
-            note,
-            action: x.boardNeeded.action,
-            button: decide,
-          },
-        },
-      );
-      break;
-    }
-
-    case "board_returned": {
-      const note = { label: x.boardReturned.question, text: event.question };
-      out.push(
-        {
-          template: "expenses.board_returned",
-          audience: "accountant",
-          to: await accountants(),
-          content: {
-            subject: x.boardReturned.subject(ref, dept),
-            heading: x.boardReturned.heading,
-            status: x.statuses.inReview,
-            facts: facts(ctx),
-            note,
-            action: x.boardReturned.action,
-            button: review,
-          },
-        },
-        {
-          template: "expenses.board_returned.board",
-          audience: "board",
-          to: await person(tx, actorId),
-          content: {
-            subject: x.boardReturned.subject(ref, dept),
-            heading: x.boardReturned.copyHeading,
-            status: x.statuses.inReview,
-            facts: facts(ctx),
-            note,
-            action: noAction,
-            button: view,
-          },
-        },
-      );
+      });
       break;
     }
 
     case "final_approved": {
       const summary = comparisonOf(ctx);
+      const boardApprover = async () => {
+        const d = await latestDecision(tx, e.id, "board");
+        return d ? person(tx, d.decidedByUserId) : [];
+      };
       const intro =
         e.type === "purchase_request"
           ? e.howBought === "requester_claims"
@@ -530,7 +513,7 @@ export async function queueExpenseEmails(
         {
           template: "expenses.final_approved.board",
           audience: "board",
-          to: await person(tx, actorId),
+          to: await boardApprover(),
           content: copy,
         },
       );
@@ -624,14 +607,12 @@ export async function queueExpenseEmails(
           content: { ...copy, button: review },
         },
       );
-      if (event.level === "board") {
-        out.push({
-          template: "expenses.declined.board",
-          audience: "board",
-          to: await person(tx, actorId),
-          content: copy,
-        });
-      }
+      out.push({
+        template: "expenses.declined.board",
+        audience: "board",
+        to: (await board()).recipients,
+        content: copy,
+      });
       break;
     }
 
@@ -659,6 +640,15 @@ export async function queueExpenseEmails(
           content: { ...content, button: review },
         },
       );
+      // Withdrawn before review: the Board Chair had been asked too.
+      if (!cancelled && event.from === "submitted") {
+        out.push({
+          template: "expenses.withdrawn.board",
+          audience: "board",
+          to: (await board()).recipients,
+          content,
+        });
+      }
       // An approved purchase request may have been waiting for the office.
       if (cancelled) {
         out.push({
