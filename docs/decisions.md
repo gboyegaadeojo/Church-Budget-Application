@@ -662,3 +662,17 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
   - Board: final approvals, the Vice-Chair only while covering.
   - Church Administrator and accountant: payments to record.
   - Each task leaves the list once the step is done (AC-109).
+
+## Stage 3 step 8: the expense workbook (FR-50) (2026-10-16)
+
+- **Where:** Reports → **Expenses and payments** (accountant, backup approver, Church Administrator; the System Administrator exports everything, AC-110). Filters: budget cycle, department, and an optional date range for payments. `GET /api/exports/expenses`, audited as `expenses.exported` with its filters.
+- **Sheets:**
+  - **Expenses**: one row per submitted expense with the FR-50 columns. Requested and approved subtotal, sales tax and total are separate. There's a Total row.
+  - **Lines**: purchase request items and claim receipt lines.
+  - **Receipts**: one link per file. The link goes to the app's checked route, never to the file (6B.9).
+  - **Payments**: payments in the date range, with a Total row, for bank reconciliation.
+  - **Budget**: each department's Available, Committed, Pending, Spent and Remaining for the cycle.
+- **Approved amounts** in the export are only final approvals. An expense still waiting for the Board Chair shows its accountant's approval date but no approved total, matching AC-73.
+- **Same rules as FR-20:** amounts are numbers in CAD format written from stored values (no formulas). Text that starts like a formula is prefixed with an apostrophe (AC-96). Links are http and https only. The church's logo sits at the top.
+- **Budget vs Actual** (FR-20's spending workbook) gains Committed and Pending in Stage 4, with the spending dashboard. Until then, the Budget sheet here gives the same figures for expenses.
+- The Reports page's "Coming in Stage 3" placeholder for expenses is replaced by the real card. With two downloads on the page, the annual e2e test now picks its button inside the annual card.

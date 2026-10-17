@@ -298,11 +298,12 @@ test.describe("Excel exports (FR-20, DRD 6.10)", () => {
       await signInAs(page, PEOPLE.pat);
       await page.goto("/reports");
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-      await expect(page.getByText("What's in the workbook")).toBeVisible();
+      const annual = page.getByRole("region", { name: "Annual budgets" });
+      await expect(annual.getByText("What's in the workbook")).toBeVisible();
       await expectNoHorizontalScroll(page);
       await expectAxeClean(page);
       const downloading = page.waitForEvent("download");
-      await page.getByRole("button", { name: "Download Excel" }).click();
+      await annual.getByRole("button", { name: "Download Excel" }).click();
       expect((await downloading).suggestedFilename()).toBe("FY2027_Annual_Budgets.xlsx");
     });
   }
