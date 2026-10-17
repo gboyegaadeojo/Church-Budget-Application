@@ -22,6 +22,7 @@ import {
   type BudgetFigures,
   type BudgetImpact,
 } from "./budget";
+import { listFilterConditions, type ExpenseListFilters } from "./list-filters";
 import { expenseTotals, type ExpenseContent } from "./schema";
 import { authzContextOf, contentOf, currentRate, loadExpense, type ExpenseRow } from "./service";
 import {
@@ -402,17 +403,25 @@ export function toListRow(r: ListRaw): ExpenseListRow {
 }
 
 /** The person's departments' expenses, newest first (FR-48 "My expense submissions"). */
-export async function listMyExpenses(tx: Tx, viewer: Subject): Promise<ExpenseListRow[]> {
+export async function listMyExpenses(
+  tx: Tx,
+  viewer: Subject,
+  filters: ExpenseListFilters = {},
+): Promise<ExpenseListRow[]> {
   const ids = viewer.departments.map((d) => d.id);
   if (ids.length === 0) return [];
+  const zone = await getChurchTimeZone(tx);
   const rows = await tx
     .select(listColumns)
     .from(expenseSubmissions)
     .innerJoin(budgetCycles, eq(budgetCycles.id, expenseSubmissions.budgetCycleId))
     .where(
-      or(
-        inArray(expenseSubmissions.departmentId, ids),
-        eq(expenseSubmissions.requesterUserId, viewer.id),
+      and(
+        or(
+          inArray(expenseSubmissions.departmentId, ids),
+          eq(expenseSubmissions.requesterUserId, viewer.id),
+        ),
+        listFilterConditions(filters, zone),
       ),
     )
     .orderBy(desc(expenseSubmissions.updatedAt));

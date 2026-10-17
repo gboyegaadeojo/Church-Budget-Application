@@ -719,3 +719,9 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 
 - **Problem found:** once the release time passed, the page stopped offering **Release now** and **Cancel schedule**, but the held decisions weren't sent until the 15-minute `release-decisions` job ran. That job is called only by GitHub Actions, so on a local server it never runs, and in production it can lag by up to 15 minutes. The page listed the held decisions with no way to send them, and the past-time error still said "use Release now".
 - **Fix:** Release now works whenever decisions are held, including after the release time. The page says the time has passed and how many haven't been sent, and offers Release now. With nothing held it's still refused. The past-time error now just asks for a future time. The Send immediately hint explains that each decision is emailed as it's confirmed, so there's nothing to release later.
+
+## FR-48: search and filters on every expense list (2026-10-16)
+
+- **One filter set** (`src/domain/expenses/list-filters.ts`) for Review queue, Awaiting my approval, All expenses, My expenses and Ready to process: search (reference, title, payee, department), department, type, status, **submitted from/to** and **amount from/to**.
+- Dates compare the day submitted in the church's time zone. The amount is the approved amount once there is one, otherwise the amount asked. Amounts are read as cents with `parseCAD`, never floats.
+- The form is a plain GET, so filters stay in the address (DRD 6.0) and work without JavaScript. Anything that doesn't parse (a date like 2026-02-31, "abc" as an amount) is ignored rather than refused.
