@@ -85,7 +85,7 @@ describe("Ready to process (AC-77)", () => {
       ...PURCHASE,
       howBought: "requester_claims",
     });
-    const queue = await readyQueue(db, world.office, NOW);
+    const queue = await readyQueue(db, world.office, {}, NOW);
     const ids = queue!.rows.map((r) => r.id);
     expect(ids).toContain(claim);
     expect(ids).not.toContain(selfBought);

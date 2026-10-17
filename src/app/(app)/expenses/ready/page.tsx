@@ -14,11 +14,13 @@ import { buttonClass, cardClass, linkClass } from "@/components/ui/styles";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
 import { readyQueue, type ReadyRow } from "@/domain/expenses/payment-queries";
+import { hasListFilters, parseListFilters } from "@/domain/expenses/list-filters";
 import { getChurchTimeZone } from "@/domain/settings";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
 import { formatDate, zonedDate } from "@/lib/time-zone";
 import { getViewer } from "@/lib/viewer";
+import { ExpenseFilterForm } from "../filter-form";
 import { ExpenseStatusBadge } from "../status-badge";
 import { StartProcessing } from "./start-processing";
 
@@ -56,9 +58,10 @@ async function ReadyContent({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const query = await searchParams;
+  const filters = parseListFilters(query);
   const viewer = await getViewer();
   const db = getDb();
-  const [queue, zone] = await Promise.all([readyQueue(db, viewer), getChurchTimeZone(db)]);
+  const [queue, zone] = await Promise.all([readyQueue(db, viewer, filters), getChurchTimeZone(db)]);
   if (!queue) return <PermissionDenied />;
   const day = (d: Date | null) => (d ? formatDate(zonedDate(d, zone)) : "");
 
@@ -97,8 +100,14 @@ async function ReadyContent({
       </div>
 
       <Section title={r.listHeading} icon={Inbox} tone="teal">
+        <ExpenseFilterForm
+          basePath="/expenses/ready"
+          filters={filters}
+          departments={queue.departments}
+          statuses={["approved", "processing"]}
+        />
         {queue.rows.length === 0 ? (
-          <EmptyState>{p.empty}</EmptyState>
+          <EmptyState>{hasListFilters(filters) ? r.emptyFiltered : p.empty}</EmptyState>
         ) : (
           <div
             className="-mx-1 overflow-x-auto px-1"

@@ -10,12 +10,11 @@ import { budgetFigures, impactOf, linkedCommitment, type BudgetFigures } from ".
 import { toListRow, type ExpenseListRow } from "./queries";
 import { daysBetween, isLateClaim } from "./schema";
 import { authzContextOf, type ExpenseRow } from "./service";
+import { filterStatus, listFilterConditions, type ExpenseListFilters } from "./list-filters";
 import {
   ACCOUNTANT_WAITING,
   BOARD_WAITING,
   ENDED_WITHOUT_CHARGE,
-  EXPENSE_STATUSES,
-  EXPENSE_TYPES,
   type ExpenseStatus,
 } from "./status";
 
@@ -45,12 +44,7 @@ export type QueueRow = ExpenseListRow & {
   canDecide: boolean;
 };
 
-export type QueueFilters = {
-  department?: string;
-  type?: string;
-  status?: string;
-  overBudget?: string;
-};
+export type QueueFilters = ExpenseListFilters;
 
 export type Queue = {
   rows: QueueRow[];
@@ -101,10 +95,9 @@ async function queueFor(
   const access = authorize(viewer, options.queueAction);
   if (!access.allowed) return null;
   const f = options.filters;
-  const statuses =
-    f.status && (EXPENSE_STATUSES as readonly string[]).includes(f.status)
-      ? [f.status as ExpenseStatus]
-      : options.statuses;
+  const zone = await getChurchTimeZone(tx);
+  const chosen = filterStatus(f.status);
+  const statuses = chosen && options.statuses.includes(chosen) ? [chosen] : options.statuses;
   const raw = await tx
     .select({ ...listColumns, full: expenseSubmissions })
     .from(expenseSubmissions)
@@ -112,16 +105,12 @@ async function queueFor(
     .where(
       and(
         inArray(expenseSubmissions.status, [...statuses]),
-        f.department ? eq(expenseSubmissions.departmentId, f.department) : undefined,
-        f.type && (EXPENSE_TYPES as readonly string[]).includes(f.type)
-          ? eq(expenseSubmissions.type, f.type as (typeof EXPENSE_TYPES)[number])
-          : undefined,
+        listFilterConditions(f, zone, { status: false }),
       ),
     )
     .orderBy(asc(expenseSubmissions.submittedAt));
 
   const figures = new Map<string, BudgetFigures>();
-  const zone = await getChurchTimeZone(tx);
   const today = zonedDate(options.now, zone);
   const rows: QueueRow[] = [];
   for (const { full, ...r } of raw) {
@@ -279,7 +268,7 @@ export async function warningsFor(
 
 // ---------------------------------------------------------------- all expenses (FR-48)
 
-export type AllFilters = QueueFilters & { q?: string };
+export type AllFilters = ExpenseListFilters;
 
 /**
  * Every submitted expense (and each person's own drafts are on My expenses), for the
@@ -297,32 +286,12 @@ export async function allExpenses(
 } | null> {
   const access = authorize(viewer, "expense.view_all");
   if (!access.allowed) return null;
-  const q = filters.q?.trim().slice(0, 100);
-  const pattern = q ? `%${q.replace(/[\%_]/g, (c) => `\${c}`)}%` : null;
+  const zone = await getChurchTimeZone(tx);
   const rows = await tx
     .select(listColumns)
     .from(expenseSubmissions)
     .innerJoin(budgetCycles, eq(budgetCycles.id, expenseSubmissions.budgetCycleId))
-    .where(
-      and(
-        ne(expenseSubmissions.status, "draft"),
-        filters.department ? eq(expenseSubmissions.departmentId, filters.department) : undefined,
-        filters.type && (EXPENSE_TYPES as readonly string[]).includes(filters.type)
-          ? eq(expenseSubmissions.type, filters.type as (typeof EXPENSE_TYPES)[number])
-          : undefined,
-        filters.status && (EXPENSE_STATUSES as readonly string[]).includes(filters.status)
-          ? eq(expenseSubmissions.status, filters.status as ExpenseStatus)
-          : undefined,
-        pattern
-          ? or(
-              sql`${expenseSubmissions.referenceNumber} ilike ${pattern}`,
-              sql`${expenseSubmissions.title} ilike ${pattern}`,
-              sql`${expenseSubmissions.payeeName} ilike ${pattern}`,
-              sql`${expenseSubmissions.departmentNameSnapshot} ilike ${pattern}`,
-            )
-          : undefined,
-      ),
-    )
+    .where(and(ne(expenseSubmissions.status, "draft"), listFilterConditions(filters, zone)))
     .orderBy(sql`${expenseSubmissions.submittedAt} desc nulls last`)
     .limit(500);
   const departments = await tx
