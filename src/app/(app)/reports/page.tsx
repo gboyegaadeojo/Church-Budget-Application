@@ -15,6 +15,7 @@ import { authorize } from "@/lib/authz";
 import { cn } from "@/lib/cn";
 import { getViewer } from "@/lib/viewer";
 import { AnnualExportForm } from "./annual-export-form";
+import { ExpenseExportForm } from "./expense-export-form";
 
 const p = exportsCopy.page;
 const title = labelForHref("/reports") ?? p.title;
@@ -39,29 +40,33 @@ export default function ReportsPage() {
 async function ReportsContent() {
   const viewer = await getViewer();
   const canExportAnnual = authorize(viewer, "annual.export_all").allowed;
+  const canExportExpenses = authorize(viewer, "expense.export").allowed;
   const seesActivity = authorize(viewer, "analytics.view").allowed;
 
   const db = getDb();
-  const [cycles, departmentRows] = canExportAnnual
-    ? await Promise.all([
-        db
-          .select({ id: budgetCycles.id, name: budgetCycles.name, status: budgetCycles.status })
-          .from(budgetCycles)
-          .orderBy(desc(budgetCycles.budgetYear), desc(budgetCycles.createdAt)),
-        db
-          .select({ id: departments.id, name: departments.name })
-          .from(departments)
-          .where(ne(departments.status, "rejected"))
-          .orderBy(asc(departments.name)),
-      ])
-    : [[], []];
+  const [cycles, departmentRows] =
+    canExportAnnual || canExportExpenses
+      ? await Promise.all([
+          db
+            .select({ id: budgetCycles.id, name: budgetCycles.name, status: budgetCycles.status })
+            .from(budgetCycles)
+            .orderBy(desc(budgetCycles.budgetYear), desc(budgetCycles.createdAt)),
+          db
+            .select({ id: departments.id, name: departments.name })
+            .from(departments)
+            .where(ne(departments.status, "rejected"))
+            .orderBy(asc(departments.name)),
+        ])
+      : [[], []];
   const cycleStatus = annualCopy.review.cycleStatus as Record<string, string>;
   const defaultCycle = cycles.find((c) => c.status === "open") ?? cycles[0];
 
   return (
     <>
       <PageHeader title={title} intro={p.intro} />
-      {!canExportAnnual && <p className="text-sm text-fg-muted">{p.nothingForYou}</p>}
+      {!canExportAnnual && !canExportExpenses && (
+        <p className="text-sm text-fg-muted">{p.nothingForYou}</p>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {canExportAnnual && (
@@ -102,6 +107,41 @@ async function ReportsContent() {
                 />
               </>
             )}
+          </ReportCard>
+        )}
+
+        {canExportExpenses && defaultCycle && (
+          <ReportCard
+            id="expense-export"
+            area="expenses"
+            title={exportsCopy.expenses.heading}
+            intro={exportsCopy.expenses.intro}
+            className="md:col-span-2 xl:col-span-3"
+          >
+            <details className="group rounded-control border border-border text-sm">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 font-medium [&::-webkit-details-marker]:hidden">
+                {p.sheetsHeading}
+                <ChevronDown
+                  aria-hidden="true"
+                  className="ml-auto size-4 text-fg-muted transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <ul className="list-disc space-y-1 border-t border-border py-3 pr-3 pl-8 text-fg-muted">
+                {exportsCopy.expenses.sheets.map((sheet) => (
+                  <li key={sheet.name}>
+                    <span className="font-medium text-fg">{sheet.name}:</span> {sheet.columns}
+                  </li>
+                ))}
+              </ul>
+            </details>
+            <ExpenseExportForm
+              cycles={cycles.map((c) => ({
+                id: c.id,
+                label: `${c.name} (${cycleStatus[c.status] ?? c.status})`,
+              }))}
+              departments={departmentRows}
+              defaultCycleId={defaultCycle.id}
+            />
           </ReportCard>
         )}
 
