@@ -2,69 +2,124 @@
 
 A web app for Immanuel Fellowship Church to:
 
-1. **Set each department's yearly budget (Annual Budget).** Departments submit what they need for the year. The accountant approves it, or approves a different amount (including 12% tax) based on the board's decision.
-2. **Approve spending during the year (Expenses).** Departments submit purchase requests and expense claims against their approved budget. The accountant approves, then the Board Chair. The church administrator then pays or purchases and records how.
-3. **Track what's left.** The app shows approved, committed, spent and remaining for every department.
+1. **Set each department's yearly budget (Annual Budget).** Each department submits one budget for the year. The accountant approves it, approves a different amount (including 12% tax) based on the board's decision, asks a question, or declines.
+2. **Approve spending during the year (Expenses).** Departments submit purchase requests (before buying) and expense claims (after buying) against their approved budget. The accountant and the Board Chair both approve; then the Church Administrator pays or purchases and records how.
+3. **Track what's left (Spending).** Approved, amendments, committed, spent and remaining for every department, with a ledger, Budget vs actual, alerts, a year-end lock and Excel exports.
 
 Sign-in is with Planning Center (the Church Administrator and System Administrators can also use an emailed code). Only verified Group Leaders can submit. Everything runs on free tiers.
 
-## Documents
+## Status
 
-| Document | What it covers | Who it's for |
-|---|---|---|
-| [Requirements (PRD/SRS) v3.3](docs/church-media-budget-requirements.md) | What the app must do: roles, workflows, functional requirements (FR-xx), data model, security, business rules, acceptance criteria (AC-xx), delivery stages, decisions | Developer (Claude Code), testers, church leadership |
-| [Design Requirements (DRD) v3.3](docs/church-media-budget-design.md) | How it looks and behaves: colours, typography, motion, screens, statuses, emails, accessibility | Designer, developer |
-| [User manual](docs/user-manual.md) | How to use the app, by role; source for the in-app Help page | Everyone using the app |
-| [Go-live checklist](docs/go-live-checklist.md) | Every account, tool and integration needed to launch, on free tiers | Church leadership, administrators, developer |
-| [Build guide for Claude Code](CLAUDE.md) | How to build it: stack, structure, conventions, build order, testing, setup | Claude Code |
+Stages 1 to 4 are built, tested and merged (annual budgets, polish, expenses, spending). Next is **Stage 5: hardening and launch** (Requirements Section 15): security review, screen-reader and mobile passes, the nightly backup job and a restore test, an email deliverability test, a pilot, and the [go-live checklist](docs/go-live-checklist.md).
 
-If the two documents disagree about **behaviour**, the requirements win. If they disagree about **look or interaction**, the design document wins.
-
-## Quick reference
-
-| Topic | Answer | Where |
-|---|---|---|
-| Sales tax | 12%, one line, on the subtotal, rounded to the cent, no exemptions | Req FR-07a |
-| Annual approval | Accountant enters one approved total **including tax**, plus a board reference | Req FR-16 |
-| Edits after submitting the annual budget | 2; a clarification response doesn't count | Req FR-12 |
-| Expense approval | Accountant, then Board Chair; then the church administrator records payment | Req 6B.4–6B.5 |
-| Attachments | None, except receipts on expense claims and the admin's logo | Req FR-23, 6B.9 |
-| Emails | Every update emails the people involved; annual decisions can be held for a scheduled release | Req FR-21, FR-19a, FR-49 |
-| Sign-in | Planning Center, plus an emailed code for the Church Administrator and System Administrators; requesters need the Group Leader custom field ("Ministry Leader" = "Yes") | Req FR-01, FR-01a |
-| Cost | Free tiers only (Resend, Netlify, Neon, GitHub Actions, Cloudflare R2) | Req 20.3 |
-| Department leaders | One Primary and up to two ranked Backup requesters per department | Req FR-38 |
-| Planning Center teams | Departments can be mapped to a Planning Center team, group or tag to keep leaders in step | Req FR-39 |
-| Audit and analytics | Reports → Analytics & Audit: charts, full activity log, access checks | Req FR-52 |
-| Build order | Stage 1 Annual Budget → 2 Polish → 3 Expenses → 4 Spending → 5 Launch | Req Section 15 |
+Every choice made along the way that the specifications didn't settle is recorded in [docs/decisions.md](docs/decisions.md).
 
 ## Roles
 
 It is **one application** for everyone: one web address, one sign-in, and a Home page with **My tasks** showing what each person needs to do across all their roles.
 
-
 | Role | Who | Main job |
 |---|---|---|
-| Requester | Department leaders (verified Group Leaders in Planning Center) | Submit the annual budget and expenses |
-| Accountant (+ backup approver) | Church accountant | Approve annual budgets; first approval on expenses |
-| Board Chair | Chairman of the Board | Final approval on expenses |
-| Vice-Chair | Vice-Chairman of the Board | Final approval when the Chair is away or conflicted |
+| Requester | Department leaders (verified Group Leaders in Planning Center) | Submit the annual budget and expenses; follow their department's spending |
+| Accountant (+ backup approver) | Church accountant | Decide annual budgets; approve expenses; amend budgets; lock the year |
+| Board Chair | Chairman of the Board | Approve expenses (alongside the accountant) |
+| Vice-Chair | Vice-Chairman of the Board | Approves when the Chair is away or conflicted |
 | Church Administrator | Admin assistant | Pay or purchase approved expenses; record spending |
-| System Administrator | Whoever runs the app | Users, departments, settings, Planning Center, branding; **sees everything** (read-only) |
+| System Administrator | Whoever runs the app | Users, departments, settings, Planning Center, branding; **sees everything** (read-only on money) |
 
-## What the church needs to provide before building starts
+## Documents
 
-- [x] Department list (18 departments, Req FR-03). Representatives aren't pre-loaded because leaders change; they join by signing in or through Planning Center mapping
-- [ ] Planning Center: G creates the OAuth app and API key, and confirms the custom field and value for Group Leader (default "Ministry Leader" = "Yes")
-- [ ] Email addresses for the accountant, Board Chair, Vice-Chair, backup approver, church administrator, and two system administrators; any address works (Req FR-01b)
-- [ ] A church-owned Google account to own hosting, database, email and code (explained in the [go-live checklist](docs/go-live-checklist.md))
-- [ ] Cheque signing authorities' names; editable later in the app (Req FR-53)
-- [ ] Logo and brand colour; editable later by the administrator (Req FR-30)
-- [ ] FY2027 budget year dates and submission deadline; the deadline can be changed or extended per department (Req 4.3)
+| Document | What it covers | Who it's for |
+|---|---|---|
+| [Requirements (PRD/SRS)](docs/church-media-budget-requirements.md) | What the app must do: roles, workflows, functional requirements (FR-xx), data model, rules, acceptance criteria (AC-xx), delivery stages | Developer, testers, church leadership |
+| [Design Requirements (DRD)](docs/church-media-budget-design.md) | How it looks and behaves: colours, typography, motion, screens, emails, accessibility | Designer, developer |
+| [Decisions](docs/decisions.md) | Every choice and change made during the build, with the reason | Developer, church leadership |
+| [User manual](docs/user-manual.md) | How to use the app, by role; source for the in-app Help page | Everyone using the app |
+| [Go-live checklist](docs/go-live-checklist.md) | Every account, tool and integration needed to launch, on free tiers | Church leadership, administrators, developer |
+| [Demo site](docs/demo-site.md) | A hosted training copy with made-up people, alongside production | Administrators, trainers |
+| [Build guide](CLAUDE.md) | Stack, structure, conventions, hard constraints, testing | Developer (Claude Code) |
 
-## Going live
+If the requirements and the design disagree about **behaviour**, the requirements win; about **look or interaction**, the design wins. Later decisions in `docs/decisions.md` override both where they say so.
 
-Every account, tool and integration needed to launch is listed in the [go-live checklist](docs/go-live-checklist.md).
+## Quick reference
 
-## Status
+| Topic | Answer | Where |
+|---|---|---|
+| Sales tax | 12%, one line, on the subtotal, rounded to the cent; the rate is kept with each request and expense | Req FR-07a |
+| Money | Integer cents everywhere; the server recalculates every total | CLAUDE.md |
+| Annual budgets | One per department per year; 2 shared edits after submitting; the accountant approves one total **including tax** | Req FR-12, FR-16; decisions 2026-10-17 |
+| Expense approval | The accountant and the Board Chair are asked at the same time; either may approve first, and the lower amount stands | Req 6B.4; decisions 2026-10-16 |
+| Files | Receipts on claims, optional attachments (quote, invoice, photo) on purchase requests, and the admin's logo; nothing else | Req 6B.9, FR-30; decisions 2026-10-17 |
+| Emails | Every update emails the people involved, through an outbox; nobody can turn them off | Req FR-21, FR-49 |
+| Sign-in | Planning Center, plus an emailed code for the Church Administrator and System Administrators; requesters need the Group Leader field ("Ministry Leader" = "Yes") | Req FR-01, FR-01a |
+| Year-end | The accountant locks a year's spending; open purchase requests are cancelled or carried into next year | Req FR-29, FR-46 |
+| Audit and analytics | Reports → Analytics & Audit: Overview charts, the full activity log, access checks | Req FR-52 |
+| Cost | Free tiers only: Netlify, Neon, Resend, GitHub Actions, Cloudflare R2 | Req 20.3 |
 
-The requirements and design are final for build (v3.0, 2026-10-15). Claude Code will build the app in the stages in Requirements Section 15. The two specifications are in `docs/`; the build guide for Claude Code is `CLAUDE.md` at the repository root.
+## For developers
+
+### Stack
+
+Next.js (App Router, TypeScript strict) · Tailwind CSS with the DRD tokens · Radix UI · React Hook Form + Zod (shared by client and server) · Neon Postgres with Drizzle ORM and migrations · Auth.js (Planning Center OAuth and emailed codes) · Resend for email · Cloudflare R2 for files · ExcelJS for exports · Vitest and Playwright (Chromium, axe-core) for tests. Hosted on Netlify.
+
+### Run it on your computer
+
+You need Node.js 22 or later. On Windows PowerShell, use `npm.cmd` instead of `npm`.
+
+```sh
+npm install
+npm run dev:fake     # the app at http://localhost:3000 with no outside services
+```
+
+`dev:fake` starts an in-memory Postgres (PGlite), migrates it, seeds test people and data, and turns on **Sign in as…** buttons for each test person, a fake email outbox and a fake Planning Center. Data is gone when it stops. New migrations are applied while it runs.
+
+`npm run dev:demo` runs the same thing as the hosted demo (banner and demo sign-in) at <http://demo.localhost:3000>.
+
+To run against a real database instead, copy `.env.example` to `.env.local`, fill in the values (see the go-live checklist for where each comes from) and run `npm run dev`.
+
+### Commands
+
+| Command | What it does |
+|---|---|
+| `npm run dev:fake` | Local app with fake services and test data |
+| `npm run dev:demo` | Local app as the demo site |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run lint` · `npm run format:check` · `npm run typecheck` | ESLint, Prettier, TypeScript |
+| `npm test` | Unit tests (Vitest) |
+| `npm run test:integration` | Service tests against Postgres (PGlite locally, a real Postgres in CI) |
+| `npm run test:e2e` | Playwright end-to-end and accessibility tests; it builds the app and starts the fake server on port 3100 itself |
+| `npm run db:generate` · `npm run db:migrate` · `npm run db:check` | Drizzle migrations |
+
+### Where things are
+
+```
+src/app/          routes: (auth) sign-in, (app) annual/ expenses/ spending/ reports/ admin/, api/
+src/domain/       business rules: annual, expenses, spending, tasks, analytics, users, settings…
+src/lib/          money.ts (cents and tax), authz.ts (every permission), audit, email outbox, storage, excel
+src/copy/         all UI text (English, Canada)
+src/db/schema.ts  the database schema; migrations are in drizzle/
+tests/            unit, integration, e2e (tests are named after their ACs)
+scripts/          fake server, test seed, demo reset
+netlify/functions scheduled jobs (email outbox)
+.github/workflows CI on every PR, nightly jobs, demo reset
+```
+
+Every action follows the same order in one transaction: permission check, validation, status-machine check, write, audit, email outbox. See [CLAUDE.md](CLAUDE.md) for the hard constraints and conventions.
+
+### Quality bar
+
+CI must pass lint, typecheck, unit, integration and end-to-end tests (with axe accessibility checks at 360 px and 1440 px) before anything merges into `main`.
+
+### Deploying
+
+Production is a Netlify site connected to this repository. The environment variables, secrets and scheduled jobs are listed in [CLAUDE.md](CLAUDE.md#environment-variables-names-only-values-live-in-netlify-and-github-secrets) and explained in the [go-live checklist](docs/go-live-checklist.md). The optional training copy is set up as in [docs/demo-site.md](docs/demo-site.md).
+
+## What the church provides before launch
+
+- [x] Department list (18 departments, Req FR-03). Leaders join by signing in or through Planning Center mapping
+- [ ] Planning Center: the OAuth app and API key, and the Group Leader custom field and value (default "Ministry Leader" = "Yes")
+- [ ] Email addresses for the accountant, Board Chair, Vice-Chair, backup approver, Church Administrator and two System Administrators
+- [ ] A church-owned Google account to own hosting, database, email and code (see the [go-live checklist](docs/go-live-checklist.md))
+- [ ] Cheque signing authorities' names (editable later, Req FR-53)
+- [ ] Logo and brand colour (editable later by the administrator, Req FR-30)
+- [ ] FY2027 budget year dates and submission deadline (changeable and extendable per department, Req 4.3)
