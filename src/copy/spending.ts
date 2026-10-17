@@ -103,7 +103,7 @@ export const spendingCopy = {
     },
   },
   mine: {
-    title: "My department's budget",
+    title: "My department's spending",
     intro: "Your department's budget and what's been spent against it. View only.",
     panelTitle: (department: string) => `${department} budget`,
     entries: "Spending entries",

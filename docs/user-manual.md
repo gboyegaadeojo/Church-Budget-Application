@@ -94,7 +94,7 @@ Each department submits **one** annual budget for the year. Once it has one (a d
 
 ### See how much is left
 
-**Spending → My department's budget** shows, for each department you lead, the approved budget, any amendments, the available budget, committed, spent and remaining, with a bar showing how much is used (On track, Nearing limit or Over budget). Below it is every spending entry: the date, payee, description and amount. Refunds show as a minus amount, and voided entries stay listed, struck through. Choose another **Budget year** to look back. Your annual budget page shows the same panel with the latest five entries.
+**Spending → My department's spending** shows, for each department you lead, the approved budget, any amendments, the available budget, committed, spent and remaining, with a bar showing how much is used (On track, Nearing limit or Over budget). Below it is every spending entry: the date, payee, description and amount. Refunds show as a minus amount, and voided entries stay listed, struck through. Choose another **Budget year** to look back. Your annual budget page shows the same panel with the latest five entries.
 
 You can only see your own departments. How each item was paid and its receipt or cheque numbers are kept with the accountant.
 

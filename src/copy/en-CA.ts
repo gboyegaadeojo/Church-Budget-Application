@@ -34,6 +34,7 @@ export const copy = {
     breadcrumbs: "Breadcrumb",
     myTasks: "My tasks",
     myDepartmentBudget: "My department's budget",
+    myDepartmentSpending: "My department's spending",
     reviewDashboard: "Review dashboard",
     departments: "Departments",
     decisionRelease: "Decision release",
@@ -113,6 +114,14 @@ export const copy = {
       count === 1 ? "1 task waiting for you" : `${count} tasks waiting for you`,
     waiting: (days: number) =>
       days < 1 ? "Waiting since today" : days === 1 ? "Waiting 1 day" : `Waiting ${days} days`,
+  },
+  /** The hosted demo site (docs/demo-site.md). */
+  demo: {
+    banner: "Made-up people and data, reset every night. No real emails are sent.",
+    bannerLabel: "Demo site",
+    signInHeading: "Try the app as someone",
+    signInNote:
+      "Pick a person to see the app as they would: a department leader, the accountant, the Board Chair, the Church Administrator or the System Administrator. Sign out from the account menu to switch.",
   },
   comingSoon: {
     title: "Coming soon",

@@ -69,7 +69,8 @@ Private repositories get about 2,000 free Actions minutes a month, and every run
 7. [ ] Pilot for one or two weeks with the accountant, Board Chair, Church Administrator and two departments; fix what they find.
 8. [ ] Check the [user manual](user-manual.md) against the built app and link it from the Help page.
 9. [ ] Open the budget cycle; the app emails every department representative.
-10. [ ] After launch, check Reports → Analytics & Audit → Access weekly for failed sign-ins, departments without a backup, and mapping problems.
+10. [ ] Optional: set up the [demo site](demo-site.md) for training (a Neon branch, a second Netlify site with `DEMO_MODE=1`, and the GitHub secrets `DEMO_DATABASE_URL` and `NETLIFY_DEMO_BUILD_HOOK`).
+11. [ ] After launch, check Reports → Analytics & Audit → Access weekly for failed sign-ins, departments without a backup, and mapping problems.
 
 ## 4. Who keeps what running
 

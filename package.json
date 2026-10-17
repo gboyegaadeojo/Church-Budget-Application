@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:fake": "node scripts/fake-server.mjs --dev",
+    "dev:demo": "node scripts/fake-server.mjs --dev --demo",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

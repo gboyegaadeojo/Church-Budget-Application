@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -8,25 +6,18 @@ import { connection } from "next/server";
 import { AlertCircle, Users } from "lucide-react";
 import { signInFake, signInWithProvider } from "@/app/actions/auth";
 import { auth } from "@/auth";
+import { DemoBanner } from "@/components/app-shell/demo-banner";
 import { copy } from "@/copy/en-CA";
 import { getDb } from "@/db";
 import { getSignInSettings } from "@/domain/settings";
-import { fakeSignInEnabled } from "@/lib/auth-mode";
+import { demoMode, fakeSignInEnabled } from "@/lib/auth-mode";
+import { FAKE_IDENTITIES, isDemoDatabase } from "@/lib/demo";
 import { getEmailSender } from "@/lib/email";
 import { EmailSignIn } from "./email-sign-in";
 
 const s = copy.signIn;
 
 export const metadata: Metadata = { title: s.title };
-
-type FakeIdentity = {
-  label: string;
-  provider: "planningcenter" | "email";
-  subject: string;
-  email: string;
-  name: string;
-  organizationId?: string;
-};
 
 /**
  * Sign-in (DRD 6.1): Continue with Planning Center, then the quieter Continue with email
@@ -35,6 +26,7 @@ type FakeIdentity = {
 export default function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   return (
     <div className="space-y-6">
+      <DemoBanner className="-mx-6 -mt-6 rounded-t-card sm:-mx-8 sm:-mt-8" />
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">{s.heading}</h1>
         <p className="text-sm text-fg-muted">{s.description}</p>
@@ -61,14 +53,18 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/sign-in">, "sear
   const params = await searchParams;
   const callbackUrl = typeof params.callbackUrl === "string" ? params.callbackUrl : "/";
   const failed = typeof params.error === "string";
-  const settings = await getSignInSettings(getDb());
-  const showPco = settings.planningCenterEnabled && !!process.env.PCO_CLIENT_ID;
+  const db = getDb();
+  const settings = await getSignInSettings(db);
+  // The demo site signs in only as its made-up people, and only against its own database.
+  const demo = demoMode();
+  const showPco = !demo && settings.planningCenterEnabled && !!process.env.PCO_CLIENT_ID;
   // Codes need a working sender; without one they would wait unsent in the outbox.
-  const showEmail = settings.emailEnabled && getEmailSender() !== null;
-  const fake = fakeSignInEnabled();
+  const showEmail = !demo && settings.emailEnabled && getEmailSender() !== null;
+  const fake = fakeSignInEnabled() && (!demo || (await isDemoDatabase(db)));
 
   return (
     <div className="space-y-6">
+      {demo && fake && <FakeSignIn callbackUrl={callbackUrl} demo />}
       {failed && (
         <p
           role="alert"
@@ -106,7 +102,7 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/sign-in">, "sear
         )}
       </section>
 
-      {fake && <FakeSignIn callbackUrl={callbackUrl} />}
+      {!demo && fake && <FakeSignIn callbackUrl={callbackUrl} />}
     </div>
   );
 }
@@ -134,19 +130,17 @@ function ProviderButton({
   );
 }
 
-function FakeSignIn({ callbackUrl }: { callbackUrl: string }) {
-  const file = path.resolve(process.cwd(), "tests/fixtures/fake-identities.json");
-  const identities = JSON.parse(readFileSync(file, "utf8")) as FakeIdentity[];
+function FakeSignIn({ callbackUrl, demo = false }: { callbackUrl: string; demo?: boolean }) {
   return (
     <section
       aria-labelledby="fake-heading"
       className="space-y-3 rounded-control border border-dashed border-warning p-4"
     >
       <h2 id="fake-heading" className="text-sm font-semibold">
-        {s.fakeHeading}
+        {demo ? copy.demo.signInHeading : s.fakeHeading}
       </h2>
-      <p className="text-xs text-fg-muted">{s.fakeNote}</p>
-      {identities.map((identity) => (
+      <p className="text-xs text-fg-muted">{demo ? copy.demo.signInNote : s.fakeNote}</p>
+      {FAKE_IDENTITIES.map((identity) => (
         <form key={identity.subject} action={signInFake}>
           <input type="hidden" name="callbackUrl" value={callbackUrl} />
           {(["provider", "subject", "email", "name", "organizationId"] as const).map((key) => (

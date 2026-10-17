@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { fakeSignInEnabled } from "@/lib/auth-mode";
+import { demoMode, fakeSignInEnabled } from "@/lib/auth-mode";
 import { presignUrl } from "./sigv4";
 
 /**
@@ -135,7 +135,8 @@ const shared = globalThis as typeof globalThis & { __memoryStorage?: MemoryStora
 
 /** R2 when its four settings are present, the fake when fake sign-in is on, else none. */
 export function getStorage(): ObjectStorage | null {
-  if (fakeSignInEnabled()) {
+  // The hosted demo runs on many short-lived functions, so files go to a demo R2 bucket.
+  if (fakeSignInEnabled() && !demoMode()) {
     return (shared.__memoryStorage ??= new MemoryStorage(
       process.env.AUTH_URL ?? "http://localhost:3000",
       process.env.AUTH_SECRET ?? "fake-storage",

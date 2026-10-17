@@ -97,7 +97,7 @@ test.describe("Spending (Stage 4)", () => {
       await page.setViewportSize(size);
       await page.goto("/spending/my-department");
       await expect(
-        page.getByRole("heading", { level: 1, name: "My department's budget" }),
+        page.getByRole("heading", { level: 1, name: "My department's spending" }),
       ).toBeVisible();
       await page.getByLabel("Budget year", { exact: true }).selectOption({ label: "FY2026" });
       await page.getByRole("button", { name: "Show" }).click();

@@ -81,7 +81,7 @@ export const AREAS: readonly AreaDef[] = [
     id: "spending",
     label: copy.areas.spending,
     items: [
-      { href: "/spending/my-department", label: n.myDepartmentBudget, act: ["requester"] },
+      { href: "/spending/my-department", label: n.myDepartmentSpending, act: ["requester"] },
       { href: "/spending", label: n.spendingDashboard, act: ["church_admin", ...ACCOUNTANTS] },
       { href: "/spending/record", label: n.recordSpending, act: ["church_admin", ...ACCOUNTANTS] },
       { href: "/spending/ledger", label: n.ledger, act: ["church_admin", ...ACCOUNTANTS] },
