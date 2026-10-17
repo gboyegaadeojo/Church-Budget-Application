@@ -213,6 +213,8 @@ Choose **Away** in the account menu (Account settings). Give the first day away 
 
 Every workbook has a **Summary** sheet (one row per budget, requested and approved subtotal, sales tax and total, the difference, who approved it and when, and a Total row) and a **Line Items** sheet (each item as requested and as approved, with the reason for any change). A one-budget workbook ends with its Subtotal, Sales tax and Total. When a different total was approved, an **Overall adjustment** row makes the approved items add up to it. Amounts are the app's own figures to the cent, as numbers you can sum. Drafts are never included. Each download is recorded in the activity log.
 
+**Spending workbook.** **Export to Excel** on the Spending dashboard downloads the year shown; **Reports → Spending and budget vs actual** lets you choose the year and one department or all. It has three sheets: **Budget vs Actual** (each department's approved, amendments, available, committed, spent, remaining, percentage used and status, with a Total row that matches the dashboard to the cent), **Ledger** (every spending entry with payment method and reference; refunds are negative, voided entries are listed but not counted in the total) and **Amendments**. The Church Administrator and the System Administrator can download it too.
+
 ---
 
 ## 6. Board Chair and Vice-Chair

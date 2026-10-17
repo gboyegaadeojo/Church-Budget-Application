@@ -10,6 +10,7 @@ import {
   TrendingDown,
   Wallet,
 } from "lucide-react";
+import { DownloadButton } from "@/components/download-button";
 import { Badge, EmptyState, PageHeader, Section, StatCard } from "@/components/ui/display";
 import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
 import { expensesCopy } from "@/copy/expenses";
@@ -81,6 +82,9 @@ export function DashboardView({
     <>
       <PageHeader title={title} intro={intro}>
         <div className="ml-auto flex flex-wrap gap-2">
+          {dashboard.canExport && cycle && (
+            <DownloadButton href={`/api/exports/spending?cycle=${cycle.id}`} label={d.export} />
+          )}
           {dashboard.canLock && cycle && (
             <Link
               href={`/spending/year-end?cycle=${cycle.id}`}

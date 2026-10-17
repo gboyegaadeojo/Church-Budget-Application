@@ -150,3 +150,42 @@ test.describe("Spending (Stage 4)", () => {
     await expectAxeClean(page);
   });
 });
+
+test.describe("Spending export (Stage 4)", () => {
+  test("AC-91 the Church Administrator downloads the spending workbook for FY2026", async ({
+    page,
+  }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.gina);
+    await page.goto("/reports");
+    const card = page.getByRole("region", { name: "Spending and budget vs actual" });
+    await expect(card).toBeVisible();
+    await card.getByLabel("Budget cycle").selectOption({ label: "FY2026 (Closed)" });
+    await expectAxeClean(page);
+    const download = page.waitForEvent("download");
+    await card.getByRole("button", { name: "Download Excel" }).click();
+    expect((await download).suggestedFilename()).toBe("Spending_2026.xlsx");
+  });
+
+  test("the accountant exports from the Spending dashboard; a requester can't", async ({
+    page,
+    browser,
+  }) => {
+    await signInAs(page, PEOPLE.pat);
+    await page.goto("/spending");
+    await page.getByLabel("Budget year", { exact: true }).selectOption({ label: "FY2026" });
+    await page.getByRole("button", { name: "Show" }).click();
+    const download = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Export to Excel" }).click();
+    expect((await download).suggestedFilename()).toBe("Spending_2026.xlsx");
+
+    const other = await browser.newContext();
+    const sam = await other.newPage();
+    await signInAs(sam, PEOPLE.sam);
+    const response = await sam.request.get(
+      "/api/exports/spending?cycle=00000000-0000-0000-0000-000000000000",
+    );
+    expect(response.status()).toBe(403);
+    await other.close();
+  });
+});

@@ -311,7 +311,7 @@ test.describe("Excel exports (FR-20, DRD 6.10)", () => {
   test("AC-4 a department leader can't export", async ({ page }) => {
     await signInAs(page, PEOPLE.sam);
     await page.goto("/reports");
-    await expect(page.getByText("There are no reports for your roles yet.")).toBeVisible();
+    await expect(page.getByText("There are no reports for your roles.")).toBeVisible();
     const response = await page.request.get("/api/exports/annual");
     expect(response.status()).toBe(403);
   });
