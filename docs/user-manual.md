@@ -125,7 +125,7 @@ You can submit expenses once your department's annual budget is approved and the
 
 ### What happens next
 
-- The accountant approves first, then the Board Chair (or Vice-Chair). After final approval, the Church Administrator pays or buys and records how. You and every other leader of the department get an email at each step, and **My expenses** shows a tracker with where it is.
+- The accountant and the Board Chair (or Vice-Chair) are asked at the same time and can approve in either order. Once both have approved, the Church Administrator pays or buys and records how. You and every other leader of the department get an email at each step, and **My expenses** shows a tracker with where it is.
 - You can **change** the expense until the accountant starts reviewing it, or **withdraw** it. If the accountant returns it with a question, change it and send your answer.
 - An approved purchase request you buy yourself stays set aside until you submit the claim linked to it. If it won't go ahead, **cancel** it with a reason so the money goes back to the budget.
 
@@ -207,10 +207,10 @@ Every workbook has a **Summary** sheet (one row per budget, requested and approv
 
 ## 6. Board Chair and Vice-Chair
 
-1. When the accountant approves an expense, you get an email and a task: **Final approval**.
-2. Open it from the email or **Expenses → Awaiting my approval**. You see the amount, the accountant's note, receipts, and the department's remaining budget. If it takes the department over budget, a warning shows by how much, with the requester's explanation; your final approval is what charges it, and the department then shows as over budget.
-3. Choose **Give final approval**, **Approve a smaller amount** (including tax, with a reason), **Return to accountant** with a question, or **Decline** with a reason.
-4. Final approval charges the budget. The requester and the Church Administrator are emailed.
+1. When an expense is submitted, you and the accountant are both emailed at the same time, and it's in your tasks: **Expense to approve**. Either of you can approve first.
+2. Open it from the email or **Expenses → Awaiting my approval**. You see the amount, the accountant's approval and note if they've already approved, receipts, and the department's remaining budget. If it takes the department over budget, a warning shows by how much, with the requester's explanation; the second approval is what charges it, and the department then shows as over budget.
+3. Choose **Approve**, **Approve a smaller amount** (including tax, with a reason), **Return for clarification** to the department with a question, or **Decline** with a reason.
+4. Once both of you have approved, the budget is charged, and the requester and the Church Administrator are emailed. If your amounts differ, the lower one is approved.
 5. The Chair can turn on **Away** (account menu); the Vice-Chair then gets the emails and tasks. The Vice-Chair also decides when the Chair represents the department, submitted it, or is the payee. Otherwise the Vice-Chair's screen says the Chair decides it. Decisions show who made them, and in which role.
 6. Expenses waiting more than 7 days are listed in a reminder email.
 

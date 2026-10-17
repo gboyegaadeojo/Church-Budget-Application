@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { AdminSkeleton, PermissionDenied } from "@/components/ui/display";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
-import { boardQueue } from "@/domain/expenses/review-queries";
+import { BOARD_QUEUE, boardQueue } from "@/domain/expenses/review-queries";
 import { getViewer } from "@/lib/viewer";
 import { filtersFrom, QueueView } from "../review/queue-view";
 
@@ -37,7 +37,7 @@ async function BoardQueueContent({
       intro={r.boardIntro}
       queue={queue}
       filters={filters}
-      statuses={["awaiting_board"]}
+      statuses={BOARD_QUEUE}
       basePath="/expenses/awaiting-approval"
     />
   );

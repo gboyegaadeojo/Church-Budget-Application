@@ -69,13 +69,22 @@ describe("starting the review (FR-44, AC-71)", () => {
   it("isn't started by someone who can't decide it", async () => {
     const world = await expenseWorld(db);
     const { expenseId } = await submitted(db, world, "purchase_request");
-    expect(await run((tx) => startExpenseReview(tx, world.chair, { id: expenseId }))).toBe(false);
+    expect(await run((tx) => startExpenseReview(tx, world.office, { id: expenseId }))).toBe(false);
     expect((await loadExpense(db, expenseId)).status).toBe("submitted");
   });
 });
 
+describe("starting the review: the Board Chair too (AC-142)", () => {
+  it("is started by the Board Chair opening it first", async () => {
+    const world = await expenseWorld(db);
+    const { expenseId } = await submitted(db, world, "purchase_request");
+    expect(await run((tx) => startExpenseReview(tx, world.chair, { id: expenseId }))).toBe(true);
+    expect((await loadExpense(db, expenseId)).status).toBe("in_review");
+  });
+});
+
 describe("approving (AC-73)", () => {
-  it("sends it to the Board Chair without charging the budget", async () => {
+  it("waits for the Board Chair without charging the budget", async () => {
     const world = await expenseWorld(db);
     const { expenseId } = await submitted(db, world, "purchase_request");
     const result = await decide(world.accountant, expenseId, { kind: "approve" });

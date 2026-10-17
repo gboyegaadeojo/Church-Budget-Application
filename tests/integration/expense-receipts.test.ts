@@ -223,7 +223,8 @@ describe("removing and seeing receipts", () => {
       .where(eq(expenseSubmissions.id, expenseId));
     expect(await see(world.accountant)).not.toBeNull();
     expect(await see(world.office)).not.toBeNull();
-    expect(await see(world.chair)).toBeNull();
+    // The Board Chair is asked at submission, alongside the accountant (AC-142).
+    expect(await see(world.chair)).not.toBeNull();
     expect(await see(stranger)).toBeNull();
 
     await db

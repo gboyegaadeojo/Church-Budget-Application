@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { AdminSkeleton, PermissionDenied } from "@/components/ui/display";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
-import { accountantQueue } from "@/domain/expenses/review-queries";
+import { ACCOUNTANT_QUEUE, accountantQueue } from "@/domain/expenses/review-queries";
 import { getViewer } from "@/lib/viewer";
 import { filtersFrom, QueueView } from "./queue-view";
 
@@ -37,7 +37,7 @@ async function QueueContent({
       intro={r.queueIntro}
       queue={queue}
       filters={filters}
-      statuses={["submitted", "in_review", "returned", "awaiting_board"]}
+      statuses={ACCOUNTANT_QUEUE}
       basePath="/expenses/review"
     />
   );

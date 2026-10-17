@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { boardDecide } from "@/domain/expenses/board";
 import type { ActionState } from "@/lib/action-state";
 import { runForResult } from "@/lib/admin-server";
+import { doneKey } from "../review/approvals";
 import type { DecideInput } from "../review/decision-panel";
 
 /** The Board Chair's (or Vice-Chair's) final decision (6B.4 level 2). */
@@ -20,19 +21,11 @@ const pagesOf = (id: string) => [
   "/",
 ];
 
-const DONE = {
-  approve: "final_approve",
-  approve_smaller: "approve_smaller",
-  return: "board_return",
-  decline: "board_decline",
-} as const;
-
 export async function boardDecideAction(input: DecideInput): Promise<ActionState> {
   const result = await runForResult(
     async (tx, viewer) => ({ message: "", data: await boardDecide(tx, viewer, input) }),
     { paths: pagesOf(input.id), latestHref: page(input.id) },
   );
   if (result.status !== "success") return result;
-  const done = DONE[input.decision.kind as keyof typeof DONE] ?? "final_approve";
-  redirect(`${page(input.id)}?done=${done}`);
+  redirect(`${page(input.id)}?done=${doneKey(input.decision.kind, result.data.status)}`);
 }

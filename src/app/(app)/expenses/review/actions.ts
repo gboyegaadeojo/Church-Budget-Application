@@ -1,10 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { expensesCopy } from "@/copy/expenses";
 import { accountantDecide, startExpenseReview } from "@/domain/expenses/review";
 import type { ActionState } from "@/lib/action-state";
 import { runForResult } from "@/lib/admin-server";
+import { doneKey } from "./approvals";
 import type { DecideInput } from "./decision-panel";
 
 /**
@@ -41,6 +41,5 @@ export async function accountantDecideAction(input: DecideInput): Promise<Action
     { paths: pagesOf(input.id), latestHref: page(input.id) },
   );
   if (result.status !== "success") return result;
-  const kind = input.decision.kind as keyof typeof expensesCopy.review.done;
-  redirect(`${page(input.id)}?done=${kind}`);
+  redirect(`${page(input.id)}?done=${doneKey(input.decision.kind, result.data.status)}`);
 }

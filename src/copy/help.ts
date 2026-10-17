@@ -59,7 +59,7 @@ export const helpCopy = {
         "You can't decide a budget for a department you lead; another accountant or the backup approver does.",
         "Going away? Choose Away in the account menu: accountant emails go to the backup approvers until the day you're back.",
         "Expenses → Review queue: open a purchase request or claim to see its items or receipts, the receipt files and the budget now and after. Warnings show if it takes the department over budget, matches another claim or is late.",
-        "Approve and send to the Board Chair, approve a different amount (including tax), return it with a question, or decline it. The budget isn't charged until the Board Chair's final approval.",
+        "Approve, approve a smaller amount (including tax), return it with a question, or decline it. The Board Chair is asked at the same time and either of you can approve first; the budget is charged once you both have, at the lower amount if they differ.",
       ],
     },
     {
@@ -67,10 +67,10 @@ export const helpCopy = {
       title: "Board Chair and Vice-Chair",
       who: "board_chair",
       steps: [
-        "After the accountant approves an expense, you're emailed and it's in My tasks. Open it from the email or Expenses → Awaiting my approval; it works on a phone.",
-        "You see the accountant's approved amount and note, the receipts, and the department's budget. If it takes the department over budget, it says by how much, with the requester's explanation.",
-        "Give final approval, approve a smaller amount (including tax), return it to the accountant with a question, or decline it with a reason. Your final approval is what charges the budget.",
-        "Going away? Choose Away in the account menu: final approvals go to the Vice-Chair. The Vice-Chair also decides when the Chair leads the department or is being paid.",
+        "When an expense is submitted, you and the accountant are both emailed and it's in My tasks. Either of you can approve first. Open it from the email or Expenses → Awaiting my approval; it works on a phone.",
+        "You see the receipts, the department's budget, and the accountant's approved amount and note if they've approved. If it takes the department over budget, it says by how much, with the requester's explanation.",
+        "Approve, approve a smaller amount (including tax), return it to the department with a question, or decline it with a reason. Once you both approve, the budget is charged, at the lower amount if yours differ.",
+        "Going away? Choose Away in the account menu: approvals go to the Vice-Chair. The Vice-Chair also decides when the Chair leads the department or is being paid.",
       ],
     },
     {

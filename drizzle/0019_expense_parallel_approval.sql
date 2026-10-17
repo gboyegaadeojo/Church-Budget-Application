@@ -1,0 +1,1 @@
+ALTER TYPE "public"."expense_status" ADD VALUE 'awaiting_accountant' BEFORE 'approved';

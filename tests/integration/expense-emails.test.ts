@@ -77,6 +77,8 @@ describe("the whole way through (AC-79)", () => {
     const sent = await emailsOf(id);
     expect(sent.get("expenses.submitted.receipt")).toEqual([world.requester.email, payee].sort());
     expect(sent.get("expenses.submitted.accountant")).toContain(world.accountant.email);
+    // AC-142: the Board Chair is asked at the same time.
+    expect(sent.get("expenses.board_needed")).toContain(world.chair.email);
 
     await run((tx) => startExpenseReview(tx, world.accountant, { id }));
     expect((await emailsOf(id)).get("expenses.review_started")).toEqual(
@@ -87,9 +89,9 @@ describe("the whole way through (AC-79)", () => {
       accountantDecide(tx, world.accountant, { ...input, decision: { kind: "approve" } }),
     );
     let all = await emailsOf(id);
-    expect(all.get("expenses.accountant_approved")).toEqual([world.requester.email, payee].sort());
-    expect(all.get("expenses.board_needed")).toContain(world.chair.email);
-    // AC-74: no "approved" or "ready for processing" before the final approval.
+    // One approval: only the accountant hears; the department waits for both (AC-74).
+    expect(all.get("expenses.approved_one.accountant")).toEqual([world.accountant.email]);
+    expect(all.has("expenses.accountant_approved")).toBe(false);
     expect(all.has("expenses.final_approved")).toBe(false);
     expect(all.has("expenses.ready_for_processing")).toBe(false);
 
@@ -146,7 +148,7 @@ describe("the whole way through (AC-79)", () => {
     expect((await emailsOf(id)).get("expenses.returned.accountant")).not.toContain(backup.email);
   });
 
-  it("emails returns, the board's question and declines to the right people", async () => {
+  it("emails returns and declines from either approver to the right people", async () => {
     const world = await expenseWorld(db);
     const { expenseId: id } = await submitted(db, world, "purchase_request");
     await act(id, (tx, input) =>
@@ -157,7 +159,9 @@ describe("the whole way through (AC-79)", () => {
     );
     let all = await emailsOf(id);
     expect(all.get("expenses.returned")).toEqual([world.requester.email]);
+    expect(all.get("expenses.returned.board")).toContain(world.chair.email);
 
+    // The Board Chair's question goes to the department too, with copies to both approvers.
     const { expenseId: second } = await submitted(db, world, "purchase_request");
     await act(second, (tx, input) =>
       accountantDecide(tx, world.accountant, { ...input, decision: { kind: "approve" } }),
@@ -166,23 +170,25 @@ describe("the whole way through (AC-79)", () => {
       boardDecide(tx, world.chair, { ...input, decision: { kind: "return", note: "Cheaper?" } }),
     );
     all = await emailsOf(second);
-    expect(all.get("expenses.board_returned")).toContain(world.accountant.email);
-    expect(all.get("expenses.board_returned.board")).toEqual([world.chair.email]);
-    await act(second, (tx, input) =>
-      accountantDecide(tx, world.accountant, { ...input, decision: { kind: "approve" } }),
-    );
-    await act(second, (tx, input) =>
+    expect(all.get("expenses.returned")).toEqual([world.requester.email]);
+    expect(all.get("expenses.returned.accountant")).toContain(world.accountant.email);
+    expect(all.get("expenses.returned.board")).toContain(world.chair.email);
+    expect(all.has("expenses.board_returned")).toBe(false);
+
+    const { expenseId: third } = await submitted(db, world, "purchase_request");
+    await act(third, (tx, input) =>
       boardDecide(tx, world.chair, { ...input, decision: { kind: "decline", note: "No." } }),
     );
-    all = await emailsOf(second);
+    all = await emailsOf(third);
     expect(all.get("expenses.declined")).toEqual([world.requester.email]);
-    expect(all.get("expenses.declined.board")).toEqual([world.chair.email]);
+    expect(all.get("expenses.declined.board")).toContain(world.chair.email);
+    expect(all.get("expenses.declined.accountant")).toContain(world.accountant.email);
     const [declined] = await db
       .select({ text: emailOutbox.textBody })
       .from(emailOutbox)
       .where(
         and(
-          eq(emailOutbox.expenseSubmissionId, second),
+          eq(emailOutbox.expenseSubmissionId, third),
           eq(emailOutbox.template, "expenses.declined"),
         ),
       );
