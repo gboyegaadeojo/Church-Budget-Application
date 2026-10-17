@@ -276,8 +276,58 @@ export const activityCopy = {
   /** The Overview tab (FR-52): the annual budget at a glance. */
   overview: {
     intro: "How the budget year is going: what's requested, approved and still waiting.",
-    notForYou:
-      "The Overview shows annual budget figures for the accountant, backup approvers and the System Administrator. Spending and expense figures arrive with those parts of the app.",
+    notForYou: "The Overview shows budget figures for church staff who review or follow spending.",
+    annualHeading: "Annual budgets",
+    spendingHeading: "Spending and expenses",
+    spending: {
+      available: "Available",
+      availableFrom: (approved: string, amendments: string) =>
+        `Approved ${approved} · amendments ${amendments}`,
+      spent: "Spent",
+      committed: (amount: string) => `Committed ${amount}`,
+      remaining: "Remaining",
+      used: (used: string) => `${used} used`,
+      waiting: "Expenses waiting",
+      waitingDetail: (accountant: number, board: number, requester: number) =>
+        `Accountant ${accountant} · Board Chair ${board} · requester ${requester}`,
+      payment: "Waiting to be paid or bought",
+      paymentDays: (days: number, paid: number) =>
+        `Paid on average ${days === 1 ? "1 day" : `${days} days`} after approval (${paid} paid)`,
+      noPayments: "Nothing paid yet this year.",
+      export: "Export spending to Excel",
+      budgetTitle: (over: number, near: number) =>
+        over
+          ? `${over} ${over === 1 ? "department is" : "departments are"} over budget`
+          : near
+            ? `${near} ${near === 1 ? "department is" : "departments are"} nearing the limit`
+            : "Every department is within its budget",
+      budgetCaption: "Budget used by department",
+      noBudgets: "No department has an approved budget or spending this year.",
+      overBy: (amount: string) => `Over by ${amount}`,
+      monthsTitle: (spent: string) => `${spent} spent so far this year`,
+      monthsCaption: "Spending by month",
+      legendThisYear: "This year",
+      legendLastYear: "Last year",
+      noLastYear: "There's no budget year before this one to compare with.",
+      pipelineTitle: (count: number) =>
+        `${count} ${count === 1 ? "expense" : "expenses"} submitted this year`,
+      pipelineCaption: "Expenses by status",
+      noExpenses: "No expenses submitted this year.",
+      columns: {
+        department: "Department",
+        available: "Available",
+        spent: "Spent and committed",
+        remaining: "Remaining",
+        used: "Used",
+        status: "Status",
+        month: "Month",
+        thisYear: "This year",
+        lastYear: "Last year",
+        expenseStatus: "Status",
+        count: "Expenses",
+        amount: "Amount",
+      },
+    },
     cycle: "Budget cycle",
     show: "Show",
     noCycle: "No budget cycle yet.",
