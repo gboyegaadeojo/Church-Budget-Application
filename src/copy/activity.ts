@@ -99,6 +99,9 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
     group: "money",
   },
   "spending.entry_paid": { label: "Spending entry updated with its payment", group: "money" },
+  "spending.entry_recorded": { label: "Recorded spending", group: "money" },
+  "spending.entry_corrected": { label: "Corrected a spending entry", group: "money" },
+  "spending.entry_voided": { label: "Voided a spending entry", group: "money" },
   // Sign-in and access
   "access.sign_in_succeeded": { label: "Signed in", group: "access" },
   "access.sign_in_failed": { label: "Sign-in refused", group: "access" },
@@ -244,6 +247,9 @@ export const MONEY_EVENT_TYPES = [
   "expenses.purchased",
   "spending.entry_from_expense",
   "spending.entry_paid",
+  "spending.entry_recorded",
+  "spending.entry_corrected",
+  "spending.entry_voided",
 ];
 
 export const activityCopy = {

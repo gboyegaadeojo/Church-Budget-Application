@@ -16,6 +16,7 @@ import { formatCAD, type TaxBreakdown } from "@/lib/money";
 import type { Role } from "@/lib/roles";
 import { budgetFigures, impactOf, linkedCommitment } from "./budget";
 import { approvedFiguresFor } from "./decision";
+import { checkSpendingAlerts } from "@/domain/spending/alerts";
 import { queueExpenseEmails } from "./emails";
 import {
   auditBase,
@@ -254,6 +255,14 @@ export async function applyDecision(
   });
   if (final && approved && row.type === "expense_claim") {
     await chargeClaim(tx, actor, actingRole, row, approved, now);
+  }
+  // FR-28: the first time this takes the department near its limit. Going over budget is
+  // already emailed by the expense's own over-budget alert (FR-49).
+  if (final) {
+    await checkSpendingAlerts(tx, row.budgetCycleId, row.departmentId, {
+      now,
+      overBudget: false,
+    });
   }
   await writeAudit(tx, {
     actor: actorOf(actor, actingRole),

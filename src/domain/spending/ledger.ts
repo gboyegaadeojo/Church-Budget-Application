@@ -5,10 +5,9 @@ import { authorize, type Subject } from "@/lib/authz";
 import { sumCents } from "@/lib/money";
 
 /**
- * The spending ledger, read-only for Stage 3 (FR-24, FR-42, AC-80): every entry for a
- * cycle, including those made from approved expenses, so nothing is typed twice. Stage 4
- * adds recording, refunds, corrections and voids. Spent excludes voided entries and
- * subtracts refunds (FR-25).
+ * The spending ledger (FR-24, FR-26, FR-42, AC-80): every entry for a cycle, including
+ * those made from approved expenses, so nothing is typed twice. Spent excludes voided
+ * entries and subtracts refunds (FR-25).
  */
 
 export type LedgerRow = {
@@ -22,6 +21,7 @@ export type LedgerRow = {
   paymentMethod: string | null;
   referenceNumber: string | null;
   status: "recorded" | "voided";
+  unbudgeted: boolean;
   expense: { id: string; reference: string | null } | null;
 };
 
@@ -31,6 +31,8 @@ export type Ledger = {
   rows: LedgerRow[];
   spentCents: number;
   readOnly: boolean;
+  /** The viewer records, corrects and voids spending (FR-24). */
+  canRecord: boolean;
 };
 
 export async function getLedger(tx: Tx, viewer: Subject, cycleId?: string): Promise<Ledger | null> {
@@ -49,7 +51,10 @@ export async function getLedger(tx: Tx, viewer: Subject, cycleId?: string): Prom
     cycles.find((c) => withSpending.some((w) => w.id === c.id))?.id ??
     cycles[0]?.id ??
     null;
-  if (!chosen) return { cycles, cycleId: null, rows: [], spentCents: 0, readOnly: access.readOnly };
+  const canRecord = authorize(viewer, "spending.record").allowed;
+  if (!chosen) {
+    return { cycles, cycleId: null, rows: [], spentCents: 0, readOnly: access.readOnly, canRecord };
+  }
   const raw = await tx
     .select({
       entry: spendingEntries,
@@ -77,6 +82,7 @@ export async function getLedger(tx: Tx, viewer: Subject, cycleId?: string): Prom
     paymentMethod: entry.paymentMethod,
     referenceNumber: entry.referenceNumber,
     status: entry.status,
+    unbudgeted: entry.unbudgeted,
     expense: entry.expenseSubmissionId
       ? { id: entry.expenseSubmissionId, reference: expenseReference }
       : null,
@@ -86,5 +92,5 @@ export async function getLedger(tx: Tx, viewer: Subject, cycleId?: string): Prom
       .filter((r) => r.status === "recorded")
       .map((r) => (r.entryType === "refund" ? -r.amountCents : r.amountCents)),
   );
-  return { cycles, cycleId: chosen, rows, spentCents, readOnly: access.readOnly };
+  return { cycles, cycleId: chosen, rows, spentCents, readOnly: access.readOnly, canRecord };
 }

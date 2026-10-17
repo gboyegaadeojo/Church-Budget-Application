@@ -1316,6 +1316,10 @@ export const spendingEntries = pgTable(
       .references(() => departments.id),
     budgetRequestId: uuid("budget_request_id").references(() => budgetRequests.id),
     expenseSubmissionId: uuid("expense_submission_id").references(() => expenseSubmissions.id),
+    /** The approved line this was spent on (FR-25 "Spending by line item"); null is "General". */
+    budgetLineItemId: uuid("budget_line_item_id").references(() => budgetLineItems.id),
+    /** Recorded for a department with no approved budget, after a warning (FR-24). */
+    unbudgeted: boolean("unbudgeted").notNull().default(false),
     entryType: spendingEntryTypeEnum("entry_type").notNull(),
     spentOn: date("spent_on").notNull(),
     payee: text("payee").notNull(),
@@ -1346,5 +1350,47 @@ export const spendingEntries = pgTable(
       "spending_entries_void_has_reason",
       sql`${t.status} <> 'voided' or ${t.voidReason} is not null`,
     ),
+  ],
+);
+
+/**
+ * Budget amendments (FR-27, 9.16): the accountant raises or lowers a department's
+ * available budget, including tax, with a reason. The original approval never changes;
+ * each amendment is its own append-only record (database trigger), and the budget is the
+ * approved total plus every amendment.
+ */
+export const budgetAmendments = pgTable(
+  "budget_amendments",
+  {
+    id: id(),
+    budgetRequestId: uuid("budget_request_id")
+      .notNull()
+      .references(() => budgetRequests.id),
+    departmentId: uuid("department_id")
+      .notNull()
+      .references(() => departments.id),
+    budgetCycleId: uuid("budget_cycle_id")
+      .notNull()
+      .references(() => budgetCycles.id),
+    /** Before tax; negative for a reduction. */
+    amountBeforeTaxCents: integer("amount_before_tax_cents").notNull(),
+    taxCents: integer("tax_cents").notNull(),
+    /** Including tax: what the budget changes by. */
+    amountCents: integer("amount_cents").notNull(),
+    taxRate: taxRate("tax_rate").notNull(),
+    reason: text("reason").notNull(),
+    boardReference: text("board_reference"),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("budget_amendments_cycle_department_idx").on(t.budgetCycleId, t.departmentId),
+    check(
+      "budget_amendments_amounts_reconcile",
+      sql`${t.amountCents} <> 0 and ${t.amountBeforeTaxCents} + ${t.taxCents} = ${t.amountCents}`,
+    ),
+    check("budget_amendments_reason", sql`btrim(${t.reason}) <> ''`),
   ],
 );

@@ -631,8 +631,6 @@ export const expensesCopy = {
     recorded: "Recorded",
     refund: "Refund",
     voided: "Voided",
-    stage4:
-      "Approved expense claims and purchases are added here automatically. Recording other spending, refunds and corrections come with spending tracking.",
   },
 
   /** All expenses (FR-48). */

@@ -11,6 +11,7 @@ import { writeAudit } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
 import { parseCAD } from "@/lib/money";
 import { zonedDate } from "@/lib/time-zone";
+import { checkSpendingAlerts } from "@/domain/spending/alerts";
 import { queueExpenseEmails } from "./emails";
 import { isIsoDate } from "./schema";
 import {
@@ -270,6 +271,8 @@ export async function recordPayment(
     },
   });
   await queueExpenseEmails(tx, row.id, actor.id, { kind: "paid" }, { now });
+  // FR-28: a payment that differs from the approved amount can change where it stands.
+  await checkSpendingAlerts(tx, row.budgetCycleId, row.departmentId, { now });
   return storeIdempotent(tx, key, actor, "expenses.record_payment", row.id, {
     expenseId: row.id,
     status: next,
