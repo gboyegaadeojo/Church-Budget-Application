@@ -15,6 +15,7 @@ import { emailBrand } from "@/domain/notifications/notice";
 import {
   accountantRecipients,
   boardCover,
+  departmentRepresentatives,
   person,
   usersWithRole,
 } from "@/domain/notifications/recipients";
@@ -31,7 +32,9 @@ import type { ExpenseStatus } from "./status";
  * content is built from what's stored, never from what the browser sent. Amounts show
  * Subtotal / Sales tax / Total, or Total paid for a claim (its receipts include tax).
  *
- * "Requester" is the person who submitted it, plus the payee when that's someone else.
+ * "Requester" is the person who submitted it, the payee when that's someone else, and every
+ * leader of the department (Primary, Backups and other representatives), so everyone who
+ * leads it knows what's being bought (decided 2026-10-16).
  */
 
 export type ExpenseEmailEvent =
@@ -186,13 +189,34 @@ async function itemLines(tx: Tx, ctx: Context) {
   };
 }
 
-/** The submitter, and the payee when that's someone else (FR-49 "Requester (+ payee)"). */
-async function requesterAndPayee(tx: Tx, ctx: Context): Promise<Recipient[]> {
-  const out: Recipient[] = await person(tx, ctx.e.requesterUserId);
-  if (ctx.e.payeeKind === "other" && ctx.e.payeeEmail) {
-    out.push({ email: ctx.e.payeeEmail, userId: ctx.e.payeeUserId });
+/**
+ * FR-49 "Requester (+ payee)": the submitter, the payee when that's someone else, and
+ * every leader of the department. Each address once.
+ */
+export async function requesterGroup(
+  tx: Tx,
+  e: {
+    requesterUserId: string;
+    departmentId: string;
+    payeeKind: string | null;
+    payeeEmail: string | null;
+    payeeUserId: string | null;
+  },
+): Promise<Recipient[]> {
+  const out: Recipient[] = [
+    ...(await person(tx, e.requesterUserId)),
+    ...(await departmentRepresentatives(tx, e.departmentId)),
+  ];
+  if (e.payeeKind === "other" && e.payeeEmail) {
+    out.push({ email: e.payeeEmail, userId: e.payeeUserId });
   }
-  return out;
+  const seen = new Set<string>();
+  return out.filter((r) => {
+    const key = r.email.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 const churchAdmins = (tx: Tx) => usersWithRole(tx, ["church_admin"]);
@@ -226,7 +250,7 @@ export async function queueExpenseEmails(
   const time = formatDateTime(now, ctx.zone);
   const asked = summaryOf(ctx, requested(e));
   const current = approved(e) ?? requested(e);
-  const requesterTo = await requesterAndPayee(tx, ctx);
+  const requesterTo = await requesterGroup(tx, e);
   const accountants = () => accountantRecipients(tx, now);
   const noAction = emailCopy.noAction;
   const out: Outgoing[] = [];
@@ -546,7 +570,7 @@ export async function queueExpenseEmails(
           {
             template: "expenses.over_budget.requester",
             audience: "requester",
-            to: await person(tx, e.requesterUserId),
+            to: requesterTo,
             content: alert(x.overBudget.requesterIntro(dept, over)),
           },
           {

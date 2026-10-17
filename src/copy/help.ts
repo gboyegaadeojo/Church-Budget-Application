@@ -40,7 +40,7 @@ export const helpCopy = {
         "Purchase request: add items with prices before tax (the app adds the sales tax) and choose how it will be bought.",
         "Expense claim: one line per receipt with the amount you paid including tax, who should be paid and how (cheque or e-transfer), and a photo or PDF of each receipt (Take photo works on a phone). If you bought something you asked for beforehand, link the purchase request.",
         "Going over budget? You'll see by how much. Explain why it's needed and you can still submit; the accountant and the Board Chair decide.",
-        "Preview, then Confirm submission. You can change it until the accountant starts reviewing, or withdraw it. Every step is emailed, and My expenses shows where each one is.",
+        "Preview, then Confirm submission. You can change it until the accountant starts reviewing, or withdraw it. Every step is emailed to you and to every leader of the department, and My expenses shows where each one is.",
       ],
     },
     {

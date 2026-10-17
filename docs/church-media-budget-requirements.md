@@ -1715,7 +1715,7 @@ Valid transitions: Draft → Submitted → In Review → (Returned for Clarifica
 
 ## FR-49: Expense Emails
 
-Same rules as FR-21 (every update emails the people involved).
+Same rules as FR-21 (every update emails the people involved). **Requester** means the person who submitted it, the payee if different, and every leader of the department (Primary, Backups and other representatives), so everyone who leads the department knows what is being bought (decided by the church 2026-10-16).
 
 | Event | Requester (+ payee if different) | Accountant | Board Chair | Church Administrator |
 |---|---|---|---|---|
@@ -2582,6 +2582,7 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 - **AC-70** A submission that exceeds Remaining shows the requester the over-budget warning, requires an over-budget explanation, can still be submitted, and shows the overage and explanation to the accountant and to the Board Chair (or Vice-Chair) when they decide.
 - **AC-139** After the Board Chair gives final approval to an expense that exceeds Remaining, the department's Remaining is below zero, shown as "Over budget by $X", and its status is Over budget.
 - **AC-140** The over-budget figure an approver sees is worked out at the time of their decision, including expenses approved since the submission.
+- **AC-141** Every leader of the department receives each expense email the requester receives (receipt, questions, decisions, processing, payment, over-budget notice and reminders), once per address.
 - **AC-71** A requester can edit a submission until review starts, and cannot after.
 - **AC-72** An approver cannot approve their own claim or one for their own department.
 - **AC-73** After the accountant approves, the status is Awaiting Board Chair, the Board Chair is emailed, and the budget is not yet charged.
