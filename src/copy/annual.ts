@@ -56,7 +56,7 @@ export const annualCopy = {
     // Scheduled release (FR-19a)
     releaseAtRequired: "Choose the date and time the decisions go out.",
     releaseAtInvalid: "Enter a date and time, like 2026-12-01 09:00.",
-    releaseAtFuture: "Choose a time in the future, or use Release now.",
+    releaseAtFuture: "Choose a time in the future.",
     releaseMessageTooLong: "Keep the message under 1,000 characters.",
     notHolding: "Decisions for this cycle aren't being held.",
     releaseCycleNotOpen: "Decisions can only be held for an open cycle.",
@@ -69,6 +69,8 @@ export const annualCopy = {
     returnNoteRequired: "Write what the department needs to clarify.",
     declineReasonRequired: "Give a reason for declining.",
     reopenReasonRequired: "Give a reason for reopening.",
+    reopenHasExpenses: (committed: string, spent: string, pending: string) =>
+      `Expenses rely on this budget (committed ${committed}, spent ${spent}, waiting for approval ${pending}). Confirm the warning to reopen it.`,
     noteTooLong: "Keep the note to 2,000 characters or fewer.",
     boardReferenceTooLong: "Keep the board reference to 200 characters or fewer.",
     adjustmentReasonTooLong: "Keep the reason to 500 characters or fewer.",
@@ -132,7 +134,8 @@ export const annualCopy = {
       scheduled: "Hold and release on a date",
     },
     modeHints: {
-      immediate: "Each approval or decline is emailed when you confirm it.",
+      immediate:
+        "Each approval or decline is emailed to the department when you confirm it, so there's nothing to release later. To send every decision together instead, hold them until a date.",
       scheduled:
         "Decide every department first; all the decisions go out together at the time you choose. Questions (Return for clarification) are never held.",
     },
@@ -142,6 +145,8 @@ export const annualCopy = {
         `Decisions are held until ${when}. Departments won't see them before then.`,
       released: (when: string) =>
         `Decisions were released on ${when}. Decisions made now are sent straight away.`,
+      overdue: (when: string, n: number) =>
+        `The release time (${when}) has passed, but ${n === 1 ? "1 decision hasn't" : `${n} decisions haven't`} been sent yet. Use Release now to send ${n === 1 ? "it" : "them"}.`,
     },
     releaseAt: "Release date and time",
     releaseAtHint: (zone: string) => `Church time (${zone}). Emails go within 15 minutes of it.`,
@@ -608,6 +613,10 @@ export const annualCopy = {
     reopenBody:
       "It goes back to the department as Returned for Clarification, so they can change and resubmit it. No edit is used. The current decision stays in the history.",
     reopenReason: "Reason for reopening",
+    reopenExpensesWarning: (committed: string, spent: string, pending: string) =>
+      `Expenses already rely on this budget: ${committed} committed, ${spent} spent and ${pending} waiting for approval. While it's reopened the department has no approved budget, so new expenses can't be started, and the new decision will change what the department has available.`,
+    reopenExpensesConfirm:
+      "I understand the new decision will change the department's available budget.",
     historyHeading: "Revision history",
     decisionsHeading: "Decisions",
     noDecisions: "No decisions yet.",

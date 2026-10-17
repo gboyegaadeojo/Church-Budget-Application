@@ -74,11 +74,16 @@ async function ReleaseContent({ searchParams }: { searchParams: Promise<Search> 
   if (!overview) return <PermissionDenied />;
   const { cycle, counts, held, holding } = overview;
   const when = cycle.releaseAt ? formatDateTime(cycle.releaseAt, zone) : "";
+  // The release time has passed but the job hasn't sent everything yet.
+  const overdue = !holding && held.length > 0;
+  const waiting = holding || overdue;
   const status = holding
     ? r.current.holding(when)
-    : cycle.mode === "scheduled" && cycle.releaseAt
-      ? r.current.released(when)
-      : r.current.immediate;
+    : overdue
+      ? r.current.overdue(when, held.length)
+      : cycle.mode === "scheduled" && cycle.releaseAt
+        ? r.current.released(when)
+        : r.current.immediate;
   // After Release now or Cancel schedule, whose buttons are gone once they've worked.
   const sent = Math.max(0, Number.parseInt(String(query.sent ?? "0"), 10) || 0);
   const done =
@@ -129,10 +134,10 @@ async function ReleaseContent({ searchParams }: { searchParams: Promise<Search> 
 
       <section
         aria-labelledby="release-card"
-        className={cn(cardClass, "space-y-5", holding && "border-warning")}
+        className={cn(cardClass, "space-y-5", waiting && "border-warning")}
       >
         <div className="flex flex-wrap items-start gap-3">
-          <IconChip icon={holding ? CalendarClock : Send} tone={holding ? "amber" : "blue"} />
+          <IconChip icon={waiting ? CalendarClock : Send} tone={waiting ? "amber" : "blue"} />
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <h2
@@ -141,14 +146,14 @@ async function ReleaseContent({ searchParams }: { searchParams: Promise<Search> 
               >
                 {r.cardHeading}
               </h2>
-              <Badge tone={holding ? "warning" : "neutral"}>
-                {holding ? r.modes.scheduled : r.modes.immediate}
+              <Badge tone={waiting ? "warning" : "neutral"}>
+                {waiting ? r.modes.scheduled : r.modes.immediate}
               </Badge>
             </div>
             <p className="text-sm" role="status">
               {status}
             </p>
-            {holding && cycle.message && (
+            {waiting && cycle.message && (
               <p className="text-sm text-fg-muted">
                 {r.message}: {cycle.message}
               </p>
@@ -175,6 +180,7 @@ async function ReleaseContent({ searchParams }: { searchParams: Promise<Search> 
               >
                 <input type="hidden" name="cycleId" value={cycle.id} />
                 <input type="hidden" name="version" value={cycle.version} />
+                {!waiting && <p className="text-sm text-fg-muted">{r.modeHints.immediate}</p>}
                 {!holding && <p className="text-sm text-fg-muted">{r.modeHints.scheduled}</p>}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <TextField
@@ -201,7 +207,7 @@ async function ReleaseContent({ searchParams }: { searchParams: Promise<Search> 
               </ActionForm>
             )}
 
-            {holding && (
+            {waiting && (
               <div className="flex flex-wrap gap-3">
                 <ActionForm
                   action={releaseNowAction}
