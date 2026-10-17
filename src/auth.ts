@@ -9,6 +9,7 @@ import { sendOutboxAfterResponse } from "@/lib/email";
 import { trackQueuedEmails } from "@/lib/email/outbox";
 import { writeAudit } from "@/lib/audit";
 import { fakeSignInEnabled } from "@/lib/auth-mode";
+import { fakeSignInAllowed } from "@/lib/demo";
 import { rememberDeniedEmail } from "@/lib/denied-email";
 import { getPlanningCenterDirectory } from "@/lib/pco-directory";
 import { requestIpHash } from "@/lib/request-ip";
@@ -166,6 +167,9 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     async signIn({ user, account, profile, credentials }) {
       const identity = toIdentity({ account, profile, credentials, user });
+      if (account?.provider === "fake" && !(await fakeSignInAllowed(getDb(), identity?.subject))) {
+        return "/access-denied/not-allowed";
+      }
       if (!identity?.subject) {
         await rememberDeniedEmail(null);
         return "/access-denied/not-allowed";

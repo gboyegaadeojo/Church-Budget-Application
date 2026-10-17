@@ -181,7 +181,9 @@ test.describe("Sign-in (FR-01, FR-01a, DRD 6.1, 6.1a)", () => {
     // (Cache Components); the not-found UI and the noindex tag still apply.
     await page.goto("/access-denied/whatever");
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
-    await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(1);
+    // At least one noindex tag. Next.js sometimes streams the not-found metadata twice;
+    // two identical tags still mean "don't index" (docs/decisions.md 2026-10-17).
+    await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
   });
 });
 

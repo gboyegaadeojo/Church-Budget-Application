@@ -1,0 +1,45 @@
+name: Demo site reset
+
+# Every night the hosted demo (docs/demo-site.md) starts fresh: its own database is wiped,
+# migrated and seeded with made-up people, then the demo site is rebuilt from main so it
+# shows the latest app. Production is never touched: the script refuses any database
+# that isn't already the demo's.
+on:
+  schedule:
+    - cron: "30 8 * * *" # 03:30 Winnipeg time in summer (08:30 UTC); 02:30 in winter
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reset:
+    name: Reset the demo database
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm ci --ignore-scripts
+      - name: Reset
+        env:
+          DEMO_DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
+        run: |
+          if [ -z "$DEMO_DATABASE_URL" ]; then
+            echo "DEMO_DATABASE_URL is not set yet; skipping."
+            exit 0
+          fi
+          node scripts/demo-reset.mjs
+      - name: Rebuild the demo site
+        env:
+          HOOK: ${{ secrets.NETLIFY_DEMO_BUILD_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "NETLIFY_DEMO_BUILD_HOOK is not set; the demo keeps its current build."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error -X POST -d '{}' "$HOOK"

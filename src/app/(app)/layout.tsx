@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Brand } from "@/components/app-shell/live-brand";
 import { Breadcrumbs } from "@/components/app-shell/breadcrumbs";
+import { DemoBanner } from "@/components/app-shell/demo-banner";
 import { Footer } from "@/components/app-shell/footer";
 import { GlobalSearch } from "@/components/app-shell/global-search";
 import {
@@ -28,6 +29,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       >
         {copy.app.skipToContent}
       </a>
+      <Suspense fallback={null}>
+        <DemoBanner />
+      </Suspense>
       <div className="flex min-h-dvh">
         <Suspense fallback={<SidebarFallback />}>
           <ViewerSidebar />

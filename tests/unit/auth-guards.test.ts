@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isAccessDeniedReason } from "@/domain/users/access";
-import { fakeSignInEnabled } from "@/lib/auth-mode";
+import { demoMode, fakeSignInEnabled } from "@/lib/auth-mode";
 import { isAuthorizedJobRequest } from "@/lib/jobs";
 import { isPublicPath, refusesFiles } from "@/proxy";
 
@@ -22,6 +22,27 @@ describe("fake sign-in can never reach a real site", () => {
     [{ ...local, CONTEXT: "production" }],
     [{ ...local, CONTEXT: "deploy-preview" }],
   ])("stays off for %o", (env) => {
+    expect(fakeSignInEnabled(env)).toBe(false);
+  });
+});
+
+describe("the hosted demo (docs/demo-site.md)", () => {
+  const demo = { DEMO_MODE: "1", AUTH_URL: "https://demo-ifc-budget.netlify.app", NETLIFY: "true" };
+
+  it("turns on with DEMO_MODE=1 and a host that names the demo", () => {
+    expect(demoMode(demo)).toBe(true);
+    expect(fakeSignInEnabled(demo)).toBe(true);
+    expect(demoMode({ ...demo, AUTH_URL: "https://ifc-budget-demo.netlify.app" })).toBe(true);
+  });
+
+  it.each([
+    [{ ...demo, DEMO_MODE: "true" }],
+    [{ ...demo, DEMO_MODE: undefined }],
+    [{ ...demo, AUTH_URL: "https://ifc-budget.netlify.app" }],
+    [{ ...demo, AUTH_URL: "https://demonstration.example.org" }],
+    [{ ...demo, AUTH_URL: undefined }],
+  ])("stays off for %o", (env) => {
+    expect(demoMode(env)).toBe(false);
     expect(fakeSignInEnabled(env)).toBe(false);
   });
 });

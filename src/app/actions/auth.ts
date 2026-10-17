@@ -6,6 +6,7 @@ import { copy } from "@/copy/en-CA";
 import { getDb } from "@/db";
 import { normalizeCode, requestEmailCode } from "@/domain/users/email-sign-in";
 import { fakeSignInEnabled } from "@/lib/auth-mode";
+import { fakeSignInAllowed } from "@/lib/demo";
 import { rememberDeniedEmail } from "@/lib/denied-email";
 import { sendOutboxAfterResponse } from "@/lib/email";
 import { trackQueuedEmails } from "@/lib/email/outbox";
@@ -26,6 +27,8 @@ export async function signInWithProvider(formData: FormData) {
 
 export async function signInFake(formData: FormData) {
   if (!fakeSignInEnabled()) return;
+  // On the demo site: only the listed made-up people, and only on the demo's database.
+  if (!(await fakeSignInAllowed(getDb(), formData.get("subject")))) return;
   await signIn("fake", {
     provider: formData.get("provider"),
     subject: formData.get("subject"),
