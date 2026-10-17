@@ -35,6 +35,8 @@ import { formatCAD } from "@/lib/money";
 import { formatDate, formatDateTime, zonedDate } from "@/lib/time-zone";
 import { accountCopy } from "@/copy/account";
 import { departmentCover } from "@/domain/users/away";
+import { myDepartmentSpending } from "@/domain/spending/my-department";
+import { MyDepartmentPanel } from "../spending/my-department-panel";
 import { AnnualStatusBadge } from "./status-badge";
 
 const d = annualCopy.dashboard;
@@ -74,12 +76,14 @@ async function DashboardContent({
   const viewer = await viewerAllowedTo("annual.start", "/annual");
   if (!viewer) return <PermissionDenied body={annualCopy.deniedBody} />;
   const db = getDb();
-  const [cycle, requests, zone, { adminContactEmail }] = await Promise.all([
+  const [cycle, requests, zone, { adminContactEmail }, budgets] = await Promise.all([
     getOpenCycle(db),
     listMyRequests(db, viewer),
     getChurchTimeZone(db),
     getSignInSettings(db),
+    myDepartmentSpending(db, viewer),
   ]);
+  const budgetCycle = budgets?.cycle;
   const firstName = viewer.name.split(" ")[0] ?? viewer.name;
   // This year's budgets, one per department; Submit only where a department has none.
   const thisYear = cycle ? requests.filter((r) => r.cycleId === cycle.id) : [];
@@ -285,6 +289,13 @@ async function DashboardContent({
           <RequestTable requests={others} caption={d.myRequests} />
         ) : null}
       </Section>
+
+      {/* DRD 6.2a: each department's budget and what's been spent against it. */}
+      {budgets &&
+        budgetCycle &&
+        budgets.departments.map((b) => (
+          <MyDepartmentPanel key={b.departmentId} budget={b} cycleId={budgetCycle.id} limit={5} />
+        ))}
     </>
   );
 }

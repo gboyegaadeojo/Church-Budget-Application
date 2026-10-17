@@ -101,6 +101,21 @@ export const spendingCopy = {
         `This reduction takes Remaining below zero (over budget by ${amount}). Tick the box to confirm.`,
     },
   },
+  mine: {
+    title: "My department's budget",
+    intro: "Your department's budget and what's been spent against it. View only.",
+    panelTitle: (department: string) => `${department} budget`,
+    entries: "Spending entries",
+    columns: { date: "Date", payee: "Payee", description: "Description", amount: "Amount" },
+    noEntries: "Nothing has been spent yet.",
+    notApproved: "Your budget will appear here once it's approved.",
+    noDepartment:
+      "You don't represent a department yet. Ask the administrator to add you as a leader.",
+    voided: "Voided",
+    refund: "Refund",
+    latest: (shown: number, all: number) => `The latest ${shown} of ${all} entries.`,
+    seeAll: "See all entries",
+  },
   ledgerFilters: {
     heading: "Filters",
     search: "Search payee, description or reference",
