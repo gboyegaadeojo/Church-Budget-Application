@@ -744,3 +744,9 @@ The church asked that the "approval needed" email go to both approvers at the sa
 - **One filter set** (`src/domain/expenses/list-filters.ts`) for Review queue, Awaiting my approval, All expenses, My expenses and Ready to process: search (reference, title, payee, department), department, type, status, **submitted from/to** and **amount from/to**.
 - Dates compare the day submitted in the church's time zone. The amount is the approved amount once there is one, otherwise the amount asked. Amounts are read as cents with `parseCAD`, never floats.
 - The form is a plain GET, so filters stay in the address (DRD 6.0) and work without JavaScript. Anything that doesn't parse (a date like 2026-02-31, "abc" as an amount) is ignored rather than refused.
+
+## Reopening an approved budget that expenses rely on (FR-18a) (2026-10-16)
+
+- Reopening an approved annual budget takes away the department's Available for expenses until it's approved again (`approvedAnnualBudget` only counts an approved, released budget). So when expenses already rely on it (anything committed, spent, or waiting for approval for that department and year), the reopen dialog shows those amounts and the accountant must tick "I understand the new decision will change the department's available budget."
+- The server enforces it: without `confirmExpenses`, `reopenRequest` refuses with the amounts. A declined budget, or one with no expenses, reopens as before.
+- Nothing about the expenses changes on reopen: their approvals and spending stay, and the new annual decision sets the new Available. Remaining may then show Over budget, as FR-43 allows.

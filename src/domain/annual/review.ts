@@ -15,7 +15,7 @@ import type { Tx } from "@/db/types";
 import { ConflictError, parseInput, RuleError, ValidationError } from "@/domain/errors";
 import { writeAudit } from "@/lib/audit";
 import { assertCan, authorize, type Subject } from "@/lib/authz";
-import type { TaxBreakdown } from "@/lib/money";
+import { formatCAD, type TaxBreakdown } from "@/lib/money";
 import { approvedFigures, decisionSchema, DECISION_LIMITS, type DecisionKind } from "./decision";
 import { queueAnnualEmails, type AnnualEmailEvent } from "./emails";
 import { secondApprovalThreshold } from "@/domain/settings";
@@ -31,7 +31,14 @@ import {
   updateRequest,
   type RequestRow,
 } from "./service";
-import { canTransition, transition, type AnnualEvent, type AnnualStatus } from "./status";
+import {
+  canTransition,
+  isApproved,
+  transition,
+  type AnnualEvent,
+  type AnnualStatus,
+} from "./status";
+import { expenseUseOf } from "@/domain/expenses/budget";
 
 /**
  * Annual budget requests, the accountant's side (FR-13 to FR-18a). Same order as the
@@ -348,7 +355,14 @@ export type ReopenResult = { requestId: string; status: AnnualStatus; reopenedAt
 export async function reopenRequest(
   tx: Tx,
   actor: Subject,
-  input: { id: string; version: unknown; idempotencyKey: unknown; reason: unknown },
+  input: {
+    id: string;
+    version: unknown;
+    idempotencyKey: unknown;
+    reason: unknown;
+    /** The accountant confirmed the warning that expenses rely on this budget (FR-18a). */
+    confirmExpenses?: unknown;
+  },
   options: Options = {},
 ): Promise<ReopenResult> {
   const key = parseKey(input.idempotencyKey);
@@ -365,7 +379,16 @@ export async function reopenRequest(
   if (row.version !== version) throw new ConflictError({ type: "budget_request", id: row.id });
   const { reason } = parseInput(reopenSchema, { reason: input.reason });
   const next = nextOrRefuse(row.status, "reopen", e.notReopenable);
-  // TODO(Stage 3): warn and require confirmation while approved expenses exist (FR-18a).
+  // Expenses rely on an approved budget: reopening takes its Available away until it's
+  // approved again, so the accountant must confirm the warning first (FR-18a).
+  const use = isApproved(row.status)
+    ? await expenseUseOf(tx, row.budgetCycleId, row.departmentId)
+    : null;
+  if (use && input.confirmExpenses !== true) {
+    throw new RuleError(
+      e.reopenHasExpenses(formatCAD(use.committed), formatCAD(use.spent), formatCAD(use.pending)),
+    );
+  }
 
   await tx.insert(approvalDecisions).values({
     budgetRequestId: row.id,

@@ -39,6 +39,22 @@ export type BudgetStatus = "on_track" | "nearing_limit" | "over_budget" | "no_bu
  * The department's approved annual budget for the cycle, if its decision has reached the
  * department: a held decision (FR-19a) doesn't start expenses yet.
  */
+export type ExpenseUse = { committed: number; spent: number; pending: number };
+
+/**
+ * What expenses already rely on a department's annual budget for a year (FR-18a): open
+ * commitments, money spent, and expenses still waiting for approval. Null when none.
+ */
+export async function expenseUseOf(
+  tx: Tx,
+  cycleId: string,
+  departmentId: string,
+): Promise<ExpenseUse | null> {
+  const f = await budgetFigures(tx, cycleId, departmentId);
+  if (f.committed === 0 && f.spent === 0 && f.pending === 0) return null;
+  return { committed: f.committed, spent: f.spent, pending: f.pending };
+}
+
 export async function approvedAnnualBudget(
   tx: Tx,
   cycleId: string,
