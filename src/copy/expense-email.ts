@@ -173,21 +173,18 @@ export const expenseEmailCopy = {
     copyHeading: "A payment was recorded",
   },
   reminders: {
-    board: {
+    approval: {
       subject: (n: number) =>
         n === 1
-          ? "1 expense is waiting for your approval"
-          : `${n} expenses are waiting for your approval`,
-      heading: "Expenses waiting for your final approval",
-      intro: (days: number) => `These have waited more than ${days} days.`,
-      accountantSubject: (n: number) =>
-        n === 1
-          ? "1 expense has waited for the Board Chair"
-          : `${n} expenses have waited for the Board Chair`,
-      accountantHeading: "Expenses waiting for the Board Chair",
-      action: "Open each one and decide.",
-      accountantAction: "Nothing, unless you want to follow up with the Board Chair.",
-      button: "Awaiting my approval",
+          ? "Reminder: 1 expense is waiting for your approval"
+          : `Reminder: ${n} expenses are waiting for your approval`,
+      heading: "Expenses waiting for your approval",
+      intro: (days: number) =>
+        `These have waited more than ${days} days for your approval. You'll get this reminder each day until you decide.`,
+      action:
+        "Open each one and decide: approve, approve a smaller amount, return it or decline it.",
+      accountantButton: "Review queue",
+      boardButton: "Awaiting my approval",
     },
     payment: {
       subject: (n: number) =>

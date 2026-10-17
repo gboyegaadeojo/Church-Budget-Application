@@ -730,10 +730,16 @@ The church asked that the "approval needed" email go to both approvers at the sa
 - **Returns go to the department.** Either approver can return it with a question; the earlier approval is cleared, and both approve again after the department answers. "Return to accountant" is gone. Old `expenses.board_returned` events still read correctly in the activity log.
 - **Emails.** After one approval only the approver gets a copy; "Approved by the accountant, waiting for the Board Chair" is no longer sent. After both, the department gets "Your expense has been approved", the Church Administrator "Approved, ready for processing", and both approvers a copy. Returns and declines copy both approvers. Updates before review and a withdrawal before review also reach the board.
 - **Who sees what.** The board sees an expense from submission (never a draft). My tasks, the queues and the tracker show each level separately: the accountant's queue waits on Submitted, In Review and Awaiting accountant; the board's on Submitted, In Review and Awaiting Board Chair.
-- The daily 5-day reminders for approvers follow in the next change.
 
 ## FR-48: search and filters on every expense list (2026-10-16)
 
 - **One filter set** (`src/domain/expenses/list-filters.ts`) for Review queue, Awaiting my approval, All expenses, My expenses and Ready to process: search (reference, title, payee, department), department, type, status, **submitted from/to** and **amount from/to**.
 - Dates compare the day submitted in the church's time zone. The amount is the approved amount once there is one, otherwise the amount asked. Amounts are read as cents with `parseCAD`, never floats.
 - The form is a plain GET, so filters stay in the address (DRD 6.0) and work without JavaScript. Anything that doesn't parse (a date like 2026-02-31, "abc" as an amount) is ignored rather than refused.
+
+## Daily reminders for approvers after 5 days (FR-49, AC-144) (2026-10-16)
+
+- The church asked that approvers who haven't approved within 5 days get a daily reminder. This replaces the weekly reminder to the Board Chair after 7 days (and its copy to the accountant).
+- **Setting:** `approval_reminder_days` (5) replaces `board_reminder_days` (migration `0020`).
+- **Who:** for every expense still waiting for an approval (Submitted, In Review, Awaiting Board Chair, Awaiting accountant) more than 5 days after it was last submitted or answered, the accountant gets one list of those waiting on them, and each Board Chair (or the Vice-Chair covering) one list of theirs. An approver who has approved stops getting it. A returned expense waits for the department, so it isn't included.
+- **Once a day:** the daily `reminders` job sends them; the outbox dedupe key includes the person and the church-time date, so a second run the same day sends nothing new. The payment and unclaimed-purchase reminders stay weekly.

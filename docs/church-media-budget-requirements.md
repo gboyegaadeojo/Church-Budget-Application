@@ -1734,7 +1734,7 @@ Same rules as FR-21 (every update emails the people involved). **Requester** mea
 | Processing started | "Being processed" | — | — | — |
 | Paid / Purchased | How and when it was paid, reference | Copy | — | Copy |
 | Over budget after approval | Notice | Alert | — | Alert |
-| Waiting for Board Chair over 7 days | — | Notice | Reminder | — |
+| An approval still needed after 5 days (`approval_reminder_days`), **daily** until decided | — | Reminder (if still waiting on them) | Reminder (if still waiting on them) | — |
 | Approved but not processed after 14 days | — | Reminder | — | Reminder |
 | Approved purchase request not purchased or claimed after 60 days | Reminder | — | — | Reminder |
 
@@ -2585,6 +2585,7 @@ Every item must pass before the matching stage (Section 15) is complete. Claude 
 - **AC-70** A submission that exceeds Remaining shows the requester the over-budget warning, requires an over-budget explanation, can still be submitted, and shows the overage and explanation to the accountant and to the Board Chair (or Vice-Chair) when they decide.
 - **AC-139** After the Board Chair gives final approval to an expense that exceeds Remaining, the department's Remaining is below zero, shown as "Over budget by $X", and its status is Over budget.
 - **AC-140** The over-budget figure an approver sees is worked out at the time of their decision, including expenses approved since the submission.
+- **AC-144** An approver who hasn't decided an expense within 5 days of its last submission is reminded every day, once a day, until they decide; the other approver stops getting reminders once they have approved.
 - **AC-142** The accountant and the Board Chair are both emailed "Approval needed" at submission and can approve in either order; the expense is Approved only once both have approved.
 - **AC-143** If the two approvers approve different amounts, the lower one is the approved amount, whichever approved first; each approver's own amount stays on their decision.
 - **AC-141** Every leader of the department receives each expense email the requester receives (receipt, questions, decisions, processing, payment, over-budget notice and reminders), once per address.

@@ -212,7 +212,7 @@ Every workbook has a **Summary** sheet (one row per budget, requested and approv
 3. Choose **Approve**, **Approve a smaller amount** (including tax, with a reason), **Return for clarification** to the department with a question, or **Decline** with a reason.
 4. Once both of you have approved, the budget is charged, and the requester and the Church Administrator are emailed. If your amounts differ, the lower one is approved.
 5. The Chair can turn on **Away** (account menu); the Vice-Chair then gets the emails and tasks. The Vice-Chair also decides when the Chair represents the department, submitted it, or is the payee. Otherwise the Vice-Chair's screen says the Chair decides it. Decisions show who made them, and in which role.
-6. Expenses waiting more than 7 days are listed in a reminder email.
+6. If you haven't decided an expense within 5 days, you get a reminder email every day until you do. The accountant gets the same daily reminder for expenses waiting on them.
 
 These screens are designed for a phone.
 

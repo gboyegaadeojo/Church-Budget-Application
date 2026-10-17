@@ -141,6 +141,13 @@
       "when": 1792205389450,
       "tag": "0019_expense_parallel_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792206481495,
+      "tag": "0020_approval_reminder_days",
+      "breakpoints": true
     }
   ]
 }
