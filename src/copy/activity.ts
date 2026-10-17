@@ -66,6 +66,7 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "expenses.cancelled": { label: "Cancelled a purchase request", group: "requests" },
   "expenses.receipt_added": { label: "Added a receipt", group: "requests" },
   "expenses.receipt_removed": { label: "Removed a receipt", group: "requests" },
+  "expenses.message_sent": { label: "Sent a message on an expense", group: "requests" },
   "expenses.review_started": { label: "Started reviewing an expense", group: "decisions" },
   "expenses.accountant_approved": {
     label: "Approved an expense (accountant)",

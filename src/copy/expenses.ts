@@ -112,6 +112,10 @@ export const expensesCopy = {
       'Receipt uploads aren\'t set up yet. Tick "No receipt available" and hand the paper receipt to the office.',
     receiptUploadFailed: "The file didn't upload. Check your connection and try again.",
     receiptConvertFailed: "That photo couldn't be converted. Try a JPG or PDF instead.",
+    messageEmpty: "Write a message first.",
+    messageTooLong: "Keep it to 2,000 characters.",
+    messageDraft: "Messages start once the expense is submitted.",
+    messageLimit: "You've sent 30 messages today. Try again tomorrow.",
   },
 
   types: {
@@ -639,6 +643,26 @@ export const expensesCopy = {
     search: "Search",
     payee: "Payee",
     empty: "No expenses have been submitted yet.",
+  },
+
+  /** Messages on an expense (6B.4). */
+  thread: {
+    heading: "Messages",
+    intro:
+      "Questions and answers about this expense. A message doesn't change it; to ask for a change, return it for clarification.",
+    empty: "No messages yet.",
+    label: "Your message",
+    send: "Send",
+    sent: "Message sent.",
+    note: "Sends an email to the department, the accountant and the Board Chair.",
+    readOnly: "You can read the messages.",
+    you: "You",
+    sides: {
+      department: "Department",
+      accountant: "Accountant",
+      board: "Board",
+      office: "Church Administrator",
+    },
   },
 
   /** My tasks (FR-37). */

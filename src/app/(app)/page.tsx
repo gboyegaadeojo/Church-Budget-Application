@@ -1,7 +1,17 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, CircleCheck, LayoutGrid } from "lucide-react";
+import {
+  Activity,
+  BadgeCheck,
+  Building2,
+  CircleCheck,
+  HandCoins,
+  Inbox,
+  LayoutGrid,
+  PiggyBank,
+} from "lucide-react";
+import { StatCard } from "@/components/ui/display";
 import { AreaIcon } from "@/components/app-shell/area-icon";
 import { copy } from "@/copy/en-CA";
 import { daysWaiting, getMyTasks, type Task } from "@/domain/tasks";
@@ -10,6 +20,7 @@ import { activityCopy, activityLabel } from "@/copy/activity";
 import { annualCopy } from "@/copy/annual";
 import { getDb } from "@/db";
 import { listActivity } from "@/domain/analytics/activity";
+import { atAGlance } from "@/domain/home/glance";
 import { getChurchTimeZone } from "@/domain/settings";
 import { authorize } from "@/lib/authz";
 import { cn } from "@/lib/cn";
@@ -75,15 +86,115 @@ async function HomeContent() {
 
       {/* Recent activity is part of Analytics & Audit, which is for staff only. */}
       <div className={cn("grid gap-8", staff && "lg:grid-cols-2")}>
-        <EmptySection
-          id="at-a-glance-heading"
-          title={h.atAGlance}
-          body={h.atAGlanceEmpty}
-          icon={<LayoutGrid className="size-5 text-fg-muted" aria-hidden="true" />}
-        />
+        <AtAGlance viewer={viewer} />
         {staff && <RecentActivity viewer={viewer} />}
       </div>
     </>
+  );
+}
+
+/** One card per role the person holds (FR-37, DRD 6.0), each linking to its work. */
+async function AtAGlance({ viewer }: { viewer: Viewer }) {
+  const cards = await atAGlance(getDb(), viewer);
+  if (cards.length === 0) {
+    return (
+      <EmptySection
+        id="at-a-glance-heading"
+        title={h.atAGlance}
+        body={h.atAGlanceEmpty}
+        icon={<LayoutGrid className="size-5 text-fg-muted" aria-hidden="true" />}
+      />
+    );
+  }
+  const g = h.glance;
+  return (
+    <section aria-labelledby="at-a-glance-heading" className="space-y-4">
+      <h2 id="at-a-glance-heading" className="text-xl font-semibold">
+        {h.atAGlance}
+      </h2>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {cards.map((card) => {
+          switch (card.kind) {
+            case "department": {
+              const over = card.figures.remaining < 0;
+              return (
+                <StatCard
+                  key={`${card.kind}-${card.department}`}
+                  label={g.department(card.department, card.cycle)}
+                  value={g.available(formatCAD(card.figures.available))}
+                  icon={PiggyBank}
+                  tone={over ? "red" : "amber"}
+                  href={card.href}
+                >
+                  <p className={cn("text-sm", over ? "text-danger" : "text-fg-muted")}>
+                    {over
+                      ? g.overBy(formatCAD(-card.figures.remaining))
+                      : g.remaining(formatCAD(card.figures.remaining))}
+                  </p>
+                </StatCard>
+              );
+            }
+            case "review":
+              return (
+                <StatCard
+                  key={card.kind}
+                  label={g.review}
+                  value={card.annual + card.expenses}
+                  icon={Inbox}
+                  tone="teal"
+                  emphasis={card.annual + card.expenses > 0}
+                  href={card.href}
+                >
+                  <p className="text-sm text-fg-muted">
+                    {g.reviewDetail(card.annual, card.expenses)}
+                  </p>
+                </StatCard>
+              );
+            case "board":
+              return (
+                <StatCard
+                  key={card.kind}
+                  label={g.board}
+                  value={card.waiting}
+                  icon={BadgeCheck}
+                  tone="violet"
+                  emphasis={card.waiting > 0}
+                  href={card.href}
+                >
+                  <p className="text-sm text-fg-muted">{g.boardDetail(card.waiting)}</p>
+                </StatCard>
+              );
+            case "pay":
+              return (
+                <StatCard
+                  key={card.kind}
+                  label={g.pay}
+                  value={formatCAD(card.owedCents)}
+                  icon={HandCoins}
+                  tone="blue"
+                  href={card.href}
+                >
+                  <p className="text-sm text-fg-muted">{g.payDetail(card.waiting)}</p>
+                </StatCard>
+              );
+            case "proposed":
+              return (
+                <StatCard
+                  key={card.kind}
+                  label={g.proposed}
+                  value={card.count}
+                  icon={Building2}
+                  tone="slate"
+                  emphasis={card.count > 0}
+                  href={card.href}
+                >
+                  <p className="text-sm text-fg-muted">{g.proposedDetail(card.count)}</p>
+                </StatCard>
+              );
+          }
+        })}
+      </div>
+    </section>
   );
 }
 

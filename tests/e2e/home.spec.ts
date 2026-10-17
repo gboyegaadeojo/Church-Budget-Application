@@ -67,6 +67,9 @@ test.describe("Home and app shell", () => {
     // One My tasks list.
     await expect(page.getByRole("heading", { level: 2, name: "My tasks" })).toHaveCount(1);
     await expect(page.getByRole("heading", { level: 2, name: "At a glance" })).toBeVisible();
+    // FR-37: one card per role, e.g. the accountant's review count and the office's total to pay.
+    await expect(page.getByText("Waiting for your review")).toBeVisible();
+    await expect(page.getByText("To pay", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { level: 2, name: "Recent activity" })).toBeVisible();
 
     // Roles are chips in the account menu, not a role switcher.

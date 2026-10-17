@@ -685,7 +685,6 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 - **Activity log:** every expense event has a plain-language label and group. Approvals, payments and the spending entries they make count as money changes. Each event links to its expense: the review screen for an accountant, the expense page for everyone else. The log's search matches expense references.
 - **Help** (FR-36) and the **user manual** describe expenses for each role.
 - **Not built in Stage 3:**
-  - Messages on expenses (6B.4 lists them). A return for clarification, or the board's return to the accountant, carries the question instead.
   - The Home "At a glance" cards, which are still the placeholder from Stage 1.
   - The Overview tab's expense charts, which join with Stage 4's spending charts.
 
@@ -752,12 +751,30 @@ The church asked that the "approval needed" email go to both approvers at the sa
 - **Access:** being given a department lets a verified person who was waiting for one sign in (FR-01a). Removing the last one puts them back to waiting.
 - **Not built:** "the Church Administrator submits a claim on behalf of another person" (6B.2 table). The Church Administrator can be made an Expense submitter for a department if needed, and any claim can already name someone else as the payee.
 
+## Home: At a glance (FR-37, DRD 6.0) (2026-10-16)
+
+- One card per role the person holds, each linking to its work (`src/domain/home/glance.ts`):
+  - **Department leaders:** each department's budget for its latest year: the approved budget and what's left (or "Over budget by"), linking to My expenses.
+  - **Accountant and backup approver:** "Waiting for your review": annual budgets in open cycles (Submitted, Updated, In Review) and expenses they may decide.
+  - **Board Chair and Vice-Chair:** "Waiting for your approval": expenses they may decide now.
+  - **Church Administrator:** "To pay": what's owed to people, with how many are ready to process.
+  - **System Administrator:** proposed departments.
+- The cards use the same read models as the screens they link to (the queues, Ready to process, the budget figures), so the numbers agree. Someone with no card-bearing role sees the empty state.
+
 ## Daily reminders for approvers after 5 days (FR-49, AC-144) (2026-10-16)
 
 - The church asked that approvers who haven't approved within 5 days get a daily reminder. This replaces the weekly reminder to the Board Chair after 7 days (and its copy to the accountant).
 - **Setting:** `approval_reminder_days` (5) replaces `board_reminder_days` (migration `0020`).
 - **Who:** for every expense still waiting for an approval (Submitted, In Review, Awaiting Board Chair, Awaiting accountant) more than 5 days after it was last submitted or answered, the accountant gets one list of those waiting on them, and each Board Chair (or the Vice-Chair covering) one list of theirs. An approver who has approved stops getting it. A returned expense waits for the department, so it isn't included.
 - **Once a day:** the daily `reminders` job sends them; the outbox dedupe key includes the person and the church-time date, so a second run the same day sends nothing new. The payment and unclaimed-purchase reminders stay weekly.
+
+## Messages on expenses (6B.4) (2026-10-16)
+
+- Each expense has a **Messages** thread on its page, the accountant's review screen and the Board Chair's decision screen, like annual budgets (FR-31): plain text up to 2,000 characters, links shown with their domain, 30 messages per person per day, append-only (`expense_messages`, database triggers), audited (`expenses.message_sent`).
+- **Who writes:** the department (its leaders, and the person who submitted it), the accountant and backup approvers, the Board Chair (or Vice-Chair), and the Church Administrator. The System Administrator reads only. Not on a draft.
+- **Who is emailed:** every other side, never the writer: the department (submitter, payee and leaders, AC-141), the accountant, the Board Chair (or Vice-Chair covering), and the Church Administrator once the expense is approved or being processed.
+- A message never changes the expense; a change is still asked for with Return for clarification.
+- **Not built:** unread counts on the lists (the annual thread has them, DRD 6.11a). The emails tell people there's a new message.
 
 ## Reopening an approved budget that expenses rely on (FR-18a) (2026-10-16)
 

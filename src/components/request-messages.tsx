@@ -12,7 +12,7 @@ const URL_PATTERN = /(https?:\/\/[^\s<>"]+)/g;
  * Plain text with its http and https links made clickable (CLAUDE.md "Links"): opened in
  * a new tab without the opener, each followed by its domain. Nothing else is markup.
  */
-function Linked({ text }: { text: string }) {
+export function Linked({ text }: { text: string }) {
   return text.split(URL_PATTERN).map((part, i) => {
     if (i % 2 === 0) return part;
     let domain: string;

@@ -125,6 +125,7 @@ You can submit expenses once your department's annual budget is approved and the
 
 ### What happens next
 
+- **Messages** at the bottom of an expense let you, the accountant, the Board Chair and the Church Administrator ask and answer questions; each message is emailed to the others. A message doesn't change the expense.
 - The accountant and the Board Chair (or Vice-Chair) are asked at the same time and can approve in either order. Once both have approved, the Church Administrator pays or buys and records how. You and every other leader of the department get an email at each step, and **My expenses** shows a tracker with where it is.
 - You can **change** the expense until the accountant starts reviewing it, or **withdraw** it. If the accountant returns it with a question, change it and send your answer.
 - An approved purchase request you buy yourself stays set aside until you submit the claim linked to it. If it won't go ahead, **cancel** it with a reason so the money goes back to the budget.

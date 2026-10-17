@@ -91,6 +91,22 @@ export const copy = {
     atAGlance: "At a glance",
     atAGlanceEmpty:
       "Your budget and approval summaries will appear here once a budget year is set up.",
+    glance: {
+      department: (department: string, cycle: string) => `${department} · ${cycle}`,
+      available: (amount: string) => `${amount} budget`,
+      remaining: (amount: string) => `${amount} remaining`,
+      overBy: (amount: string) => `Over budget by ${amount}`,
+      review: "Waiting for your review",
+      reviewDetail: (annual: number, expenses: number) =>
+        `${annual === 1 ? "1 annual budget" : `${annual} annual budgets`} · ${expenses === 1 ? "1 expense" : `${expenses} expenses`}`,
+      board: "Waiting for your approval",
+      boardDetail: (n: number) => (n === 1 ? "1 expense" : `${n} expenses`),
+      pay: "To pay",
+      payDetail: (n: number) =>
+        n === 1 ? "1 expense ready to process" : `${n} expenses ready to process`,
+      proposed: "Proposed departments",
+      proposedDetail: (n: number) => (n === 0 ? "Nothing to approve" : "Waiting for your decision"),
+    },
     recentActivity: "Recent activity",
     recentActivityEmpty: "No activity yet.",
     taskBadgeLabel: (count: number) =>
