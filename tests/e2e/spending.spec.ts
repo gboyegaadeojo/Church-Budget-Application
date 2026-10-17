@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { DESKTOP, expectAxeClean, MOBILE, PEOPLE, signInAs } from "./helpers";
+import {
+  DESKTOP,
+  expectAxeClean,
+  expectNoHorizontalScroll,
+  MOBILE,
+  PEOPLE,
+  signInAs,
+} from "./helpers";
 
 /*
  * Spending tracking (Stage 4; FR-24, DRD 6.8). The seed has a closed FY2026 cycle with
@@ -80,6 +87,34 @@ test.describe("Spending (Stage 4)", () => {
     // The accountant can amend; amending is covered by integration tests (AC-84).
     await expect(page.getByRole("button", { name: "Amend budget" })).toBeVisible();
     await expectAxeClean(page);
+  });
+
+  test("AC-89 a leader sees their own department's budget, axe clean at 360 and 1440 px", async ({
+    page,
+  }) => {
+    await signInAs(page, PEOPLE.sam);
+    for (const size of [MOBILE, DESKTOP]) {
+      await page.setViewportSize(size);
+      await page.goto("/spending/my-department");
+      await expect(
+        page.getByRole("heading", { level: 1, name: "My department's budget" }),
+      ).toBeVisible();
+      await page.getByLabel("Budget year", { exact: true }).selectOption({ label: "FY2026" });
+      await page.getByRole("button", { name: "Show" }).click();
+      const panel = page.getByRole("region", { name: "Media Team budget" });
+      await expect(panel.getByText("$30,000.00").first()).toBeVisible();
+      await expect(panel.getByText("Remaining", { exact: true })).toBeVisible();
+      // Payment method and reference numbers aren't shown to requesters.
+      await expect(panel.getByRole("columnheader", { name: "Method" })).toHaveCount(0);
+      await expectNoHorizontalScroll(page);
+      await expectAxeClean(page);
+    }
+    // Other tests make Sam a leader of more departments, so the integration test checks
+    // that no other department's spending is shown (AC-89). Sam can't open the dashboard.
+    await page.goto("/spending");
+    await expect(
+      page.getByRole("heading", { name: "You don't have access to this page" }),
+    ).toBeVisible();
   });
 
   test("the Board Chair reads Budget vs actual without changing anything", async ({ page }) => {
