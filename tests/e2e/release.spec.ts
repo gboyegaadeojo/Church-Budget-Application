@@ -41,7 +41,7 @@ test.describe("Decision release (FR-19a)", () => {
     await page.goto("/annual/release");
     await page.getByLabel("Release date and time").fill("2020-01-01T09:00");
     await page.getByRole("button", { name: "Hold and release on a date" }).click();
-    await expect(page.getByText("Choose a time in the future, or use Release now.")).toBeVisible();
+    await expect(page.getByText("Choose a time in the future.")).toBeVisible();
     await page.reload();
     await expect(
       page.getByRole("region", { name: "Decision emails" }).getByText("Send immediately", {

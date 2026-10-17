@@ -14,6 +14,7 @@ const TONE: Record<ExpenseStatus, BadgeTone> = {
   in_review: "info",
   returned: "warning",
   awaiting_board: "info",
+  awaiting_accountant: "info",
   approved: "success",
   processing: "info",
   paid: "success",

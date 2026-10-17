@@ -68,7 +68,11 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "expenses.receipt_removed": { label: "Removed a receipt", group: "requests" },
   "expenses.review_started": { label: "Started reviewing an expense", group: "decisions" },
   "expenses.accountant_approved": {
-    label: "Approved an expense and sent it to the Board Chair",
+    label: "Approved an expense (accountant)",
+    group: "decisions",
+  },
+  "expenses.board_approved": {
+    label: "Approved an expense (Board Chair)",
     group: "decisions",
   },
   "expenses.returned": { label: "Returned an expense with a question", group: "decisions" },
@@ -77,7 +81,10 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
     label: "Returned an expense to the accountant",
     group: "decisions",
   },
-  "expenses.final_approved": { label: "Gave an expense final approval", group: "decisions" },
+  "expenses.final_approved": {
+    label: "Gave an expense its second approval",
+    group: "decisions",
+  },
   "expenses.closed_by_claim": {
     label: "Purchase request closed by its claim",
     group: "decisions",
@@ -222,6 +229,7 @@ export const MONEY_EVENT_TYPES = [
   "annual.reopened",
   "admin.tax_rate_changed",
   "expenses.accountant_approved",
+  "expenses.board_approved",
   "expenses.final_approved",
   "expenses.paid",
   "expenses.purchased",

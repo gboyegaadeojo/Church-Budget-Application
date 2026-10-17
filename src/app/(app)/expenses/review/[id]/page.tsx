@@ -8,10 +8,12 @@ import { listReceipts } from "@/domain/expenses/receipts";
 import { warningsFor } from "@/domain/expenses/review-queries";
 import { authzContextOf, loadExpense } from "@/domain/expenses/service";
 import { getChurchTimeZone } from "@/domain/settings";
+import { ACCOUNTANT_WAITING } from "@/domain/expenses/status";
 import { authorize } from "@/lib/authz";
 import { getViewer } from "@/lib/viewer";
 import { ExpenseNotFound } from "../../[id]/not-found-state";
 import { accountantDecideAction, startExpenseReviewAction } from "../actions";
+import { decisionOptions, OtherApproval } from "../approvals";
 import { DecisionPanel } from "../decision-panel";
 import { ReviewView } from "../review-view";
 import { StartReview } from "../start-review";
@@ -20,7 +22,7 @@ const r = expensesCopy.review;
 
 export const metadata: Metadata = { title: r.queueTitle };
 
-/** The accountant's review screen (6B.4 level 1, DRD 6.9a). */
+/** The accountant's review screen (6B.4, DRD 6.9a); the Board Chair decides alongside. */
 export default function ExpenseReviewPage({
   params,
   searchParams,
@@ -49,7 +51,7 @@ async function ReviewContent({
   if (!expense || expense.status === "draft") return <ExpenseNotFound />;
   const row = await loadExpense(db, id);
   const can = authorize(viewer, "expense.first_approve", authzContextOf(row));
-  const decidable = expense.status === "submitted" || expense.status === "in_review";
+  const decidable = ACCOUNTANT_WAITING.includes(expense.status);
   const amount = expense.approved?.total ?? expense.totals.total;
   const [receipts, warnings, zone] = await Promise.all([
     expense.type === "expense_claim" ? listReceipts(db, viewer, id) : null,
@@ -62,7 +64,11 @@ async function ReviewContent({
   let decision: React.ReactNode;
   if (!decidable) {
     decision = (
-      <p className="text-sm text-fg-muted">{expensesCopy.status[expense.status].explain}</p>
+      <p className="text-sm text-fg-muted">
+        {expense.status === "awaiting_board"
+          ? r.alreadyApproved
+          : expensesCopy.status[expense.status].explain}
+      </p>
     );
   } else if (!can.allowed) {
     decision = (
@@ -83,41 +89,7 @@ async function ReviewContent({
           rate={expense.rate}
           maxCents={expense.totals.total}
           action={accountantDecideAction}
-          options={[
-            {
-              kind: "approve",
-              label: r.approve,
-              note: { label: r.note, required: false },
-              confirmTitle: r.confirmTitle.approve,
-              confirmBody: r.confirmBody.approve,
-              tone: "primary",
-            },
-            {
-              kind: "approve_different_amount",
-              label: r.approveDifferent,
-              amount: true,
-              note: { label: r.reason, required: true },
-              confirmTitle: r.confirmTitle.approve_different_amount,
-              confirmBody: r.confirmBody.approve,
-              tone: "primary",
-            },
-            {
-              kind: "return",
-              label: r.returnToRequester,
-              note: { label: r.question, required: true },
-              confirmTitle: r.confirmTitle.return,
-              confirmBody: r.confirmBody.return,
-              tone: "secondary",
-            },
-            {
-              kind: "decline",
-              label: r.decline,
-              note: { label: r.reason, required: true },
-              confirmTitle: r.confirmTitle.decline,
-              confirmBody: r.confirmBody.decline,
-              tone: "danger",
-            },
-          ]}
+          options={decisionOptions("accountant", expense.status === "awaiting_accountant")}
         />
       </>
     );
@@ -131,6 +103,7 @@ async function ReviewContent({
       zone={zone}
       done={done}
       back={{ href: "/expenses/review", label: r.queueTitle }}
+      top={<OtherApproval expense={expense} level="accountant" />}
       decision={decision}
     />
   );

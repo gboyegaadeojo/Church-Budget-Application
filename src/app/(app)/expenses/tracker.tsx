@@ -1,7 +1,7 @@
 import { CheckCircle2, Circle, Clock, XCircle } from "lucide-react";
 import { expensesCopy } from "@/copy/expenses";
 import type { ExpenseDecisionView } from "@/domain/expenses/queries";
-import type { ExpenseStatus, ExpenseType } from "@/domain/expenses/status";
+import { levelApproved, type ExpenseStatus, type ExpenseType } from "@/domain/expenses/status";
 import { cn } from "@/lib/cn";
 import { formatDateTime } from "@/lib/time-zone";
 
@@ -14,9 +14,9 @@ const ICON = { done: CheckCircle2, current: Clock, waiting: Circle, stopped: XCi
 const STATE_WORD = { done: t.done, current: t.current, waiting: t.waiting, stopped: t.stopped };
 
 /**
- * Where an expense is (DRD 6.9a "approval tracker"): Submitted → Accountant → Board
- * Chair → Processing → Paid (or Purchased), with names and dates. Each step has an icon
- * and words, never colour alone.
+ * Where an expense is (DRD 6.9a "approval tracker"): Submitted → Accountant and Board
+ * Chair (side by side, in either order) → Processing → Paid (or Purchased), with names and
+ * dates. Each step has an icon and words, never colour alone.
  */
 export function trackerSteps(input: {
   type: ExpenseType;
@@ -27,47 +27,58 @@ export function trackerSteps(input: {
   paidAt?: Date | null;
 }): Step[] {
   const { status } = input;
-  const last = (level: "accountant" | "board") =>
-    input.decisions.findLast((d) => d.level === level && d.decision !== "returned");
-  const accountant = last("accountant");
-  const board = last("board");
-  // Steps: 0 Submitted, 1 Accountant, 2 Board Chair, 3 Processing, 4 Paid or Purchased.
-  const POSITION: Record<ExpenseStatus, number> = {
-    draft: -1,
-    submitted: 1,
-    in_review: 1,
-    returned: 1,
-    awaiting_board: 2,
-    approved: 3,
-    processing: 3,
-    paid: 5,
-    purchased: 5,
-    closed: 5,
-    withdrawn: 1,
-    declined: board?.decision === "declined" ? 2 : 1,
-    cancelled: 3,
-  };
+  // This round's decisions: everything since the latest return to the department.
+  const lastReturn = input.decisions.findLastIndex((d) => d.decision === "returned");
+  const round = input.decisions.slice(lastReturn + 1);
+  const last = (level: "accountant" | "board") => round.findLast((d) => d.level === level);
   const stopped = status === "withdrawn" || status === "declined" || status === "cancelled";
-  const at = POSITION[status];
-  const stateOf = (i: number): StepState => {
-    if (at < 0) return "waiting";
-    if (i < at) return "done";
-    if (i === at) return stopped ? "stopped" : "current";
-    return "waiting";
+  const finished = status === "paid" || status === "purchased" || status === "closed";
+
+  const approval = (level: "accountant" | "board"): StepState => {
+    if (status === "draft") return "waiting";
+    if (levelApproved(status, level)) return "done";
+    if (status === "declined") return last(level)?.decision === "declined" ? "stopped" : "waiting";
+    if (status === "withdrawn") return "stopped";
+    if (status === "returned") return "waiting";
+    return "current";
   };
+  const decidedBy = (level: "accountant" | "board") => {
+    const d = last(level);
+    return d && d.decision !== "returned" ? d : undefined;
+  };
+  const accountant = decidedBy("accountant");
+  const board = decidedBy("board");
+  const processing: StepState = finished
+    ? "done"
+    : status === "approved" || status === "processing"
+      ? "current"
+      : status === "cancelled"
+        ? "stopped"
+        : "waiting";
+
   return [
-    { label: t.submitted, state: stateOf(0), who: input.requester, when: input.submittedAt },
+    {
+      label: t.submitted,
+      state: status === "draft" ? "waiting" : "done",
+      who: input.requester,
+      when: input.submittedAt,
+    },
     {
       label: t.accountant,
-      state: stateOf(1),
+      state: approval("accountant"),
       who: accountant?.decidedBy,
       when: accountant?.createdAt,
     },
-    { label: t.board, state: stateOf(2), who: board?.decidedBy, when: board?.createdAt },
-    { label: t.processing, state: stateOf(3) },
+    {
+      label: t.board,
+      state: approval("board"),
+      who: board?.decidedBy,
+      when: board?.createdAt,
+    },
+    { label: t.processing, state: stopped && status !== "cancelled" ? "waiting" : processing },
     {
       label: input.type === "purchase_request" ? t.purchased : t.paid,
-      state: stateOf(4),
+      state: finished ? "done" : "waiting",
       when: input.paidAt,
     },
   ];

@@ -11,7 +11,28 @@ import { toListRow, type ExpenseListRow } from "./queries";
 import { daysBetween, isLateClaim } from "./schema";
 import { authzContextOf, type ExpenseRow } from "./service";
 import { filterStatus, listFilterConditions, type ExpenseListFilters } from "./list-filters";
-import { ENDED_WITHOUT_CHARGE, type ExpenseStatus } from "./status";
+import {
+  ACCOUNTANT_WAITING,
+  BOARD_WAITING,
+  ENDED_WITHOUT_CHARGE,
+  type ExpenseStatus,
+} from "./status";
+
+/** The accountant's queue: waiting for them, and out with the department or the board. */
+export const ACCOUNTANT_QUEUE: readonly ExpenseStatus[] = [
+  "submitted",
+  "in_review",
+  "awaiting_accountant",
+  "returned",
+  "awaiting_board",
+];
+/** The board's queue: waiting for them, and waiting for the accountant after they approved. */
+export const BOARD_QUEUE: readonly ExpenseStatus[] = [
+  "submitted",
+  "in_review",
+  "awaiting_board",
+  "awaiting_accountant",
+];
 
 /** The approvers' lists and warnings (FR-47, FR-48; DRD 6.9a). */
 
@@ -109,9 +130,12 @@ async function queueFor(
       daysWaiting: full.submittedAt
         ? Math.max(0, daysBetween(zonedDate(full.submittedAt, zone), today))
         : 0,
-      canDecide: options.canDecide
-        ? await options.canDecide(full)
-        : authorize(viewer, options.decideAction, authzContextOf(full)).allowed,
+      // Only while this level's approval is still needed, and the person may give it.
+      canDecide:
+        options.waiting.includes(full.status) &&
+        (options.canDecide
+          ? await options.canDecide(full)
+          : authorize(viewer, options.decideAction, authzContextOf(full)).allowed),
     });
   }
   const filtered = f.overBudget === "yes" ? rows.filter((r) => r.overBy > 0) : rows;
@@ -132,7 +156,7 @@ async function queueFor(
   };
 }
 
-/** The accountant's review queue (6B.4 level 1, FR-48). */
+/** The accountant's review queue (6B.4, FR-48): waiting for them, then out with others. */
 export function accountantQueue(
   tx: Tx,
   viewer: Subject,
@@ -142,14 +166,14 @@ export function accountantQueue(
   return queueFor(tx, viewer, {
     queueAction: "expense.review_queue",
     decideAction: "expense.first_approve",
-    statuses: ["submitted", "in_review", "returned", "awaiting_board"],
-    waiting: ["submitted", "in_review"],
+    statuses: ACCOUNTANT_QUEUE,
+    waiting: ACCOUNTANT_WAITING,
     filters,
     now,
   });
 }
 
-/** "Awaiting my approval" for the Board Chair and Vice-Chair (6B.4 level 2). */
+/** "Awaiting my approval" for the Board Chair and Vice-Chair (6B.4), asked at submission. */
 export function boardQueue(
   tx: Tx,
   viewer: Subject,
@@ -159,8 +183,8 @@ export function boardQueue(
   return queueFor(tx, viewer, {
     queueAction: "expense.board_queue",
     decideAction: "expense.final_approve",
-    statuses: ["awaiting_board"],
-    waiting: ["awaiting_board"],
+    statuses: BOARD_QUEUE,
+    waiting: BOARD_WAITING,
     filters,
     now,
     canDecide: async (row) => (await boardPermission(tx, viewer, row, now)).allowed,

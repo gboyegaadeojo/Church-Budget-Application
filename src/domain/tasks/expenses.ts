@@ -5,6 +5,7 @@ import type { Tx } from "@/db/types";
 import { boardPermission } from "@/domain/expenses/board";
 import { isProcessable } from "@/domain/expenses/payment";
 import { authzContextOf } from "@/domain/expenses/service";
+import { ACCOUNTANT_WAITING, BOARD_WAITING } from "@/domain/expenses/status";
 import { authorize } from "@/lib/authz";
 import { hasRole, type Viewer } from "@/lib/roles";
 import type { Task } from "./types";
@@ -15,7 +16,7 @@ const t = expensesCopy.tasks;
  * Expense tasks (FR-37, 6B): what's waiting for this person at each step.
  * - Department: drafts to finish, questions to answer, approved purchases to buy and claim.
  * - Accountant: expenses to review (not their own department, claim or payee).
- * - Board Chair, or the Vice-Chair covering: final approvals.
+ * - Board Chair, or the Vice-Chair covering: approvals, asked alongside the accountant.
  * - Church Administrator and accountant: payments to record.
  */
 export function canHaveExpenseTasks(viewer: Viewer): boolean {
@@ -51,8 +52,8 @@ export async function expenseTasks(
           inArray(expenseSubmissions.status, ["draft", "returned", "approved"]),
         )
       : undefined,
-    accountant ? inArray(expenseSubmissions.status, ["submitted", "in_review"]) : undefined,
-    boardMember ? inArray(expenseSubmissions.status, ["awaiting_board"]) : undefined,
+    accountant ? inArray(expenseSubmissions.status, [...ACCOUNTANT_WAITING]) : undefined,
+    boardMember ? inArray(expenseSubmissions.status, [...BOARD_WAITING]) : undefined,
     payer ? inArray(expenseSubmissions.status, ["approved", "processing"]) : undefined,
   ].filter((c) => c !== undefined);
   if (conditions.length === 0) return [];
@@ -108,7 +109,7 @@ export async function expenseTasks(
     }
     if (
       accountant &&
-      (r.status === "submitted" || r.status === "in_review") &&
+      ACCOUNTANT_WAITING.includes(r.status) &&
       authorize(viewer, "expense.first_approve", ctx).allowed
     ) {
       tasks.push({
@@ -122,14 +123,14 @@ export async function expenseTasks(
     }
     if (
       boardMember &&
-      r.status === "awaiting_board" &&
+      BOARD_WAITING.includes(r.status) &&
       (await boardPermission(tx, viewer, r, now)).allowed
     ) {
       tasks.push({
         ...base,
         id: `expense:${r.id}:final-approval`,
         action: t.finalApproval,
-        waitingSince: r.updatedAt,
+        waitingSince: r.submittedAt ?? r.updatedAt,
         href: `/expenses/awaiting-approval/${r.id}`,
         buttonLabel: t.decide,
       });

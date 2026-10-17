@@ -715,11 +715,28 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 | AC-139 | expense-board.test | — |
 | AC-140 | expense-review.test | — |
 
+
+
+## Release now after the release time (FR-19a, AC-19) (2026-10-16)
+
+- **Problem found:** once the release time passed, the page stopped offering **Release now** and **Cancel schedule**, but the held decisions weren't sent until the 15-minute `release-decisions` job ran. That job is called only by GitHub Actions, so on a local server it never runs, and in production it can lag by up to 15 minutes. The page listed the held decisions with no way to send them, and the past-time error still said "use Release now".
+- **Fix:** Release now works whenever decisions are held, including after the release time. The page says the time has passed and how many haven't been sent, and offers Release now. With nothing held it's still refused. The past-time error now just asks for a future time. The Send immediately hint explains that each decision is emailed as it's confirmed, so there's nothing to release later.
+
 ## Department leaders receive every expense email (FR-49, AC-141) (2026-10-16)
 
 - The church asked that every leader of a department (Primary, Backups and other representatives) receive the chain of emails the requester receives, so everyone is aware of purchases. This reverses the Stage 3 step 7 rule that copied only the submitter and the payee.
 - "Requester" in FR-49 is now the submitter, the payee if different, and every department leader (`requesterGroup` in `src/domain/expenses/emails.ts`), each address once. It covers the receipt, updates, review started, questions, decisions, processing, payment, the over-budget notice and the unclaimed-purchase reminder.
 - Leaders already received the annual budget emails (FR-21), so both parts now behave the same.
+
+## The two expense approvals run side by side (6B.4, FR-45, FR-49; AC-142, AC-143) (2026-10-16)
+
+The church asked that the "approval needed" email go to both approvers at the same time, not one after the other, and that the department and the Church Administrator hear only once both have approved.
+
+- **Either order.** At submission the accountant and the Board Chair (or the Vice-Chair covering, 3.3) are both emailed **Approval needed**. Either may open it (which starts the review, FR-44) and decide first. The first approval moves it to **Awaiting Board Chair** or **Awaiting accountant** (a new status, migration `0019`); the second makes it **Approved** and charges the budget (FR-42, AC-73). One decision service serves both (`src/domain/expenses/approval.ts`).
+- **The lower amount wins (AC-143).** Each approver approves as asked or a smaller amount, never more than asked. The Board Chair is no longer capped by the accountant's amount. When the second approval lands, the approved amount is the lower of the two, re-split into subtotal and tax as before (FR-16). Each decision keeps its own amount. The expense's `approved_total` holds the lowest so far, but the budget counts it only from Approved on.
+- **Returns go to the department.** Either approver can return it with a question; the earlier approval is cleared, and both approve again after the department answers. "Return to accountant" is gone. Old `expenses.board_returned` events still read correctly in the activity log.
+- **Emails.** After one approval only the approver gets a copy; "Approved by the accountant, waiting for the Board Chair" is no longer sent. After both, the department gets "Your expense has been approved", the Church Administrator "Approved, ready for processing", and both approvers a copy. Returns and declines copy both approvers. Updates before review and a withdrawal before review also reach the board.
+- **Who sees what.** The board sees an expense from submission (never a draft). My tasks, the queues and the tracker show each level separately: the accountant's queue waits on Submitted, In Review and Awaiting accountant; the board's on Submitted, In Review and Awaiting Board Chair.
 
 ## FR-48: search and filters on every expense list (2026-10-16)
 
@@ -736,3 +753,16 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
   - **Church Administrator:** "To pay": what's owed to people, with how many are ready to process.
   - **System Administrator:** proposed departments.
 - The cards use the same read models as the screens they link to (the queues, Ready to process, the budget figures), so the numbers agree. Someone with no card-bearing role sees the empty state.
+
+## Daily reminders for approvers after 5 days (FR-49, AC-144) (2026-10-16)
+
+- The church asked that approvers who haven't approved within 5 days get a daily reminder. This replaces the weekly reminder to the Board Chair after 7 days (and its copy to the accountant).
+- **Setting:** `approval_reminder_days` (5) replaces `board_reminder_days` (migration `0020`).
+- **Who:** for every expense still waiting for an approval (Submitted, In Review, Awaiting Board Chair, Awaiting accountant) more than 5 days after it was last submitted or answered, the accountant gets one list of those waiting on them, and each Board Chair (or the Vice-Chair covering) one list of theirs. An approver who has approved stops getting it. A returned expense waits for the department, so it isn't included.
+- **Once a day:** the daily `reminders` job sends them; the outbox dedupe key includes the person and the church-time date, so a second run the same day sends nothing new. The payment and unclaimed-purchase reminders stay weekly.
+
+## Reopening an approved budget that expenses rely on (FR-18a) (2026-10-16)
+
+- Reopening an approved annual budget takes away the department's Available for expenses until it's approved again (`approvedAnnualBudget` only counts an approved, released budget). So when expenses already rely on it (anything committed, spent, or waiting for approval for that department and year), the reopen dialog shows those amounts and the accountant must tick "I understand the new decision will change the department's available budget."
+- The server enforces it: without `confirmExpenses`, `reopenRequest` refuses with the amounts. A declined budget, or one with no expenses, reopens as before.
+- Nothing about the expenses changes on reopen: their approvals and spending stay, and the new annual decision sets the new Available. Remaining may then show Over budget, as FR-43 allows.

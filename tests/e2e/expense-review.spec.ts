@@ -2,13 +2,13 @@ import { expect, test } from "@playwright/test";
 import { submitPurchase } from "./expense-helpers";
 import { DESKTOP, expectAxeClean, MOBILE, PEOPLE, signInAs } from "./helpers";
 
-/* The accountant's first approval (Stage 3; 6B.4 level 1, DRD 6.9a). */
+/* The accountant's approval, asked alongside the Board Chair (6B.4, DRD 6.9a). */
 
 test.describe("Expense review: accountant (Stage 3)", () => {
   // Each test signs in as several people in turn; under the full parallel run that takes time.
   test.describe.configure({ timeout: 90_000 });
 
-  test("AC-69 AC-73 approve a different amount and send to the Board Chair", async ({
+  test("AC-69 AC-73 approve a smaller amount; it waits for the Board Chair", async ({
     page,
     browser,
   }) => {
@@ -23,17 +23,15 @@ test.describe("Expense review: accountant (Stage 3)", () => {
     // Opening it starts the review (FR-44).
     await expect(page.getByText("In Review", { exact: true }).first()).toBeVisible();
 
-    await page.getByLabel("Approve a different amount and send to Board Chair").check();
+    await page.getByLabel("Approve a smaller amount").check();
     await page.getByLabel("Approved total (incl. tax)").fill("500.00");
     await expect(page.getByText("$446.43 before tax + $53.57 tax")).toBeVisible();
     await page.getByLabel("Reason").fill("One microphone for now.");
     await expectAxeClean(page);
-    await page
-      .getByRole("button", { name: "Approve a different amount and send to Board Chair" })
-      .click();
+    await page.getByRole("button", { name: "Approve a smaller amount" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Confirm" }).click();
-    await page.waitForURL(/\?done=approve_different_amount$/);
-    await expect(page.getByText("Approved and sent to the Board Chair.")).toBeVisible();
+    await page.waitForURL(/\?done=waiting$/);
+    await expect(page.getByText("Approved. It's waiting for the other approval.")).toBeVisible();
     await expect(page.getByText("Awaiting Board Chair", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("Approved a different amount · Pat Accountant")).toBeVisible();
   });
@@ -62,8 +60,6 @@ test.describe("Expense review: accountant (Stage 3)", () => {
     await signInAs(page, PEOPLE.gina);
     await page.goto(`/expenses/review/${id}`);
     await expect(page.getByText(/You can't decide this one/)).toBeVisible();
-    await expect(page.getByRole("button", { name: "Approve and send to Board Chair" })).toHaveCount(
-      0,
-    );
+    await expect(page.getByRole("button", { name: "Approve", exact: true })).toHaveCount(0);
   });
 });
