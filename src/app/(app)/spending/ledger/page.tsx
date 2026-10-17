@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import {
   AdminSkeleton,
   Badge,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/display";
 import { buttonClass, inputClass, linkClass } from "@/components/ui/styles";
 import { expensesCopy } from "@/copy/expenses";
+import { spendingCopy } from "@/copy/spending";
 import { getDb } from "@/db";
 import { getLedger } from "@/domain/spending/ledger";
 import { cn } from "@/lib/cn";
@@ -24,8 +25,8 @@ const l = expensesCopy.ledger;
 export const metadata: Metadata = { title: l.title };
 
 /**
- * The spending ledger (FR-24), read-only in Stage 3: entries made from approved expenses
- * appear here without re-typing (AC-80). Recording, refunds and voids come with Stage 4.
+ * The spending ledger (FR-24): every entry, including those made from approved expenses
+ * (AC-80). Those who record spending open an entry to correct or void it.
  */
 export default function LedgerPage({ searchParams }: PageProps<"/spending/ledger">) {
   return (
@@ -50,11 +51,24 @@ async function LedgerContent({
     typeof query.cycle === "string" ? query.cycle : undefined,
   );
   if (!ledger) return <PermissionDenied />;
-  const methods = expensesCopy.payment.methods as Record<string, string>;
+  const methods = {
+    ...(expensesCopy.payment.methods as Record<string, string>),
+    ...spendingCopy.methods,
+  };
 
   return (
     <>
-      <PageHeader title={l.title} intro={l.intro} />
+      <PageHeader title={l.title} intro={l.intro}>
+        {ledger.canRecord && (
+          <Link
+            href={`/spending/record${ledger.cycleId ? `?cycle=${ledger.cycleId}` : ""}`}
+            className={buttonClass("primary", "ml-auto")}
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            {spendingCopy.record.title}
+          </Link>
+        )}
+      </PageHeader>
       <Section
         title={l.entries}
         icon={BookOpen}
@@ -138,7 +152,15 @@ async function LedgerContent({
                       {formatDate(row.spentOn)}
                     </td>
                     <td className="py-2.5 pr-4 align-top">{row.department}</td>
-                    <td className="py-2.5 pr-4 align-top">{row.payee}</td>
+                    <td className="py-2.5 pr-4 align-top">
+                      {ledger.canRecord ? (
+                        <Link href={`/spending/entries/${row.id}`} className={linkClass}>
+                          {row.payee}
+                        </Link>
+                      ) : (
+                        row.payee
+                      )}
+                    </td>
                     <td className="py-2.5 pr-4 align-top">{row.description}</td>
                     <td className="tabular py-2.5 pr-4 text-right align-top">
                       {formatCAD(row.entryType === "refund" ? -row.amountCents : row.amountCents)}
@@ -155,7 +177,10 @@ async function LedgerContent({
                         "—"
                       )}
                     </td>
-                    <td className="py-2.5 align-top">
+                    <td className="space-x-1 py-2.5 align-top">
+                      {row.unbudgeted && (
+                        <Badge tone="warning">{spendingCopy.ledgerStatus.unbudgeted}</Badge>
+                      )}
                       <Badge
                         tone={
                           row.status === "voided"
@@ -178,7 +203,6 @@ async function LedgerContent({
             </table>
           </div>
         )}
-        <p className="text-xs text-fg-muted">{l.stage4}</p>
       </Section>
     </>
   );

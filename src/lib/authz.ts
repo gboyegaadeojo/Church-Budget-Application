@@ -170,8 +170,6 @@ const notOwnDepartmentOrPayee: Check = (s, ctx) =>
   notOwnDepartment(s, ctx) ??
   (ctx.payeeUserId === s.id || ctx.requesterUserId === s.id ? "conflict_of_interest" : null);
 
-const notPayee: Check = (s, ctx) => (ctx.payeeUserId === s.id ? "conflict_of_interest" : null);
-
 const notPayeeOrSubmitter: Check = (s, ctx) =>
   ctx.payeeUserId === s.id || ctx.requesterUserId === s.id ? "conflict_of_interest" : null;
 

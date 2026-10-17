@@ -162,6 +162,13 @@
       "when": 1792209283737,
       "tag": "0022_expense_submitters",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792210894185,
+      "tag": "0023_spending_foundations",
+      "breakpoints": true
     }
   ]
 }

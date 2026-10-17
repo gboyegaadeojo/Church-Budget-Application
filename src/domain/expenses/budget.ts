@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import {
   approvalDecisions,
+  budgetAmendments,
   budgetRequests,
   expenseSubmissions,
   spendingEntries,
@@ -14,7 +15,7 @@ import { COMMITTED_STATUSES, PENDING_STATUSES } from "./status";
 /**
  * A department's budget for one cycle, as Part B sees it (FR-25, FR-42, FR-48):
  *
- *   Available = approved annual total (incl. tax) [+ amendments, Stage 4]
+ *   Available = approved annual total (incl. tax) + amendments (FR-27)
  *   Committed = approved purchase requests not yet bought, claimed or cancelled
  *   Spent     = expense entries − refund entries, voided ones left out
  *   Remaining = Available − Committed − Spent (may go below zero, FR-43)
@@ -26,6 +27,11 @@ import { COMMITTED_STATUSES, PENDING_STATUSES } from "./status";
 export type BudgetFigures = {
   /** The approved, released annual request; null when the department has none (AC-78). */
   annualRequestId: string | null;
+  /** The approved annual total, including tax; never changed by amendments. */
+  approved: number;
+  /** Every amendment, including tax (FR-27); negative when reduced overall. */
+  amendments: number;
+  /** Approved + amendments. */
   available: number;
   committed: number;
   pending: number;
@@ -35,10 +41,6 @@ export type BudgetFigures = {
 
 export type BudgetStatus = "on_track" | "nearing_limit" | "over_budget" | "no_budget";
 
-/**
- * The department's approved annual budget for the cycle, if its decision has reached the
- * department: a held decision (FR-19a) doesn't start expenses yet.
- */
 export type ExpenseUse = { committed: number; spent: number; pending: number };
 
 /**
@@ -55,6 +57,10 @@ export async function expenseUseOf(
   return { committed: f.committed, spent: f.spent, pending: f.pending };
 }
 
+/**
+ * The department's approved annual budget for the cycle, if its decision has reached the
+ * department: a held decision (FR-19a) doesn't start expenses yet.
+ */
 export async function approvedAnnualBudget(
   tx: Tx,
   cycleId: string,
@@ -127,20 +133,33 @@ export async function budgetFigures(
         eq(spendingEntries.status, "recorded"),
       ),
     );
+  const [amended] = annual
+    ? await tx
+        .select({ cents: sql<string>`coalesce(sum(${budgetAmendments.amountCents}), 0)` })
+        .from(budgetAmendments)
+        .where(eq(budgetAmendments.budgetRequestId, annual.requestId))
+    : [{ cents: "0" }];
   return figuresFrom({
     annualRequestId: annual?.requestId ?? null,
-    available: annual?.totalCents ?? 0,
+    approved: annual?.totalCents ?? 0,
+    amendments: Number(amended.cents),
     committed: Number(committed.cents),
     pending: Number(pending.cents),
     spent: Number(spent.cents),
   });
 }
 
-/** Remaining from the parts, in integer cents (FR-25). */
-export function figuresFrom(parts: Omit<BudgetFigures, "remaining">): BudgetFigures {
+/** Available and Remaining from the parts, in integer cents (FR-25). */
+export function figuresFrom(
+  parts: Omit<BudgetFigures, "remaining" | "available" | "amendments"> & { amendments?: number },
+): BudgetFigures {
+  const amendments = parts.amendments ?? 0;
+  const available = sumCents([parts.approved, amendments]);
   return {
     ...parts,
-    remaining: sumCents([parts.available, -parts.committed, -parts.spent]),
+    amendments,
+    available,
+    remaining: sumCents([available, -parts.committed, -parts.spent]),
   };
 }
 
@@ -207,4 +226,26 @@ export async function linkedCommitment(tx: Tx, purchaseRequestId: string | null)
     )
     .limit(1);
   return row?.cents ?? 0;
+}
+
+/**
+ * Percentage used (FR-25), (Committed + Spent) ÷ Available, in tenths of a percent and
+ * rounded half-up with integer maths: 432 is 43.2%. Null when there's no available budget.
+ */
+export function usedTenthsOfPercent(
+  figures: Pick<BudgetFigures, "available" | "committed" | "spent">,
+): number | null {
+  if (figures.available <= 0) return null;
+  const used = BigInt(sumCents([figures.committed, figures.spent]));
+  const available = BigInt(figures.available);
+  const scaled = used * 2000n;
+  const tenths = scaled >= 0n ? (scaled / available + 1n) / 2n : -((-scaled / available + 1n) / 2n);
+  return Number(tenths);
+}
+
+/** "43.2%" from tenths of a percent. */
+export function formatPercentTenths(tenths: number): string {
+  const sign = tenths < 0 ? "−" : "";
+  const abs = Math.abs(tenths);
+  return `${sign}${Math.floor(abs / 10)}.${abs % 10}%`;
 }
