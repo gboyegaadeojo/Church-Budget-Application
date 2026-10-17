@@ -13,7 +13,7 @@ import {
   users,
 } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
-import { getRequestView, listMyRequests } from "@/domain/annual/queries";
+import { departmentPicker, getRequestView, listMyRequests } from "@/domain/annual/queries";
 import {
   deleteDraft,
   reviseRequest,
@@ -124,7 +124,8 @@ describe("starting a request (FR-03, FR-38)", () => {
     const { requestId, dept } = await readyDraft();
     const second = await newLeader();
     const result = await run((tx) => startRequest(tx, second, { cycleId, departmentId: dept.id }));
-    expect(result).toEqual({ requestId, departmentId: dept.id, existing: true });
+    // Still a draft, so it opens in the editor.
+    expect(result).toEqual({ requestId, departmentId: dept.id, existing: true, open: "edit" });
     expect((await fresh(second)).departments[0].representativeType).toBe("representative");
     const [joined] = await db
       .select()
@@ -145,7 +146,8 @@ describe("starting a request (FR-03, FR-38)", () => {
     const { me, dept, requestId, version } = await readyDraft();
     await submit(me, requestId, version);
     const again = await run((tx) => startRequest(tx, me, { cycleId, departmentId: dept.id }));
-    expect(again).toEqual({ requestId, departmentId: dept.id, existing: true });
+    // Submitted: it opens on its page to review, never a second request.
+    expect(again).toEqual({ requestId, departmentId: dept.id, existing: true, open: "view" });
     // The database refuses a second request for the same department and cycle too.
     await expect(
       db.insert(budgetRequests).values({
@@ -156,6 +158,43 @@ describe("starting a request (FR-03, FR-38)", () => {
         title: "",
       }),
     ).rejects.toThrow();
+  });
+
+  it("rule 1 a leader of two departments starts the other's budget; a decided one only opens to view", async () => {
+    const { me, dept, requestId, version } = await readyDraft();
+    await submit(me, requestId, version);
+    // The same leader also leads a department with no budget yet: a new draft for it.
+    const other = await insertDepartment(db);
+    const second = await run((tx) => startRequest(tx, me, { cycleId, departmentId: other.id }));
+    expect(second).toMatchObject({ existing: false, open: "edit", departmentId: other.id });
+    expect(second.requestId).not.toBe(requestId);
+
+    // The picker tells them what the first department's budget allows.
+    const leader = await fresh(me);
+    const picker = await departmentPicker(db, leader, cycleId);
+    expect(picker.choices.find((c) => c.id === dept.id)?.existing).toMatchObject({
+      requestId,
+      status: "submitted",
+      editsLeft: 2,
+      editable: true,
+    });
+    // Once approved it can't be changed: picking it opens it to view.
+    await db
+      .update(budgetRequests)
+      .set({
+        status: "approved",
+        approvedSubtotalCents: 102_500,
+        approvedTaxCents: 12_300,
+        approvedTotalCents: 114_800,
+      })
+      .where(eq(budgetRequests.id, requestId));
+    const after = await departmentPicker(db, leader, cycleId);
+    expect(after.choices.find((c) => c.id === dept.id)?.existing).toMatchObject({
+      status: "approved",
+      editable: false,
+    });
+    const again = await run((tx) => startRequest(tx, leader, { cycleId, departmentId: dept.id }));
+    expect(again).toMatchObject({ requestId, existing: true, open: "view" });
   });
 
   it("AC-14 typing a new name creates a Proposed department; a known name reuses it", async () => {

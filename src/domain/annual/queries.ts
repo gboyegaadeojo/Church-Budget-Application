@@ -16,7 +16,14 @@ import type { TaxBreakdown } from "@/lib/money";
 import type { LineContent } from "./schema";
 import { unreadCounts } from "./messages";
 import { hiddenDecisions } from "./release";
-import { currentTaxRate, editsRemaining, lastYearRequests, linesOf, totalsOf } from "./service";
+import {
+  canStillEdit,
+  currentTaxRate,
+  editsRemaining,
+  lastYearRequests,
+  linesOf,
+  totalsOf,
+} from "./service";
 import type { AnnualStatus } from "./status";
 
 /** Read models for the requester's annual budget screens (DRD 6.2 to 6.5). */
@@ -55,7 +62,14 @@ export type DepartmentChoice = {
   /** The person already represents it ("Yours"). */
   yours: boolean;
   /** This cycle's request, if one was started ("Media already has a budget…"). */
-  existing: { requestId: string; startedBy: string } | null;
+  existing: {
+    requestId: string;
+    startedBy: string;
+    status: AnnualStatus;
+    editsLeft: number;
+    /** Opens in the editor (draft, returned, or submitted with edits left). */
+    editable: boolean;
+  } | null;
   /** Named by the person's Planning Center Ministry Department. */
   fromPlanningCenter: boolean;
   /** The department's most recent submitted request from an earlier cycle (FR-35). */
@@ -102,6 +116,9 @@ async function departmentChoices(
       requestId: budgetRequests.id,
       departmentId: budgetRequests.departmentId,
       startedBy: users.displayName,
+      status: budgetRequests.status,
+      editCount: budgetRequests.editCount,
+      extraEditsAllowed: budgetRequests.extraEditsAllowed,
     })
     .from(budgetRequests)
     .innerJoin(users, eq(users.id, budgetRequests.requesterUserId))
@@ -115,7 +132,15 @@ async function departmentChoices(
       id: r.id,
       name: r.name,
       yours: mine.has(r.id),
-      existing: request ? { requestId: request.requestId, startedBy: request.startedBy } : null,
+      existing: request
+        ? {
+            requestId: request.requestId,
+            startedBy: request.startedBy,
+            status: request.status,
+            editsLeft: editsRemaining(request),
+            editable: canStillEdit(request),
+          }
+        : null,
       fromPlanningCenter: fromPlanningCenter.has(r.id),
       lastYear: last ? { cycleName: last.cycleName, reference: last.reference } : null,
     };

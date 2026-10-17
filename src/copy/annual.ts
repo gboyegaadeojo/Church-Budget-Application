@@ -297,8 +297,17 @@ export const annualCopy = {
     otherHint: "An administrator will add this department. You can still finish and submit.",
     didYouMean: "Did you mean",
     useSuggestion: (name: string) => `Use ${name}`,
-    existing: (department: string, by: string) =>
-      `${department} already has a budget started by ${by}. A department submits one budget a year; you can open it and edit it.`,
+    /** A department submits one budget a year: what someone picking it can do instead. */
+    existingDraft: (department: string, by: string) =>
+      `${department} already has a draft budget, started by ${by}. A department submits one budget a year, so you'll continue that draft.`,
+    existingReturned: (department: string) =>
+      `${department}'s budget was returned with a question. A department submits one budget a year, so answer it on that budget.`,
+    existingEditable: (department: string, status: string, left: number) =>
+      `${department} has already submitted its budget (${status}). A department submits one budget a year, so you can't start another. Open it to review it, or change it while edits are left (${left === 1 ? "1 edit" : `${left} edits`} left).`,
+    existingLocked: (department: string, status: string) =>
+      `${department} has already submitted its budget (${status}). A department submits one budget a year, and this one can't be changed now. You can open it to review it.`,
+    continueIt: "Continue it",
+    openIt: "Open it",
     hasBudget: "Has a budget",
     lastYear: (cycle: string, reference: string | null) =>
       reference
@@ -308,7 +317,6 @@ export const annualCopy = {
       "Copies the title, reasons and items into a new draft at today's tax rate. Check every item before you submit.",
     copiedNote:
       "This draft starts from last year's request, at today's tax rate. Check every item, quantity and price before you submit.",
-    openIt: "Open it",
     continue: "Continue",
     noCycleTitle: "No budget cycle is open",
     noCycleBody: "There's nothing to submit right now. You'll be able to start once a cycle opens.",

@@ -47,10 +47,10 @@ export async function startAction(_: ActionState, data: FormData): Promise<Actio
     { paths: [DASHBOARD], allowWaiting: true },
   );
   if (result.status !== "success") return result;
-  const { requestId, existing, copied } = result.data;
-  redirect(
-    existing ? view(requestId) : `${view(requestId)}/edit${copied ? "?from=last-year" : ""}`,
-  );
+  const { requestId, existing, open, copied } = result.data;
+  // A department has one budget a year: an existing one opens where it can be worked on.
+  if (existing) redirect(open === "edit" ? edit(requestId) : view(requestId));
+  redirect(`${edit(requestId)}${copied ? "?from=last-year" : ""}`);
 }
 
 export type DraftInput = { id: string; version: number } & RequestContentInput;
