@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { AdminSkeleton } from "@/components/ui/display";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
+import { getExpenseThread } from "@/domain/expenses/messages";
 import { getExpenseView } from "@/domain/expenses/queries";
 import { listReceipts } from "@/domain/expenses/receipts";
 import { warningsFor } from "@/domain/expenses/review-queries";
@@ -103,6 +104,7 @@ async function ReviewContent({
       zone={zone}
       done={done}
       back={{ href: "/expenses/review", label: r.queueTitle }}
+      thread={await getExpenseThread(db, viewer, id)}
       top={<OtherApproval expense={expense} level="accountant" />}
       decision={decision}
     />

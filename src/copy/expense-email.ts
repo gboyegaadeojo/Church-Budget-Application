@@ -172,6 +172,15 @@ export const expenseEmailCopy = {
     purchasedHeading: "Your purchase request has been bought",
     copyHeading: "A payment was recorded",
   },
+  message: {
+    subject: (r: string, d: string) => `New message: ${about(r, d)}`,
+    heading: "A new message about an expense",
+    status: "Message",
+    intro: (name: string, side: string) => `${name} (${side}) wrote:`,
+    label: "Message",
+    action: "Reply on the expense if you need to.",
+    button: "Open the messages",
+  },
   reminders: {
     approval: {
       subject: (n: number) =>
