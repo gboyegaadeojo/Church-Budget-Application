@@ -190,6 +190,32 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
     });
   }
 
+  test("FR-52 AC-127 the Board Chair sees spending and expenses on the Overview, axe clean", async ({
+    page,
+  }) => {
+    await signInAs(page, PEOPLE.cleo);
+    for (const size of [MOBILE, DESKTOP]) {
+      await page.setViewportSize(size);
+      await page.goto("/reports/analytics/overview");
+      await page.getByLabel("Budget cycle").selectOption({ label: "FY2026" });
+      await page.getByRole("button", { name: "Show" }).click();
+      await expect(page.getByRole("heading", { name: "Spending and expenses" })).toBeVisible();
+      await expect(page.getByRole("list", { name: "Budget used by department" })).toBeVisible();
+      await expect(page.getByRole("list", { name: "Spending by month" })).toBeVisible();
+      // The board reads figures but doesn't export or see the annual review figures.
+      await expect(page.getByRole("button", { name: /Export/ })).toHaveCount(0);
+      await expect(page.getByText("Requested (incl. tax)")).toHaveCount(0);
+      await expectAxeClean(page);
+      await expectNoHorizontalScroll(page);
+    }
+    await page
+      .getByRole("list", { name: "Budget used by department" })
+      .getByRole("link")
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/spending\/departments\//);
+  });
+
   test("FR-52 the Overview exports to Excel", async ({ page }) => {
     await signInAs(page, PEOPLE.pat);
     await page.goto("/reports/analytics/overview");

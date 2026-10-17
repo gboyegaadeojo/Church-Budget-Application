@@ -2,16 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DownloadButton } from "@/components/download-button";
-import {
-  BadgeCheck,
-  BarChart3,
-  FileText,
-  Hourglass,
-  Landmark,
-  Scale,
-  Timer,
-  type LucideIcon,
-} from "lucide-react";
+import { BadgeCheck, BarChart3, FileText, Hourglass, Landmark, Scale, Timer } from "lucide-react";
 import {
   AdminSkeleton,
   EmptyState,
@@ -19,7 +10,6 @@ import {
   PageHeader,
   PermissionDenied,
   StatCard,
-  type Tone,
 } from "@/components/ui/display";
 import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
 import { activityCopy } from "@/copy/activity";
@@ -31,11 +21,14 @@ import {
   type OverviewDepartment,
 } from "@/domain/analytics/overview";
 import { seesAdminAudit } from "@/domain/analytics/activity";
+import { spendingOverview } from "@/domain/analytics/spending";
 import { viewerAllowedTo } from "@/lib/admin-server";
 import { authorize } from "@/lib/authz";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
 import { AnalyticsTabs } from "../tabs";
+import { ChartCard, td, th } from "./chart-card";
+import { SpendingSection } from "./spending-section";
 
 const a = activityCopy;
 const o = a.overview;
@@ -65,7 +58,15 @@ async function OverviewContent({ searchParams }: { searchParams: Promise<Search>
   const viewer = await viewerAllowedTo("analytics.view", "/reports/analytics/overview");
   if (!viewer) return <PermissionDenied body={a.denied} />;
   const tabs = <AnalyticsTabs current="overview" showAccess={seesAdminAudit(viewer)} />;
-  if (!authorize(viewer, "annual.review").allowed) {
+  const db = getDb();
+  const query = await searchParams;
+  // The annual half is for those who review budgets; the spending half for those who
+  // follow spending (Requirements 3.6). Both use the cycle chosen in the one filter bar.
+  const data = authorize(viewer, "annual.review").allowed
+    ? await getOverview(db, viewer, { cycleId: one(query.cycle) })
+    : null;
+  const spending = await spendingOverview(db, viewer, data?.cycle?.id ?? one(query.cycle));
+  if (!data && !spending) {
     return (
       <>
         <PageHeader title={a.title} intro={o.intro} />
@@ -74,23 +75,42 @@ async function OverviewContent({ searchParams }: { searchParams: Promise<Search>
       </>
     );
   }
-  const query = await searchParams;
-  const data = await getOverview(getDb(), viewer, { cycleId: one(query.cycle) });
-  if (!data) return <PermissionDenied body={a.denied} />;
+  const cycles = data?.cycles ?? spending!.dashboard.cycles;
+  const cycleId = data?.cycle?.id ?? spending?.dashboard.cycle.id;
 
   return (
     <>
       <PageHeader title={a.title} intro={o.intro} />
       {tabs}
-      {data.cycle ? (
+      {cycleId ? (
         <>
-          <Filters data={data} />
-          <Headlines data={data} />
-          <div className="grid gap-6 xl:grid-cols-2">
-            <StagesChart data={data} />
-            <AmountsChart data={data} />
-          </div>
-          <Waiting data={data} />
+          <Filters
+            cycles={cycles}
+            cycleId={cycleId}
+            exportHref={data ? `/api/exports/overview?cycle=${cycleId}` : null}
+          />
+          {data?.cycle && (
+            <section
+              aria-labelledby={spending ? "annual-overview-heading" : undefined}
+              className="space-y-6"
+            >
+              {spending && (
+                <h2
+                  id="annual-overview-heading"
+                  className="text-xl leading-tight font-semibold tracking-tight"
+                >
+                  {o.annualHeading}
+                </h2>
+              )}
+              <Headlines data={data} />
+              <div className="grid gap-6 xl:grid-cols-2">
+                <StagesChart data={data} />
+                <AmountsChart data={data} />
+              </div>
+              <Waiting data={data} />
+            </section>
+          )}
+          {spending && <SpendingSection data={spending} />}
         </>
       ) : (
         <EmptyState>{o.noCycle}</EmptyState>
@@ -99,7 +119,15 @@ async function OverviewContent({ searchParams }: { searchParams: Promise<Search>
   );
 }
 
-function Filters({ data }: { data: Overview }) {
+function Filters({
+  cycles,
+  cycleId,
+  exportHref,
+}: {
+  cycles: { id: string; name: string }[];
+  cycleId: string;
+  exportHref: string | null;
+}) {
   return (
     <form
       method="get"
@@ -110,13 +138,8 @@ function Filters({ data }: { data: Overview }) {
         <label htmlFor="overview-cycle" className="block text-sm font-medium">
           {o.cycle}
         </label>
-        <select
-          id="overview-cycle"
-          name="cycle"
-          defaultValue={data.cycle!.id}
-          className={inputClass}
-        >
-          {data.cycles.map((c) => (
+        <select id="overview-cycle" name="cycle" defaultValue={cycleId} className={inputClass}>
+          {cycles.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
@@ -126,11 +149,7 @@ function Filters({ data }: { data: Overview }) {
       <button type="submit" className={buttonClass("secondary")}>
         {o.show}
       </button>
-      <DownloadButton
-        href={`/api/exports/overview?cycle=${data.cycle!.id}`}
-        label={o.export}
-        className="sm:ml-auto"
-      />
+      {exportHref && <DownloadButton href={exportHref} label={o.export} className="sm:ml-auto" />}
     </form>
   );
 }
@@ -200,44 +219,6 @@ function Headlines({ data }: { data: Overview }) {
           {turnaround.decided ? o.turnaroundFrom(turnaround.decided) : o.noDecisions}
         </p>
       </StatCard>
-    </section>
-  );
-}
-
-const th = "py-2 pr-4 text-left text-xs font-semibold tracking-wide text-fg-muted uppercase";
-const td = "py-2 pr-4 align-top";
-
-/** A chart card: the takeaway as its title, the chart, then the same figures as a table. */
-function ChartCard({
-  id,
-  title,
-  icon,
-  tone,
-  children,
-  table,
-}: {
-  id: string;
-  title: string;
-  icon: LucideIcon;
-  tone: Tone;
-  children: React.ReactNode;
-  table: React.ReactNode;
-}) {
-  return (
-    <section aria-labelledby={`${id}-heading`} className={cn(cardClass, "space-y-5")}>
-      <div className="flex items-center gap-3">
-        <IconChip icon={icon} tone={tone} />
-        <h2 id={`${id}-heading`} className="text-[17px] leading-tight font-semibold tracking-tight">
-          {title}
-        </h2>
-      </div>
-      {children}
-      <details className="rounded-control border border-border">
-        <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-medium lg:min-h-9">
-          {o.asTable}
-        </summary>
-        <div className="overflow-x-auto border-t border-border p-3">{table}</div>
-      </details>
     </section>
   );
 }
