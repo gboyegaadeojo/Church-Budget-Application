@@ -53,7 +53,7 @@ test.describe("Expenses across the app (Stage 3)", () => {
     await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.pat);
     await page.goto("/spending/ledger");
-    await page.getByLabel("Budget cycle").selectOption({ label: "FY2026" });
+    await page.getByLabel("Budget cycle", { exact: true }).selectOption({ label: "FY2026" });
     await page.getByRole("button", { name: "Apply" }).click();
     await expect(page.getByRole("link", { name: reference })).toBeVisible();
     await expectAxeClean(page);

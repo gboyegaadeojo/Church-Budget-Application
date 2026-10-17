@@ -43,7 +43,7 @@ test.describe("Spending (Stage 4)", () => {
 
     await page.setViewportSize(DESKTOP);
     await page.goto("/spending/ledger");
-    await page.getByLabel("Budget cycle").selectOption({ label: "FY2026" });
+    await page.getByLabel("Budget cycle", { exact: true }).selectOption({ label: "FY2026" });
     await page.getByLabel("Search payee, description or reference").fill(payee);
     await page.getByRole("button", { name: "Apply" }).click();
     await expect(page.getByRole("link", { name: `${payee} second` })).toBeVisible();
@@ -160,7 +160,9 @@ test.describe("Spending export (Stage 4)", () => {
     await page.goto("/reports");
     const card = page.getByRole("region", { name: "Spending and budget vs actual" });
     await expect(card).toBeVisible();
-    await card.getByLabel("Budget cycle").selectOption({ label: "FY2026 (Closed)" });
+    await card
+      .getByLabel("Budget cycle", { exact: true })
+      .selectOption({ label: "FY2026 (Closed)" });
     await expectAxeClean(page);
     const download = page.waitForEvent("download");
     await card.getByRole("button", { name: "Download Excel" }).click();
