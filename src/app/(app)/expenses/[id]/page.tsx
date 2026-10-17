@@ -7,6 +7,8 @@ import { AdminSkeleton, PageHeader } from "@/components/ui/display";
 import { buttonClass, cardClass, linkClass } from "@/components/ui/styles";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
+import { ExpenseMessages } from "@/components/expense-messages";
+import { getExpenseThread } from "@/domain/expenses/messages";
 import { getExpenseView, type ExpenseView } from "@/domain/expenses/queries";
 import { paymentOf } from "@/domain/expenses/payment";
 import { listReceipts } from "@/domain/expenses/receipts";
@@ -62,6 +64,7 @@ async function ExpenseContent({
     expense.type === "expense_claim" ? await listReceipts(db, viewer, expense.id) : null;
   const payment = await paymentOf(db, expense.id);
   const pending = ["draft", ...PENDING_STATUSES].includes(expense.status);
+  const thread = await getExpenseThread(db, viewer, expense.id);
 
   return (
     <>
@@ -191,6 +194,7 @@ async function ExpenseContent({
         figures={expense.figures}
         after={pending ? expense.impact.after : undefined}
       />
+      {thread && <ExpenseMessages expenseId={expense.id} thread={thread} zone={zone} />}
     </>
   );
 }

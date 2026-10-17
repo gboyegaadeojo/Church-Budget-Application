@@ -16,6 +16,8 @@ import { ExpenseLines } from "../expense-lines";
 import { ReceiptList } from "../receipt-list";
 import { ExpenseStatusBadge } from "../status-badge";
 import { ApprovalTracker, trackerSteps } from "../tracker";
+import { ExpenseMessages } from "@/components/expense-messages";
+import type { ExpenseThread } from "@/domain/expenses/messages";
 
 const r = expensesCopy.review;
 const v = expensesCopy.view;
@@ -35,6 +37,7 @@ export function ReviewView({
   done,
   top,
   decision,
+  thread,
 }: {
   expense: ExpenseView;
   receipts: ReceiptFileView[] | null;
@@ -45,6 +48,8 @@ export function ReviewView({
   /** Shown first on the right: the accountant's approved amount, for the board. */
   top?: React.ReactNode;
   decision: React.ReactNode;
+  /** The messages on this expense (6B.4). */
+  thread?: ExpenseThread | null;
 }) {
   const amount = expense.approved?.total ?? expense.totals.total;
   const c = expense.content;
@@ -176,6 +181,7 @@ export function ReviewView({
       </div>
 
       <BudgetStrip department={expense.department.name} figures={expense.figures} />
+      {thread && <ExpenseMessages expenseId={expense.id} thread={thread} zone={zone} />}
     </>
   );
 }

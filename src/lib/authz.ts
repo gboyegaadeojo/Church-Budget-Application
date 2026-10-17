@@ -59,6 +59,8 @@ export type Action =
   /** Cancel an approved purchase request that won't go ahead (FR-44). */
   | "expense.cancel"
   | "expense.export"
+  /** Write on an expense's thread (6B.4): the department, the approvers and the office. */
+  | "expense.message_send"
   // Spending
   | "spending.view"
   | "spending.record"
@@ -234,6 +236,12 @@ const RULES: Record<Action, readonly Rule[]> = {
   "expense.pay": [{ roles: [...ACCOUNTANTS, "church_admin"], check: notPayee }],
   "expense.cancel": [{ roles: ["requester"], check: ownDepartment }, { roles: ACCOUNTANTS }],
   "expense.export": [{ roles: [...ACCOUNTANTS, "church_admin", "system_admin"] }],
+  "expense.message_send": [
+    { roles: ["requester"], check: ownDepartment },
+    { roles: ACCOUNTANTS },
+    { roles: BOARD, check: sentToBoard },
+    { roles: ["church_admin"] },
+  ],
 
   "spending.view": [
     { roles: [...ACCOUNTANTS, "church_admin"] },

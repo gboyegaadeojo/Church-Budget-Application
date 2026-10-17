@@ -70,4 +70,29 @@ test.describe("Expenses across the app (Stage 3)", () => {
     await page.getByRole("combobox", { name: /Search budgets/ }).fill(reference);
     await expect(page.getByRole("option", { name: new RegExp(reference) })).toBeVisible();
   });
+
+  test("6B.4 the accountant asks a question in the messages; the department sees it", async ({
+    page,
+    browser,
+  }) => {
+    const { id } = await submitPurchase(browser, "Message check");
+    await page.setViewportSize(MOBILE);
+    await signInAs(page, PEOPLE.pat);
+    await page.goto(`/expenses/review/${id}`);
+    const messages = page.getByRole("region", { name: "Messages" });
+    await messages.getByLabel("Your message").fill("Which model is it? https://example.org/mic");
+    await messages.getByRole("button", { name: "Send" }).click();
+    await expect(messages.getByText("Which model is it?")).toBeVisible();
+    await expect(messages.getByText("(example.org)")).toBeVisible();
+    await expectAxeClean(page);
+
+    const context = await browser.newContext({ viewport: DESKTOP });
+    const sam = await context.newPage();
+    await signInAs(sam, PEOPLE.sam);
+    await sam.goto(`/expenses/${id}`);
+    await expect(
+      sam.getByRole("region", { name: "Messages" }).getByText("Which model is it?"),
+    ).toBeVisible();
+    await context.close();
+  });
 });

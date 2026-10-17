@@ -4,6 +4,7 @@ import { AdminSkeleton } from "@/components/ui/display";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
 import { boardPermission } from "@/domain/expenses/board";
+import { getExpenseThread } from "@/domain/expenses/messages";
 import { getExpenseView } from "@/domain/expenses/queries";
 import { listReceipts } from "@/domain/expenses/receipts";
 import { warningsFor } from "@/domain/expenses/review-queries";
@@ -113,6 +114,7 @@ async function BoardReviewContent({
       done={done}
       top={<OtherApproval expense={expense} level="board" />}
       back={{ href: "/expenses/awaiting-approval", label: r.boardTitle }}
+      thread={await getExpenseThread(db, viewer, id)}
       decision={decision}
     />
   );

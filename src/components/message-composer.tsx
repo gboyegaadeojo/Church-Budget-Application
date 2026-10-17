@@ -28,7 +28,21 @@ export function MarkMessagesRead({ requestId, unread }: { requestId: string; unr
  * its own idempotency key, so a double click posts one message (FR-10); the text is kept
  * if the server refuses it (DRD 11).
  */
-export function MessageComposer({ requestId, note }: { requestId: string; note: string }) {
+export function MessageComposer({
+  requestId,
+  note,
+  send: sendAction = sendMessageAction,
+}: {
+  /** The request (or expense) the thread belongs to. */
+  requestId: string;
+  note: string;
+  /** Where the message goes: an annual request by default; an expense passes its own. */
+  send?: (input: {
+    requestId: string;
+    body: string;
+    idempotencyKey: string;
+  }) => Promise<ActionState>;
+}) {
   const ids = useId();
   const router = useRouter();
   const [body, setBody] = useState("");
@@ -41,7 +55,7 @@ export function MessageComposer({ requestId, note }: { requestId: string; note: 
     event.preventDefault();
     if (pending) return;
     startTransition(async () => {
-      const result = await sendMessageAction({ requestId, body, idempotencyKey: key });
+      const result = await sendAction({ requestId, body, idempotencyKey: key });
       setState(result);
       if (result.status === "success") {
         setBody("");

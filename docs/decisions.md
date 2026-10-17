@@ -685,7 +685,6 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 - **Activity log:** every expense event has a plain-language label and group. Approvals, payments and the spending entries they make count as money changes. Each event links to its expense: the review screen for an accountant, the expense page for everyone else. The log's search matches expense references.
 - **Help** (FR-36) and the **user manual** describe expenses for each role.
 - **Not built in Stage 3:**
-  - Messages on expenses (6B.4 lists them). A return for clarification, or the board's return to the accountant, carries the question instead.
   - The Home "At a glance" cards, which are still the placeholder from Stage 1.
   - The Overview tab's expense charts, which join with Stage 4's spending charts.
 
@@ -750,6 +749,14 @@ The church asked that the "approval needed" email go to both approvers at the sa
 - **Setting:** `approval_reminder_days` (5) replaces `board_reminder_days` (migration `0020`).
 - **Who:** for every expense still waiting for an approval (Submitted, In Review, Awaiting Board Chair, Awaiting accountant) more than 5 days after it was last submitted or answered, the accountant gets one list of those waiting on them, and each Board Chair (or the Vice-Chair covering) one list of theirs. An approver who has approved stops getting it. A returned expense waits for the department, so it isn't included.
 - **Once a day:** the daily `reminders` job sends them; the outbox dedupe key includes the person and the church-time date, so a second run the same day sends nothing new. The payment and unclaimed-purchase reminders stay weekly.
+
+## Messages on expenses (6B.4) (2026-10-16)
+
+- Each expense has a **Messages** thread on its page, the accountant's review screen and the Board Chair's decision screen, like annual budgets (FR-31): plain text up to 2,000 characters, links shown with their domain, 30 messages per person per day, append-only (`expense_messages`, database triggers), audited (`expenses.message_sent`).
+- **Who writes:** the department (its leaders, and the person who submitted it), the accountant and backup approvers, the Board Chair (or Vice-Chair), and the Church Administrator. The System Administrator reads only. Not on a draft.
+- **Who is emailed:** every other side, never the writer: the department (submitter, payee and leaders, AC-141), the accountant, the Board Chair (or Vice-Chair covering), and the Church Administrator once the expense is approved or being processed.
+- A message never changes the expense; a change is still asked for with Return for clarification.
+- **Not built:** unread counts on the lists (the annual thread has them, DRD 6.11a). The emails tell people there's a new message.
 
 ## Reopening an approved budget that expenses rely on (FR-18a) (2026-10-16)
 

@@ -1125,6 +1125,34 @@ export const expenseReceiptFiles = pgTable(
 );
 
 /** Every submitted version, frozen (FR-44 "every version is preserved"). Append-only. */
+/**
+ * Messages on an expense (6B.4) between the department, the accountant, the board and the
+ * office. Plain text, append-only: a message never changes the expense.
+ */
+export const expenseMessages = pgTable(
+  "expense_messages",
+  {
+    id: id(),
+    expenseSubmissionId: uuid("expense_submission_id")
+      .notNull()
+      .references(() => expenseSubmissions.id),
+    authorUserId: uuid("author_user_id")
+      .notNull()
+      .references(() => users.id),
+    actingRole: roleEnum("acting_role").notNull(),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("expense_messages_expense_idx").on(t.expenseSubmissionId, t.createdAt),
+    index("expense_messages_author_idx").on(t.authorUserId, t.createdAt),
+    check(
+      "expense_messages_body_length",
+      sql`btrim(${t.body}) <> '' and char_length(${t.body}) <= 2000`,
+    ),
+  ],
+);
+
 export const expenseRevisions = pgTable(
   "expense_revisions",
   {
