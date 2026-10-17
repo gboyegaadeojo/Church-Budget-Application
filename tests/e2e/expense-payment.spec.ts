@@ -5,6 +5,9 @@ import { DESKTOP, expectAxeClean, MOBILE, PEOPLE, signInAs } from "./helpers";
 /* Processing and payment (Stage 3; 6B.5, DRD 6.9a). Pat, the accountant, may process too. */
 
 test.describe("Ready to process and Record payment (Stage 3)", () => {
+  // Each test signs in as several people in turn; under the full parallel run that takes time.
+  test.describe.configure({ timeout: 90_000 });
+
   test("AC-77 AC-80 an approved claim is processed and paid by e-transfer", async ({
     page,
     browser,

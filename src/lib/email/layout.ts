@@ -28,6 +28,8 @@ export type EmailLine = {
 
 export type EmailSummary =
   | { kind: "single"; heading?: string; totals: TaxBreakdown; rate: TaxRate }
+  /** An expense claim: receipts already include tax, so one "Total paid" line (FR-41). */
+  | { kind: "paid"; heading?: string; label: string; totalCents: number }
   | {
       kind: "comparison";
       requested: TaxBreakdown;
@@ -84,6 +86,7 @@ export function renderEmail(content: EmailContent, brand: EmailBrand): RenderedE
 // ---------------------------------------------------------------- plain text
 
 function summaryRows(summary: EmailSummary): [string, string, string?][] {
+  if (summary.kind === "paid") return [[summary.label, formatCAD(summary.totalCents)]];
   const tax = c.salesTax(formatTaxRate(summary.rate));
   if (summary.kind === "single") {
     return [
@@ -114,7 +117,7 @@ function renderText(content: EmailContent, brand: EmailBrand): string {
   }
   if (content.summary) {
     const s = content.summary;
-    if (s.kind === "single") {
+    if (s.kind !== "comparison") {
       if (s.heading) out.push(`${s.heading}:`);
       for (const [label, value] of summaryRows(s)) out.push(`${label}: ${value}`);
     } else {
@@ -164,7 +167,7 @@ function htmlSummary(summary: EmailSummary): string {
   const isTotal = (i: number) => i === rows.length - 1;
   const rowStyle = (i: number) =>
     isTotal(i) ? "border-top:1px solid #d1d5db;font-weight:600;" : "";
-  if (summary.kind === "single") {
+  if (summary.kind !== "comparison") {
     const heading = summary.heading
       ? `<p style="margin:0 0 6px;font-size:14px;font-weight:600;">${escapeHtml(summary.heading)}</p>`
       : "";

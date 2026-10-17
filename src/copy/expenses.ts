@@ -590,6 +590,20 @@ export const expensesCopy = {
     nothingOwed: "Nothing owed (church card)",
   },
 
+  /** My tasks (FR-37). */
+  tasks: {
+    finishDraft: "Finish and submit expense",
+    respond: "Answer the accountant's question",
+    buyAndClaim: "Buy it, then submit a claim",
+    review: "Expense to review",
+    finalApproval: "Final approval needed",
+    recordPayment: "Record payment",
+    open: "Open",
+    review_: "Review",
+    decide: "Decide",
+    pay: "Record",
+  },
+
   messages: {
     started: "Draft started.",
     saved: "Draft saved.",
