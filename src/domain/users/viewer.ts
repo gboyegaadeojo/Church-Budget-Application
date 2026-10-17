@@ -78,7 +78,9 @@ export async function loadViewer(
       email: user.email,
       roles,
       departments: roles.includes("requester") ? represented : [],
-      expenseDepartments: roles.includes("requester") ? expenseDepartments : [],
+      // Requesters, and the Church Administrator submitting for a department (6B.2).
+      expenseDepartments:
+        roles.includes("requester") || roles.includes("church_admin") ? expenseDepartments : [],
     },
   };
 }

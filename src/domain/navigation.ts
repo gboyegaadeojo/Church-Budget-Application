@@ -15,6 +15,8 @@ export type NavItemDef = {
   act: readonly Role[];
   /** Roles that can open it read-only (System Administrator, Requirements 3.5). */
   view?: readonly Role[];
+  /** Also for an Expense submitter (6B.2), whatever their roles. */
+  submitter?: boolean;
 };
 
 export type AreaDef = {
@@ -62,8 +64,8 @@ export const AREAS: readonly AreaDef[] = [
     id: "expenses",
     label: copy.areas.expenses,
     items: [
-      { href: "/expenses/new", label: n.newExpense, act: ["requester"] },
-      { href: "/expenses/mine", label: n.myExpenses, act: ["requester"] },
+      { href: "/expenses/new", label: n.newExpense, act: ["requester"], submitter: true },
+      { href: "/expenses/mine", label: n.myExpenses, act: ["requester"], submitter: true },
       { href: "/expenses/review", label: n.reviewQueue, act: ACCOUNTANTS },
       { href: "/expenses/awaiting-approval", label: n.awaitingMyApproval, act: BOARD },
       { href: "/expenses/ready", label: n.readyToProcess, act: ["church_admin", ...ACCOUNTANTS] },
@@ -137,13 +139,19 @@ export type NavArea = { id: AreaId; label: string; href: string; items: NavItem[
  * area. Areas with nothing to show are left out. An item is "view only" when
  * none of the person's roles can act on it.
  */
-export function navigationFor(roles: readonly Role[]): NavArea[] {
+export function navigationFor(
+  roles: readonly Role[],
+  options: { expenseSubmitter?: boolean } = {},
+): NavArea[] {
   const has = (list: readonly Role[] | undefined) => !!list?.some((r) => roles.includes(r));
+  // An Expense submitter (6B.2), such as the Church Administrator, submits expenses too.
+  const acts = (item: { act?: readonly Role[]; submitter?: boolean }) =>
+    has(item.act) || (!!item.submitter && !!options.expenseSubmitter);
 
   return AREAS.flatMap((area) => {
     const items = area.items
-      .filter((item) => has(item.act) || has(item.view))
-      .map((item) => ({ href: item.href, label: item.label, viewOnly: !has(item.act) }));
+      .filter((item) => acts(item) || has(item.view))
+      .map((item) => ({ href: item.href, label: item.label, viewOnly: !acts(item) }));
     if (items.length === 0) return [];
     return [{ id: area.id, label: area.label, href: items[0].href, items }];
   });
