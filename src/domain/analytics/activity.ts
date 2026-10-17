@@ -25,6 +25,7 @@ import {
   auditEvents,
   budgetCycles,
   budgetRequests,
+  expenseSubmissions,
   departments,
   users,
 } from "@/db/schema";
@@ -94,6 +95,8 @@ export type ActivityItem = {
   entityType: string;
   entityId: string | null;
   request: { id: string; reference: string | null; title: string } | null;
+  /** The expense an event is about (Part B). */
+  expense: { id: string; reference: string | null; title: string } | null;
   department: { id: string; name: string } | null;
   cycle: string | null;
   reason: string | null;
@@ -135,6 +138,7 @@ const uuid = z.uuid();
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const request = aliasedTable(budgetRequests, "activity_request");
+const expense = aliasedTable(expenseSubmissions, "activity_expense");
 const department = aliasedTable(departments, "activity_department");
 const cycle = aliasedTable(budgetCycles, "activity_cycle");
 const actorUser = aliasedTable(users, "activity_actor");
@@ -146,6 +150,11 @@ const requestJoin = or(
     eq(auditEvents.entityType, "budget_request"),
     eq(sql`${request.id}::text`, auditEvents.entityId),
   ),
+);
+/** The expense an event is about, named by its entity id. */
+const expenseJoin = and(
+  eq(auditEvents.entityType, "expense_submission"),
+  eq(sql`${expense.id}::text`, auditEvents.entityId),
 );
 const departmentId = sql<
   string | null
@@ -300,6 +309,7 @@ async function conditions(tx: Tx, actor: Subject, f: ActivityFilters, now: Date)
     where.push(
       or(
         ilike(request.referenceNumber, pattern),
+        ilike(expense.referenceNumber, pattern),
         ilike(request.title, pattern),
         ilike(actorUser.displayName, pattern),
         ilike(actorUser.email, pattern),
@@ -328,6 +338,9 @@ function base(tx: Tx) {
       requestId: request.id,
       reference: request.referenceNumber,
       title: request.title,
+      expenseId: expense.id,
+      expenseReference: expense.referenceNumber,
+      expenseTitle: expense.title,
       departmentId: department.id,
       departmentName: department.name,
       cycleName: cycle.name,
@@ -337,6 +350,7 @@ function base(tx: Tx) {
     .from(auditEvents)
     .leftJoin(actorUser, eq(actorUser.id, auditEvents.actorUserId))
     .leftJoin(request, requestJoin)
+    .leftJoin(expense, expenseJoin)
     .leftJoin(department, eq(department.id, departmentId))
     .leftJoin(cycle, eq(cycle.id, cycleId));
 }
@@ -355,6 +369,9 @@ function toItem(r: Row): ActivityItem {
     entityType: r.entityType,
     entityId: r.entityId,
     request: r.requestId ? { id: r.requestId, reference: r.reference, title: r.title ?? "" } : null,
+    expense: r.expenseId
+      ? { id: r.expenseId, reference: r.expenseReference, title: r.expenseTitle ?? "" }
+      : null,
     department: r.departmentId ? { id: r.departmentId, name: r.departmentName ?? "" } : null,
     cycle: r.cycleName,
     reason: r.reason,
@@ -375,6 +392,7 @@ export async function listActivity(
     .from(auditEvents)
     .leftJoin(actorUser, eq(actorUser.id, auditEvents.actorUserId))
     .leftJoin(request, requestJoin)
+    .leftJoin(expense, expenseJoin)
     .leftJoin(department, eq(department.id, departmentId))
     .where(where);
   const pages = Math.max(1, Math.ceil(total / pageSize));

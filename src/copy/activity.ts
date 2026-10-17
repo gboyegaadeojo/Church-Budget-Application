@@ -52,6 +52,45 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "annual.released_now": { label: "Released the held decisions now", group: "decisions" },
   "annual.exported": { label: "Exported annual budgets to Excel", group: "exports" },
   "annual.overview_exported": { label: "Exported the Overview to Excel", group: "exports" },
+  // Expenses (Part B)
+  "expenses.draft_started": { label: "Started an expense", group: "requests" },
+  "expenses.draft_saved": { label: "Saved an expense draft", group: "requests" },
+  "expenses.draft_deleted": { label: "Deleted an expense draft", group: "requests" },
+  "expenses.submitted": { label: "Submitted an expense", group: "requests" },
+  "expenses.edited": { label: "Changed a submitted expense", group: "requests" },
+  "expenses.clarification_answered": {
+    label: "Answered the accountant's question on an expense",
+    group: "requests",
+  },
+  "expenses.withdrawn": { label: "Withdrew an expense", group: "requests" },
+  "expenses.cancelled": { label: "Cancelled a purchase request", group: "requests" },
+  "expenses.receipt_added": { label: "Added a receipt", group: "requests" },
+  "expenses.receipt_removed": { label: "Removed a receipt", group: "requests" },
+  "expenses.review_started": { label: "Started reviewing an expense", group: "decisions" },
+  "expenses.accountant_approved": {
+    label: "Approved an expense and sent it to the Board Chair",
+    group: "decisions",
+  },
+  "expenses.returned": { label: "Returned an expense with a question", group: "decisions" },
+  "expenses.declined": { label: "Declined an expense", group: "decisions" },
+  "expenses.board_returned": {
+    label: "Returned an expense to the accountant",
+    group: "decisions",
+  },
+  "expenses.final_approved": { label: "Gave an expense final approval", group: "decisions" },
+  "expenses.closed_by_claim": {
+    label: "Purchase request closed by its claim",
+    group: "decisions",
+  },
+  "expenses.processing_started": { label: "Started processing an expense", group: "decisions" },
+  "expenses.paid": { label: "Recorded a payment", group: "money" },
+  "expenses.purchased": { label: "Recorded a purchase", group: "money" },
+  "expenses.exported": { label: "Exported expenses to Excel", group: "exports" },
+  "spending.entry_from_expense": {
+    label: "Spending recorded from an expense",
+    group: "money",
+  },
+  "spending.entry_paid": { label: "Spending entry updated with its payment", group: "money" },
   // Sign-in and access
   "access.sign_in_succeeded": { label: "Signed in", group: "access" },
   "access.sign_in_failed": { label: "Sign-in refused", group: "access" },
@@ -182,6 +221,12 @@ export const MONEY_EVENT_TYPES = [
   "annual.second_approved",
   "annual.reopened",
   "admin.tax_rate_changed",
+  "expenses.accountant_approved",
+  "expenses.final_approved",
+  "expenses.paid",
+  "expenses.purchased",
+  "spending.entry_from_expense",
+  "spending.entry_paid",
 ];
 
 export const activityCopy = {

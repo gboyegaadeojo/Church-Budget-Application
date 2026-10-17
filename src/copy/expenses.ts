@@ -590,6 +590,42 @@ export const expensesCopy = {
     nothingOwed: "Nothing owed (church card)",
   },
 
+  /** The read-only spending ledger of Stage 3 (FR-24, AC-80). */
+  ledger: {
+    title: "Spending ledger",
+    intro: "Money spent against each department's budget, including approved expenses.",
+    entries: "Entries",
+    spent: "Spent",
+    cycle: "Budget cycle",
+    show: "Show",
+    empty: "Nothing has been spent in this cycle yet.",
+    columns: {
+      date: "Date",
+      department: "Department",
+      payee: "Payee",
+      description: "Description",
+      amount: "Amount",
+      method: "Method",
+      expense: "Expense",
+      status: "Status",
+    },
+    recorded: "Recorded",
+    refund: "Refund",
+    voided: "Voided",
+    stage4:
+      "Approved expense claims and purchases are added here automatically. Recording other spending, refunds and corrections come with spending tracking.",
+  },
+
+  /** All expenses (FR-48). */
+  all: {
+    title: "All expenses",
+    intro: "Every submitted purchase request and claim, with search and filters.",
+    introReadOnly: "Every submitted purchase request and claim. View only.",
+    search: "Search",
+    payee: "Payee",
+    empty: "No expenses have been submitted yet.",
+  },
+
   /** My tasks (FR-37). */
   tasks: {
     finishDraft: "Finish and submit expense",

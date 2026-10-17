@@ -676,3 +676,41 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 - **Same rules as FR-20:** amounts are numbers in CAD format written from stored values (no formulas). Text that starts like a formula is prefixed with an apostrophe (AC-96). Links are http and https only. The church's logo sits at the top.
 - **Budget vs Actual** (FR-20's spending workbook) gains Committed and Pending in Stage 4, with the spending dashboard. Until then, the Budget sheet here gives the same figures for expenses.
 - The Reports page's "Coming in Stage 3" placeholder for expenses is replaced by the real card. With two downloads on the page, the annual e2e test now picks its button inside the annual card.
+
+## Stage 3 step 9: finishing Part B (2026-10-16)
+
+- **All expenses** (`/expenses/all`, accountant, backup approver, Church Administrator; the System Administrator reads only): every submitted expense, with search (reference, title, payee, department) and filters (department, type, status) kept in the address (FR-48). The navigation now offers it, and **Ready to process**, to backup approvers too, matching their permissions.
+- **Spending ledger, read-only** (`/spending/ledger`): every spending entry of a cycle, including the ones made from approved claims and purchases, linked to their expense (AC-80). Spent leaves out voided entries and subtracts refunds. Recording, refunds, corrections and voids come with Stage 4, which builds on this page.
+- **Global search** finds expenses by reference, title or department, each checked with the same rule as its page. A draft stays with its department.
+- **Activity log:** every expense event has a plain-language label and group. Approvals, payments and the spending entries they make count as money changes. Each event links to its expense: the review screen for an accountant, the expense page for everyone else. The log's search matches expense references.
+- **Help** (FR-36) and the **user manual** describe expenses for each role.
+- **Not built in Stage 3:**
+  - Messages on expenses (6B.4 lists them). A return for clarification, or the board's return to the accountant, carries the question instead.
+  - The Home "At a glance" cards, which are still the placeholder from Stage 1.
+  - The Overview tab's expense charts, which join with Stage 4's spending charts.
+
+## Stage 3 summary: acceptance criteria and where they're tested (2026-10-16)
+
+| AC | Integration test | End-to-end test |
+|---|---|---|
+| AC-65 | expenses.test | expenses.spec |
+| AC-66, AC-67 | expense-board.test | — |
+| AC-68 | expenses.test | expenses.spec |
+| AC-69 | expense-review.test | expense-review.spec |
+| AC-70 | expenses.test, expense-review.test | expenses.spec, expense-more.spec |
+| AC-71 | expenses.test, expense-review.test | expenses.spec |
+| AC-72 | expense-review.test, expense-board.test | expense-review.spec |
+| AC-73, AC-74 | expense-review.test, expense-board.test, expense-emails.test | expense-review.spec, expense-board.spec |
+| AC-75 | expense-board.test | expense-board.spec |
+| AC-76 | expense-payment.test | expense-payment.spec |
+| AC-77 | expense-payment.test, expense-emails.test | expense-payment.spec |
+| AC-78 | expenses.test | — |
+| AC-79 | expense-emails.test | expense-more.spec |
+| AC-80 | expense-board.test, expense-payment.test | expense-more.spec |
+| AC-81 | expense-receipts.test | expenses.spec |
+| AC-109 | expense-emails.test | expense-more.spec |
+| AC-111 | expense-review.test, expense-board.test | — |
+| AC-112 | expense-board.test | expense-board.spec |
+| AC-134, AC-135 | expense-payment.test | admin.spec |
+| AC-139 | expense-board.test | — |
+| AC-140 | expense-review.test | — |
