@@ -726,3 +726,13 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 - **One filter set** (`src/domain/expenses/list-filters.ts`) for Review queue, Awaiting my approval, All expenses, My expenses and Ready to process: search (reference, title, payee, department), department, type, status, **submitted from/to** and **amount from/to**.
 - Dates compare the day submitted in the church's time zone. The amount is the approved amount once there is one, otherwise the amount asked. Amounts are read as cents with `parseCAD`, never floats.
 - The form is a plain GET, so filters stay in the address (DRD 6.0) and work without JavaScript. Anything that doesn't parse (a date like 2026-02-31, "abc" as an amount) is ignored rather than refused.
+
+## Home: At a glance (FR-37, DRD 6.0) (2026-10-16)
+
+- One card per role the person holds, each linking to its work (`src/domain/home/glance.ts`):
+  - **Department leaders:** each department's budget for its latest year: the approved budget and what's left (or "Over budget by"), linking to My expenses.
+  - **Accountant and backup approver:** "Waiting for your review": annual budgets in open cycles (Submitted, Updated, In Review) and expenses they may decide.
+  - **Board Chair and Vice-Chair:** "Waiting for your approval": expenses they may decide now.
+  - **Church Administrator:** "To pay": what's owed to people, with how many are ready to process.
+  - **System Administrator:** proposed departments.
+- The cards use the same read models as the screens they link to (the queues, Ready to process, the budget figures), so the numbers agree. Someone with no card-bearing role sees the empty state.
