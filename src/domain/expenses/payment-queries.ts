@@ -5,6 +5,7 @@ import { getChurchTimeZone } from "@/domain/settings";
 import { authorize, type Subject } from "@/lib/authz";
 import { sumCents } from "@/lib/money";
 import { zonedDate } from "@/lib/time-zone";
+import { filterStatus, listFilterConditions, type ExpenseListFilters } from "./list-filters";
 import { isProcessable } from "./payment";
 import { daysBetween } from "./schema";
 import { authzContextOf } from "./service";
@@ -48,23 +49,42 @@ export type ReadyQueue = {
   owedCents: number;
   oldestDays: number | null;
   recent: PaidRow[];
+  departments: { id: string; name: string }[];
   readOnly: boolean;
 };
 
 export async function readyQueue(
   tx: Tx,
   viewer: Subject,
+  filters: ExpenseListFilters = {},
   now: Date = new Date(),
 ): Promise<ReadyQueue | null> {
   const access = authorize(viewer, "expense.process_queue");
   if (!access.allowed) return null;
   const zone = await getChurchTimeZone(tx);
   const today = zonedDate(now, zone);
+  const ready = inArray(expenseSubmissions.status, ["approved", "processing"]);
+  const chosen = filterStatus(filters.status);
   const raw = await tx
     .select()
     .from(expenseSubmissions)
-    .where(inArray(expenseSubmissions.status, ["approved", "processing"]))
+    .where(
+      and(
+        chosen === "approved" || chosen === "processing"
+          ? eq(expenseSubmissions.status, chosen)
+          : ready,
+        listFilterConditions(filters, zone, { status: false }),
+      ),
+    )
     .orderBy(asc(expenseSubmissions.approvedAt));
+  const departments = await tx
+    .selectDistinct({
+      id: expenseSubmissions.departmentId,
+      name: expenseSubmissions.departmentNameSnapshot,
+    })
+    .from(expenseSubmissions)
+    .where(ready)
+    .orderBy(asc(expenseSubmissions.departmentNameSnapshot));
   const rows: ReadyRow[] = raw.filter(isProcessable).map((r) => ({
     id: r.id,
     referenceNumber: r.referenceNumber ?? "",
@@ -108,6 +128,7 @@ export async function readyQueue(
     ),
     oldestDays: rows.length > 0 ? Math.max(...rows.map((r) => r.daysWaiting)) : null,
     recent: recent.map((r) => ({ ...r, referenceNumber: r.referenceNumber ?? "" })),
+    departments,
     readOnly: access.readOnly,
   };
 }

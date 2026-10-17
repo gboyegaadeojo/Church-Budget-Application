@@ -720,3 +720,9 @@ The church asked for a cleaner look, with colour to tell cards apart, on these p
 - The church asked that every leader of a department (Primary, Backups and other representatives) receive the chain of emails the requester receives, so everyone is aware of purchases. This reverses the Stage 3 step 7 rule that copied only the submitter and the payee.
 - "Requester" in FR-49 is now the submitter, the payee if different, and every department leader (`requesterGroup` in `src/domain/expenses/emails.ts`), each address once. It covers the receipt, updates, review started, questions, decisions, processing, payment, the over-budget notice and the unclaimed-purchase reminder.
 - Leaders already received the annual budget emails (FR-21), so both parts now behave the same.
+
+## FR-48: search and filters on every expense list (2026-10-16)
+
+- **One filter set** (`src/domain/expenses/list-filters.ts`) for Review queue, Awaiting my approval, All expenses, My expenses and Ready to process: search (reference, title, payee, department), department, type, status, **submitted from/to** and **amount from/to**.
+- Dates compare the day submitted in the church's time zone. The amount is the approved amount once there is one, otherwise the amount asked. Amounts are read as cents with `parseCAD`, never floats.
+- The form is a plain GET, so filters stay in the address (DRD 6.0) and work without JavaScript. Anything that doesn't parse (a date like 2026-02-31, "abc" as an amount) is ignored rather than refused.

@@ -5,7 +5,8 @@ import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
 import { accountantQueue } from "@/domain/expenses/review-queries";
 import { getViewer } from "@/lib/viewer";
-import { filtersFrom, QueueView } from "./queue-view";
+import { parseListFilters } from "@/domain/expenses/list-filters";
+import { QueueView } from "./queue-view";
 
 const r = expensesCopy.review;
 
@@ -27,7 +28,7 @@ async function QueueContent({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const filters = filtersFrom(await searchParams);
+  const filters = parseListFilters(await searchParams);
   const viewer = await getViewer();
   const queue = await accountantQueue(getDb(), viewer, filters);
   if (!queue) return <PermissionDenied />;
