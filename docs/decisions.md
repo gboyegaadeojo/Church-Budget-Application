@@ -1004,3 +1004,9 @@ The church asked for the reminders to go by text as well as email, to the mobile
 - **Nothing is queued** while Twilio isn't configured (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`), so turning it on later doesn't send a backlog.
 - **Data:** migration `0025_sms` adds `sms_outbox` (never deleted, like `email_outbox`) and `users.phone_e164` / `phone_checked_at`. The activity log records `notifications.sms_sent` and `notifications.sms_failed` with only the last four digits. Failed texts aren't in the administrators' daily failed-email digest: a STOP is the person's choice, not a fault to fix.
 - The privacy notice now lists the mobile number and Twilio.
+
+## Stage 5 step 6: performance check (2026-10-18)
+
+- **How:** `npm run test:perf` (`tests/perf/volume.perf.ts`, its own Vitest config, not in CI). It seeds a full year at about three times the church's size: 40 departments, 2,000 expenses, 5,000 spending entries and 50,000 activity events. It then times the server work behind each main page, five runs each, with a median limit of 1.5 s. Results and method are in `docs/performance.md`.
+- **Fixed:** the activity log's joins to the budget and the expense compared `id::text` with the entity id, which scanned the expense table for every event. Page 500 of the Activity tab took 10.8 s on PGlite. The joins now compare uuids (a guarded cast) and use the primary-key index: page 500 takes 0.2 s, and page 1 and Home's Recent activity take under 30 ms.
+- **Accepted:** Activity search (about 1.4 s on PGlite, an `ILIKE` over eight columns) and the accountant's At a glance (about 0.5 s with 1,000 expenses waiting). A trigram index is the next step if search ever feels slow on Neon.
