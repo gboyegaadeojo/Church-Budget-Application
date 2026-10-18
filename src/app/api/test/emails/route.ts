@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { fakeSignInEnabled } from "@/lib/auth-mode";
+import { demoMode, fakeSignInEnabled } from "@/lib/auth-mode";
 import { getEmailSender } from "@/lib/email";
 import type { EmailMessage } from "@/lib/email/sender";
 
@@ -11,7 +11,7 @@ import type { EmailMessage } from "@/lib/email/sender";
 export async function GET(request: Request) {
   // Answer at request time; a build-time answer would always be the 404.
   await connection();
-  const sender = fakeSignInEnabled() ? getEmailSender() : null;
+  const sender = fakeSignInEnabled() && !demoMode() ? getEmailSender() : null;
   // Checked by shape: route and action bundles each hold their own copy of the class.
   const sent = (sender as { sent?: EmailMessage[] } | null)?.sent;
   if (!Array.isArray(sent)) return new Response("Not found", { status: 404 });
