@@ -957,3 +957,16 @@ This replaces the earlier note that opening, closing and deadlines stay with the
   - A new tax rate applies only to requests submitted later; submitted ones keep their snapshot (FR-07a).
   - The spending period end must be in or after the budget year, and can't change while the year's spending is locked.
 - Opening a cycle still emails every department representative, and reopening or changing the deadline still needs a reason, whoever does it.
+
+## Stage 5 step 5: Overview filters and expense turnaround (2026-10-17)
+
+The FR-52 Overview items left out in Stage 4 step 8.
+
+- **Filters**, kept in the address with a **Clear filters** link: **Department** and a **From/To** date range, beside the budget cycle. They apply to the spending and expenses half:
+  - the budget figures and chart (that department's dashboard row and its own totals, summed in cents);
+  - spending by month (entries paid in the range; last year shows the same department over the whole year);
+  - the expense pipeline, waiting counts, payment time and turnaround (expenses submitted in the range).
+- The **annual half stays church-wide**: its charts already show each department. **Area** isn't a separate filter, since the two halves are the areas.
+- **Unknown filter values are dropped**, never trusted.
+- **Export spending to Excel** follows the department filter. The workbook has no date range, so it doesn't follow those dates.
+- **How long expenses take:** average days from submission to the accountant's first decision, to the Board Chair's (or Vice-Chair's) first decision, and from approval to payment, plus the five expenses waiting longest for a decision, each linking to the expense.

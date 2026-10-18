@@ -10,7 +10,12 @@ import { buildSpendingExport } from "@/domain/spending/export";
 import { recordEntry } from "@/domain/spending/service";
 import { createTestDb, type TestDb } from "./helpers/db";
 import { expenseWorld, person, submitted, type ExpenseWorld } from "./helpers/expenses";
-import { insertCycle, insertUser } from "./helpers/fixtures";
+import {
+  insertApprovedBudget,
+  insertCycle,
+  insertDepartment,
+  insertUser,
+} from "./helpers/fixtures";
 
 /** The Overview tab's spending and expense figures (FR-52, AC-127, AC-128). */
 
@@ -114,5 +119,72 @@ describe("the Overview's spending figures", () => {
     expect((await spendingOverview(db, admin, world.cycle.id))?.dashboard.cycle.id).toBe(
       world.cycle.id,
     );
+  });
+});
+
+describe("the Overview's filters and turnaround (FR-52)", () => {
+  it("narrows to one department and a date range, and times each approval step", async () => {
+    const world = await expenseWorld(db, { budgetCents: 3_360_000 });
+    const y = world.cycle.budgetYear;
+    const owner = await insertUser(db);
+    const youth = await insertDepartment(db, { name: `Youth ${randomUUID().slice(0, 6)}` });
+    await insertApprovedBudget(
+      db,
+      {
+        cycleId: world.cycle.id,
+        departmentId: youth.id,
+        userId: owner.id,
+        approverUserId: world.accountant.id,
+      },
+      500_000,
+    );
+    await record(world, world.cycle.id, `${y}-03-15`, "100");
+    await record(world, world.cycle.id, `${y}-09-15`, "50");
+    await run((tx) =>
+      recordEntry(tx, world.office, {
+        cycleId: world.cycle.id,
+        departmentId: youth.id,
+        entryType: "expense",
+        spentOn: `${y}-03-20`,
+        payee: "Camp",
+        description: "Camp",
+        amount: "40",
+        paymentMethod: "cheque",
+        idempotencyKey: randomUUID(),
+      }),
+    );
+
+    const media = await spendingOverview(db, world.office, world.cycle.id, {
+      departmentId: world.media.id,
+    });
+    expect(media!.dashboard.rows.map((r) => r.departmentId)).toEqual([world.media.id]);
+    expect(media!.dashboard.totals.spent).toBe(15_000);
+    expect(media!.departments.length).toBeGreaterThanOrEqual(2);
+
+    const march = await spendingOverview(db, world.office, world.cycle.id, {
+      departmentId: world.media.id,
+      from: `${y}-03-01`,
+      to: `${y}-03-31`,
+    });
+    expect(march!.months[2].cents).toBe(10_000);
+    expect(march!.months[8].cents).toBe(0);
+
+    // Unknown filter values are dropped rather than trusted.
+    const junk = await spendingOverview(db, world.office, world.cycle.id, {
+      departmentId: "not-a-uuid",
+      from: "yesterday",
+    });
+    expect(junk!.filters).toEqual({ departmentId: undefined, from: undefined, to: undefined });
+
+    // One waiting on both approvers, one the accountant has decided.
+    const waiting = await submitted(db, world, "purchase_request");
+    const decided = await submitted(db, world, "expense_claim");
+    await approve(world, decided.expenseId, "accountant");
+    const later = new Date("2026-10-25T17:00:00Z");
+    const timed = await spendingOverview(db, world.office, world.cycle.id, {}, later);
+    expect(timed!.turnaround.decided).toBe(1);
+    expect(timed!.turnaround.accountantDays).not.toBeNull();
+    expect(timed!.turnaround.boardDays).toBeNull();
+    expect(timed!.turnaround.slowest[0]).toMatchObject({ id: waiting.expenseId, days: 5 });
   });
 });

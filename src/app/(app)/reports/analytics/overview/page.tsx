@@ -21,7 +21,7 @@ import {
   type OverviewDepartment,
 } from "@/domain/analytics/overview";
 import { seesAdminAudit } from "@/domain/analytics/activity";
-import { spendingOverview } from "@/domain/analytics/spending";
+import { spendingOverview, type SpendingOverview } from "@/domain/analytics/spending";
 import { viewerAllowedTo } from "@/lib/admin-server";
 import { authorize } from "@/lib/authz";
 import { cn } from "@/lib/cn";
@@ -65,7 +65,11 @@ async function OverviewContent({ searchParams }: { searchParams: Promise<Search>
   const data = authorize(viewer, "annual.review").allowed
     ? await getOverview(db, viewer, { cycleId: one(query.cycle) })
     : null;
-  const spending = await spendingOverview(db, viewer, data?.cycle?.id ?? one(query.cycle));
+  const spending = await spendingOverview(db, viewer, data?.cycle?.id ?? one(query.cycle), {
+    departmentId: one(query.department),
+    from: one(query.from),
+    to: one(query.to),
+  });
   if (!data && !spending) {
     return (
       <>
@@ -85,6 +89,7 @@ async function OverviewContent({ searchParams }: { searchParams: Promise<Search>
       {cycleId ? (
         <>
           <Filters
+            spending={spending}
             cycles={cycles}
             cycleId={cycleId}
             exportHref={data ? `/api/exports/overview?cycle=${cycleId}` : null}
@@ -120,14 +125,17 @@ async function OverviewContent({ searchParams }: { searchParams: Promise<Search>
 }
 
 function Filters({
+  spending,
   cycles,
   cycleId,
   exportHref,
 }: {
+  spending: SpendingOverview | null;
   cycles: { id: string; name: string }[];
   cycleId: string;
   exportHref: string | null;
 }) {
+  const f = spending?.filters ?? {};
   return (
     <form
       method="get"
@@ -146,9 +154,63 @@ function Filters({
           ))}
         </select>
       </div>
+      {spending && (
+        <>
+          <div className="space-y-1.5">
+            <label htmlFor="overview-department" className="block text-sm font-medium">
+              {o.filterDepartment}
+            </label>
+            <select
+              id="overview-department"
+              name="department"
+              defaultValue={f.departmentId ?? ""}
+              className={inputClass}
+            >
+              <option value="">{o.allDepartments}</option>
+              {spending.departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="overview-from" className="block text-sm font-medium">
+              {o.from}
+            </label>
+            <input
+              id="overview-from"
+              type="date"
+              name="from"
+              defaultValue={f.from ?? ""}
+              className={inputClass}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="overview-to" className="block text-sm font-medium">
+              {o.to}
+            </label>
+            <input
+              id="overview-to"
+              type="date"
+              name="to"
+              defaultValue={f.to ?? ""}
+              className={inputClass}
+            />
+          </div>
+        </>
+      )}
       <button type="submit" className={buttonClass("secondary")}>
         {o.show}
       </button>
+      {(f.departmentId || f.from || f.to) && (
+        <Link
+          href={`/reports/analytics/overview?cycle=${cycleId}`}
+          className={buttonClass("ghost")}
+        >
+          {o.clear}
+        </Link>
+      )}
       {exportHref && <DownloadButton href={exportHref} label={o.export} className="sm:ml-auto" />}
     </form>
   );

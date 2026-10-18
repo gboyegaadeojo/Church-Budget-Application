@@ -204,17 +204,22 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
       await expect(page.getByRole("heading", { name: "Spending and expenses" })).toBeVisible();
       await expect(page.getByRole("list", { name: "Budget used by department" })).toBeVisible();
       await expect(page.getByRole("list", { name: "Spending by month" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "How long expenses take" })).toBeVisible();
       // The board reads figures but doesn't export or see the annual review figures.
       await expect(page.getByRole("button", { name: /Export/ })).toHaveCount(0);
       await expect(page.getByText("Requested (incl. tax)")).toHaveCount(0);
       await expectAxeClean(page);
       await expectNoHorizontalScroll(page);
     }
-    await page
-      .getByRole("list", { name: "Budget used by department" })
-      .getByRole("link")
-      .first()
-      .click();
+    // Narrow to one department: kept in the address, and Clear brings everything back.
+    await page.getByLabel("Department", { exact: true }).selectOption({ label: "Media Team" });
+    await page.getByRole("button", { name: "Show" }).click();
+    await page.waitForURL(/department=/);
+    const bars = page.getByRole("list", { name: "Budget used by department" });
+    await expect(bars.getByRole("listitem")).toHaveCount(1);
+    await expect(page.getByRole("link", { name: "Clear filters" })).toBeVisible();
+    await expectAxeClean(page);
+    await bars.getByRole("link").first().click();
     await expect(page).toHaveURL(/\/spending\/departments\//);
   });
 
