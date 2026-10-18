@@ -62,6 +62,7 @@
   "overrides": {
     "@axe-core/playwright": {
       "playwright-core": "$@playwright/test"
-    }
+    },
+    "uuid": "^11.1.1"
   }
 }

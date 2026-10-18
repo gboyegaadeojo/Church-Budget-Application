@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { fakeSignInEnabled } from "@/lib/auth-mode";
+import { demoMode, fakeSignInEnabled } from "@/lib/auth-mode";
 import { getStorage, MemoryStorage } from "@/lib/storage";
 
 /**
@@ -12,7 +12,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 
 async function check(request: Request, params: Promise<{ key: string[] }>, method: string) {
   await connection();
-  const storage = fakeSignInEnabled() ? getStorage() : null;
+  const storage = fakeSignInEnabled() && !demoMode() ? getStorage() : null;
   // Checked by shape: route bundles each hold their own copy of the class.
   if (!storage || !("files" in storage)) return null;
   const key = (await params).key.join("/");

@@ -918,3 +918,26 @@ The Departments item in the accountant's Annual Budget menu (DRD 6.0) was still 
 - **Skips itself** until all six secrets are set, naming what's missing. A failure emails the repository owner.
 - **Not in the backup:** receipt and attachment files in R2 (durable storage; the database keeps their keys).
 - **Restore guide** and the yearly practice restore: `docs/backup-restore.md`. The upload script was exercised against a fake Google API (sign-in, resumable upload, list, prune); the real run needs the church's Google account.
+
+## Stage 5 step 2: security review (2026-10-17)
+
+**Checked and in place:**
+- **Every API route checks the session:** exports, the receipt routes and search. Job routes compare `JOBS_SECRET` in constant time.
+- **Every server action** goes through `runAction`/`runForResult` or Auth.js, and each service checks permission in `authz.ts`. The only domain writes without a check are the sign-in flows and `applyDecision`, whose callers check first.
+- **Sign-in codes:** 5 requests per address and 20 per IP per hour, 5 wrong tries.
+- **Redirects** after sign-in accept local paths only.
+- **Links** are http/https only.
+- **SVG logos** with scripts, `foreignObject`, event handlers or `javascript:` are refused.
+- **Excel cells** go through the formula guard (AC-96).
+- **Receipts and attachments:** checked by their bytes; links are signed and short-lived.
+- **Multipart bodies** are refused outside the logo.
+- **Demo sign-in** needs three locks (see the demo-site entry).
+
+**Fixed here:**
+- **Security headers** on every response: HSTS (2 years), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, a `Permissions-Policy` (camera for receipt photos only; no microphone, location or payment), and a CSP with `frame-ancestors 'none'; base-uri 'self'; object-src 'none'`.
+- **`npm audit`:** a moderate advisory in `uuid`, pulled in by ExcelJS, is fixed with an npm override to `uuid@11.1.1` (ExcelJS only uses `v4()`; the export tests pass). It now reports 0 vulnerabilities.
+- **Test-only routes** (`/api/test/emails`, `/api/test/storage`) are now off on the hosted demo too, not only on production.
+
+**Accepted for now:**
+- **No `script-src` in the CSP.** Next.js's inline scripts would need nonces, which turn off static rendering (Cache Components). Our main defence against injected scripts is React's escaping plus no `dangerouslySetInnerHTML` anywhere.
+- **`form-action` isn't restricted,** because Planning Center sign-in redirects from a form.
