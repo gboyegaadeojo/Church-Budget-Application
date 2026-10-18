@@ -402,7 +402,9 @@ Each cycle must contain:
 
 ## 4.3 Cycle Rules
 
-- New requests may be created only in an open cycle.
+> **Changed 2026-10-18 (docs/decisions.md):** a cycle is the budget year. **Open** means the year is live: departments submit until the deadline (or their extension) and spend from approved budgets all year. **Closing** a cycle ends the year: spending stops and the unspent budget returns to the church. It replaces the separate spending lock of FR-29. Submissions end at the deadline, not on closing.
+
+- New requests may be created only in an open cycle, before the department's deadline.
 - The deadline and cycle status must be validated by the server.
 - Closing a cycle prevents new submissions unless the administrator reopens it.
 - Closing a cycle must not delete requests or prevent authorized review of existing submissions.
@@ -1361,6 +1363,8 @@ The Church Administrator and accountant see, for the selected cycle:
 - Alerts are logged in the NotificationLog.
 
 ## FR-29: Spending Period Lock
+
+> **Changed 2026-10-18 (docs/decisions.md):** the lock is now **closing the budget year** (4.3). The accountant, backup approver, Board Chair or Vice-Chair closes it; the System Administrator can't. The accountant is reminded once the spending period end has passed.
 
 - Each cycle has a spending period end date (default: end of the budget year).
 - The accountant can lock the spending period for a cycle at year-end. After locking, the Church Administrator cannot add, correct, or void entries.

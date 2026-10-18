@@ -6,6 +6,7 @@ export const annualCopy = {
   errors: {
     noOpenCycle: "There's no budget cycle open for submissions right now.",
     cycleNotOpen: "This budget cycle isn't open for submissions.",
+    yearClosed: "This budget year has closed, so its budgets can't be changed.",
     deadlinePassed: (when: string) =>
       `The deadline for this department was ${when}. Ask the accountant for an extension.`,
     chooseDepartment: "Choose your department.",

@@ -152,10 +152,10 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     ["no", "act", "act", "no", "no", "no", "no"],
   ],
   [
-    "lock or reopen the spending period",
-    "spending.lock",
+    "close or reopen a budget year",
+    "cycles.close",
     {},
-    ["no", "act", "act", "no", "no", "no", "no"],
+    ["no", "act", "act", "act", "act", "no", "no"],
   ],
   [
     "view another department's budget vs actual",
@@ -413,7 +413,7 @@ describe("System Administrator", () => {
     "expense.cancel",
     "spending.record",
     "spending.amend",
-    "spending.lock",
+    "cycles.close",
   ];
 
   it("reads everything, drafts included, read-only", () => {

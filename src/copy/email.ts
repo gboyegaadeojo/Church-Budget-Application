@@ -365,16 +365,17 @@ export const emailCopy = {
       action: "Start your department's budget before the deadline.",
     },
     reopened: {
-      subject: (cycle: string) => `${cycle} budgets are open again`,
-      heading: (cycle: string) => `${cycle} budget requests reopened`,
-      intro: (deadline: string) =>
-        `The administrator reopened submissions. The new deadline is ${deadline}.`,
-      action: "Submit or change your department's budget before the new deadline.",
+      subject: (cycle: string) => `The ${cycle} budget year is open again`,
+      heading: (cycle: string) => `${cycle} reopened`,
+      intro: (cycle: string) =>
+        `The ${cycle} budget year was reopened, so expenses can be charged to it again until it closes.`,
+      action: "Nothing, unless you still have expenses to submit for this year.",
     },
     closed: {
-      subject: (cycle: string) => `${cycle} budgets are closed`,
-      heading: (cycle: string) => `${cycle} budget requests are closed`,
-      intro: "Submissions are closed. Budgets already submitted continue through review.",
+      subject: (cycle: string) => `The ${cycle} budget year has closed`,
+      heading: (cycle: string) => `${cycle} has closed`,
+      intro: (cycle: string) =>
+        `The ${cycle} budget year has ended. No more expenses can be charged to it, and any budget your department didn't spend goes back to the church.`,
     },
     deadlineChanged: {
       subject: (cycle: string, deadline: string) => `${cycle} deadline changed to ${deadline}`,
@@ -407,6 +408,15 @@ export const emailCopy = {
         `The deadline was ${deadline}. Some departments haven't submitted a budget.`,
       listHeading: "Not submitted",
       action: "Follow up with these departments, or give one more time on the cycle page.",
+    },
+    closeDue: {
+      subject: (cycle: string) => `Time to close the ${cycle} budget year`,
+      heading: (cycle: string) => `${cycle}'s spending period has ended`,
+      intro: (cycle: string, end: string) =>
+        `${cycle}'s spending period ended on ${end}. Departments can still spend from it until the year is closed.`,
+      action:
+        "Close the budget year once every expense for it is decided and paid. The budget left unspent then goes back to the church.",
+      button: "Close budget year",
     },
   },
 

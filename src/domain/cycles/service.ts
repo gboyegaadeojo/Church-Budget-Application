@@ -263,11 +263,16 @@ export async function updateCycleDetails(
 
 // ---------------------------------------------------------------- status
 
+/**
+ * Opens a draft cycle. Closing and reopening are the budget year's end
+ * (`closeBudgetYear` / `reopenBudgetYear` in src/domain/spending/year-end.ts), which set the
+ * status together with the spending lock (docs/decisions.md 2026-10-18).
+ */
 async function changeStatus(
   tx: Tx,
   actor: Subject,
-  input: { id: string; version: unknown; newDeadline?: string; reason?: string },
-  event: CycleEvent,
+  input: { id: string; version: unknown },
+  event: Extract<CycleEvent, "open">,
   now: Date,
 ): Promise<void> {
   const { actingRole } = assertCan(actor, "cycles.manage");
@@ -281,12 +286,7 @@ async function changeStatus(
   }
 
   const set: Partial<typeof budgetCycles.$inferInsert> = { status: next };
-  let reason: string | undefined;
-  if (event === "reopen") {
-    // A closed cycle reopens with a new deadline (4.3).
-    reason = requireReason(input.reason);
-    set.submissionDeadline = await futureDeadline(tx, input.newDeadline ?? "", "newDeadline", now);
-  } else if (event === "open" && cycle.submissionDeadline.getTime() <= now.getTime()) {
+  if (cycle.submissionDeadline.getTime() <= now.getTime()) {
     throw new RuleError(c.errors.deadlineFuture);
   }
 
@@ -294,24 +294,15 @@ async function changeStatus(
   await writeAudit(tx, {
     actor: actorOf(actor, actingRole),
     area: "admin",
-    eventType: `admin.cycle_${event === "open" ? "opened" : event === "close" ? "closed" : "reopened"}`,
+    eventType: "admin.cycle_opened",
     entity: { type: "budget_cycle", id: cycle.id },
     cycleId: cycle.id,
-    reason,
     details: {
       before: { status: cycle.status, submissionDeadline: iso(cycle.submissionDeadline) },
-      after: {
-        status: next,
-        submissionDeadline: iso(set.submissionDeadline ?? cycle.submissionDeadline),
-      },
+      after: { status: next, submissionDeadline: iso(cycle.submissionDeadline) },
     },
   });
-  await emailCycleStatus(
-    tx,
-    { ...cycle, submissionDeadline: set.submissionDeadline ?? cycle.submissionDeadline },
-    event,
-    reason,
-  );
+  await emailCycleStatus(tx, cycle, event);
 }
 
 export const openCycle = (
@@ -320,20 +311,6 @@ export const openCycle = (
   input: { id: string; version: unknown },
   o: Options = {},
 ) => changeStatus(tx, actor, input, "open", o.now ?? new Date());
-
-export const closeCycle = (
-  tx: Tx,
-  actor: Subject,
-  input: { id: string; version: unknown },
-  o: Options = {},
-) => changeStatus(tx, actor, input, "close", o.now ?? new Date());
-
-export const reopenCycle = (
-  tx: Tx,
-  actor: Subject,
-  input: { id: string; version: unknown; newDeadline: string; reason: string },
-  o: Options = {},
-) => changeStatus(tx, actor, input, "reopen", o.now ?? new Date());
 
 // ---------------------------------------------------------------- deadlines (4.3)
 

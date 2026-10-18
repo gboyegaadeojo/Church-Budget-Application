@@ -103,10 +103,21 @@ async function YearEndContent({
         )}
         {locked && cycle.lockedAt
           ? y.lockedBanner(formatDateTime(cycle.lockedAt, zone), cycle.lockedBy)
-          : y.openBanner}
+          : cycle.status === "draft"
+            ? y.draftBanner
+            : y.openBanner}
       </p>
 
-      {!locked && (
+      {cycle.status !== "draft" && (
+        <p className={cn(cardClass, "space-y-1 p-4 text-sm sm:p-4")}>
+          <span className="tabular block text-base font-semibold">
+            {y.unspent(formatCAD(cycle.unspentCents))}
+          </span>
+          <span className="block text-fg-muted">{locked ? y.unspentClosed : y.unspentOpen}</span>
+        </p>
+      )}
+
+      {!locked && cycle.status === "open" && (
         <Section title={y.checklist} icon={CalendarCheck} tone="blue">
           <h3 className="text-base font-semibold">{y.awaitingDecision}</h3>
           <ItemList items={view.awaitingDecision} empty={y.awaitingDecisionNone} />
@@ -129,7 +140,7 @@ async function YearEndContent({
                 trigger={y.lock}
                 triggerTone="primary"
                 title={y.lockTitle(cycle.name)}
-                body={y.lockBody}
+                body={y.lockBody(formatCAD(cycle.unspentCents))}
                 confirmLabel={y.lock}
               />
             </ActionForm>

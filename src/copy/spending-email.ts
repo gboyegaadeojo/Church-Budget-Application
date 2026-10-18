@@ -12,6 +12,7 @@ export const spendingEmailCopy = {
     used: "Used",
     reason: "Reason",
     boardReference: "Board reference",
+    unspent: "Unspent, back to the church",
   },
   overBy: (amount: string) => `Over budget by ${amount}`,
   button: "Open the spending dashboard",
@@ -32,19 +33,19 @@ export const spendingEmailCopy = {
     action: "Follow up with the department, or amend the budget if the board agreed.",
   },
   locked: {
-    subject: (cycle: string) => `${cycle} spending is locked`,
-    heading: "A year's spending is locked",
-    status: "Locked",
+    subject: (cycle: string) => `The ${cycle} budget year has closed`,
+    heading: "A budget year has closed",
+    status: "Closed",
     intro: (cycle: string) =>
-      `The accountant locked ${cycle} spending for year-end. Its entries can no longer be added, corrected or voided.`,
+      `${cycle} has closed. Its spending can no longer be added, corrected or voided, and the budget left unspent goes back to the church.`,
     action: "Nothing. Ask the accountant if something for that year still needs recording.",
   },
   reopened: {
-    subject: (cycle: string) => `${cycle} spending is open again`,
-    heading: "A year's spending was reopened",
+    subject: (cycle: string) => `The ${cycle} budget year is open again`,
+    heading: "A budget year was reopened",
     status: "Reopened",
     intro: (cycle: string) =>
-      `The accountant reopened ${cycle} spending. Its entries can be recorded and changed again.`,
+      `${cycle} was reopened. Its spending can be recorded and changed again.`,
     action: "Record or correct what the accountant asked for.",
   },
   amendment: {

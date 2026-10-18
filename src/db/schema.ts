@@ -365,6 +365,12 @@ export const budgetCycles = pgTable(
   },
   (t) => [
     check("budget_cycles_currency_cad", sql`${t.currency} = 'CAD'`),
+    // A cycle is the budget year: Closed means its spending is locked, and only then
+    // (docs/decisions.md 2026-10-18).
+    check(
+      "budget_cycles_closed_is_locked",
+      sql`(${t.status} = 'closed') = (${t.spendingLockedAt} is not null)`,
+    ),
     check(
       "budget_cycles_tax_rate_range",
       sql`${t.defaultTaxRate} >= 0 and ${t.defaultTaxRate} <= 1`,

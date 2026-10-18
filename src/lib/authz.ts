@@ -65,7 +65,6 @@ export type Action =
   | "spending.view"
   | "spending.record"
   | "spending.amend"
-  | "spending.lock"
   | "spending.export"
   // Administration
   | "admin.users"
@@ -73,8 +72,14 @@ export type Action =
   | "admin.cycles"
   /** Create a budget cycle (decided 2026-10-17): finance and board staff, and the administrator. */
   | "cycles.create"
-  /** Edit, open, close and reopen a cycle and change its deadline (decided 2026-10-17). */
+  /** Edit and open a cycle and change its deadline (decided 2026-10-17). */
   | "cycles.manage"
+  /**
+   * Close a budget year (spending stops, the unspent budget returns to the church), reopen
+   * it, and carry purchases into next year. A money decision, so not the System
+   * Administrator (decided 2026-10-18).
+   */
+  | "cycles.close"
   | "admin.settings"
   /** Settings → Branding: the logo upload, names and accent colour (FR-30, AC-101). */
   | "admin.branding"
@@ -268,7 +273,6 @@ const RULES: Record<Action, readonly Rule[]> = {
   ],
   "spending.record": [{ roles: [...ACCOUNTANTS, "church_admin"] }],
   "spending.amend": [{ roles: ACCOUNTANTS }],
-  "spending.lock": [{ roles: ACCOUNTANTS }],
   "spending.export": [{ roles: [...ACCOUNTANTS, "church_admin", "system_admin"] }],
 
   "admin.users": [{ roles: ["system_admin"] }],
@@ -276,6 +280,7 @@ const RULES: Record<Action, readonly Rule[]> = {
   "admin.cycles": [{ roles: ["system_admin"] }],
   "cycles.create": [{ roles: [...ACCOUNTANTS, ...BOARD, "system_admin"] }],
   "cycles.manage": [{ roles: [...ACCOUNTANTS, ...BOARD, "system_admin"] }],
+  "cycles.close": [{ roles: [...ACCOUNTANTS, ...BOARD] }],
   "admin.settings": [{ roles: ["system_admin"] }],
   "admin.branding": [{ roles: ["system_admin"] }],
   "admin.pco_mapping": [{ roles: ["system_admin"] }],

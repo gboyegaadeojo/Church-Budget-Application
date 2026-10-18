@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PenLine } from "lucide-react";
 import {
@@ -9,13 +10,16 @@ import {
 } from "@/components/ui/action-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge, EmptyState, PageHeader, Section } from "@/components/ui/display";
+import { buttonClass } from "@/components/ui/styles";
 import { adminCopy } from "@/copy/admin";
 import { getDb } from "@/db";
 import { centsToInput } from "@/domain/annual/schema";
 import { getCycleDetail } from "@/domain/cycles/queries";
 import { deadlineEditable } from "@/domain/cycles/status";
 import { getChurchTimeZone } from "@/domain/settings";
+import { authorize } from "@/lib/authz";
 import { formatCAD, formatTaxRate, taxRateToPercent } from "@/lib/money";
+import { getViewer } from "@/lib/viewer";
 import { formatDateTime, utcToZonedLocal } from "@/lib/time-zone";
 import {
   changeDeadlineAction,
@@ -29,7 +33,8 @@ const c = adminCopy.cycles;
 
 /**
  * One budget cycle (Requirements 4, DRD 6.11): its details and the form to edit them,
- * open, close or reopen it, change its deadline, and give extensions. Shared by Admin →
+ * open it, change its deadline, and give extensions; closing the budget year links to
+ * Spending → Close budget year (docs/decisions.md 2026-10-18). Shared by Admin →
  * Budget Cycles and Annual Budget → Budget cycles; the caller checks permission
  * (`admin.cycles` or `cycles.manage`) and the services check `cycles.manage` again.
  */
@@ -46,6 +51,7 @@ export async function CycleDetail({
   const { cycle, extensions, activeDepartments } = detail;
   const zone = await getChurchTimeZone(db);
   const statusFormId = `cycle-status-${cycle.id}`;
+  const canClose = authorize(await getViewer(), "cycles.close").allowed;
   const deadlineLocal = utcToZonedLocal(cycle.submissionDeadline, zone);
 
   return (
@@ -75,36 +81,46 @@ export async function CycleDetail({
           </dd>
         </dl>
 
-        {cycle.status !== "closed" && (
-          <ActionForm
-            action={cycleStatusAction}
-            id={statusFormId}
-            aria-label={c.statusLabels[cycle.status]}
-          >
+        {cycle.status === "draft" && (
+          <ActionForm action={cycleStatusAction} id={statusFormId} aria-label={c.open}>
             <input type="hidden" name="id" value={cycle.id} />
             <input type="hidden" name="version" value={cycle.version} />
-            <input type="hidden" name="event" value={cycle.status === "draft" ? "open" : "close"} />
-            {cycle.status === "draft" ? (
-              <ConfirmDialog
-                formId={statusFormId}
-                trigger={c.open}
-                triggerTone="primary"
-                title={c.openTitle(cycle.name)}
-                body={c.openBody}
-                confirmLabel={c.open}
-              />
-            ) : (
-              <ConfirmDialog
-                formId={statusFormId}
-                trigger={c.close}
-                triggerTone="danger"
-                title={c.closeTitle(cycle.name)}
-                body={c.closeBody}
-                confirmLabel={c.close}
-                confirmTone="danger"
-              />
-            )}
+            <input type="hidden" name="event" value="open" />
+            <ConfirmDialog
+              formId={statusFormId}
+              trigger={c.open}
+              triggerTone="primary"
+              title={c.openTitle(cycle.name)}
+              body={c.openBody}
+              confirmLabel={c.open}
+            />
           </ActionForm>
+        )}
+        {cycle.status === "open" && (
+          <div className="space-y-2">
+            <p className="text-sm text-fg-muted">{c.closeHint}</p>
+            {canClose && (
+              <Link
+                href={`/spending/year-end?cycle=${cycle.id}`}
+                className={buttonClass("secondary")}
+              >
+                {c.close}
+              </Link>
+            )}
+          </div>
+        )}
+        {cycle.status === "closed" && (
+          <div className="space-y-2">
+            <p className="text-sm text-fg-muted">{c.closedNote}</p>
+            {canClose && (
+              <Link
+                href={`/spending/year-end?cycle=${cycle.id}`}
+                className={buttonClass("secondary")}
+              >
+                {c.reopen}
+              </Link>
+            )}
+          </div>
         )}
       </Section>
 
@@ -167,25 +183,6 @@ export async function CycleDetail({
           <SubmitButton tone="secondary">{c.save}</SubmitButton>
         </ActionForm>
       </Section>
-
-      {cycle.status === "closed" && (
-        <Section title={c.reopenHeading} id="reopen">
-          <ActionForm action={cycleStatusAction} aria-label={c.reopenHeading}>
-            <input type="hidden" name="id" value={cycle.id} />
-            <input type="hidden" name="version" value={cycle.version} />
-            <input type="hidden" name="event" value="reopen" />
-            <TextField
-              name="newDeadline"
-              type="datetime-local"
-              label={c.newDeadline}
-              hint={c.deadlineHint(zone)}
-              required
-            />
-            <TextAreaField name="reason" label={adminCopy.common.reason} rows={2} required />
-            <SubmitButton>{c.reopen}</SubmitButton>
-          </ActionForm>
-        </Section>
-      )}
 
       {deadlineEditable(cycle.status) && (
         <Section title={c.deadlineHeading} id="deadline">
