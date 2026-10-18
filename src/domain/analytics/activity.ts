@@ -145,19 +145,23 @@ const department = aliasedTable(departments, "activity_department");
 const cycle = aliasedTable(budgetCycles, "activity_cycle");
 const actorUser = aliasedTable(users, "activity_actor");
 
-/** The budget an event is about: its link, or a draft named only by its entity id. */
-const requestJoin = or(
-  eq(request.id, auditEvents.budgetRequestId),
-  and(
-    eq(auditEvents.entityType, "budget_request"),
-    eq(sql`${request.id}::text`, auditEvents.entityId),
-  ),
+/** The event's entity id as a uuid when it names this kind of entity, else null. */
+const entityUuid = (type: string) =>
+  sql`(case when ${auditEvents.entityType} = ${type}
+    and ${auditEvents.entityId} ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    then ${auditEvents.entityId}::uuid end)`;
+
+/**
+ * The budget an event is about: its link, or a draft named only by its entity id. One
+ * uuid equality, so it's a primary-key lookup: comparing `id::text` scanned the whole
+ * table for every event and made deep pages of the log slow (docs/performance.md).
+ */
+const requestJoin = eq(
+  request.id,
+  sql`coalesce(${auditEvents.budgetRequestId}, ${entityUuid("budget_request")})`,
 );
 /** The expense an event is about, named by its entity id. */
-const expenseJoin = and(
-  eq(auditEvents.entityType, "expense_submission"),
-  eq(sql`${expense.id}::text`, auditEvents.entityId),
-);
+const expenseJoin = eq(expense.id, entityUuid("expense_submission"));
 const departmentId = sql<
   string | null
 >`coalesce(${auditEvents.departmentId}, ${request.departmentId})`;
