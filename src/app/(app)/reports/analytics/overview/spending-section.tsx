@@ -5,11 +5,13 @@ import {
   Hourglass,
   PiggyBank,
   Receipt,
+  Timer,
   Wallet,
   Workflow,
 } from "lucide-react";
 import { DownloadButton } from "@/components/download-button";
-import { EmptyState, StatCard } from "@/components/ui/display";
+import { EmptyState, IconChip, StatCard } from "@/components/ui/display";
+import { cardClass, linkClass } from "@/components/ui/styles";
 import { activityCopy } from "@/copy/activity";
 import { expensesCopy } from "@/copy/expenses";
 import { spendingCopy } from "@/copy/spending";
@@ -44,7 +46,9 @@ export function SpendingSection({ data }: { data: SpendingOverview }) {
         </h2>
         {data.dashboard.canExport && (
           <DownloadButton
-            href={`/api/exports/spending?cycle=${cycle.id}`}
+            href={`/api/exports/spending?cycle=${cycle.id}${
+              data.filters.departmentId ? `&department=${data.filters.departmentId}` : ""
+            }`}
             label={s.export}
             className="sm:ml-auto"
           />
@@ -104,6 +108,7 @@ export function SpendingSection({ data }: { data: SpendingOverview }) {
         <MonthsChart data={data} />
         <PipelineChart data={data} />
       </div>
+      <TurnaroundCard data={data} />
     </section>
   );
 }
@@ -418,5 +423,54 @@ function PipelineChart({ data }: { data: SpendingOverview }) {
         </ul>
       )}
     </ChartCard>
+  );
+}
+
+/** How long expenses take at each step, and what has waited longest (FR-52). */
+function TurnaroundCard({ data }: { data: SpendingOverview }) {
+  const t = data.turnaround;
+  const d = (n: number | null) => (n === null ? "—" : s.days(n));
+  return (
+    <section aria-labelledby="turnaround-heading" className={cn(cardClass, "space-y-5")}>
+      <div className="flex items-center gap-3">
+        <IconChip icon={Timer} tone="amber" />
+        <h2
+          id="turnaround-heading"
+          className="text-[17px] leading-tight font-semibold tracking-tight"
+        >
+          {s.turnaroundTitle}
+        </h2>
+      </div>
+      <dl className="grid gap-3 text-sm sm:grid-cols-3">
+        {[
+          [s.turnaroundAccountant, d(t.accountantDays)],
+          [s.turnaroundBoard, d(t.boardDays)],
+          [s.turnaroundPayment, d(data.payments.averageDays)],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-[12px] bg-surface-2 px-3 py-2.5">
+            <dt className="text-fg-muted">{label}</dt>
+            <dd className="tabular text-lg font-semibold">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <h3 className="text-base font-semibold">{s.waitingLongest}</h3>
+      {t.slowest.length === 0 ? (
+        <EmptyState>{s.nothingWaiting}</EmptyState>
+      ) : (
+        <ul className="divide-y divide-border text-sm">
+          {t.slowest.map((w) => (
+            <li key={w.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2">
+              <span>
+                <Link href={`/expenses/${w.id}`} className={linkClass}>
+                  {w.reference ?? w.department}
+                </Link>{" "}
+                · {w.department}
+              </span>
+              <span className="tabular text-fg-muted">{s.days(w.days)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

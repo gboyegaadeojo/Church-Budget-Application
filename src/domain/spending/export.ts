@@ -154,7 +154,8 @@ export async function buildSpendingExport(
   };
 }
 
-function totalsOf(rows: DashboardRow[]): Dashboard["totals"] {
+/** Totals for some of the dashboard's rows, summed in cents (one department, a filter). */
+export function totalsOf(rows: DashboardRow[]): Dashboard["totals"] {
   const sum = (pick: (r: DashboardRow) => number) => sumCents(rows.map(pick));
   const parts = {
     approved: sum((r) => r.figures.approved),
