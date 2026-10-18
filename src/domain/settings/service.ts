@@ -130,6 +130,26 @@ export async function updateSecondApprovalThreshold(
   );
 }
 
+// ---------------------------------------------------------------- reminder texts
+
+/** How many reminder texts may go each calendar month; 0 stops texts (cost guard). */
+export async function updateSmsMonthlyLimit(
+  tx: Tx,
+  actor: Subject,
+  input: { limit: string; versions: Record<string, unknown> },
+): Promise<boolean> {
+  assertCan(actor, "admin.settings");
+  const typed = (input.limit ?? "").trim().replace(/,/g, "");
+  if (!/^\d{1,5}$/.test(typed)) throw new ValidationError({ limit: s.errors.smsLimit });
+  return writeSettings(
+    tx,
+    actor,
+    { sms_monthly_limit: String(Number(typed)) },
+    input.versions,
+    "admin.sms_limit_changed",
+  );
+}
+
 // ---------------------------------------------------------------- time zone
 
 export async function updateTimeZone(

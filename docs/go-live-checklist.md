@@ -33,6 +33,7 @@ This account is **not** used to sign in to the budget app itself. People sign in
 | 10 | **Scheduled jobs** | Sending the email outbox, decision release, reminders, nightly Planning Center check | See the warning below about GitHub Actions minutes. | `JOBS_SECRET` (shared by the scheduler and the app) |
 | 11 | **Web address** (optional) | A friendlier address than `*.netlify.app` | Free: keep the Netlify subdomain. A custom domain costs about $15/year, so it needs the church's approval because of the free-tier rule. | `AUTH_URL`, `APP_URL` |
 | 12 | **Uptime check** (optional, free) | An email to the administrators if the app is down | For example a free UptimeRobot monitor on the sign-in page. | None |
+| 13 | **Twilio** (pay-as-you-go, **paid**: about CA$5-8 a month for 300 texts; approved 2026-10-18) | Reminder texts beside the deadline, approval, payment and unclaimed-purchase reminder emails | Create a Twilio account in the church's name, upgrade from the trial (a trial only texts numbers verified by hand), add a payment method and turn on low-balance auto-recharge or an alert. Buy one **Canadian local number** (Manitoba area code; Canadian long codes need no US A2P 10DLC registration) with SMS. Under Messaging → Settings → Geo permissions, allow only Canada and the United States. Leave Twilio's built-in STOP handling on. In the app, Admin → Settings → Reminder texts shows **Connected** and the monthly limit (default 300). Ask leaders to keep their mobile number in Planning Center up to date. | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` (the number, e.g. `+12045550000`) |
 
 Also set in Netlify: `AUTH_SECRET` (a long random value) and `APP_TIMEZONE=America/Winnipeg`.
 
@@ -43,7 +44,7 @@ Private repositories get about 2,000 free Actions minutes a month, and every run
 - **Recommended:** run the 15-minute jobs as **Netlify Scheduled Functions** (included in the free plan) that call the same `/api/jobs/<name>` endpoints, and keep GitHub Actions for CI and the nightly backup.
 - Or run the GitHub Actions schedule every 30 minutes and accept slower email retries and decision release.
 
-**Chosen (step 7a): Netlify Scheduled Functions.** `netlify/functions/send-outbox.mts` runs every 15 minutes on the free plan. It needs `JOBS_SECRET` set in Netlify; Netlify provides `URL` itself. GitHub Actions runs only the nightly jobs (Planning Center check, deadline reminders and the failed-email digest, and an outbox backstop), which need the `APP_URL` and `JOBS_SECRET` repository secrets.
+**Chosen (step 7a): Netlify Scheduled Functions.** `netlify/functions/send-outbox.mts` runs every 15 minutes on the free plan (it also sends reminder texts held overnight, from 9:00 a.m.). It needs `JOBS_SECRET` set in Netlify; Netlify provides `URL` itself. GitHub Actions runs only the nightly jobs (Planning Center check, deadline reminders and the failed-email digest, and an outbox backstop), which need the `APP_URL` and `JOBS_SECRET` repository secrets.
 
 ## 2. Information the church provides
 

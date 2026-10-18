@@ -1,6 +1,7 @@
 import { and, asc, eq, inArray, lte, max } from "drizzle-orm";
 import { emailCopy } from "@/copy/email";
 import { expenseEmailCopy as x } from "@/copy/expense-email";
+import { smsCopy } from "@/copy/sms";
 import { expenseRevisions, expenseSubmissions } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
 import { emailBrand } from "@/domain/notifications/notice";
@@ -14,6 +15,7 @@ import { daysSetting, getChurchTimeZone } from "@/domain/settings";
 import { appUrl } from "@/lib/email/layout";
 import { enqueueEmail, type Recipient } from "@/lib/email/outbox";
 import { formatCAD } from "@/lib/money";
+import { enqueueSms } from "@/lib/sms/outbox";
 import { zonedDate } from "@/lib/time-zone";
 import { requesterGroup } from "./emails";
 import { isProcessable } from "./payment";
@@ -75,9 +77,22 @@ async function queueList(
     button: { label: string; href: string };
     key: string;
     now: Date;
+    /** The reminder text that goes with it (docs/decisions.md 2026-10-18). */
+    text?: string;
+    expenseSubmissionId?: string;
   },
 ) {
   if (input.to.length === 0 || input.rows.length === 0) return 0;
+  if (input.text) {
+    await enqueueSms(tx, {
+      template: input.template,
+      userIds: input.to.map((r) => r.userId),
+      body: input.text,
+      dedupeKey: input.key,
+      expenseSubmissionId: input.expenseSubmissionId,
+      now: input.now,
+    });
+  }
   return enqueueEmail(tx, {
     template: input.template,
     audience: input.audience,
@@ -135,6 +150,7 @@ export async function runExpenseReminders(
         button: { label: r.accountantButton, href: appUrl("/expenses/review") },
         key: `expense-approval-reminder:accountant:${who.userId}:${today}`,
         now,
+        text: smsCopy.approval(forAccountant.length, appUrl("/expenses/review")),
       });
     }
 
@@ -160,6 +176,7 @@ export async function runExpenseReminders(
         button: { label: r.boardButton, href: appUrl("/expenses/awaiting-approval") },
         key: `expense-approval-reminder:board:${who.userId}:${today}`,
         now,
+        text: smsCopy.approval(rows.length, appUrl("/expenses/awaiting-approval")),
       });
     }
 
@@ -194,6 +211,7 @@ export async function runExpenseReminders(
       button: { label: p.button, href: appUrl("/expenses/ready") },
       key: `expense-payment-reminder:${week}`,
       now,
+      text: smsCopy.payment(unpaid.length, appUrl("/expenses/ready")),
     });
 
     // Approved purchase requests the requester buys themselves, still open.
@@ -223,6 +241,8 @@ export async function runExpenseReminders(
         button: { label: x.viewExpense, href: appUrl(`/expenses/${e.id}`) },
         key: `expense-unclaimed-reminder:${e.id}:${week}`,
         now,
+        text: smsCopy.unclaimed(e.referenceNumber ?? "", appUrl("/expenses/mine")),
+        expenseSubmissionId: e.id,
       });
     }
     summary.unclaimed += await queueList(tx, {

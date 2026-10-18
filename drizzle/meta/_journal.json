@@ -176,6 +176,13 @@
       "when": 1792242382790,
       "tag": "0024_year_end_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792353414816,
+      "tag": "0025_sms",
+      "breakpoints": true
     }
   ]
 }

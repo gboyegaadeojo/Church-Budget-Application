@@ -989,3 +989,18 @@ With decision release (FR-19a), a department must not learn its decision before 
   - The start form's department picker (`departmentChoices`) said "already submitted its budget (Approved)". A held request now reads In Review there and isn't editable.
   - **Activity on this budget** (`listActivity` with a `requestId`) hides held approve/decline events for a department the viewer leads, even when a staff role would show them.
 - **Send immediately** is unchanged: the department is told as soon as the accountant decides.
+
+## Reminder texts by Twilio: the one paid service (2026-10-18)
+
+The church asked for the reminders to go by text as well as email, to the mobile number in each person's Planning Center profile, for about 300 texts a month.
+
+- **Paid exception to constraint 1, approved by the church.** No free service reliably texts Canadian numbers: Twilio's trial only texts numbers verified by hand, and the Canadian carriers have mostly shut their email-to-text gateways. Twilio pay-as-you-go costs about CA$2 a month for a Canadian local number plus about 1-2 cents a text, so about CA$5-8 a month. It is the only paid service; everything else stays on free tiers. Setup is item 13 of `docs/go-live-checklist.md`.
+- **Which reminders:** the annual deadline (7 days and 1 day), approvers' daily approval reminder (accountant, and the Board Chair or Vice-Chair covering), approved-but-unpaid (accountant and Church Administrator), and approved-but-unclaimed purchase (the requester's group). Each text is queued in the same transaction as its email, with the same dedupe key, to the same people. The office's weekly unclaimed summary and the after-deadline notice stay email-only.
+- **Content:** one 160-character GSM-7 segment from `src/copy/sms.ts`, with no amounts or names, and an app link that needs sign-in (no data in the address).
+- **Phone numbers:** read from Planning Center (`include=phone_numbers`). A Mobile number is preferred, then the primary one, and only +1 (North American) numbers are kept, as `users.phone_e164`. It is stored at sign-in's Group Leader check and refreshed nightly for every linked person (`refreshPhones`, part of `pco-verify`). Only the phone is synced; the account email stays as set up. People without a Planning Center link or a mobile number get emails only.
+- **Opt-out:** replying STOP, which Twilio enforces. A refused text (error 21610) is marked failed and never retried. There's no in-app setting, and reminder emails always go (the 2026-10-16 rule is unchanged).
+- **Quiet hours:** texts go only from 9:00 a.m. to 8:00 p.m. church time. The nightly reminders job runs about 2-3 a.m., so its texts are queued for 9:00, and the 15-minute `send-outbox` function sends them then. A text not sent within a day of its send time expires.
+- **Cost guard:** `sms_monthly_limit` (default 300; Admin → Settings → Reminder texts, which also shows Connected and Sent this month). Texts past the limit in a calendar month are marked failed with "Monthly text limit reached", never sent late. 0 stops texts.
+- **Nothing is queued** while Twilio isn't configured (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`), so turning it on later doesn't send a backlog.
+- **Data:** migration `0025_sms` adds `sms_outbox` (never deleted, like `email_outbox`) and `users.phone_e164` / `phone_checked_at`. The activity log records `notifications.sms_sent` and `notifications.sms_failed` with only the last four digits. Failed texts aren't in the administrators' daily failed-email digest: a STOP is the person's choice, not a fault to fix.
+- The privacy notice now lists the mobile number and Twilio.

@@ -53,6 +53,8 @@ export const SETTING_DEFAULTS = {
   payment_reminder_days: "14",
   /** FR-49 reminders: an approval still needed after this many days, then daily. */
   approval_reminder_days: "5",
+  /** Reminder texts sent per calendar month before the rest are held back (cost guard). */
+  sms_monthly_limit: "300",
 } as const;
 
 /** A whole-number-of-days setting, or its default when the stored value is unusable. */
@@ -67,6 +69,15 @@ export async function daysSetting(
   const { [key]: value } = await readSettings(tx, [key]);
   const days = Number.parseInt(value, 10);
   return Number.isSafeInteger(days) && days > 0 ? days : Number(SETTING_DEFAULTS[key]);
+}
+
+/** How many reminder texts may go out this calendar month (0 turns texts off). */
+export async function smsMonthlyLimit(tx: Tx): Promise<number> {
+  const { sms_monthly_limit: value } = await readSettings(tx, ["sms_monthly_limit"]);
+  const limit = Number.parseInt(value, 10);
+  return Number.isSafeInteger(limit) && limit >= 0
+    ? limit
+    : Number(SETTING_DEFAULTS.sms_monthly_limit);
 }
 
 /** The second-approval threshold in cents, or null when it's off (FR-34). */

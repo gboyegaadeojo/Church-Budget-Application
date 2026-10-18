@@ -1,4 +1,4 @@
-import { Palette, Percent, ShieldCheck, Globe2, Plug, UserX } from "lucide-react";
+import { Palette, Percent, ShieldCheck, Globe2, MessageSquare, Plug, UserX } from "lucide-react";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -30,7 +30,9 @@ import { centsToInput } from "@/domain/annual/schema";
 import { formatCAD, taxRateToPercent } from "@/lib/money";
 import type { PcoFieldDefinition } from "@/lib/pco";
 import { getPlanningCenterDirectory } from "@/lib/pco-directory";
-import { secondApprovalAction, timeZoneAction } from "./actions";
+import { smsConfigured } from "@/lib/sms/config";
+import { smsUsage } from "@/lib/sms/outbox";
+import { secondApprovalAction, smsLimitAction, timeZoneAction } from "./actions";
 import { AccountantsSection, SignersSection } from "./people-sections";
 import { SignInSettingsForm, TaxRateForm } from "./settings-forms";
 
@@ -121,9 +123,11 @@ async function SettingsContent() {
     churchToday(db),
     getDepartmentFieldSettings(db),
   ]);
-  const [threshold, thresholdVersions] = await Promise.all([
+  const [threshold, thresholdVersions, sms, smsVersions] = await Promise.all([
     secondApprovalThreshold(db),
     settingVersions(db, ["second_approval_threshold"]),
+    smsUsage(db),
+    settingVersions(db, ["sms_monthly_limit"]),
   ]);
 
   return (
@@ -171,6 +175,41 @@ async function SettingsContent() {
               />
             </div>
             <SubmitButton tone="secondary">{s.threshold.save}</SubmitButton>
+          </ActionForm>
+        </Section>
+
+        <Section
+          title={s.sms.heading}
+          description={s.sms.intro}
+          id="reminder-texts"
+          icon={MessageSquare}
+          tone="green"
+        >
+          <p className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-fg-muted">{s.sms.connection}</span>
+            {smsConfigured() ? (
+              <Badge tone="success">{s.sms.connected}</Badge>
+            ) : (
+              <span className="text-warning">{s.sms.notConfigured}</span>
+            )}
+          </p>
+          <p className="text-sm">{s.sms.usage(sms.sent, sms.limit)}</p>
+          {sms.failed > 0 ? (
+            <p className="text-sm text-fg-muted">{s.sms.failed(sms.failed)}</p>
+          ) : null}
+          <ActionForm action={smsLimitAction} aria-label={s.sms.heading}>
+            <input type="hidden" name="versions" value={JSON.stringify(smsVersions)} />
+            <div className="max-w-xs">
+              <TextField
+                name="limit"
+                label={s.sms.label}
+                hint={s.sms.hint}
+                defaultValue={String(sms.limit)}
+                inputMode="numeric"
+                autoComplete="off"
+              />
+            </div>
+            <SubmitButton tone="secondary">{s.sms.save}</SubmitButton>
           </ActionForm>
         </Section>
 

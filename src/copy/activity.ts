@@ -42,6 +42,7 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
     label: "Changed the second-approval amount",
     group: "settings",
   },
+  "admin.sms_limit_changed": { label: "Changed the monthly text limit", group: "settings" },
   "annual.message_sent": { label: "Sent a message", group: "requests" },
   "annual.decision_released": {
     label: "Released the decision to the department",
@@ -221,6 +222,8 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   // Email
   "notifications.email_sent": { label: "Email sent", group: "emails" },
   "notifications.email_failed": { label: "Email couldn't be sent", group: "emails" },
+  "notifications.sms_sent": { label: "Reminder text sent", group: "emails" },
+  "notifications.sms_failed": { label: "Reminder text couldn't be sent", group: "emails" },
 };
 
 /** "admin.department_backup_promoted" → "Department backup promoted", for a type not listed. */
