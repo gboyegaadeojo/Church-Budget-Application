@@ -970,3 +970,14 @@ The FR-52 Overview items left out in Stage 4 step 8.
 - **Unknown filter values are dropped**, never trusted.
 - **Export spending to Excel** follows the department filter. The workbook has no date range, so it doesn't follow those dates.
 - **How long expenses take:** average days from submission to the accountant's first decision, to the Board Chair's (or Vice-Chair's) first decision, and from approval to payment, plus the five expenses waiting longest for a decision, each linking to the expense.
+
+## Held decisions read In Review on the department's own pages (2026-10-18)
+
+With decision release (FR-19a), a department must not learn its decision before the release time. That already held for leaders with only the requester role. A leader who also holds a staff role (`annual.view_held`: accountant, backup approver, Board Chair, Vice-Chair, Church Administrator, System Administrator) could still see it early.
+
+- **Rule:** on department-facing screens, a leader's own department's budget reads exactly as the department sees it until release, whatever other roles they hold. Staff screens (Review dashboard and review page, Decision release, Departments, Overview, Analytics & Audit) still show the truth to those allowed. Other departments' held decisions stay visible to staff everywhere.
+- **Leaks fixed:**
+  - `hiddenDecisions` (`src/domain/annual/release.ts`) now masks the viewer's own departments even for staff. It feeds the budget page, My budget requests and search.
+  - The start form's department picker (`departmentChoices`) said "already submitted its budget (Approved)". A held request now reads In Review there and isn't editable.
+  - **Activity on this budget** (`listActivity` with a `requestId`) hides held approve/decline events for a department the viewer leads, even when a staff role would show them.
+- **Send immediately** is unchanged: the department is told as soon as the accountant decides.
