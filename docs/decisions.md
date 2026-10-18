@@ -945,3 +945,15 @@ The Departments item in the accountant's Annual Budget menu (DRD 6.0) was still 
 ## Stage 5 step 5: Remaining before and after on Record spending (2026-10-17)
 
 The live "Remaining: before → after" line DRD 6.8 asks for, noted as not built in Stage 4, now shows on Record spending once a department with an approved budget is chosen. It updates as the amount and type change: an expense lowers Remaining, a refund raises it, and below zero it reads "Over budget by $X" with an icon. It's a preview with `money.ts` in the browser; on save the server still recalculates and asks for the overspend note itself. A department with no approved budget shows no line (its entries are Unbudgeted).
+
+## Finance and board staff manage budget cycles in full (2026-10-17)
+
+This replaces the earlier note that opening, closing and deadlines stay with the System Administrator. The church asked that the System Administrator, accountant, Board Chair and Vice-Chair can edit an existing cycle, including opening and closing it. Backup approvers are included, as they hold every accountant power.
+
+- **`cycles.manage`** (accountant, backup approver, Board Chair, Vice-Chair, System Administrator) now governs opening, closing, reopening, changing the deadline and the new **Edit details**. `cycle.extend_deadline` adds the Board Chair and Vice-Chair. `admin.cycles` remains only for the Admin menu page.
+- **Where:** Annual Budget → Budget cycles now links each cycle to `/annual/cycles/{id}`, the same page as Admin → Budget Cycles → a cycle (a shared `CycleDetail` component).
+- **Edit details:** name, budget year, start date, default tax rate, board-approved total and reference, and spending period end. It uses optimistic versioning and is audited as `admin.cycle_updated` with before and after values.
+  - The budget year can't change once any department has a budget for the cycle (its references carry the year) or if another cycle has that year.
+  - A new tax rate applies only to requests submitted later; submitted ones keep their snapshot (FR-07a).
+  - The spending period end must be in or after the budget year, and can't change while the year's spending is locked.
+- Opening a cycle still emails every department representative, and reopening or changing the deadline still needs a reason, whoever does it.

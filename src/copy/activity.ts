@@ -195,6 +195,7 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
     group: "settings",
   },
   "admin.cycle_created": { label: "Created a budget cycle", group: "settings" },
+  "admin.cycle_updated": { label: "Edited a budget cycle", group: "settings" },
   "admin.cycle_opened": { label: "Opened a budget cycle", group: "settings" },
   "admin.cycle_closed": { label: "Closed a budget cycle", group: "settings" },
   "admin.cycle_reopened": { label: "Reopened a budget cycle", group: "settings" },

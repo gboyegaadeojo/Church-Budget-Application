@@ -282,7 +282,7 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 ### Budget cycles
 
-**Admin → Budget Cycles**: create the year (the first is FY2027), set the deadline and board-approved church total, open and close it, and choose whether decision emails go out immediately or at a scheduled time. The accountant, backup approvers, the Board Chair and the Vice-Chair can also create a year, from **Annual Budget → Budget cycles**; it starts as a draft, and you open it when it is ready.
+**Admin → Budget Cycles**: create the year (the first is FY2027), set the deadline and board-approved church total, open and close it, and choose whether decision emails go out immediately or at a scheduled time. The accountant, backup approvers, the Board Chair and the Vice-Chair can do all of this too, from **Annual Budget → Budget cycles**: create a year, open one to **edit its details** (name, start date, tax rate for new submissions, board-approved total and reference, spending period end), change its deadline, give extensions, and open, close or reopen it. A cycle starts as a draft; opening it emails every department. The budget year can't change once a department has a budget for it.
 
 - **Change deadline**: pick the new date and give a reason; departments that haven't submitted are emailed.
 - **Give extension**: a later date for one department only, with a reason.

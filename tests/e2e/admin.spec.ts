@@ -184,15 +184,26 @@ test.describe("Admin (Stage 1 step 4)", () => {
 });
 
 test.describe("Budget cycles for finance and board staff (decided 2026-10-17)", () => {
-  test("the Board Chair opens Annual Budget → Budget cycles, axe clean", async ({ page }) => {
+  test("the Board Chair opens Annual Budget → Budget cycles and a cycle to edit, axe clean", async ({
+    page,
+  }) => {
     await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.cleo);
     await page.goto("/annual/cycles");
     await expect(page.getByRole("heading", { level: 1, name: "Budget Cycles" })).toBeVisible();
     await expect(page.getByRole("table", { name: "Budget Cycles" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Create cycle" })).toBeVisible();
-    // Opening and deadlines stay in Admin: the cycles aren't links here.
-    await expect(page.getByRole("link", { name: "FY2026" })).toHaveCount(0);
+    await expectAxeClean(page);
+    // Each cycle opens its page to edit it (decided 2026-10-17). Nothing is saved here:
+    // other tests share FY2026; editing is covered by integration tests.
+    await page.getByRole("link", { name: "FY2026", exact: true }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "FY2026" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Edit details" })).toBeVisible();
+    await expect(
+      page
+        .getByRole("form", { name: "Edit details" })
+        .getByLabel("Board-approved church total, incl. tax"),
+    ).toBeVisible();
     await expectAxeClean(page);
   });
 });

@@ -1,11 +1,11 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { adminCopy } from "@/copy/admin";
-import { budgetCycles, deadlineExtensions, departments } from "@/db/schema";
+import { budgetCycles, budgetRequests, deadlineExtensions, departments } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { ConflictError, parseInput, RuleError, ValidationError } from "@/domain/errors";
 import { getChurchTimeZone, readSettings } from "@/domain/settings";
-import { writeAudit, type AuditActor } from "@/lib/audit";
+import { changedFields, writeAudit, type AuditActor } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
 import { normalizeTaxRate, parseCAD, percentToTaxRate } from "@/lib/money";
 import type { Role } from "@/lib/roles";
@@ -14,9 +14,10 @@ import { emailCycleStatus, emailDeadlineChanged, emailExtension } from "./emails
 import { deadlineEditable, transitionCycle, type CycleEvent } from "./status";
 
 /**
- * Budget cycles (Requirements 4): create, open, close and reopen; change the deadline
- * with a reason; give one department an extension (4.3). Deadlines are entered in the
- * church time zone and stored in UTC.
+ * Budget cycles (Requirements 4): create, edit, open, close and reopen; change the
+ * deadline with a reason; give one department an extension (4.3). Deadlines are entered
+ * in the church time zone and stored in UTC. The accountant, backup approvers, the Board
+ * Chair, the Vice-Chair and the System Administrator manage cycles (decided 2026-10-17).
  */
 
 const c = adminCopy.cycles;
@@ -160,6 +161,106 @@ export async function createCycle(
   return { id: row.id, name: data.name };
 }
 
+// ---------------------------------------------------------------- edit
+
+const updateSchema = createSchema.omit({ submissionDeadline: true }).extend({
+  version: versionSchema,
+  spendingPeriodEnd: z.string().optional(),
+});
+
+/**
+ * Edits a cycle's details: name, budget year, start date, default tax rate, board total
+ * and reference, and spending period end. The deadline and status have their own steps
+ * (with reasons and emails). The budget year can't change once a department has a
+ * budget for it, since its reference numbers carry the year. A new tax rate applies to
+ * requests submitted from now on; submitted ones keep theirs.
+ */
+export async function updateCycleDetails(
+  tx: Tx,
+  actor: Subject,
+  input: z.input<typeof updateSchema> & { id: string },
+): Promise<{ id: string; name: string; changed: boolean }> {
+  const { actingRole } = assertCan(actor, "cycles.manage");
+  const data = parseInput(updateSchema, input);
+  const cycle = await loadCycle(tx, input.id);
+
+  let taxRate = cycle.defaultTaxRate;
+  if (data.taxRatePercent?.trim()) {
+    const rate = percentToTaxRate(data.taxRatePercent);
+    if (!rate) throw new ValidationError({ taxRatePercent: adminCopy.settings.errors.taxRate });
+    taxRate = rate;
+  }
+  let boardTotalCents: number | null = null;
+  if (data.boardTotal?.trim()) {
+    boardTotalCents = parseCAD(data.boardTotal);
+    if (boardTotalCents === null)
+      throw new ValidationError({ boardTotal: c.errors.boardTotalInvalid });
+  }
+  let spendingPeriodEnd: string | null = null;
+  if (data.spendingPeriodEnd?.trim()) {
+    const end = z.iso.date().safeParse(data.spendingPeriodEnd.trim());
+    if (!end.success || end.data < `${data.budgetYear}-01-01`) {
+      throw new ValidationError({ spendingPeriodEnd: c.errors.spendingPeriodEnd });
+    }
+    spendingPeriodEnd = end.data;
+  }
+  if (spendingPeriodEnd !== cycle.spendingPeriodEnd && cycle.spendingLockedAt) {
+    throw new ValidationError({ spendingPeriodEnd: c.errors.spendingLocked });
+  }
+
+  if (data.budgetYear !== cycle.budgetYear) {
+    const [request] = await tx
+      .select({ id: budgetRequests.id })
+      .from(budgetRequests)
+      .where(eq(budgetRequests.budgetCycleId, cycle.id))
+      .limit(1);
+    if (request) throw new ValidationError({ budgetYear: c.errors.yearInUse });
+    const [taken] = await tx
+      .select({ id: budgetCycles.id })
+      .from(budgetCycles)
+      .where(eq(budgetCycles.budgetYear, data.budgetYear))
+      .limit(1);
+    if (taken) throw new ValidationError({ budgetYear: c.errors.yearExists(data.budgetYear) });
+  }
+
+  const after = {
+    name: data.name,
+    budgetYear: data.budgetYear,
+    startDate: data.startDate,
+    defaultTaxRate: taxRate,
+    boardTotalCents,
+    boardReference: data.boardReference || null,
+    spendingPeriodEnd,
+  };
+  const diff = changedFields(
+    {
+      name: cycle.name,
+      budgetYear: cycle.budgetYear,
+      startDate: cycle.startDate,
+      defaultTaxRate: cycle.defaultTaxRate,
+      boardTotalCents: cycle.boardTotalCents,
+      boardReference: cycle.boardReference,
+      spendingPeriodEnd: cycle.spendingPeriodEnd,
+    },
+    after,
+  );
+  if (!diff) {
+    if (cycle.version !== data.version)
+      throw new ConflictError({ type: "budget_cycle", id: cycle.id });
+    return { id: cycle.id, name: cycle.name, changed: false };
+  }
+  await bumpCycle(tx, cycle.id, data.version, actor.id, after);
+  await writeAudit(tx, {
+    actor: actorOf(actor, actingRole),
+    area: "admin",
+    eventType: "admin.cycle_updated",
+    entity: { type: "budget_cycle", id: cycle.id },
+    cycleId: cycle.id,
+    details: diff,
+  });
+  return { id: cycle.id, name: data.name, changed: true };
+}
+
 // ---------------------------------------------------------------- status
 
 async function changeStatus(
@@ -169,7 +270,7 @@ async function changeStatus(
   event: CycleEvent,
   now: Date,
 ): Promise<void> {
-  const { actingRole } = assertCan(actor, "admin.cycles");
+  const { actingRole } = assertCan(actor, "cycles.manage");
   const { version } = parseInput(z.object({ version: versionSchema }), input);
   const cycle = await loadCycle(tx, input.id);
   let next;
@@ -243,7 +344,7 @@ export async function changeDeadline(
   input: { id: string; version: unknown; newDeadline: string; reason: string },
   { now = new Date() }: Options = {},
 ): Promise<void> {
-  const { actingRole } = assertCan(actor, "admin.cycles");
+  const { actingRole } = assertCan(actor, "cycles.manage");
   const { version } = parseInput(z.object({ version: versionSchema }), input);
   const cycle = await loadCycle(tx, input.id);
   if (!deadlineEditable(cycle.status)) throw new RuleError(c.errors.deadlineNotEditable);

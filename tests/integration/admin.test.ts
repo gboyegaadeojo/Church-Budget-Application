@@ -18,6 +18,7 @@ import {
   changeDeadline,
   closeCycle,
   createCycle,
+  updateCycleDetails,
   effectiveDeadline,
   extendDepartment,
   openCycle,
@@ -154,7 +155,7 @@ describe("permissions", () => {
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
-  it("the accountant, backup approver, Board Chair and Vice-Chair create cycles; opening stays with the administrator", async () => {
+  it("the accountant, backup approver, Board Chair and Vice-Chair create, edit, open and close cycles", async () => {
     const roles: Role[] = ["accountant", "backup_approver", "board_chair", "vice_chair"];
     for (const [i, role] of roles.entries()) {
       const creator = await person([role]);
@@ -176,10 +177,113 @@ describe("permissions", () => {
       expect(row).toMatchObject({ status: "draft", createdByUserId: creator.id });
       const [event] = await audits("admin.cycle_created", created.id);
       expect(event).toMatchObject({ actorUserId: creator.id, actingRole: role });
-      await expect(
-        run((tx) => openCycle(tx, creator, { id: created.id, version: row.version }, { now: NOW })),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+
+      // Edit the details: audited with what changed and the role used.
+      const edited = await run((tx) =>
+        updateCycleDetails(tx, creator, {
+          id: created.id,
+          version: row.version,
+          name: `FY${year} budget`,
+          budgetYear: year,
+          startDate: `${year}-01-01`,
+          taxRatePercent: "12",
+          boardTotal: "150,000.00",
+          boardReference: "Board minutes",
+          spendingPeriodEnd: `${year}-12-31`,
+        }),
+      );
+      expect(edited.changed).toBe(true);
+      const [after] = await db.select().from(budgetCycles).where(eq(budgetCycles.id, created.id));
+      expect(after).toMatchObject({
+        name: `FY${year} budget`,
+        boardTotalCents: 15_000_000,
+        boardReference: "Board minutes",
+        spendingPeriodEnd: `${year}-12-31`,
+      });
+      const [update] = await audits("admin.cycle_updated", created.id);
+      expect(update).toMatchObject({ actorUserId: creator.id, actingRole: role });
+      expect(update.details).toMatchObject({ after: { boardTotalCents: 15_000_000 } });
+
+      // Open and close it.
+      await run((tx) =>
+        openCycle(tx, creator, { id: created.id, version: after.version }, { now: NOW }),
+      );
+      await run((tx) =>
+        closeCycle(tx, creator, { id: created.id, version: after.version + 1 }, { now: NOW }),
+      );
+      const [closed] = await db.select().from(budgetCycles).where(eq(budgetCycles.id, created.id));
+      expect(closed.status).toBe("closed");
     }
+  });
+
+  it("the Church Administrator can't edit or open a cycle; a stale edit is a conflict", async () => {
+    const owner = await person(["accountant"]);
+    const created = await run((tx) =>
+      createCycle(
+        tx,
+        owner,
+        {
+          name: "FY2095",
+          budgetYear: 2095,
+          startDate: "2095-01-01",
+          submissionDeadline: "2094-11-30T17:00",
+        },
+        { now: NOW },
+      ),
+    );
+    const details = {
+      id: created.id,
+      version: 1,
+      name: "FY2095",
+      budgetYear: 2095,
+      startDate: "2095-01-01",
+      taxRatePercent: "12",
+      boardTotal: "",
+      boardReference: "",
+    };
+    const office = await person(["church_admin"]);
+    await expect(run((tx) => updateCycleDetails(tx, office, details))).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
+    await expect(
+      run((tx) => openCycle(tx, office, { id: created.id, version: 1 }, { now: NOW })),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    await run((tx) => updateCycleDetails(tx, owner, { ...details, name: "FY2095 v2" }));
+    await expect(
+      run((tx) => updateCycleDetails(tx, owner, { ...details, name: "FY2095 v3" })),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
+
+  it("keeps the budget year once a department has a budget for it", async () => {
+    const owner = await person(["accountant"]);
+    const created = await run((tx) =>
+      createCycle(
+        tx,
+        owner,
+        {
+          name: "FY2096",
+          budgetYear: 2096,
+          startDate: "2096-01-01",
+          submissionDeadline: "2095-11-30T17:00",
+        },
+        { now: NOW },
+      ),
+    );
+    const leader = await person(["requester"]);
+    const department = await insertDepartment(db);
+    await insertDraft(db, { cycleId: created.id, departmentId: department.id, userId: leader.id });
+    await expect(
+      run((tx) =>
+        updateCycleDetails(tx, owner, {
+          id: created.id,
+          version: 1,
+          name: "FY2096",
+          budgetYear: 2097,
+          startDate: "2096-01-01",
+          taxRatePercent: "12",
+        }),
+      ),
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 });
 

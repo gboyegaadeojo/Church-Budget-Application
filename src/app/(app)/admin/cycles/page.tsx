@@ -37,7 +37,7 @@ async function CyclesContent() {
   return (
     <>
       <PageHeader title={c.title} />
-      <CycleList cycles={cycles} zone={zone} linked />
+      <CycleList cycles={cycles} zone={zone} hrefFor={(id) => `/admin/cycles/${id}`} />
       <CreateCycleForm nextYear={nextYear} zone={zone} taxRate={sales_tax_rate} />
     </>
   );

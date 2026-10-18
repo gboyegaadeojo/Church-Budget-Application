@@ -73,6 +73,8 @@ export type Action =
   | "admin.cycles"
   /** Create a budget cycle (decided 2026-10-17): finance and board staff, and the administrator. */
   | "cycles.create"
+  /** Edit, open, close and reopen a cycle and change its deadline (decided 2026-10-17). */
+  | "cycles.manage"
   | "admin.settings"
   /** Settings → Branding: the logo upload, names and accent colour (FR-30, AC-101). */
   | "admin.branding"
@@ -272,8 +274,8 @@ const RULES: Record<Action, readonly Rule[]> = {
   "admin.users": [{ roles: ["system_admin"] }],
   "admin.departments": [{ roles: ["system_admin"] }],
   "admin.cycles": [{ roles: ["system_admin"] }],
-  // Opening, closing and deadlines stay with admin.cycles: opening emails every department.
   "cycles.create": [{ roles: [...ACCOUNTANTS, ...BOARD, "system_admin"] }],
+  "cycles.manage": [{ roles: [...ACCOUNTANTS, ...BOARD, "system_admin"] }],
   "admin.settings": [{ roles: ["system_admin"] }],
   "admin.branding": [{ roles: ["system_admin"] }],
   "admin.pco_mapping": [{ roles: ["system_admin"] }],
@@ -284,7 +286,7 @@ const RULES: Record<Action, readonly Rule[]> = {
     { roles: ["system_admin"] },
     { roles: ["requester"], check: primaryOfDepartment },
   ],
-  "cycle.extend_deadline": [{ roles: ["system_admin", ...ACCOUNTANTS] }],
+  "cycle.extend_deadline": [{ roles: ["system_admin", ...ACCOUNTANTS, ...BOARD] }],
   // The Board Chair's Away routes expense final approvals to the Vice-Chair (3.3, AC-112).
   "account.away": [{ roles: [...ACCOUNTANTS, ...BOARD] }],
   "department.away": [

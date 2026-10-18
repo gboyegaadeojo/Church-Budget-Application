@@ -17,16 +17,16 @@ type Cycles = Awaited<ReturnType<typeof listCycles>>;
 /**
  * The cycles and the form for a new one, shared by Admin → Budget Cycles and Annual
  * Budget → Budget cycles (finance and board staff create cycles; decided 2026-10-17).
- * `linked` links each cycle to its admin page, where it's opened, closed and extended.
+ * `hrefFor` links each cycle to its page, where it's edited, opened, closed and extended.
  */
 export function CycleList({
   cycles,
   zone,
-  linked = false,
+  hrefFor,
 }: {
   cycles: Cycles;
   zone: string;
-  linked?: boolean;
+  hrefFor?: (id: string) => string;
 }) {
   return (
     <>
@@ -62,8 +62,8 @@ export function CycleList({
                 {cycles.map((cycle) => (
                   <tr key={cycle.id}>
                     <td className="py-3 pr-4">
-                      {linked ? (
-                        <Link href={`/admin/cycles/${cycle.id}`} className={linkClass}>
+                      {hrefFor ? (
+                        <Link href={hrefFor(cycle.id)} className={linkClass}>
                           {cycle.name}
                         </Link>
                       ) : (
