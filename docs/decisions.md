@@ -970,3 +970,11 @@ The FR-52 Overview items left out in Stage 4 step 8.
 - **Unknown filter values are dropped**, never trusted.
 - **Export spending to Excel** follows the department filter. The workbook has no date range, so it doesn't follow those dates.
 - **How long expenses take:** average days from submission to the accountant's first decision, to the Board Chair's (or Vice-Chair's) first decision, and from approval to payment, plus the five expenses waiting longest for a decision, each linking to the expense.
+
+## GitHub Actions minutes: the repository is public, CI runs once per PR (2026-10-18)
+
+October's 2,000 free Actions minutes for private repositories ran out, mostly because CI ran twice per change: on the pull request and again on the merge to `main`, about 12 minutes each. With the account's $0 budget, GitHub blocked further runs rather than billing.
+
+- **The repository is now public** (the owner's decision). Public repositories get unlimited free minutes on GitHub's standard runners. A scan of the full history found no secrets (keys and passwords live only in Netlify and GitHub secrets) and only example email addresses. Commit author details are public.
+- **CI runs once per pull request** (it tests the PR as merged) and can be run by hand (`workflow_dispatch`). It no longer repeats on the push to `main`.
+- **At go-live**, if the repository moves to a church-owned **private** account, its 2,000 minutes a month cover CI at roughly one run per PR, plus the nightly jobs (a few minutes a night).
