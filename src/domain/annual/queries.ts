@@ -125,8 +125,17 @@ async function departmentChoices(
     .where(eq(budgetRequests.budgetCycleId, cycleId));
   const mine = new Set(actor.departments.map((d) => d.id));
   const previous = await lastYearRequests(tx, cycleId);
+  // A decision held for scheduled release reads In Review here too (FR-19a).
+  const hidden = await hiddenDecisions(
+    tx,
+    actor,
+    started.map((s) => s.requestId),
+  );
   const choices = rows.map((r) => {
-    const request = started.find((s) => s.departmentId === r.id);
+    const found = started.find((s) => s.departmentId === r.id);
+    const request =
+      found && hidden.has(found.requestId) ? { ...found, status: "in_review" as const } : found;
+    const held = Boolean(found && hidden.has(found.requestId));
     const last = previous.get(r.id);
     return {
       id: r.id,
@@ -138,7 +147,8 @@ async function departmentChoices(
             startedBy: request.startedBy,
             status: request.status,
             editsLeft: editsRemaining(request),
-            editable: canStillEdit(request),
+            // A held request is locked until its decision is released.
+            editable: !held && canStillEdit(request),
           }
         : null,
       fromPlanningCenter: fromPlanningCenter.has(r.id),
