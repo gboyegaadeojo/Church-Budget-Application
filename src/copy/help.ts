@@ -1,6 +1,6 @@
 /**
- * Help and Privacy (FR-36, DRD 6.11c). Kept in step with docs/user-manual.md. Covers what
- * the app does today; spending tracking gets its guide when it arrives (Stage 4).
+ * Help and Privacy (FR-36, DRD 6.11c). Kept in step with docs/user-manual.md (checked
+ * against the app 2026-10-18).
  */
 
 export type HelpGuide = { id: string; title: string; who: string; steps: string[] };
@@ -20,7 +20,7 @@ export const helpCopy = {
       title: "Department leaders: submit your annual budget",
       who: "requester",
       steps: [
-        "Annual Budget → My department's budget → Start a budget request, then choose your department. If it isn't listed, choose Other and type its name; the administrator adds it.",
+        "Annual Budget → My department's budget → Submit annual budget, then choose your department. If it isn't listed, choose Other and type its name; the administrator adds it.",
         "Give the request a title and say why the ministry needs the money. If your department submitted last year, you can tick Start from last year's request to begin with last year's items.",
         "Add each item with its quantity and its unit price before tax. The app adds the line totals and the sales tax.",
         "Preview the request, then Confirm submission. You get a receipt by email with the reference number, like IFC-2027-0007.",
@@ -37,7 +37,7 @@ export const helpCopy = {
       steps: [
         "Once your annual budget is approved, Expenses → New expense. Choose Purchase request to ask before you buy, or Expense claim to be paid back for something you've bought. Then choose the department and the budget year.",
         "The budget strip shows what's Available, Committed, Spent and Remaining, and what's left after this expense.",
-        "Purchase request: add items with prices before tax (the app adds the sales tax) and choose how it will be bought.",
+        "Purchase request: add items with prices before tax (the app adds the sales tax) and choose how it will be bought. You can attach a quote, invoice or photo.",
         "Expense claim: one line per receipt with the amount you paid including tax, who should be paid and how (cheque or e-transfer), and a photo or PDF of each receipt (Take photo works on a phone). If you bought something you asked for beforehand, link the purchase request.",
         "Going over budget? You'll see by how much. Explain why it's needed and you can still submit; the accountant and the Board Chair decide.",
         "Preview, then Confirm submission. You can change it until the accountant starts reviewing, or withdraw it. Every step is emailed to you and to every leader of the department, and My expenses shows where each one is.",
@@ -134,7 +134,15 @@ export const helpCopy = {
       question: "How is spending recorded?",
       answer: [
         "Approved expense claims and purchases are added to the spending ledger automatically, so departments see what's left on the budget strip and in My expenses.",
-        "Recording other spending, refunds and corrections comes with spending tracking.",
+        "The accountant and the Church Administrator record other spending, refunds and corrections in Spending → Record spending. Department leaders see every entry in Spending → My department's spending.",
+      ],
+    },
+    {
+      id: "reminders",
+      question: "Can I get reminders by text?",
+      answer: [
+        "Yes, if your Planning Center profile has a mobile number: the budget deadline, expenses waiting for your approval, approved expenses waiting to be paid and unclaimed purchases also come as a short text, between 9:00 a.m. and 8:00 p.m.",
+        "Update your number in Planning Center to change it; the app picks it up overnight. Reply STOP to any text to stop them. Reminder emails always come.",
       ],
     },
     {

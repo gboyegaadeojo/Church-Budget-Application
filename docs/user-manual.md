@@ -3,7 +3,7 @@
 **Organization:** Immanuel Fellowship Church (IFC)
 **Companion documents:** [Requirements](church-media-budget-requirements.md) (Section 22) · [Design](church-media-budget-design.md) · [Go-live checklist](go-live-checklist.md) · [README](../README.md)
 
-This manual explains how to use the app, by role. It is written from the specification; before launch it is checked against the built app, screenshots are added, and it becomes the source for the in-app **Help** page.
+This manual explains how to use the app, by role. It was checked against the built app on October 18, 2026 (menus, screens and settings); screenshots are added before launch. The in-app **Help** page is a short version of it.
 
 **Contents**
 
@@ -55,7 +55,7 @@ You never need to switch accounts. If you are both an accountant and a requester
 
 ### Your account
 
-From the account menu: theme (light, dark or system), **Away** (accountants, Board Chair, Vice-Chair, Primary requesters), and sign out.
+From the account menu: theme (light, dark or system), **Away** (accountants, backup approvers, Board Chair and Vice-Chair), and sign out. A department's Primary sets Away on **Annual Budget** instead (section 4).
 
 Every email the app sends always goes to you straight away; emails can't be turned off.
 
@@ -236,6 +236,8 @@ Every workbook has a **Summary** sheet (one row per budget, requested and approv
 
 These screens are designed for a phone.
 
+You can also read **Spending → Budget vs actual** (every department's approved, spent and remaining budget) and **Reports → Analytics & Audit** (section 9), without changing anything. In **Annual Budget → Budget cycles** you can create, edit, open and close a budget year, as the accountant can (section 8, Budget cycles).
+
 ---
 
 ## 7. Church Administrator
@@ -268,7 +270,7 @@ Spending and budget-vs-actual exports, and spending analytics on **Reports → A
 
 ## 8. System Administrator
 
-You can **see everything** but cannot approve or pay unless you are also given that role.
+You can **see everything** but cannot approve or pay unless you are also given that role. **Annual Budget → All budgets** lists every department's budget for the year, read only.
 
 ### Users and roles
 
@@ -296,7 +298,7 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 ### Settings
 
-Tax rate (applies to new submissions only), **Second approval for large budgets** (an approved total, including tax, at or above which a second accountant must sign off; empty means off), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), **Reminder texts** (whether Twilio is connected, texts sent this month, and the monthly limit; 0 stops texts), email settings, sign-in options (Planning Center, email), backup reminder delay, and the weekly audit summary email.
+**Admin → Settings** has: branding (logo, names, colour), sales tax rate (applies to new submissions only), **Second approval for large budgets** (an approved total, including tax, at or above which a second accountant must sign off; empty means off), **Reminder texts** (whether Twilio is connected, texts sent this month, and the monthly limit; 0 stops texts), church time zone, the Primary accountant, signing authorities, Planning Center (connection, sign-in options, the Group Leader and Ministry Department fields, and **Test a person**), and the requesters failing verification.
 
 - **Sales tax**: type the new rate (for example 12 or 12.5) and confirm. Requests already submitted keep the rate they were submitted with.
 - **Accountants**: more than one person can have the Accountant role (give it in Users & Roles). Choose the **Primary accountant**, who gets the accountant emails; everyone else with the Accountant or Backup approver role is a backup approver. If the Primary accountant loses the role or is deactivated, choose a new one here.
@@ -305,7 +307,7 @@ Tax rate (applies to new submissions only), **Second approval for large budgets*
 - **Sign-in and Planning Center**: the contact email shown to people who can't sign in, which sign-in buttons appear, the custom field and the values that count as a Group Leader, and which roles need the check.
 - **Ministry Department**: the second Planning Center field, which names each leader's department, and what it does. **Off** ignores it. **Suggest** (the default) adds leaders to the departments their field names, and they can still pick another department on the form. **Restrict** lets leaders submit only for the departments their field names, plus any you assigned yourself, and hides **Other** on the form. Use **Test a person** to try the field and values on someone before you save. The **Requesters failing verification** list shows who is suspended or not yet verified.
 
-**Signing authorities**: the people who can sign church cheques. They don't need an account in the app. **Add signer** when someone can sign cheques (name, optional email, and the date they start). To fix a spelling or remove someone, open **Edit {name}**; **Remove** takes the date they stop and an optional reason. Removed signers stay on the list and on every payment they signed. When the Church Administrator records a cheque payment, she picks the two people who signed from this list, so keep at least two active; the page warns you when fewer remain.
+**Signing authorities**: the people who can sign church cheques. They don't need an account in the app. **Add signer** when someone can sign cheques (name, optional email, and the date they start). To fix a spelling or remove someone, open **Edit {name}**; **Remove** takes the date they stop and an optional reason. Removed signers stay on the list and on every payment they signed. When the Church Administrator records a cheque payment, they pick the two people who signed from this list, so keep at least two active; the page warns you when fewer remain.
 
 ### Keeping it healthy
 
@@ -322,7 +324,7 @@ Emails that don't go are retried for about three days. **Admin → Notifications
 
 - **Overview** (accountant, backup approver and System Administrator): for the chosen budget cycle, the board-approved total and how much is approved, requested and approved totals including tax, the average days to a decision, where each department's budget is (select a bar to open those budgets on the review dashboard), requested against approved by department, and the budgets waiting longest. **Show as a table** under each chart lists the same figures; **Export to Excel** downloads them.
 - **Overview, Spending and expenses** (accountant, backup approvers, Church Administrator, Board Chair, Vice-Chair and System Administrator): Available, Spent, Remaining and how much is used (the same figures as the Spending dashboard, to the cent); how many expenses wait for the accountant, the Board Chair, the requester, or to be paid, and how long payments take after approval; budget used by department (select a bar to open the department); spending by month against last year (select a month to open its ledger); how many expenses are at each status; and **How long expenses take** (days to the accountant's and the Board Chair's decisions and from approval to payment, with the expenses waiting longest). Choose a **Department** and a **From/To** date range to narrow this half; **Clear filters** shows everything again. **Export spending to Excel** downloads the spending workbook (not for the board).
-- **Activity** (available now): every action on the platform: who did it, in which role, when, on what, and why. Use the coloured quick views (Today, Decisions this week, Money changes; the System Administrator also has Failed sign-ins and access denied, Settings and role changes, and Emails that failed), search (a reference number, person or department), or **More filters** (person, role used, area, kind of event, department, cycle, dates). **Role used** narrows the log to what people did in one role; it doesn't let you act as anyone. Select a budget's reference to open it: the review screen for the accountant, or the budget itself for its own leaders. Each filter you apply shows as a chip under the search box; select its **×** to remove just that one, or **Reset filters**. Each event shows its area's icon and colour. **Show the details** on a row shows the before and after values, with changes marked. **Export to Excel** downloads the filtered log; the export is recorded too. Pages hold 50 events.
+- **Activity**: every action on the platform: who did it, in which role, when, on what, and why. Use the coloured quick views (Today, Decisions this week, Money changes; the System Administrator also has Failed sign-ins and access denied, Settings and role changes, and Emails that failed), search (a reference number, person or department), or **More filters** (person, role used, area, kind of event, department, cycle, dates). **Role used** narrows the log to what people did in one role; it doesn't let you act as anyone. Select a budget's reference to open it: the review screen for the accountant, or the budget itself for its own leaders. Each filter you apply shows as a chip under the search box; select its **×** to remove just that one, or **Reset filters**. Each event shows its area's icon and colour. **Show the details** on a row shows the before and after values, with changes marked. **Export to Excel** downloads the filtered log; the export is recorded too. Pages hold 50 events.
   - Who sees what: the System Administrator sees everything, including sign-ins, access denied, settings and role changes, and emails. The accountant and backup approver see the budget, expense and spending log, and the Church Administrator sees the spending log. Everyone sees what they did themselves in those areas. Sign-ins, settings and emails are the System Administrator's alone, even your own. Nobody can sign in as, or act for, someone else.
   - Each budget has its own **Activity on this budget** page, linked from the budget. Department leaders see it for their own budgets.
 - **Access** (System Administrator only; other staff don't see it): the last 7 days of sign-ins by day and method, failed sign-ins, access denied attempts (with the page), people whose Group Leader check is suspended, departments without a Backup, and Planning Center mapping problems. Each item links to where you fix it.
@@ -336,20 +338,20 @@ The address keeps your filters, so you can bookmark a view or send the link to a
 
 ## 10. Frequently asked questions
 
-**How is tax calculated?** 12% of the subtotal, once, rounded to the cent. Example: $1,025.00 + $123.00 tax = $1,148.00.
+**How is tax calculated?** 12% of the subtotal, once, rounded to the cent. Example: $1,025.00 + $123.00 tax = $1,148.00. Every price you type is before tax. On the budget form and the review screen, **How is tax calculated?** opens the explanation beside the page without losing what you typed.
 
 **Why was I approved for less than I asked?** The board sets each department's yearly amount; the accountant enters it including tax. See the decision email or Messages.
 
 **Does answering a question use one of my two edits?** No.
 
-**Can I upload quotes or documents?** Only receipts on expense claims. Use product links instead.
+**Can I upload quotes or documents?** Receipts on expense claims, and a quote, invoice or photo on a purchase request (up to 5 files, 10 MB each). On an annual budget, use product links and notes instead.
 
-**I didn't get an email.** Check spam, then My tasks, which always shows what needs you. Ask the System Administrator to check **Notifications**.
+**I didn't get an email.** Check spam, then My tasks, which always shows what needs you. Ask the System Administrator to check **Admin → Notifications & Audit**.
 
 **Someone else in my department started the budget.** That's fine: everyone in the department works on the same one.
 
-**How do I change my personal information?** On the **Help** page, under **Your personal information**, choose **See my information** or **Correct my information**, add the details and send it (once a day). The System Administrators are emailed and reply within 30 days. Financial records are kept for the retention period and aren't deleted on request. The **Privacy** notice (in the footer, and on the sign-in screen) explains what's kept and why.
+**Can I get reminders by text instead of email?** Texts come as well as emails, not instead, if your Planning Center profile has a mobile number. Reply STOP to stop the texts. See **Reminder texts** in section 1.
 
-**How is tax calculated?** Every price is before tax; tax is worked out once on the subtotal and rounded to the cent. On the budget form and the review screen, **How is tax calculated?** opens the explanation beside the page without losing what you typed.
+**How do I change my personal information?** On the **Help** page, under **Your personal information**, choose **See my information** or **Correct my information**, add the details and send it (once a day). The System Administrators are emailed and reply within 30 days. Financial records are kept for the retention period and aren't deleted on request. The **Privacy** notice (in the footer, and on the sign-in screen) explains what's kept and why.
 
 **Who do I contact?** The System Administrator for access; the accountant for budget and expense questions.
