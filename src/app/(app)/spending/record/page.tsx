@@ -19,6 +19,7 @@ import { getViewer } from "@/lib/viewer";
 import { BudgetStrip } from "../../expenses/budget-strip";
 import { recordEntryAction } from "../actions";
 import { EntryFields } from "../entry-fields";
+import { RemainingPreview } from "../remaining-preview";
 
 const r = spendingCopy.record;
 
@@ -124,6 +125,9 @@ async function RecordContent({
                 <input type="hidden" name="cycleId" value={cycle.id} />
                 <input type="hidden" name="departmentId" value={department.id} />
                 <input type="hidden" name="idempotencyKey" value={randomUUID()} />
+                {options.figures?.annualRequestId && (
+                  <RemainingPreview remainingCents={options.figures.remaining} />
+                )}
                 <EntryFields
                   lines={options.lines}
                   period={cycle.period}

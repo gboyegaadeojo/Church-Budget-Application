@@ -234,6 +234,9 @@ export const spendingCopy = {
     saved: "Recorded. Spent and Remaining are updated.",
     noBudget:
       "This department has no approved budget for this year. Entries are flagged Unbudgeted.",
+    remainingLabel: "Remaining:",
+    becomes: "becomes",
+    overBy: (amount: string) => `Over budget by ${amount}`,
   },
   edit: {
     title: "Spending entry",
