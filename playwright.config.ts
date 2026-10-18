@@ -18,7 +18,11 @@ export default defineConfig({
     timezoneId: "America/Winnipeg",
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /phone\.spec\.ts/ },
+    // The Stage 5 phone check: a Pixel 7 (Chromium) with touch.
+    { name: "phone", use: { ...devices["Pixel 7"] }, testMatch: /phone\.spec\.ts/ },
+  ],
   // The fake server runs the built app against an in-process Postgres (PGlite), seeded
   // with test people, with fake Google and Planning Center sign-in. No credentials needed.
   webServer: {

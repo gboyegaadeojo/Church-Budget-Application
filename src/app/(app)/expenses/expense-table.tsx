@@ -31,7 +31,12 @@ export function ExpenseTable({
   extra?: ExtraColumn[];
 }) {
   return (
-    <div className="-mx-1 overflow-x-auto px-1" tabIndex={0} role="region" aria-label={caption}>
+    <div
+      className="relative -mx-1 overflow-x-auto px-1"
+      tabIndex={0}
+      role="region"
+      aria-label={caption}
+    >
       <table className="w-full min-w-[44rem] text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-border text-[11px] tracking-wide text-fg-muted uppercase">

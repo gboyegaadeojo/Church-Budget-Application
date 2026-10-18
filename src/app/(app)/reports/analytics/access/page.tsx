@@ -54,7 +54,7 @@ function EventTable({
   if (events.length === 0) return <EmptyState>{t.noEvents}</EmptyState>;
   return (
     // Focusable, so a table that scrolls sideways on a phone can be scrolled by keyboard.
-    <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={caption}>
+    <div className="relative overflow-x-auto" tabIndex={0} role="region" aria-label={caption}>
       <table className="w-full text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
@@ -104,7 +104,12 @@ async function AccessContent() {
       <AnalyticsTabs current="access" showAccess />
 
       <Section title={t.signIns} id="sign-ins" icon={LogIn} tone="blue">
-        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={t.signInsCaption}>
+        <div
+          className="relative overflow-x-auto"
+          tabIndex={0}
+          role="region"
+          aria-label={t.signInsCaption}
+        >
           <table className="w-full text-sm">
             <caption className="sr-only">{t.signInsCaption}</caption>
             <thead>

@@ -10,7 +10,7 @@ import {
   PermissionDenied,
   Section,
 } from "@/components/ui/display";
-import { buttonClass, inputClass, linkClass } from "@/components/ui/styles";
+import { buttonClass, inputClass, linkClass, standaloneLinkClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
 import { getDb } from "@/db";
 import {
@@ -101,7 +101,7 @@ async function DepartmentsContent({
             <EmptyState>{p.empty}</EmptyState>
           ) : (
             <div
-              className="-mx-1 overflow-x-auto px-1"
+              className="relative -mx-1 overflow-x-auto px-1"
               tabIndex={0}
               role="region"
               aria-label={p.caption}
@@ -155,7 +155,7 @@ function DepartmentRow({ row, zone }: { row: DepartmentOverviewRow; zone: string
         {row.requestId ? (
           <Link
             href={`/annual/review/${row.requestId}`}
-            className={linkClass}
+            className={cn(linkClass, standaloneLinkClass)}
             aria-label={p.open(row.name)}
           >
             {row.name}

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminSkeleton, PageHeader, Section } from "@/components/ui/display";
-import { cardClass, linkClass } from "@/components/ui/styles";
+import { cardClass, linkClass, standaloneLinkClass } from "@/components/ui/styles";
 import { helpCopy, type HelpGuide } from "@/copy/help";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/roles";
@@ -48,7 +48,7 @@ async function HelpContent() {
         <ul className="space-y-1 text-sm">
           {h.topics.map((t) => (
             <li key={t.id}>
-              <Link href={`#${t.id}`} className={linkClass}>
+              <Link href={`#${t.id}`} className={cn(linkClass, standaloneLinkClass)}>
                 {t.question}
               </Link>
             </li>

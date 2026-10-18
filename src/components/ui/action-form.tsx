@@ -349,7 +349,7 @@ export function CheckboxField({
           aria-describedby={
             [hint && hintId, error && errorId].filter(Boolean).join(" ") || undefined
           }
-          className="mt-0.5 size-5 shrink-0 accent-accent"
+          className="size-6 shrink-0 accent-accent"
         />
         <label htmlFor={inputId} className="text-sm">
           {label}
@@ -393,7 +393,7 @@ export function CheckboxGroup({
               name={name}
               value={o.value}
               defaultChecked={defaultValues.includes(o.value)}
-              className="size-5 shrink-0 accent-accent"
+              className="size-6 shrink-0 accent-accent"
             />
             <label htmlFor={`${groupId}-${o.value}`} className="text-sm">
               {o.label}

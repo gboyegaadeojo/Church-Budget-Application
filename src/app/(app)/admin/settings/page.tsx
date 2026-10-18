@@ -11,7 +11,8 @@ import {
   PermissionDenied,
   Section,
 } from "@/components/ui/display";
-import { linkClass } from "@/components/ui/styles";
+import { linkClass, standaloneLinkClass } from "@/components/ui/styles";
+import { cn } from "@/lib/cn";
 import { adminCopy } from "@/copy/admin";
 import { brandingCopy } from "@/copy/branding";
 import { getDb } from "@/db";
@@ -143,7 +144,7 @@ async function SettingsContent() {
           icon={Palette}
           tone="pink"
         >
-          <Link href="/admin/settings/branding" className={linkClass}>
+          <Link href="/admin/settings/branding" className={cn(linkClass, standaloneLinkClass)}>
             {brandingCopy.settingsLink}
           </Link>
         </Section>
@@ -278,7 +279,10 @@ async function SettingsContent() {
                 className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between"
               >
                 <span>
-                  <Link href={`/admin/users/${p.id}`} className={linkClass}>
+                  <Link
+                    href={`/admin/users/${p.id}`}
+                    className={cn(linkClass, standaloneLinkClass)}
+                  >
                     {p.name}
                   </Link>
                   <span className="block text-fg-muted">{p.email}</span>

@@ -1161,7 +1161,7 @@ Required:
 - No drag-only interactions (WCAG 2.5.7); reordering has buttons too.
 - Text resizes to 200% without loss of content.
 
-Accessibility testing must cover the actual implementation, not merely the design mockups, including one pass with a screen reader (VoiceOver or NVDA).
+Accessibility testing must cover the actual implementation, not merely the design mockups: axe on every page in the end-to-end tests, keyboard use, and the phone check. (A manual screen-reader pass was dropped from Stage 5 by the church, docs/decisions.md 2026-10-18.)
 
 ---
 

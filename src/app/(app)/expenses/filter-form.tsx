@@ -97,7 +97,7 @@ export function ExpenseFilterForm({
               name="overBudget"
               value="yes"
               defaultChecked={filters.overBudget === "yes"}
-              className="size-5 accent-accent"
+              className="size-6 accent-accent"
             />
             {f.overBudget}
           </label>

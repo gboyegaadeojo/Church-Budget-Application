@@ -172,7 +172,7 @@ export function PaymentForm({
                 value={value}
                 checked={method === value}
                 onChange={() => setMethod(value)}
-                className="size-4 shrink-0 accent-accent"
+                className="size-6 shrink-0 accent-accent"
               />
               <Icon className="size-4 shrink-0 text-fg-muted" aria-hidden="true" />
               {p.methods[value]}
@@ -210,7 +210,7 @@ export function PaymentForm({
                 type="checkbox"
                 checked={receiptSigned}
                 onChange={(e) => setReceiptSigned(e.target.checked)}
-                className="size-5 accent-accent"
+                className="size-6 accent-accent"
               />
               {p.receiptSigned}
             </label>

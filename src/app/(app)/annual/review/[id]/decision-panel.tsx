@@ -182,7 +182,7 @@ export function DecisionPanel({
                 setFormError(null);
               }}
               aria-describedby={`${ids}-${k}-hint`}
-              className="mt-0.5 size-5 shrink-0 accent-accent"
+              className="size-6 shrink-0 accent-accent"
             />
             <span className="space-y-0.5">
               <span className={cn("block text-sm font-medium", k === "decline" && "text-danger")}>
@@ -611,7 +611,7 @@ export function ReopenControl({
                   type="checkbox"
                   checked={confirmed}
                   onChange={(e) => setConfirmed(e.target.checked)}
-                  className="mt-0.5 size-5 shrink-0 accent-accent"
+                  className="size-6 shrink-0 accent-accent"
                 />
                 {r.reopenExpensesConfirm}
               </label>

@@ -2728,7 +2728,7 @@ Build and release in stages. Each stage is usable on its own and ends with its a
 
 ## Stage 5: Hardening and launch
 
-- Security review, accessibility pass with a screen reader, mobile testing, backup and restore test, email deliverability test, pilot with the accountant, Board Chair, church administrator, and two departments, user manual checked against the built app (Section 22), go-live checklist complete (Section 21).
+- Security review, mobile testing, backup and restore test, email deliverability test, pilot with the accountant, Board Chair, church administrator, and two departments, user manual checked against the built app (Section 22), go-live checklist complete (Section 21).
 
 # 16. Future Enhancements
 

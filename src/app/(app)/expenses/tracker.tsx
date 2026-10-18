@@ -86,7 +86,7 @@ export function trackerSteps(input: {
 
 export function ApprovalTracker({ steps, zone }: { steps: Step[]; zone: string }) {
   return (
-    <nav aria-label={t.label} className="overflow-x-auto" tabIndex={0}>
+    <nav aria-label={t.label} className="relative overflow-x-auto" tabIndex={0}>
       <ol className="flex min-w-max gap-2 sm:gap-4">
         {steps.map((step, i) => {
           const Icon = ICON[step.state];

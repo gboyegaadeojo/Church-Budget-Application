@@ -38,7 +38,7 @@ export function ChartCard({
         <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-medium lg:min-h-9">
           {o.asTable}
         </summary>
-        <div className="overflow-x-auto border-t border-border p-3">{table}</div>
+        <div className="relative overflow-x-auto border-t border-border p-3">{table}</div>
       </details>
     </section>
   );
