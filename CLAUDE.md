@@ -11,7 +11,7 @@ Read the relevant FRs and the DRD screen section before starting any feature. If
 
 ## Hard constraints
 
-1. **Free tiers only.** Don't add a paid service, plan or dependency. If a feature seems to need one, stop and record it in `docs/decisions.md`.
+1. **Free tiers only.** Don't add a paid service, plan or dependency. If a feature seems to need one, stop and record it in `docs/decisions.md`. The one approved exception is Twilio for reminder texts (2026-10-18).
 2. **Money is integer cents.** Never use floating point for money. All amounts go through `src/lib/money.ts`.
 3. **The server is authoritative.** Recalculate every total, tax and balance on the server, and ignore client-sent totals.
 4. **Permissions are checked on the server** for every route and action, in one place (`src/lib/authz.ts`). Hiding UI is not security. A user's permissions are the union of their roles (Requirements 3.6). The System Administrator can **read everything** but cannot perform money actions without the matching role.
@@ -34,6 +34,7 @@ Read the relevant FRs and the DRD screen section before starting any feature. If
 | Auth | Auth.js (NextAuth v5): custom OAuth provider for Planning Center + emailed-code sign-in for the Church Administrator and System Administrators. No Google sign-in (docs/decisions.md, 2026-10-15) |
 | Planning Center | People API, called server-side with the church's Personal Access Token |
 | Email | Resend (REST API via `fetch`, the church's existing account) behind an `EmailSender` interface; a fake sender in tests |
+| Reminder texts | Twilio pay-as-you-go (REST via `fetch`) behind an `SmsSender` interface, `src/lib/sms/`; the one approved paid exception to constraint 1 (docs/decisions.md 2026-10-18) |
 | Files (receipts, logo) | Cloudflare R2 (S3 API), private bucket, signed URLs |
 | Excel | ExcelJS, server-side |
 | Hosting | Netlify free (Next.js runtime) |
@@ -136,6 +137,7 @@ AUTH_SECRET, AUTH_URL
 PCO_CLIENT_ID, PCO_CLIENT_SECRET          # OAuth sign-in
 PCO_APP_ID, PCO_PAT_SECRET                # server-side People API (Personal Access Token)
 RESEND_API_KEY, RESEND_FROM               # email sending (From is on the church's verified domain)
+TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM   # reminder texts (the one paid service, docs/decisions.md 2026-10-18)
 R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
 JOBS_SECRET
 APP_TIMEZONE=America/Winnipeg

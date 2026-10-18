@@ -508,6 +508,7 @@ describe("nightly pco-verify job", () => {
       suspended: 0,
       departmentsJoined: 0,
       mappings: null,
+      phonesChanged: 0,
       unavailable: true,
     });
     const [after] = await db.select().from(users).where(eq(users.id, user.id));

@@ -128,6 +128,12 @@ export const users = pgTable(
      */
     pcoMinistryDepartments: jsonb("pco_ministry_departments").$type<string[]>(),
     pcoDepartmentsCheckedAt: timestamp("pco_departments_checked_at", { withTimezone: true }),
+    /**
+     * The person's mobile number from Planning Center (E.164, "+12045550123"), for
+     * reminder texts. Refreshed at sign-in and nightly; null when Planning Center has none.
+     */
+    phoneE164: text("phone_e164"),
+    phoneCheckedAt: timestamp("phone_checked_at", { withTimezone: true }),
     accessStatus: accessStatusEnum("access_status").notNull().default("pending_department"),
     active: boolean("active").notNull().default(true),
     version: version(),
@@ -898,6 +904,50 @@ export const emailOutbox = pgTable(
     index("email_outbox_expense_idx").on(t.expenseSubmissionId, t.createdAt),
     check("email_outbox_sent_has_time", sql`(${t.status} = 'sent') = (${t.sentAt} is not null)`),
     check("email_outbox_attempts_non_negative", sql`${t.attempts} >= 0`),
+  ],
+);
+
+/**
+ * Reminder texts (docs/decisions.md 2026-10-18), queued beside the reminder email in the
+ * same transaction and sent after commit like the email outbox. Texts go only in church
+ * daytime, under a monthly cap; a person stops them by replying STOP (the provider
+ * enforces it). Rows are never deleted.
+ */
+export const smsOutbox = pgTable(
+  "sms_outbox",
+  {
+    id: id(),
+    /** The reminder it goes with, e.g. "expenses.reminder.payment". */
+    template: text("template").notNull(),
+    toPhone: text("to_phone").notNull(),
+    toUserId: uuid("to_user_id").references(() => users.id),
+    body: text("body").notNull(),
+    expenseSubmissionId: uuid("expense_submission_id").references(
+      (): AnyPgColumn => expenseSubmissions.id,
+    ),
+    cycleId: uuid("cycle_id").references(() => budgetCycles.id),
+    status: emailStatusEnum("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+    lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    providerMessageId: text("provider_message_id"),
+    lastError: text("last_error"),
+    /** Same key as the reminder email: a repeat run queues nothing new. */
+    dedupeKey: text("dedupe_key"),
+    /** A reminder text is stale after a day; it's marked failed instead of sent late. */
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("sms_outbox_dedupe_key")
+      .on(t.dedupeKey, t.toPhone)
+      .where(sql`${t.dedupeKey} is not null`),
+    index("sms_outbox_due_idx").on(t.status, t.nextAttemptAt),
+    index("sms_outbox_sent_idx").on(t.sentAt),
+    check("sms_outbox_sent_has_time", sql`(${t.status} = 'sent') = (${t.sentAt} is not null)`),
+    check("sms_outbox_attempts_non_negative", sql`${t.attempts} >= 0`),
   ],
 );
 

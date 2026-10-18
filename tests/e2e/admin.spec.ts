@@ -65,7 +65,9 @@ test.describe("Admin (Stage 1 step 4)", () => {
     await signInAs(page, PEOPLE.gina);
     await page.goto("/admin/settings");
 
-    await expect(page.getByText("Connected", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Planning Center" }).getByText("Connected", { exact: true }),
+    ).toBeVisible();
     const query = page.getByLabel("Name or email");
 
     await query.fill("Sam Lee");

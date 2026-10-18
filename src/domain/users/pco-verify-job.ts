@@ -12,6 +12,7 @@ import {
   type MappingRunSummary,
 } from "@/domain/departments/pco-mapping";
 import { refreshMinistryDepartments } from "./ministry-departments";
+import { refreshPhones } from "./phones";
 import { rolesOf } from "./sign-in";
 import { applyVerification } from "./verification";
 
@@ -23,6 +24,8 @@ export type PcoVerifySummary = {
   departmentsJoined: number;
   /** Departments mapped to a Planning Center team, group or tag (FR-39). */
   mappings: MappingRunSummary | null;
+  /** Reminder-text numbers that changed in Planning Center. */
+  phonesChanged: number;
   unavailable: boolean;
 };
 
@@ -53,6 +56,7 @@ export async function runPcoVerification(
     suspended: 0,
     departmentsJoined: 0,
     mappings: null,
+    phonesChanged: 0,
     unavailable: false,
   };
 
@@ -77,6 +81,7 @@ export async function runPcoVerification(
   ];
   if (roles.length === 0) {
     summary.mappings = await syncAllMappings(db, directory, now);
+    summary.phonesChanged = await refreshPhones(db, directory, now);
     return summary;
   }
 
@@ -117,6 +122,7 @@ export async function runPcoVerification(
 
   // After verification, so the mapping sees today's Group Leader answers (FR-39).
   summary.mappings = await syncAllMappings(db, directory, now);
+  summary.phonesChanged = await refreshPhones(db, directory, now);
 
   await writeAudit(db, {
     actor: { kind: "job" },

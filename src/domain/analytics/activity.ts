@@ -129,6 +129,8 @@ const RECENT_NOISE = [
   "annual.draft_saved",
   "notifications.email_sent",
   "notifications.email_failed",
+  "notifications.sms_sent",
+  "notifications.sms_failed",
   "admin.activity_exported",
   "admin.pco_person_searched",
   "admin.pco_person_tested",

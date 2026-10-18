@@ -59,14 +59,36 @@ const PERSON_42 = {
     type: "Person",
     id: "42",
     attributes: { name: "Sam Lee", status: "active" },
-    relationships: { emails: { data: [{ type: "Email", id: "9" }] } },
+    relationships: {
+      emails: { data: [{ type: "Email", id: "9" }] },
+      phone_numbers: {
+        data: [
+          { type: "PhoneNumber", id: "5" },
+          { type: "PhoneNumber", id: "6" },
+        ],
+      },
+    },
   },
-  included: [{ type: "Email", id: "9", attributes: { address: "Sam@Example.org", primary: true } }],
+  included: [
+    { type: "Email", id: "9", attributes: { address: "Sam@Example.org", primary: true } },
+    {
+      type: "PhoneNumber",
+      id: "5",
+      attributes: { number: "(204) 555-0100", location: "Home", primary: true },
+    },
+    {
+      type: "PhoneNumber",
+      id: "6",
+      attributes: { e164: "+12045550199", location: "Mobile", primary: false },
+    },
+    // Someone else's number in the same answer is never picked.
+    { type: "PhoneNumber", id: "7", attributes: { e164: "+12045550777", location: "Mobile" } },
+  ],
 };
 
 const ROUTES = {
   "/people/v2": { data: { type: "Organization", id: "100", attributes: { name: "IFC" } } },
-  "/people/v2/people/42?include=emails": PERSON_42,
+  "/people/v2/people/42?include=emails,phone_numbers": PERSON_42,
   "/people/v2/emails?where[address]=sam@example.org&per_page=25": {
     data: [
       {
@@ -120,6 +142,7 @@ describe("HttpPlanningCenterDirectory", () => {
       name: "Sam Lee",
       status: "active",
       emails: ["sam@example.org"],
+      phone: "+12045550199",
     });
     expect(await dir.findPeopleByEmail(" SAM@example.org ")).toHaveLength(1);
     expect(await dir.findFieldDefinition("ministry leader")).toEqual({

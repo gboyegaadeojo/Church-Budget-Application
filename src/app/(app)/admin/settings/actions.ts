@@ -8,6 +8,7 @@ import {
   testPerson,
   updateSignInSettings,
   updateSecondApprovalThreshold,
+  updateSmsMonthlyLimit,
   updateTaxRate,
   updateTimeZone,
   type TestPersonResult,
@@ -101,6 +102,19 @@ export async function secondApprovalAction(_: ActionState, data: FormData): Prom
         versions: form.json(data, "versions"),
       });
       return s.threshold.saved;
+    },
+    { paths: [PAGE] },
+  );
+}
+
+export async function smsLimitAction(_: ActionState, data: FormData): Promise<ActionState> {
+  return runAction(
+    async (tx, viewer) => {
+      await updateSmsMonthlyLimit(tx, viewer, {
+        limit: form.text(data, "limit"),
+        versions: form.json(data, "versions"),
+      });
+      return s.sms.saved;
     },
     { paths: [PAGE] },
   );

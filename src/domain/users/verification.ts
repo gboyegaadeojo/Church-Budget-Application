@@ -5,6 +5,7 @@ import { promoteBackupsWhenPrimaryLeaves } from "@/domain/departments/service";
 import { writeAudit, type AuditActor } from "@/lib/audit";
 import { emailLeaderSuspended } from "./emails";
 import { PCO_GRACE_MS } from "./access";
+import type { PcoPerson } from "@/lib/pco";
 import type { LeaderCheck } from "./leader-check";
 
 type UserRow = typeof users.$inferSelect;
@@ -40,6 +41,11 @@ async function pcoPersonTaken(tx: Tx, personId: string, userId: string): Promise
     .where(and(eq(users.pcoPersonId, personId), ne(users.id, userId)))
     .limit(1);
   return rows.length > 0;
+}
+
+/** The reminder-text number as Planning Center has it now (docs/decisions.md 2026-10-18). */
+export function phoneFrom(person: PcoPerson, now: Date) {
+  return { phoneE164: person.phone ?? null, phoneCheckedAt: now };
 }
 
 /**
@@ -93,6 +99,7 @@ export async function applyVerification(
         pcoFieldValueSnapshot: check.fieldValue,
         pcoPersonId: linkPerson,
         accessStatus: nextStatus,
+        ...phoneFrom(check.person, ctx.now),
         updatedAt: ctx.now,
       })
       .where(eq(users.id, user.id));
@@ -114,6 +121,7 @@ export async function applyVerification(
       pcoVerifiedAt: ctx.now,
       pcoFieldValueSnapshot: check.status === "not_leader" ? check.fieldValue : null,
       accessStatus: user.accessStatus === "inactive" ? "inactive" : "suspended_not_leader",
+      ...(check.status === "not_leader" ? phoneFrom(check.person, ctx.now) : {}),
       updatedAt: ctx.now,
     })
     .where(eq(users.id, user.id));

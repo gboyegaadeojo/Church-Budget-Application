@@ -1,5 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { emailCopy } from "@/copy/email";
+import { smsCopy } from "@/copy/sms";
 import { budgetCycles, budgetRequests, deadlineExtensions, departments } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
 import { queueNotice } from "@/domain/notifications/notice";
@@ -10,6 +11,7 @@ import {
 } from "@/domain/notifications/recipients";
 import { getChurchTimeZone } from "@/domain/settings";
 import { appUrl } from "@/lib/email/layout";
+import { enqueueSms } from "@/lib/sms/outbox";
 import { formatDateTime, zonedDate } from "@/lib/time-zone";
 
 /**
@@ -196,12 +198,22 @@ export async function runReminders(db: Db, now: Date = new Date()): Promise<Remi
           continue;
         }
         const when = formatDateTime(department.deadline, zone);
+        const to = await representativesOf(tx, [department.id]);
+        const dedupeKey = `reminder:${cycle.id}:${department.id}:${department.deadline.toISOString()}:${days}`;
+        await enqueueSms(tx, {
+          template: "cycle.reminder",
+          userIds: to.map((r) => r.userId),
+          body: smsCopy.deadline(days, appUrl("/annual")),
+          dedupeKey,
+          cycleId: cycle.id,
+          now,
+        });
         summary.reminders += await queueNotice(tx, {
           template: "cycle.reminder",
           audience: "requester",
-          to: await representativesOf(tx, [department.id]),
+          to,
           cycleId: cycle.id,
-          dedupeKey: `reminder:${cycle.id}:${department.id}:${department.deadline.toISOString()}:${days}`,
+          dedupeKey,
           now,
           content: {
             subject: m.reminder.subject(cycle.name, days),

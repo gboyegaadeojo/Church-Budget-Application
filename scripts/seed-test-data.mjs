@@ -48,6 +48,8 @@ const PEOPLE = [
     email: "sam.lee@example.org",
     name: "Sam Lee",
     pcoPersonId: "1001",
+    // A mobile number from Planning Center, for reminder texts.
+    phone: "+12045550101",
     roles: ["requester"],
     departments: [["Media Team", "backup"]],
     leader: true,
@@ -65,6 +67,7 @@ const PEOPLE = [
     name: "Pat Accountant",
     // Linked by an administrator, so Planning Center sign-in reaches this account.
     pcoPersonId: "1006",
+    phone: "+12045550106",
     roles: ["accountant"],
     departments: [],
     leader: false,
@@ -118,10 +121,11 @@ export async function seedTestData(client) {
   for (const p of PEOPLE) {
     const { rows } = await client.query(
       `insert into users (email, display_name, pco_person_id,
-         pco_leader_verified, pco_verified_at, access_status)
-       values ($1, $2, $3, $4, case when $4 then now() end, 'active')
+         pco_leader_verified, pco_verified_at, access_status, phone_e164, phone_checked_at)
+       values ($1, $2, $3, $4, case when $4 then now() end, 'active', $5,
+         case when $3::text is not null then now() end)
        returning id`,
-      [p.email, p.name, p.pcoPersonId ?? null, p.leader],
+      [p.email, p.name, p.pcoPersonId ?? null, p.leader, p.phone ?? null],
     );
     const userId = rows[0].id;
     ids[p.email] = userId;

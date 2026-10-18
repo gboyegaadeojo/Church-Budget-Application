@@ -15,6 +15,8 @@ export type PcoPerson = {
   /** "active" or "inactive" in Planning Center. */
   status: string;
   emails: string[];
+  /** Their mobile number for reminder texts (E.164, +1 only), when Planning Center has one. */
+  phone?: string | null;
 };
 
 export type PcoFieldDefinition = {
@@ -92,17 +94,49 @@ const text = (r: Resource, key: string): string => {
   return typeof value === "string" ? value : "";
 };
 
+/**
+ * A North American number as E.164 ("+12045550123"), or null. Texts go only to +1
+ * numbers: the church's sending number is Canadian (docs/decisions.md 2026-10-18).
+ */
+export function toE164(raw: string): string | null {
+  const trimmed = raw.trim();
+  let digits = trimmed.replace(/\D/g, "");
+  if (trimmed.startsWith("+") && !digits.startsWith("1")) return null;
+  if (digits.length === 11 && digits.startsWith("1")) digits = digits.slice(1);
+  // Area code and exchange can't start with 0 or 1 (NANP).
+  return /^[2-9]\d{2}[2-9]\d{6}$/.test(digits) ? `+1${digits}` : null;
+}
+
+/**
+ * The number to text: a Mobile one first, then the one marked primary, then any. Uses
+ * Planning Center's `e164` when present, else its `number`.
+ */
+export function pickPhone(numbers: Resource[]): string | null {
+  const usable = numbers
+    .map((r) => ({
+      phone: toE164(text(r, "e164") || text(r, "number")),
+      mobile: text(r, "location").toLowerCase() === "mobile",
+      primary: r.attributes.primary === true,
+    }))
+    .filter((n): n is { phone: string; mobile: boolean; primary: boolean } => n.phone !== null);
+  const rank = (n: { mobile: boolean; primary: boolean }) =>
+    (n.mobile ? 2 : 0) + (n.primary ? 1 : 0);
+  return usable.sort((a, b) => rank(b) - rank(a))[0]?.phone ?? null;
+}
+
 function toPerson(person: Resource, included: Resource[] = []): PcoPerson {
   const emailIds = new Set(relatedIds(person, "emails"));
   const emails = included
     .filter((r) => r.type === "Email" && emailIds.has(r.id))
     .map((r) => text(r, "address").trim().toLowerCase())
     .filter(Boolean);
+  const phoneIds = new Set(relatedIds(person, "phone_numbers"));
   return {
     id: person.id,
     name: text(person, "name"),
     status: text(person, "status") || "active",
     emails,
+    phone: pickPhone(included.filter((r) => r.type === "PhoneNumber" && phoneIds.has(r.id))),
   };
 }
 
@@ -181,7 +215,7 @@ export class HttpPlanningCenterDirectory implements PlanningCenterDirectory {
 
   async getPerson(personId: string): Promise<PcoPerson | null> {
     if (!/^\d+$/.test(personId)) return null;
-    const body = await this.get(`/people/v2/people/${personId}?include=emails`);
+    const body = await this.get(`/people/v2/people/${personId}?include=emails,phone_numbers`);
     if (body === null) return null;
     const parsed = single.safeParse(body);
     if (!parsed.success)
@@ -221,7 +255,7 @@ export class HttpPlanningCenterDirectory implements PlanningCenterDirectory {
     const q = query.trim();
     if (q.length < 2) return [];
     const people = await this.getList(
-      `/people/v2/people?where[search_name_or_email]=${encodeURIComponent(q)}&include=emails&per_page=10`,
+      `/people/v2/people?where[search_name_or_email]=${encodeURIComponent(q)}&include=emails,phone_numbers&per_page=10`,
       1,
     );
     return people.data.map((p) => toPerson(p, people.included));

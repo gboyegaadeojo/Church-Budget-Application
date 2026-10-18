@@ -29,7 +29,8 @@
       "emails": ["sam.lee@example.org"],
       "fieldValues": {
         "77": ["true"]
-      }
+      },
+      "phone": "+12045550101"
     },
     {
       "id": "1002",
@@ -75,7 +76,8 @@
       "emails": ["pat.accountant@example.org"],
       "fieldValues": {
         "77": ["false"]
-      }
+      },
+      "phone": "+12045550106"
     },
     {
       "id": "1007",
@@ -93,7 +95,8 @@
       "emails": ["cleo.chair@example.org"],
       "fieldValues": {
         "77": ["false"]
-      }
+      },
+      "phone": "+12045550108"
     },
     {
       "id": "1009",

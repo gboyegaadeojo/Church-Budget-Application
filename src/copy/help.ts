@@ -93,7 +93,7 @@ export const helpCopy = {
         "Admin → Departments: keep the list current, set each department's Primary and Backup leaders, and handle proposed departments.",
         "Admin → Departments → a department → Planning Center mapping: link it to a Services team, group or tag, then Add or Ignore the leaders Planning Center suggests, or let them be added automatically.",
         "Admin → Budget cycles: open the year's cycle, change its deadline with a reason, or give one department an extension.",
-        "Admin → Settings: sales tax rate (applies to new submissions only), Planning Center field, sign-in options and the Primary accountant.",
+        "Admin → Settings: sales tax rate (applies to new submissions only), Planning Center field, sign-in options, the Primary accountant and the monthly limit on reminder texts.",
         "Admin → Settings → Branding: the logo, church and application names, and the accent colour. A colour that's too light to read is refused, with a passing shade suggested.",
         "Admin → Notifications & Audit: see every email, and send failed ones again.",
         "Keep at least two System Administrators, so the church never loses access.",
@@ -177,7 +177,7 @@ export const helpCopy = {
 
 export const privacyCopy = {
   title: "Privacy notice",
-  updated: "Last updated October 16, 2026",
+  updated: "Last updated October 18, 2026",
   backToApp: "Back to the app",
   backToSignIn: "Back to sign in",
   intro: (church: string, app: string) =>
@@ -187,7 +187,7 @@ export const privacyCopy = {
       heading: "What we hold",
       items: [
         "Your name and email address, your roles in the app and the departments you lead.",
-        "If you sign in with Planning Center: your Planning Center person number, whether Planning Center shows you as a Group Leader, the value of that field and when it was last checked. We don't copy anything else from Planning Center.",
+        "If you sign in with Planning Center: your Planning Center person number, whether Planning Center shows you as a Group Leader, the value of that field and when it was last checked. We also copy your mobile number from Planning Center, if it has one, to text you reminders. We don't copy anything else from Planning Center.",
         "What you do in the app: budget requests, their items and versions, decisions, and the emails the app sends you.",
         "An activity log of sign-ins and changes, with a scrambled (hashed) form of your internet address. We never store the address itself, and we never store passwords.",
         "If you sign in with an emailed code, only a scrambled form of the code, which stops working after 10 minutes.",
@@ -196,7 +196,7 @@ export const privacyCopy = {
     {
       heading: "Why we hold it",
       items: [
-        "To let you sign in, to check that department leaders are Group Leaders, and to send you the emails about your budgets.",
+        "To let you sign in, to check that department leaders are Group Leaders, and to send you the emails about your budgets and reminder texts. Reply STOP to any text to stop them; reminder emails still come.",
         "To keep a complete and accurate record of the church's budgets and decisions, as a registered charity must.",
         "We don't sell your information, use it for advertising, or use it for anything unrelated to the church's budgets.",
       ],
@@ -207,7 +207,7 @@ export const privacyCopy = {
         "Department leaders see their own department's budgets.",
         "The accountant and backup approver see the budgets they review. The Board Chair and Vice-Chair can follow them.",
         "System Administrators can see everything, to run and support the app.",
-        "The services that host the app, its database, its email and its backups (Netlify, Neon, Resend, Cloudflare and Google Drive) store it for us under their own security and privacy terms. Some of them store data outside Canada, usually in the United States, where it may be subject to that country's laws.",
+        "The services that host the app, its database, its email and its backups (Netlify, Neon, Resend, Twilio, Cloudflare and Google Drive) store it for us under their own security and privacy terms. Some of them store data outside Canada, usually in the United States, where it may be subject to that country's laws.",
       ],
     },
     {

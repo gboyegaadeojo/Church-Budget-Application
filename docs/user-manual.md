@@ -59,6 +59,13 @@ From the account menu: theme (light, dark or system), **Away** (accountants, Boa
 
 Every email the app sends always goes to you straight away; emails can't be turned off.
 
+### Reminder texts
+
+If your Planning Center profile has a mobile number, the reminders also come as a short text: the annual budget deadline (7 days and 1 day before), expenses waiting for your approval (daily after 5 days), approved expenses waiting to be paid, and an approved purchase not yet bought or claimed. Texts are sent between 9:00 a.m. and 8:00 p.m.; a reminder made overnight arrives at 9:00. Each text links to the app, where you sign in as usual.
+
+- To change the number, update your mobile number in Planning Center; the app picks it up overnight.
+- To stop the texts, reply **STOP** to any of them. The reminder emails still come.
+
 ### Money on screen
 
 All amounts are Canadian dollars. Every total shows **Subtotal**, **Sales tax (12%)**, and **Total (incl. tax)**. Prices you type are **before tax**; the app adds tax once on the subtotal.
@@ -88,7 +95,7 @@ Each department submits **one** annual budget for the year. Once it has one (a d
 - Use **Messages** on the budget (once it's submitted) to talk with the accountant; each message emails the other side. Messages can't be changed after sending, don't change the budget or use an edit, and stay open after the decision. A link you paste becomes clickable. Your budget list shows "1 new message" until you open it.
 - The accountant's question, decline reason or approved amount appears on your budget's page and is emailed to everyone who represents your department. The approved amount may be different from what you asked for; it always includes tax, and the page and the email show it beside what you asked for.
 - Some years the accountant decides every department first and shares all the decisions at once. Then your budget stays **In Review** with "Decisions will be shared on" and the date, even if it has been decided, and you can't change it. You're emailed on that day.
-- Before the deadline you're reminded 7 days and 1 day ahead if your department hasn't submitted. You're also told when a budget cycle opens, closes or reopens, and when your deadline changes.
+- Before the deadline you're reminded 7 days and 1 day ahead if your department hasn't submitted (by email, and by text too if your Planning Center profile has a mobile number; see **Reminder texts** below). You're also told when a budget cycle opens, closes or reopens, and when your deadline changes.
 - You're also emailed when you submit (your receipt), when anyone in your department changes the budget, when the review starts, and if it's reopened. Each email says what changed and what, if anything, you need to do. Its link asks you to sign in.
 - **Emails** at the bottom of your budget's page lists every email sent to your department about it, and whether it went. If one says **Couldn't be sent**, the budget itself is safe; ask the administrator to check the address.
 
@@ -225,7 +232,7 @@ Every workbook has a **Summary** sheet (one row per budget, requested and approv
 3. Choose **Approve**, **Approve a smaller amount** (including tax, with a reason), **Return for clarification** to the department with a question, or **Decline** with a reason.
 4. Once both of you have approved, the budget is charged, and the requester and the Church Administrator are emailed. If your amounts differ, the lower one is approved.
 5. The Chair can turn on **Away** (account menu); the Vice-Chair then gets the emails and tasks. The Vice-Chair also decides when the Chair represents the department, submitted it, or is the payee. Otherwise the Vice-Chair's screen says the Chair decides it. Decisions show who made them, and in which role.
-6. If you haven't decided an expense within 5 days, you get a reminder email every day until you do. The accountant gets the same daily reminder for expenses waiting on them.
+6. If you haven't decided an expense within 5 days, you get a reminder email every day until you do, and a text if your Planning Center profile has a mobile number. The accountant gets the same daily reminder for expenses waiting on them.
 
 These screens are designed for a phone.
 
@@ -247,7 +254,7 @@ These screens are designed for a phone.
    - Then the date paid and the amount (the approved amount unless it differs, which needs a note).
 4. Confirm with the button, which names the amount and method. The requester and payee are emailed. A claim shows as Paid (a church-card claim, with nothing owed, as Closed), and a purchase as Purchased.
 5. **Spending → Ledger** shows the spending entry for each approved claim and purchase, with how it was paid. Nothing needs typing twice.
-6. Approved expenses not processed after 14 days are listed in a reminder email.
+6. Approved expenses not processed after 14 days are listed in a reminder email (and a short text to anyone with a mobile number in Planning Center).
 
 ### Record other spending
 
@@ -289,7 +296,7 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 ### Settings
 
-Tax rate (applies to new submissions only), **Second approval for large budgets** (an approved total, including tax, at or above which a second accountant must sign off; empty means off), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), email settings, sign-in options (Planning Center, email), backup reminder delay, and the weekly audit summary email.
+Tax rate (applies to new submissions only), **Second approval for large budgets** (an approved total, including tax, at or above which a second accountant must sign off; empty means off), Planning Center connection, custom field and **Test a person**, branding (logo, names, colour), **Reminder texts** (whether Twilio is connected, texts sent this month, and the monthly limit; 0 stops texts), email settings, sign-in options (Planning Center, email), backup reminder delay, and the weekly audit summary email.
 
 - **Sales tax**: type the new rate (for example 12 or 12.5) and confirm. Requests already submitted keep the rate they were submitted with.
 - **Accountants**: more than one person can have the Accountant role (give it in Users & Roles). Choose the **Primary accountant**, who gets the accountant emails; everyone else with the Accountant or Backup approver role is a backup approver. If the Primary accountant loses the role or is deactivated, choose a new one here.
