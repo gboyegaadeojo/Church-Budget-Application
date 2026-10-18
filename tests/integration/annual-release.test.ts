@@ -12,7 +12,7 @@ import {
 import type { Db, Tx } from "@/db/types";
 import { listActivity } from "@/domain/analytics/activity";
 import type { DecisionInput } from "@/domain/annual/decision";
-import { getRequestView, listMyRequests } from "@/domain/annual/queries";
+import { departmentPicker, getRequestView, listMyRequests } from "@/domain/annual/queries";
 import {
   getReleaseOverview,
   isHolding,
@@ -293,6 +293,79 @@ describe("Hold and release on a schedule (AC-18)", () => {
     );
     await runScheduledReleases(db, new Date("2026-12-01T15:10:00Z"));
     expect(await emailsAbout(a.requestId, "annual.approved")).toEqual([]);
+  });
+});
+
+describe("A held decision on the department's own pages (docs/decisions.md 2026-10-18)", () => {
+  /** Gives a department's leader a staff role as well. */
+  async function alsoStaff(leader: Subject, role: "church_admin" | "board_chair") {
+    await db.insert(userRoles).values({ userId: leader.id, role });
+    return fresh(leader);
+  }
+
+  async function seenBy(viewer: Subject, requestId: string, cycleId: string) {
+    const view = await run((tx) => getRequestView(tx, viewer, requestId));
+    const mine = await run((tx) => listMyRequests(tx, viewer));
+    const picker = await run((tx) => departmentPicker(tx, viewer, cycleId));
+    const choice = picker.choices.find((c) => c.existing?.requestId === requestId);
+    const history = await listActivity(db, viewer, { requestId });
+    return {
+      status: view?.status,
+      decision: view?.decision ?? null,
+      listed: mine.find((r) => r.id === requestId)?.status,
+      picker: choice?.existing,
+      events: history.items.map((i) => i.eventType),
+    };
+  }
+
+  it("every leader of the department sees In Review until release, whatever other roles they hold", async () => {
+    const cycle = await newCycle();
+    const pure = await submitted(cycle.id);
+    const admins = await submitted(cycle.id);
+    const chairs = await submitted(cycle.id);
+    await hold(cycle.id);
+    for (const r of [pure, admins, chairs]) {
+      await decide(r.requestId, { kind: "approve_as_requested" });
+    }
+    const churchAdmin = await alsoStaff(admins.me, "church_admin");
+    const boardChair = await alsoStaff(chairs.me, "board_chair");
+
+    for (const [viewer, requestId] of [
+      [pure.me, pure.requestId],
+      [churchAdmin, admins.requestId],
+      [boardChair, chairs.requestId],
+    ] as const) {
+      const seen = await seenBy(viewer, requestId, cycle.id);
+      expect(seen).toMatchObject({ status: "in_review", decision: null, listed: "in_review" });
+      expect(seen.picker).toMatchObject({ status: "in_review", editable: false });
+      expect(seen.events).not.toContain("annual.approved");
+    }
+
+    // Staff screens still show the truth, and so does another department's budget.
+    const review = await run((tx) => getReviewView(tx, accountant, admins.requestId));
+    expect(review).toMatchObject({ status: "approved", release: { holding: true } });
+    const other = await run((tx) => getRequestView(tx, churchAdmin, pure.requestId));
+    expect(other).toMatchObject({ status: "approved" });
+    const overview = await run((tx) => getReleaseOverview(tx, accountant, cycle.id, NOW));
+    expect(overview!.held.map((h) => h.requestId)).toContain(chairs.requestId);
+
+    // After Release now, every leader sees Approved.
+    const later = new Date("2026-10-25T17:00:00Z");
+    const input = { cycleId: cycle.id, version: await cycleVersion(cycle.id) };
+    await run((tx) =>
+      releaseNow(tx, accountant, { ...input, idempotencyKey: randomUUID() }, { now: later }),
+    );
+    for (const [viewer, requestId] of [
+      [pure.me, pure.requestId],
+      [churchAdmin, admins.requestId],
+      [boardChair, chairs.requestId],
+    ] as const) {
+      const seen = await seenBy(viewer, requestId, cycle.id);
+      expect(seen).toMatchObject({ status: "approved", listed: "approved" });
+      expect(seen.decision).not.toBeNull();
+      expect(seen.picker).toMatchObject({ status: "approved" });
+      expect(seen.events).toContain("annual.approved");
+    }
   });
 });
 
