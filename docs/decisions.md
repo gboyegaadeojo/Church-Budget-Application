@@ -941,3 +941,7 @@ The Departments item in the accountant's Annual Budget menu (DRD 6.0) was still 
 **Accepted for now:**
 - **No `script-src` in the CSP.** Next.js's inline scripts would need nonces, which turn off static rendering (Cache Components). Our main defence against injected scripts is React's escaping plus no `dangerouslySetInnerHTML` anywhere.
 - **`form-action` isn't restricted,** because Planning Center sign-in redirects from a form.
+
+## Stage 5 step 5: Remaining before and after on Record spending (2026-10-17)
+
+The live "Remaining: before → after" line DRD 6.8 asks for, noted as not built in Stage 4, now shows on Record spending once a department with an approved budget is chosen. It updates as the amount and type change: an expense lowers Remaining, a refund raises it, and below zero it reads "Over budget by $X" with an icon. It's a preview with `money.ts` in the browser; on save the server still recalculates and asks for the overspend note itself. A department with no approved budget shows no line (its entries are Unbudgeted).

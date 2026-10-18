@@ -62,6 +62,23 @@ test.describe("Spending (Stage 4)", () => {
     await expectAxeClean(page);
   });
 
+  test("DRD 6.8 Record spending shows Remaining before and after as the amount is typed", async ({
+    page,
+  }) => {
+    await signInAs(page, PEOPLE.gina);
+    await page.goto("/spending/record");
+    await page.getByLabel("Budget year", { exact: true }).selectOption({ label: "FY2026" });
+    await page.getByLabel("Department", { exact: true }).selectOption({ label: "Media Team" });
+    await page.getByRole("button", { name: "Continue" }).click();
+    const preview = page.getByText("Remaining:").locator("..");
+    await expect(preview).toBeVisible();
+    await page.getByLabel("Amount paid (incl. tax)").fill("999,999.00");
+    await expect(preview.getByText(/Over budget by \$/)).toBeVisible();
+    await page.getByLabel("Type").selectOption({ label: "Refund" });
+    await expect(preview.getByText(/Over budget by/)).toHaveCount(0);
+    await expectAxeClean(page);
+  });
+
   test("AC-88 a department leader can't record spending", async ({ page }) => {
     await signInAs(page, PEOPLE.sam);
     await page.goto("/spending/record");
@@ -79,6 +96,8 @@ test.describe("Spending (Stage 4)", () => {
       await page.goto("/spending");
       await page.getByLabel("Budget year", { exact: true }).selectOption({ label: "FY2026" });
       await page.getByRole("button", { name: "Show" }).click();
+      // The year is chosen with a GET form: wait for that page before looking.
+      await page.waitForURL(/[?&]cycle=/);
       await expect(page.getByRole("link", { name: "Media Team", exact: true })).toBeVisible();
       await expectAxeClean(page);
     }
