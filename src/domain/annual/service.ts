@@ -370,6 +370,7 @@ export async function startRequest(
   tx: Tx,
   actor: Subject,
   input: { cycleId: string; departmentId?: string; otherName?: string; fromLastYear?: boolean },
+  { now = new Date() }: { now?: Date } = {},
 ): Promise<StartResult> {
   const { actingRole } = assertCan(actor, "annual.start");
   const [cycle] = z.uuid().safeParse(input.cycleId).success
@@ -409,6 +410,9 @@ export async function startRequest(
       open: existing.status === "draft" || existing.status === "returned" ? "edit" : "view",
     };
   }
+  // A cycle stays Open all year for spending, so a new budget is refused once the
+  // department's deadline has passed (docs/decisions.md 2026-10-18).
+  await assertBeforeDeadline(tx, cycle.id, department.id, now);
 
   const [created] = await tx
     .insert(budgetRequests)
@@ -537,6 +541,7 @@ export async function saveDraft(
   const row = await loadRequest(tx, input.id);
   const { actingRole } = can(actor, "annual.edit_draft", row);
   if (row.status !== "draft") throw new RuleError(e.notDraft);
+  await assertYearNotClosed(tx, row.budgetCycleId);
   const version = parseVersion(input.version);
   const content = parseInput(requestContentSchema, input);
 
@@ -708,6 +713,15 @@ export function nextOrRefuse(from: RequestRow["status"], event: AnnualEvent, mes
   }
 }
 
+/** Nothing about a budget changes once its year has closed (docs/decisions.md 2026-10-18). */
+async function assertYearNotClosed(tx: Tx, cycleId: string) {
+  const [cycle] = await tx
+    .select({ status: budgetCycles.status })
+    .from(budgetCycles)
+    .where(eq(budgetCycles.id, cycleId));
+  if (cycle?.status === "closed") throw new RuleError(e.yearClosed);
+}
+
 /** The department's own deadline if extended, otherwise the cycle's (4.3, AC-136, AC-137). */
 async function assertBeforeDeadline(tx: Tx, cycleId: string, departmentId: string, now: Date) {
   const deadline = await effectiveDeadline(tx, cycleId, departmentId);
@@ -745,6 +759,7 @@ export async function reviseRequest(
   const { actingRole } = can(actor, "annual.revise", row);
   const version = parseVersion(input.version);
   if (row.version !== version) throw new ConflictError({ type: "budget_request", id: row.id });
+  await assertYearNotClosed(tx, row.budgetCycleId);
 
   const responding = row.status === "returned";
   const event: AnnualEvent = responding ? "respond" : "revise";

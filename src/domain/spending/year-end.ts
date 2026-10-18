@@ -16,13 +16,19 @@ import { writeAudit } from "@/lib/audit";
 import { assertCan, authorize, type Subject } from "@/lib/authz";
 import { appUrl } from "@/lib/email/layout";
 import { enqueueEmail } from "@/lib/email/outbox";
+import { emailCycleStatus } from "@/domain/cycles/emails";
+import { formatCAD } from "@/lib/money";
+import { spendingDashboard } from "./dashboard";
 import { reasonSchema } from "./schema";
 
 /**
- * The year-end lock (FR-29, FR-46, AC-90). The accountant locks a cycle's spending once
- * the year's money has settled; then nobody records, corrects or voids its entries, and
- * no new expenses go to that year. Reopening needs a reason. Both are audited and the
- * Church Administrators are told, since they record spending.
+ * Closing a budget year (FR-29, FR-46, AC-90; docs/decisions.md 2026-10-18). A cycle is the
+ * budget year: closing it ends the year. Its status becomes Closed and its spending is
+ * locked in the same step, so nobody records, corrects or voids its entries, no new
+ * expenses go to it, and the unspent budget returns to the church. The accountant, backup
+ * approver, Board Chair or Vice-Chair closes it once the year's money has settled.
+ * Reopening needs a reason. Both are audited; the Church Administrators (who record
+ * spending) and every department representative are told.
  *
  * Locking is refused while an expense for the year still waits for a decision or a
  * payment: approving or paying it would add to a locked ledger. Approved purchase
@@ -52,9 +58,12 @@ export type YearEnd = {
     id: string;
     name: string;
     budgetYear: number;
+    status: "draft" | "open" | "closed";
     version: number;
     lockedAt: Date | null;
     lockedBy: string | null;
+    /** What's left across the departments: what returns to the church on closing. */
+    unspentCents: number;
   };
   next: { id: string; name: string; locked: boolean } | null;
   awaitingDecision: YearEndItem[];
@@ -132,13 +141,13 @@ async function nextCycleOf(tx: Tx, budgetYear: number) {
   return next ?? null;
 }
 
-/** The year-end page; null when the person can't lock spending. */
+/** The Close budget year page; null when the person can't close a year. */
 export async function yearEndView(
   tx: Tx,
   viewer: Subject,
   cycleId?: string,
 ): Promise<YearEnd | null> {
-  if (!authorize(viewer, "spending.lock").allowed) return null;
+  if (!authorize(viewer, "cycles.close").allowed) return null;
   const all = await tx.select().from(budgetCycles).orderBy(desc(budgetCycles.budgetYear));
   // The year most likely to need closing: the latest whose budget year has ended.
   const thisYear = new Date().getUTCFullYear();
@@ -190,9 +199,11 @@ export async function yearEndView(
       id: chosen.id,
       name: chosen.name,
       budgetYear: chosen.budgetYear,
+      status: chosen.status,
       version: chosen.version,
       lockedAt: chosen.spendingLockedAt,
       lockedBy: lockedBy?.name ?? null,
+      unspentCents: await unspentOf(tx, viewer, chosen.id),
     },
     next,
     awaitingDecision: await items(tx, chosen.id, awaitingDecisionWhere(), next),
@@ -239,23 +250,31 @@ async function tellOffice(
   });
 }
 
+/** The remaining budget across the departments, as the Spending dashboard totals it. */
+async function unspentOf(tx: Tx, viewer: Subject, cycleId: string): Promise<number> {
+  return (await spendingDashboard(tx, viewer, cycleId))?.totals.remaining ?? 0;
+}
+
 export type LockResult = { cycleId: string; locked: boolean };
 
-/** Locks the cycle's spending (FR-29). */
-export async function lockSpending(
+/** Closes the budget year: status Closed and spending locked, together (FR-29). */
+export async function closeBudgetYear(
   tx: Tx,
   actor: Subject,
   input: { cycleId: unknown; version: unknown; idempotencyKey: unknown },
   { now = new Date() }: { now?: Date } = {},
 ): Promise<LockResult> {
   const key = parseKey(input.idempotencyKey);
-  const repeat = await previousResult<LockResult>(tx, key, actor, "spending.lock");
+  const repeat = await previousResult<LockResult>(tx, key, actor, "cycles.close");
   if (repeat) return repeat;
-  const { actingRole } = assertCan(actor, "spending.lock");
+  const { actingRole } = assertCan(actor, "cycles.close");
   const version = parseVersion(input.version);
   const cycle = await loadCycleForUpdate(tx, input.cycleId);
   if (cycle.version !== version) throw new ConflictError({ type: "budget_cycle", id: cycle.id });
-  if (cycle.spendingLockedAt) throw new RuleError(y.errors.alreadyLocked(cycle.name));
+  if (cycle.spendingLockedAt || cycle.status === "closed") {
+    throw new RuleError(y.errors.alreadyLocked(cycle.name));
+  }
+  if (cycle.status !== "open") throw new RuleError(y.errors.notOpen(cycle.name));
 
   const [waiting, unpaid] = await Promise.all([
     items(tx, cycle.id, awaitingDecisionWhere(), null),
@@ -265,9 +284,11 @@ export async function lockSpending(
     throw new RuleError(y.errors.notSettled(waiting.length, unpaid.length));
   }
 
+  const unspentCents = await unspentOf(tx, actor, cycle.id);
   await tx
     .update(budgetCycles)
     .set({
+      status: "closed",
       spendingLockedAt: now,
       spendingLockedByUserId: actor.id,
       version: cycle.version + 1,
@@ -282,26 +303,34 @@ export async function lockSpending(
     entity: { type: "budget_cycle", id: cycle.id },
     cycleId: cycle.id,
     details: {
-      before: { spendingLockedAt: null },
-      after: { spendingLockedAt: now.toISOString() },
+      before: { status: cycle.status, spendingLockedAt: null },
+      after: { status: "closed", spendingLockedAt: now.toISOString() },
+      unspentCents,
       openPurchaseRequests: open.map((o) => o.id),
     },
   });
-  await tellOffice(tx, cycle, "locked", [], now);
-  return storeIdempotent(tx, key, actor, "spending.lock", cycle.id, {
+  await tellOffice(
+    tx,
+    cycle,
+    "locked",
+    [{ label: m.facts.unspent, value: formatCAD(unspentCents) }],
+    now,
+  );
+  await emailCycleStatus(tx, cycle, "close");
+  return storeIdempotent(tx, key, actor, "cycles.close", cycle.id, {
     cycleId: cycle.id,
     locked: true,
   });
 }
 
-/** Reopens a locked cycle's spending, with a reason (FR-29). */
-export async function reopenSpending(
+/** Reopens a closed budget year, with a reason (FR-29): Open again, spending unlocked. */
+export async function reopenBudgetYear(
   tx: Tx,
   actor: Subject,
   input: { cycleId: unknown; version: unknown; reason: unknown },
   { now = new Date() }: { now?: Date } = {},
 ): Promise<LockResult> {
-  const { actingRole } = assertCan(actor, "spending.lock");
+  const { actingRole } = assertCan(actor, "cycles.close");
   const version = parseVersion(input.version);
   const { reason } = parseInput(z.object({ reason: reasonSchema }), { reason: input.reason });
   const cycle = await loadCycleForUpdate(tx, input.cycleId);
@@ -310,6 +339,7 @@ export async function reopenSpending(
   await tx
     .update(budgetCycles)
     .set({
+      status: "open",
       spendingLockedAt: null,
       spendingLockedByUserId: null,
       version: cycle.version + 1,
@@ -324,11 +354,12 @@ export async function reopenSpending(
     cycleId: cycle.id,
     reason,
     details: {
-      before: { spendingLockedAt: cycle.spendingLockedAt.toISOString() },
-      after: { spendingLockedAt: null },
+      before: { status: cycle.status, spendingLockedAt: cycle.spendingLockedAt.toISOString() },
+      after: { status: "open", spendingLockedAt: null },
     },
   });
   await tellOffice(tx, cycle, "reopened", [{ label: m.facts.reason, value: reason }], now);
+  await emailCycleStatus(tx, cycle, "reopen", reason);
   return { cycleId: cycle.id, locked: false };
 }
 
@@ -348,7 +379,7 @@ export async function carryOver(
   const key = parseKey(input.idempotencyKey);
   const repeat = await previousResult<CarryOverResult>(tx, key, actor, "expenses.carry_over");
   if (repeat) return repeat;
-  const { actingRole } = assertCan(actor, "spending.lock");
+  const { actingRole } = assertCan(actor, "cycles.close");
   const row = await loadExpense(tx, input.id, true);
   const version = parseVersion(input.version);
   if (row.version !== version) throw new ConflictError({ type: "expense_submission", id: row.id });

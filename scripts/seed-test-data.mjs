@@ -142,14 +142,15 @@ export async function seedTestData(client) {
     }
   }
 
-  // FY2026 is closed, with Media Team's budget approved and released, so expenses
-  // (Part B) can be charged to it. Media's FY2027 request is left to the annual form.
+  // FY2026 is the budget year being spent: open, its submission deadline long past, with
+  // Media Team's budget approved and released, so expenses (Part B) can be charged to it.
+  // Media's FY2027 request is left to the annual form.
   const gina = ids["gina.admin@example.org"];
   const pat = ids["pat.accountant@example.org"];
   const { rows: fy2026 } = await client.query(
     `insert into budget_cycles (name, budget_year, start_date, submission_deadline, status,
        default_tax_rate, created_by_user_id)
-     values ('FY2026', 2026, '2026-01-01', '2025-11-30T08:00:00Z', 'closed', '0.1200', $1)
+     values ('FY2026', 2026, '2026-01-01', '2025-11-30T08:00:00Z', 'open', '0.1200', $1)
      returning id`,
     [gina],
   );

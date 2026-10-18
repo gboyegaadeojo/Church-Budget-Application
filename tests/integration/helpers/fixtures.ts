@@ -48,6 +48,8 @@ export async function insertCycle(
       defaultTaxRate: "0.1200",
       status: "open",
       createdByUserId,
+      // A Closed cycle is a budget year that has ended: its spending is locked too.
+      ...(overrides.status === "closed" ? { spendingLockedAt: new Date() } : {}),
       ...overrides,
     })
     .returning();

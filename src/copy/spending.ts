@@ -52,7 +52,8 @@ export const spendingCopy = {
     none: "—",
     empty: "No departments yet.",
     noCycle: "There's no budget cycle yet.",
-    locked: (when: string) => `Spending is locked since ${when}. Nothing can be added or changed.`,
+    locked: (when: string) =>
+      `This budget year closed on ${when}. Nothing can be added or changed.`,
     record: "Record spending",
     export: "Export to Excel",
     ledger: "Ledger",
@@ -118,32 +119,36 @@ export const spendingCopy = {
     seeAll: "See all entries",
   },
   yearEnd: {
-    title: "Year-end",
+    title: "Close budget year",
     intro:
-      "Lock a year's spending once its money has settled. After that nobody can add, correct or void its entries, and no new expenses go to that year.",
-    link: "Year-end",
+      "Close a budget year once its money has settled. The year then ends: nobody can add, correct or void its entries, no new expenses go to it, and the budget left unspent goes back to the church.",
+    link: "Close budget year",
     back: "Spending dashboard",
     lockedBanner: (when: string, by: string | null) =>
-      by ? `Locked on ${when} by ${by}.` : `Locked on ${when}.`,
-    openBanner: "Spending for this year is open.",
-    checklist: "Before you lock",
+      by ? `Closed on ${when} by ${by}.` : `Closed on ${when}.`,
+    openBanner: "This budget year is open: departments can still spend from it.",
+    draftBanner: "This budget year hasn't been opened yet.",
+    unspent: (amount: string) => `Unspent: ${amount}`,
+    unspentOpen: "Goes back to the church when the year closes.",
+    unspentClosed: "Went back to the church when the year closed.",
+    checklist: "Before you close",
     awaitingDecision: "Waiting for a decision",
     awaitingDecisionNone: "No expenses are waiting for a decision.",
     awaitingPayment: "Approved but not yet paid or bought",
     awaitingPaymentNone: "Nothing is waiting to be paid or bought.",
     settleFirst:
-      "Decide or pay these first. Approving or paying them adds spending to this year, which can't happen once it's locked.",
-    lock: "Lock spending",
-    lockTitle: (cycle: string) => `Lock ${cycle} spending?`,
-    lockBody:
-      "Nobody can add, correct or void entries for this year until you reopen it. The Church Administrators are emailed.",
-    locked: (cycle: string) => `${cycle} spending is locked.`,
-    reopenHeading: "Reopen spending",
+      "Decide or pay these first. Approving or paying them adds spending to this year, which can't happen once it's closed.",
+    lock: "Close budget year",
+    lockTitle: (cycle: string) => `Close the ${cycle} budget year?`,
+    lockBody: (unspent: string) =>
+      `The year ends: no more spending or expenses for it, and the ${unspent} left unspent goes back to the church. Every department leader and the Church Administrators are emailed. You can reopen it with a reason.`,
+    locked: (cycle: string) => `${cycle} is closed.`,
+    reopenHeading: "Reopen the budget year",
     reopenIntro:
-      "Reopen the year to change its entries. Give a reason; it's kept in the activity log.",
+      "Reopen the year to change its spending or charge expenses to it. Give a reason; it's kept in the activity log.",
     reopenReason: "Reason for reopening",
-    reopen: "Reopen spending",
-    reopened: (cycle: string) => `${cycle} spending is open again.`,
+    reopen: "Reopen budget year",
+    reopened: (cycle: string) => `${cycle} is open again.`,
     openPurchases: "Approved purchase requests not yet bought",
     openPurchasesIntro: (next: string) =>
       `Cancel each one that won't go ahead, or carry it into ${next} so its money is set aside from next year's budget.`,
@@ -151,7 +156,7 @@ export const spendingCopy = {
       `Cancel each one that won't go ahead. To carry one over, the administrator first creates the ${year} budget cycle.`,
     openPurchasesNone: "No approved purchase requests are still open.",
     openPurchasesAfterLock:
-      "After you lock, approved purchase requests not yet bought are listed here to cancel or carry over.",
+      "After you close the year, approved purchase requests not yet bought are listed here to cancel or carry over.",
     carryReason: "Reason for carrying it over",
     carry: (next: string) => `Carry into ${next}`,
     carried: (next: string) => `Carried into ${next}.`,
@@ -166,18 +171,19 @@ export const spendingCopy = {
       amount: "Amount",
     },
     errors: {
-      alreadyLocked: (cycle: string) => `${cycle} spending is already locked.`,
-      notLocked: (cycle: string) => `${cycle} spending isn't locked.`,
+      alreadyLocked: (cycle: string) => `${cycle} is already closed.`,
+      notLocked: (cycle: string) => `${cycle} isn't closed.`,
+      notOpen: (cycle: string) => `${cycle} hasn't been opened yet, so it can't be closed.`,
       notSettled: (decision: number, payment: number) => {
         const parts = [
           decision ? `${decision} waiting for a decision` : "",
           payment ? `${payment} waiting to be paid or bought` : "",
         ].filter(Boolean);
-        return `This year still has expenses ${parts.join(" and ")}. Settle them before locking.`;
+        return `This year still has expenses ${parts.join(" and ")}. Settle them before closing it.`;
       },
       notCarriable:
         "Only an approved purchase request that hasn't been bought can be carried over.",
-      lockFirst: (cycle: string) => `Lock ${cycle} spending before carrying anything over.`,
+      lockFirst: (cycle: string) => `Close ${cycle} before carrying anything over.`,
       noNextCycle: (year: number) =>
         `There's no ${year} budget cycle yet. The administrator creates it first.`,
       noNextBudget: (department: string, next: string) =>
@@ -211,9 +217,9 @@ export const spendingCopy = {
     chooseDepartment: "Choose a department",
     next: "Continue",
     change: "Change",
-    locked: "Locked",
+    locked: "Closed",
     lockedNote: (cycle: string) =>
-      `Spending for ${cycle} is locked. The accountant can reopen it with a reason.`,
+      `${cycle} is closed. The accountant or the board can reopen it with a reason.`,
     type: "Type",
     spentOn: "Date paid",
     spentOnHint: (from: string, to: string) => `Between ${from} and ${to}.`,
@@ -256,7 +262,7 @@ export const spendingCopy = {
     fromExpense:
       "This entry was made from an approved expense, so it's changed through the expense.",
     openExpense: "Open the expense",
-    lockedNote: "The spending period is locked, so this entry can't be changed.",
+    lockedNote: "This budget year is closed, so this entry can't be changed.",
     back: "Ledger",
   },
   errors: {
@@ -273,7 +279,7 @@ export const spendingCopy = {
     departmentNotFound: "Choose an active department.",
     cycleNotFound: "Choose a budget cycle.",
     locked: (cycle: string) =>
-      `Spending for ${cycle} is locked. The accountant can reopen it with a reason.`,
+      `${cycle} is closed. The accountant or the board can reopen it with a reason.`,
     outsideYear: (from: string, to: string) =>
       `The date must be between ${from} and ${to}, the cycle's spending period. The accountant can allow another date.`,
     duplicate:

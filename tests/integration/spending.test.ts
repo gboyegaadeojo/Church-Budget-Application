@@ -172,7 +172,7 @@ describe("correcting and voiding (FR-24, AC-87)", () => {
     const admin = await person(db, ["system_admin"]);
     await db
       .update(budgetCycles)
-      .set({ spendingLockedAt: new Date(), spendingLockedByUserId: admin.id })
+      .set({ status: "closed", spendingLockedAt: new Date(), spendingLockedByUserId: admin.id })
       .where(eq(budgetCycles.id, world.cycle.id));
     await expect(record(world.office, entry(world))).rejects.toThrow(RuleError);
     await expect(

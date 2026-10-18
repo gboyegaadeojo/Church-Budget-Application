@@ -9,7 +9,7 @@ test("FR-50 the accountant downloads the expense workbook for FY2026", async ({ 
   await page.goto("/reports");
   const card = page.getByRole("region", { name: "Expenses and payments" });
   await expect(card).toBeVisible();
-  await card.getByLabel("Budget cycle", { exact: true }).selectOption({ label: "FY2026 (Closed)" });
+  await card.getByLabel("Budget cycle", { exact: true }).selectOption({ label: "FY2026 (Open)" });
   await expectAxeClean(page);
   const download = page.waitForEvent("download");
   await card.getByRole("button", { name: "Download Excel" }).click();

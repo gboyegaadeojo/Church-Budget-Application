@@ -1037,3 +1037,25 @@ The church no longer needs the Stage 5 "accessibility pass with a screen reader"
 - **Fixed by it:** links standing on their own (the Help questions, the Spending dashboard's Ledger link, Settings' Change the branding) were 20 px tall. They now use `standaloneLinkClass` (at least 24 px). Checkboxes and radios were 16-20 px; they're 24 px everywhere.
 - **Also fixed by it:** on a phone, Expenses → Ready to process became twice as wide as the screen once it listed an expense. Hidden (sr-only) text in the table is positioned absolutely, and its containing block was outside the table's scroll box, so it escaped the clipping. Every table scroll wrapper is now `relative`.
 - **On real phones:** [phone-check.md](phone-check.md) is a 30-minute script for one iPhone (Safari) and one Android phone (Chrome), covering what emulation can't: the camera, the keyboard over fields, text size and email links. It's run by the church on staging or the demo before the pilot.
+
+## A budget cycle is the budget year; closing it ends the year (2026-10-18)
+
+The church asked why FY2026 still showed in departments' budgets when its cycle read **Closed**. They see a budget cycle as the **budget year for spending**: closing it ends the year, and what's left unspent goes back to the church. The **submission deadline** is what ends annual budget submissions. Until now, Closed only ended submissions, and a separate Lock spending ended the year.
+
+- **Meaning:**
+  - **Draft:** not started.
+  - **Open:** the year is live. Departments submit until the deadline (or their extension) and spend all year.
+  - **Closed:** the year has ended. Spending is locked; nothing changes. Two cycles can be open at once: last year being spent, next year taking budgets.
+- **One step:** `closeBudgetYear` and `reopenBudgetYear` (`src/domain/spending/year-end.ts`) set the status and the spending lock together. The database enforces it with the check `(status = 'closed') = (spending_locked_at is not null)`.
+  - Migration `0026_cycle_year` turns cycles that were Closed but not locked back to Open, since they were still being spent.
+  - Every existing spending guard is unchanged.
+- **Who:** a new permission, `cycles.close`, for the accountant, backup approver, Board Chair and Vice-Chair. It covers closing, reopening and carry-over, and replaces `spending.lock` (accountants only). It's a money decision, so not the System Administrator. `cycles.manage` still covers editing, opening and the deadline.
+- **Where:** Spending → **Close budget year** (formerly Year-end). It shows **Unspent** (the Spending dashboard's remaining total) and the same checklist: nothing waiting for a decision or payment. Carry-over and Reopen are on the same page. The cycle page links there; its old Close and Reopen-with-a-new-deadline controls are gone. Reopening takes a reason and leaves the deadline alone.
+- **Submissions follow the deadline:**
+  - Starting a new budget now checks the department's deadline too (submitting already did).
+  - Drafts past their deadline drop out of My tasks.
+  - Saving a draft or changing a budget is refused once the year is closed.
+  - The start form uses the latest open cycle.
+- **When:** staff close the year by hand. The spending period end stays editable (blank: Dec 31). The nightly reminders job emails the accountants once (`cycle.close_due`) after it passes.
+- **Emails:** `cycle.closed` tells every department leader the year has ended and the unspent budget goes back to the church. `cycle.reopened` follows the same pattern. The office's `spending.locked` email now reads "The FY2026 budget year has closed" and shows the unspent total.
+- **Test data:** the seed's FY2026 is now Open (deadline Nov 30, 2025), like a real year being spent.

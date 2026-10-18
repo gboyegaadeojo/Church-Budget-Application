@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { spendingCopy } from "@/copy/spending";
 import { amendBudget } from "@/domain/spending/amendments";
 import { correctEntry, recordEntry, voidEntry } from "@/domain/spending/service";
-import { carryOver, lockSpending, reopenSpending } from "@/domain/spending/year-end";
+import { carryOver, closeBudgetYear, reopenBudgetYear } from "@/domain/spending/year-end";
 import { formatCAD } from "@/lib/money";
 import type { ActionState } from "@/lib/action-state";
 import { form, runAction, runForResult } from "@/lib/admin-server";
@@ -111,7 +111,7 @@ const YEAR_END = [...PATHS, "/spending/year-end", "/expenses"];
 export async function lockSpendingAction(_: ActionState, data: FormData): Promise<ActionState> {
   return runAction(
     async (tx, viewer) => {
-      await lockSpending(tx, viewer, {
+      await closeBudgetYear(tx, viewer, {
         cycleId: form.text(data, "cycleId"),
         version: form.text(data, "version"),
         idempotencyKey: form.text(data, "idempotencyKey"),
@@ -125,7 +125,7 @@ export async function lockSpendingAction(_: ActionState, data: FormData): Promis
 export async function reopenSpendingAction(_: ActionState, data: FormData): Promise<ActionState> {
   return runAction(
     async (tx, viewer) => {
-      await reopenSpending(tx, viewer, {
+      await reopenBudgetYear(tx, viewer, {
         cycleId: form.text(data, "cycleId"),
         version: form.text(data, "version"),
         reason: form.text(data, "reason"),

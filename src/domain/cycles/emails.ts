@@ -12,7 +12,7 @@ import {
 import { getChurchTimeZone } from "@/domain/settings";
 import { appUrl } from "@/lib/email/layout";
 import { enqueueSms } from "@/lib/sms/outbox";
-import { formatDateTime, zonedDate } from "@/lib/time-zone";
+import { formatDate, formatDateTime, zonedDate } from "@/lib/time-zone";
 
 /**
  * Budget cycle emails (FR-21 "Cycle and reminders", Requirements 4.3): the cycle opening,
@@ -69,9 +69,11 @@ export async function emailCycleStatus(
 ) {
   const zone = await getChurchTimeZone(tx);
   const deadline = formatDateTime(cycle.submissionDeadline, zone);
+  // Opening announces submissions and their deadline. Closing and reopening are about the
+  // budget year itself, so they carry no deadline (docs/decisions.md 2026-10-18).
   const facts = [
     { label: f.cycle, value: cycle.name },
-    ...(event === "close" ? [] : [{ label: f.deadline, value: deadline }]),
+    ...(event === "open" ? [{ label: f.deadline, value: deadline }] : []),
   ];
   const content =
     event === "close"
@@ -79,18 +81,27 @@ export async function emailCycleStatus(
           subject: m.closed.subject(cycle.name),
           heading: m.closed.heading(cycle.name),
           status: s.closed,
-          paragraphs: [m.closed.intro],
+          paragraphs: [m.closed.intro(cycle.name)],
           action: emailCopy.noAction,
-          button: { label: b.openApp, href: appUrl("/annual") },
+          button: { label: b.openApp, href: appUrl("/spending/my-department") },
         }
-      : {
-          subject: (event === "open" ? m.opened : m.reopened).subject(cycle.name),
-          heading: (event === "open" ? m.opened : m.reopened).heading(cycle.name),
-          status: event === "open" ? s.open : s.reopened,
-          paragraphs: [(event === "open" ? m.opened : m.reopened).intro(deadline)],
-          action: (event === "open" ? m.opened : m.reopened).action,
-          button: budgetLink,
-        };
+      : event === "reopen"
+        ? {
+            subject: m.reopened.subject(cycle.name),
+            heading: m.reopened.heading(cycle.name),
+            status: s.reopened,
+            paragraphs: [m.reopened.intro(cycle.name)],
+            action: m.reopened.action,
+            button: { label: b.openApp, href: appUrl("/spending/my-department") },
+          }
+        : {
+            subject: m.opened.subject(cycle.name),
+            heading: m.opened.heading(cycle.name),
+            status: s.open,
+            paragraphs: [m.opened.intro(deadline)],
+            action: m.opened.action,
+            button: budgetLink,
+          };
   await queueNotice(tx, {
     template: `cycle.${event === "open" ? "opened" : event === "close" ? "closed" : "reopened"}`,
     audience: "requester",
@@ -177,7 +188,39 @@ export function daysUntil(now: Date, deadline: Date, zone: string): number {
 
 export const REMINDER_DAYS = [7, 1] as const;
 
-export type ReminderSummary = { reminders: number; deadlinePassed: number };
+/**
+ * Once an open cycle's spending period has ended (blank: Dec 31 of its budget year), the
+ * accountants are told once to close the budget year (docs/decisions.md 2026-10-18).
+ * Closing stays a person's decision: expenses may still be waiting.
+ */
+async function remindToClose(
+  tx: Tx,
+  cycle: typeof budgetCycles.$inferSelect,
+  zone: string,
+  now: Date,
+): Promise<number> {
+  const end = cycle.spendingPeriodEnd ?? `${cycle.budgetYear}-12-31`;
+  if (zonedDate(now, zone) <= end) return 0;
+  return queueNotice(tx, {
+    template: "cycle.close_due",
+    audience: "accountant",
+    to: await accountantRecipients(tx, now),
+    cycleId: cycle.id,
+    dedupeKey: `close-due:${cycle.id}:${end}`,
+    now,
+    content: {
+      subject: m.closeDue.subject(cycle.name),
+      heading: m.closeDue.heading(cycle.name),
+      status: s.actionNeeded,
+      paragraphs: [m.closeDue.intro(cycle.name, formatDate(end))],
+      facts: [{ label: f.cycle, value: cycle.name }],
+      action: m.closeDue.action,
+      button: { label: m.closeDue.button, href: appUrl(`/spending/year-end?cycle=${cycle.id}`) },
+    },
+  });
+}
+
+export type ReminderSummary = { reminders: number; deadlinePassed: number; closeDue: number };
 
 /**
  * The daily `reminders` job (CLAUDE.md "Scheduled jobs"). Each email has a dedupe key
@@ -185,12 +228,13 @@ export type ReminderSummary = { reminders: number; deadlinePassed: number };
  * missing a day, never sends a reminder twice; a changed deadline gets fresh reminders.
  */
 export async function runReminders(db: Db, now: Date = new Date()): Promise<ReminderSummary> {
-  const summary: ReminderSummary = { reminders: 0, deadlinePassed: 0 };
+  const summary: ReminderSummary = { reminders: 0, deadlinePassed: 0, closeDue: 0 };
   const zone = await getChurchTimeZone(db);
   const cycles = await db.select().from(budgetCycles).where(eq(budgetCycles.status, "open"));
 
   for (const cycle of cycles) {
     await db.transaction(async (tx) => {
+      summary.closeDue += await remindToClose(tx, cycle, zone, now);
       const outstanding = await outstandingDepartments(tx, cycle);
       for (const department of outstanding) {
         const days = daysUntil(now, department.deadline, zone);

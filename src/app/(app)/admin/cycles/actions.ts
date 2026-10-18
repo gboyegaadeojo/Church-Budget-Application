@@ -3,13 +3,12 @@
 import { adminCopy } from "@/copy/admin";
 import {
   changeDeadline,
-  closeCycle,
   createCycle,
   updateCycleDetails,
   extendDepartment,
   openCycle,
-  reopenCycle,
 } from "@/domain/cycles/service";
+import { RuleError } from "@/domain/errors";
 import type { ActionState } from "@/lib/action-state";
 import { form, runAction } from "@/lib/admin-server";
 
@@ -47,20 +46,10 @@ export async function cycleStatusAction(_: ActionState, data: FormData): Promise
   return runAction(
     async (tx, viewer) => {
       const input = { id, version: form.text(data, "version") };
-      if (event === "open") {
-        await openCycle(tx, viewer, input);
-        return c.opened;
-      }
-      if (event === "close") {
-        await closeCycle(tx, viewer, input);
-        return c.closed;
-      }
-      await reopenCycle(tx, viewer, {
-        ...input,
-        newDeadline: form.text(data, "newDeadline"),
-        reason: form.text(data, "reason"),
-      });
-      return c.reopened;
+      // Closing and reopening the budget year live on Spending → Close budget year.
+      if (event !== "open") throw new RuleError(c.errors.closeElsewhere);
+      await openCycle(tx, viewer, input);
+      return c.opened;
     },
     { paths: pagesOf(id) },
   );

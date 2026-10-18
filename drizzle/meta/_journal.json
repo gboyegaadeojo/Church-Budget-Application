@@ -183,6 +183,13 @@
       "when": 1792353414816,
       "tag": "0025_sms",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792359748636,
+      "tag": "0026_cycle_year",
+      "breakpoints": true
     }
   ]
 }

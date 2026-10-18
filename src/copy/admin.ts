@@ -337,7 +337,7 @@ export const adminCopy = {
     title: "Budget Cycles",
     /** Annual Budget → Budget cycles, for finance and board staff (decided 2026-10-17). */
     staffIntro:
-      "Create and manage budget years: open one when it's ready (every department is emailed), change its deadline or details, give extensions, and close it.",
+      "A budget cycle is a budget year. Open it when it's ready (every department is emailed): departments submit their budgets until the deadline and spend from them once approved. Close it at the end of the year.",
     columns: {
       name: "Cycle",
       year: "Budget year",
@@ -362,9 +362,10 @@ export const adminCopy = {
     detailsHeading: "Details",
     editHeading: "Edit details",
     editIntro:
-      "The deadline and opening or closing have their own steps below. The budget year can't change once a department has a budget for it.",
+      "The deadline and opening have their own steps below; closing the year is on Spending → Close budget year. The budget year can't change once a department has a budget for it.",
     spendingPeriodEnd: "Spending period ends",
-    spendingPeriodEndHint: "Optional. Blank: the end of the budget year.",
+    spendingPeriodEndHint:
+      "When spending for this year should end. Optional; blank means Dec 31 of the budget year. The accountant is reminded to close the year after it.",
     taxRateEditHint:
       "A new rate applies to requests submitted from now on; submitted ones keep theirs.",
     save: "Save details",
@@ -373,16 +374,15 @@ export const adminCopy = {
     back: "Budget cycles",
     open: "Open cycle",
     openTitle: (name: string) => `Open ${name}?`,
-    openBody: "Departments can start and submit their budgets until the deadline.",
+    openBody:
+      "Departments can start and submit their budgets until the deadline, and spend from them once approved, until you close the year.",
     opened: "Cycle opened.",
-    close: "Close cycle",
-    closeTitle: (name: string) => `Close ${name}?`,
-    closeBody:
-      "No new submissions. Existing requests stay and can still be reviewed. You can reopen it later with a new deadline.",
-    closed: "Cycle closed.",
-    reopenHeading: "Reopen with a new deadline",
-    reopen: "Reopen cycle",
-    reopened: "Cycle reopened.",
+    close: "Close budget year",
+    closeHint:
+      "Closing ends the year: spending stops and the budget left unspent goes back to the church. Submissions end at the deadline, not here.",
+    closedNote:
+      "This budget year is closed. The accountant or the board can reopen it with a reason.",
+    reopen: "Reopen budget year",
     deadlineHeading: "Change the deadline",
     newDeadline: "New deadline",
     changeDeadline: "Change deadline",
@@ -408,13 +408,14 @@ export const adminCopy = {
       deadlineNotEditable: "The deadline can only change while the cycle is Draft or Open.",
       extensionAfterDeadline: "An extension must be later than the cycle's deadline.",
       cycleNotOpen: "Extensions can only be given while the cycle is open.",
+      closeElsewhere: "Close or reopen a budget year from Spending → Close budget year.",
       departmentInactive: "Choose an active department.",
       notAllowed: (from: string) => `This can't be done while the cycle is ${from}.`,
       boardTotalInvalid: "Enter an amount like 250,000.00.",
       yearInUse:
         "Departments already have budgets for this cycle, so its budget year can't change.",
       spendingPeriodEnd: "Enter a date in or after the budget year.",
-      spendingLocked: "Spending for this year is locked, so its period can't change.",
+      spendingLocked: "This budget year is closed, so its spending period can't change.",
     },
   },
   settings: {

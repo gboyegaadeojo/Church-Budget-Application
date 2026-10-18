@@ -135,6 +135,7 @@ export const helpCopy = {
       answer: [
         "Approved expense claims and purchases are added to the spending ledger automatically, so departments see what's left on the budget strip and in My expenses.",
         "The accountant and the Church Administrator record other spending, refunds and corrections in Spending → Record spending. Department leaders see every entry in Spending → My department's spending.",
+        "Each budget year can be spent until the accountant or the board closes it. The budget left unspent then goes back to the church. Annual budgets are submitted until the deadline, which is separate.",
       ],
     },
     {

@@ -117,7 +117,10 @@ describe("Start from last year's request (FR-35)", () => {
     );
 
     // The new year: a new cycle and a new tax rate.
-    await db.update(budgetCycles).set({ status: "closed" }).where(eq(budgetCycles.id, lastYearId));
+    await db
+      .update(budgetCycles)
+      .set({ status: "closed", spendingLockedAt: new Date() })
+      .where(eq(budgetCycles.id, lastYearId));
     thisYearId = (await insertCycle(db, admin.id, { budgetYear: 2027, name: "FY2027" })).id;
     await db
       .insert(appSettings)

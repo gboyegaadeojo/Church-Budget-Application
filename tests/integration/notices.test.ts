@@ -5,13 +5,7 @@ import { budgetCycles, emailOutbox, userDepartments, userRoles, users } from "@/
 import type { Db, Tx } from "@/db/types";
 import { saveDraft, startRequest, submitRequest } from "@/domain/annual/service";
 import { daysUntil, runReminders } from "@/domain/cycles/emails";
-import {
-  changeDeadline,
-  closeCycle,
-  extendDepartment,
-  openCycle,
-  reopenCycle,
-} from "@/domain/cycles/service";
+import { changeDeadline, extendDepartment, openCycle } from "@/domain/cycles/service";
 import {
   acceptProposed,
   mergeProposed,
@@ -26,6 +20,7 @@ import {
   emailAccessRequest,
   emailPcoUnavailable,
 } from "@/domain/users/emails";
+import { closeBudgetYear, reopenBudgetYear } from "@/domain/spending/year-end";
 import { applyVerification } from "@/domain/users/verification";
 import { loadViewer } from "@/domain/users/viewer";
 import type { Subject } from "@/lib/authz";
@@ -216,27 +211,28 @@ describe("cycle emails (FR-21, 4.3)", () => {
     expect(opened[0].subject).toBe("FY2032 budgets are open");
     expect(opened[0].textBody).toContain("Deadline: Nov 19, 2026");
 
+    // Closing ends the budget year (docs/decisions.md 2026-10-18).
     await runWithVersion(cycle.id, (tx, version) =>
-      closeCycle(tx, admin, { id: cycle.id, version }, { now: NOW }),
-    );
-    expect(
-      (await emails("cycle.closed", eq(emailOutbox.cycleId, cycle.id))).length,
-    ).toBeGreaterThan(0);
-    await runWithVersion(cycle.id, (tx, version) =>
-      reopenCycle(
+      closeBudgetYear(
         tx,
-        admin,
-        {
-          id: cycle.id,
-          version,
-          newDeadline: "2026-12-07T17:00",
-          reason: "Board asked",
-        },
+        accountant,
+        { cycleId: cycle.id, version, idempotencyKey: randomUUID() },
+        { now: NOW },
+      ),
+    );
+    const [closed] = await emails("cycle.closed", eq(emailOutbox.toUserId, rep.id));
+    expect(closed.subject).toBe("The FY2032 budget year has closed");
+    expect(closed.textBody).toContain("goes back to the church");
+    await runWithVersion(cycle.id, (tx, version) =>
+      reopenBudgetYear(
+        tx,
+        accountant,
+        { cycleId: cycle.id, version, reason: "Board asked" },
         { now: NOW },
       ),
     );
     const [reopened] = await emails("cycle.reopened", eq(emailOutbox.toUserId, rep.id));
-    expect(reopened.textBody).toContain("Dec 7, 2026");
+    expect(reopened.subject).toBe("The FY2032 budget year is open again");
     expect(reopened.textBody).toContain("Board asked");
   });
 
@@ -338,12 +334,37 @@ describe("daily reminders job", () => {
       await insertCycle(d, a.id, { submissionDeadline: deadline });
 
       const at = (iso: string) => runReminders(d, new Date(iso));
-      expect(await at("2026-11-22T15:00:00Z")).toEqual({ reminders: 0, deadlinePassed: 0 });
-      expect(await at("2026-11-23T15:00:00Z")).toEqual({ reminders: 1, deadlinePassed: 0 });
-      expect(await at("2026-11-23T20:00:00Z")).toEqual({ reminders: 0, deadlinePassed: 0 });
-      expect(await at("2026-11-29T15:00:00Z")).toEqual({ reminders: 1, deadlinePassed: 0 });
-      expect(await at("2026-12-01T15:00:00Z")).toEqual({ reminders: 0, deadlinePassed: 1 });
-      expect(await at("2026-12-02T15:00:00Z")).toEqual({ reminders: 0, deadlinePassed: 0 });
+      const none = { closeDue: 0 };
+      expect(await at("2026-11-22T15:00:00Z")).toEqual({
+        reminders: 0,
+        deadlinePassed: 0,
+        ...none,
+      });
+      expect(await at("2026-11-23T15:00:00Z")).toEqual({
+        reminders: 1,
+        deadlinePassed: 0,
+        ...none,
+      });
+      expect(await at("2026-11-23T20:00:00Z")).toEqual({
+        reminders: 0,
+        deadlinePassed: 0,
+        ...none,
+      });
+      expect(await at("2026-11-29T15:00:00Z")).toEqual({
+        reminders: 1,
+        deadlinePassed: 0,
+        ...none,
+      });
+      expect(await at("2026-12-01T15:00:00Z")).toEqual({
+        reminders: 0,
+        deadlinePassed: 1,
+        ...none,
+      });
+      expect(await at("2026-12-02T15:00:00Z")).toEqual({
+        reminders: 0,
+        deadlinePassed: 0,
+        ...none,
+      });
 
       const rows = await d.select().from(emailOutbox);
       expect(rows.map((r) => r.subject).sort()).toEqual([
@@ -354,6 +375,21 @@ describe("daily reminders job", () => {
       const passed = rows.find((r) => r.template === "cycle.deadline_passed")!;
       expect(passed.toUserId).toBe(a.id);
       expect(passed.textBody).toContain("Not submitted:\n- Ushering Team");
+
+      // After the spending period ends (Dec 31, 2027 here), the accountant is told once to
+      // close the budget year; the year stays open until someone does.
+      expect(await at("2027-12-31T20:00:00Z")).toMatchObject({ closeDue: 0 });
+      expect(await at("2028-01-01T15:00:00Z")).toMatchObject({ closeDue: 1 });
+      expect(await at("2028-01-02T15:00:00Z")).toMatchObject({ closeDue: 0 });
+      const [due] = await d
+        .select()
+        .from(emailOutbox)
+        .where(eq(emailOutbox.template, "cycle.close_due"));
+      expect(due).toMatchObject({
+        toUserId: a.id,
+        subject: "Time to close the FY2027 budget year",
+      });
+      expect(due.textBody).toContain("ended on Dec 31, 2027");
     } finally {
       await freshDb.close();
     }

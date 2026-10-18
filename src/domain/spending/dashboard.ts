@@ -102,7 +102,7 @@ export async function spendingDashboard(
     readOnly: access.readOnly,
     canRecord: authorize(viewer, "spending.record").allowed,
     canAmend: authorize(viewer, "spending.amend").allowed,
-    canLock: authorize(viewer, "spending.lock").allowed,
+    canLock: authorize(viewer, "cycles.close").allowed,
     canExport: authorize(viewer, "spending.export").allowed,
   };
   const threshold = await nearLimitThreshold(tx);

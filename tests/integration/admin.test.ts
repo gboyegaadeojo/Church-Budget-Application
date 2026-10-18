@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -16,14 +17,13 @@ import {
 import type { Db, Tx } from "@/db/types";
 import {
   changeDeadline,
-  closeCycle,
   createCycle,
   updateCycleDetails,
   effectiveDeadline,
   extendDepartment,
   openCycle,
-  reopenCycle,
 } from "@/domain/cycles/service";
+import { closeBudgetYear, reopenBudgetYear } from "@/domain/spending/year-end";
 import {
   acceptProposed,
   addDepartments,
@@ -204,12 +204,17 @@ describe("permissions", () => {
       expect(update).toMatchObject({ actorUserId: creator.id, actingRole: role });
       expect(update.details).toMatchObject({ after: { boardTotalCents: 15_000_000 } });
 
-      // Open and close it.
+      // Open it, then close the budget year (docs/decisions.md 2026-10-18).
       await run((tx) =>
         openCycle(tx, creator, { id: created.id, version: after.version }, { now: NOW }),
       );
       await run((tx) =>
-        closeCycle(tx, creator, { id: created.id, version: after.version + 1 }, { now: NOW }),
+        closeBudgetYear(
+          tx,
+          creator,
+          { cycleId: created.id, version: after.version + 1, idempotencyKey: randomUUID() },
+          { now: NOW },
+        ),
       );
       const [closed] = await db.select().from(budgetCycles).where(eq(budgetCycles.id, created.id));
       expect(closed.status).toBe("closed");
@@ -1037,7 +1042,7 @@ describe("budget cycles (Requirements 4)", () => {
     ).rejects.toMatchObject({ fieldErrors: { submissionDeadline: expect.any(String) } });
   });
 
-  it("opens, changes the deadline with a reason, closes, and reopens with a new deadline", async () => {
+  it("opens, changes the deadline with a reason, closes the year, and reopens it with a reason", async () => {
     const v = async (tx: Tx) =>
       (
         await tx
@@ -1080,8 +1085,25 @@ describe("budget cycles (Requirements 4)", () => {
       },
     });
 
+    // The System Administrator can't close a budget year; finance and the board do.
+    await expect(
+      run(async (tx) =>
+        closeBudgetYear(
+          tx,
+          admin,
+          { cycleId: fy.id, version: await v(tx), idempotencyKey: randomUUID() },
+          { now: NOW },
+        ),
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    const accountant = await person(["accountant"]);
     await run(async (tx) =>
-      closeCycle(tx, admin, { id: fy.id, version: await v(tx) }, { now: NOW }),
+      closeBudgetYear(
+        tx,
+        accountant,
+        { cycleId: fy.id, version: await v(tx), idempotencyKey: randomUUID() },
+        { now: NOW },
+      ),
     );
     await expect(
       run(async (tx) =>
@@ -1094,22 +1116,19 @@ describe("budget cycles (Requirements 4)", () => {
       ),
     ).rejects.toBeInstanceOf(RuleError);
     await run(async (tx) =>
-      reopenCycle(
+      reopenBudgetYear(
         tx,
-        admin,
-        {
-          id: fy.id,
-          version: await v(tx),
-          newDeadline: "2026-12-14T17:00",
-          reason: "Two departments asked",
-        },
+        accountant,
+        { cycleId: fy.id, version: await v(tx), reason: "A cheque was missed" },
         { now: NOW },
       ),
     );
+    // Reopening the year leaves the submission deadline alone.
     const [row] = await db.select().from(budgetCycles).where(eq(budgetCycles.id, fy.id));
     expect(row).toMatchObject({
       status: "open",
-      submissionDeadline: new Date("2026-12-14T23:00:00Z"),
+      spendingLockedAt: null,
+      submissionDeadline: new Date("2026-12-07T23:00:00Z"),
     });
   });
 
@@ -1134,7 +1153,7 @@ describe("budget cycles (Requirements 4)", () => {
           {
             cycleId: fy.id,
             departmentId: dept.id,
-            newDeadline: "2026-12-10T17:00",
+            newDeadline: "2026-12-05T17:00",
             reason: "Too early",
           },
           { now: NOW },
@@ -1177,7 +1196,7 @@ describe("budget cycles (Requirements 4)", () => {
     expect(await effectiveDeadline(db, fy.id, dept.id)).toEqual(new Date("2026-12-28T23:00:00Z"));
 
     const [other] = await db.select().from(departments).where(eq(departments.name, "Choir Team"));
-    expect(await effectiveDeadline(db, fy.id, other.id)).toEqual(new Date("2026-12-14T23:00:00Z"));
+    expect(await effectiveDeadline(db, fy.id, other.id)).toEqual(new Date("2026-12-07T23:00:00Z"));
   });
 
   it("lets the accountant give extensions (4.3)", async () => {

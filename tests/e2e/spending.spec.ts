@@ -136,16 +136,21 @@ test.describe("Spending (Stage 4)", () => {
     ).toBeVisible();
   });
 
-  // Locking would stop other tests recording FY2026 spending, so the lock, reopen and
+  // Closing would stop other tests recording FY2026 spending, so closing, reopening and
   // carry-over are covered by integration tests (AC-90, FR-46).
-  test("FR-29 the accountant opens Year-end, axe clean at 360 and 1440 px", async ({ page }) => {
+  test("FR-29 the accountant opens Close budget year, axe clean at 360 and 1440 px", async ({
+    page,
+  }) => {
     await signInAs(page, PEOPLE.pat);
     await page.goto("/spending");
     await page.getByLabel("Budget year", { exact: true }).selectOption({ label: "FY2026" });
     await page.getByRole("button", { name: "Show" }).click();
-    await page.getByRole("link", { name: "Year-end" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Year-end · FY2026" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Before you lock" })).toBeVisible();
+    await page.getByRole("link", { name: "Close budget year" }).click();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Close budget year · FY2026" }),
+    ).toBeVisible();
+    await expect(page.getByText(/^Unspent: \$\d/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Before you close" })).toBeVisible();
     for (const size of [MOBILE, DESKTOP]) {
       await page.setViewportSize(size);
       await expectNoHorizontalScroll(page);
@@ -153,8 +158,14 @@ test.describe("Spending (Stage 4)", () => {
     }
   });
 
-  test("FR-29 only the accountant opens Year-end", async ({ page }) => {
+  test("FR-29 the Board Chair can close a budget year; a department leader can't", async ({
+    page,
+  }) => {
     await signInAs(page, PEOPLE.cleo);
+    await page.goto("/spending/year-end");
+    await expect(page.getByRole("heading", { level: 1, name: /^Close budget year/ })).toBeVisible();
+    await page.context().clearCookies();
+    await signInAs(page, PEOPLE.sam);
     await page.goto("/spending/year-end");
     await expect(
       page.getByRole("heading", { name: "You don't have access to this page" }),
@@ -179,9 +190,7 @@ test.describe("Spending export (Stage 4)", () => {
     await page.goto("/reports");
     const card = page.getByRole("region", { name: "Spending and budget vs actual" });
     await expect(card).toBeVisible();
-    await card
-      .getByLabel("Budget cycle", { exact: true })
-      .selectOption({ label: "FY2026 (Closed)" });
+    await card.getByLabel("Budget cycle", { exact: true }).selectOption({ label: "FY2026 (Open)" });
     await expectAxeClean(page);
     const download = page.waitForEvent("download");
     await card.getByRole("button", { name: "Download Excel" }).click();

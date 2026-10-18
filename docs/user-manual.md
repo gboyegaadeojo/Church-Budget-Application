@@ -198,14 +198,16 @@ Each department has a **Primary requester** (accountable for the department's bu
 
 ### Spending
 
-Record spending, refunds and corrections, make **budget amendments** with a reason, and **lock** the spending year at year-end (**Spending** area).
+Record spending, refunds and corrections, make **budget amendments** with a reason, and **close the budget year** at year-end (**Spending** area).
 
-**Year-end.** On the Spending dashboard, choose the year and then **Year-end**.
+**A budget cycle is the budget year.** While it's **Open**, departments submit their annual budget until the deadline, and spend from their approved budget all year. Submissions end at the deadline (or a department's extension), not when the year closes. **Closing** the year ends it: spending stops, and the budget left unspent goes back to the church. So last year and next year can both be Open for a while: one being spent, the other taking budgets.
 
-1. **Before you lock** lists the year's expenses still waiting for a decision, and the ones approved but not yet paid or bought. Decide or pay them first; **Lock spending** appears once both lists are empty.
-2. **Lock spending** asks you to confirm. Then nobody (you included) can record, correct or void that year's spending, and no new expenses can be started for it. Viewing and exporting still work. The Church Administrators are emailed.
-3. After locking, **Approved purchase requests not yet bought** lists the ones still open. For each, either **Open to cancel** (on the expense page) or give a reason and **Carry into** next year. Carrying over moves the money set aside into next year's budget; the request stays approved with its reference, and the department's leaders and the Church Administrators are emailed. Next year's budget cycle, and the department's approved budget in it, must exist first.
-4. To change something after locking, **Reopen spending** with a reason. It's kept in the activity log.
+**Close budget year.** On the Spending dashboard, choose the year and then **Close budget year** (or **Close budget year** on the cycle's page). The accountant, backup approver, Board Chair and Vice-Chair can close a year. After the year's spending period end (Dec 31 unless it's set on the cycle), the accountant is emailed once that it's time to close it.
+
+1. The page shows **Unspent**: what's left across the departments, which goes back to the church when the year closes. **Before you close** lists the year's expenses still waiting for a decision, and the ones approved but not yet paid or bought. Decide or pay them first; **Close budget year** appears once both lists are empty.
+2. **Close budget year** asks you to confirm. Then the cycle reads **Closed**: nobody (you included) can record, correct or void that year's spending, no new expenses can be started for it, and it no longer shows in departments' budgets. Viewing and exporting still work. Every department leader and the Church Administrators are emailed.
+3. After closing, **Approved purchase requests not yet bought** lists the ones still open. For each, either **Open to cancel** (on the expense page) or give a reason and **Carry into** next year. Carrying over moves the money set aside into next year's budget; the request stays approved with its reference, and the department's leaders and the Church Administrators are emailed. Next year's budget cycle, and the department's approved budget in it, must exist first.
+4. To change something after closing, **Reopen budget year** with a reason. It's kept in the activity log, and departments are told.
 
 ### Away
 
@@ -236,7 +238,7 @@ Every workbook has a **Summary** sheet (one row per budget, requested and approv
 
 These screens are designed for a phone.
 
-You can also read **Spending → Budget vs actual** (every department's approved, spent and remaining budget) and **Reports → Analytics & Audit** (section 9), without changing anything. In **Annual Budget → Budget cycles** you can create, edit, open and close a budget year, as the accountant can (section 8, Budget cycles).
+You can also read **Spending → Budget vs actual** (every department's approved, spent and remaining budget) and **Reports → Analytics & Audit** (section 9), without changing anything. In **Annual Budget → Budget cycles** you can create, edit and open a budget year, as the accountant can (section 8, Budget cycles). To end a year, open it there and choose **Close budget year** (section 5, Spending): spending stops and the unspent budget goes back to the church.
 
 ---
 
@@ -260,7 +262,7 @@ You can also read **Spending → Budget vs actual** (every department's approved
 
 ### Record other spending
 
-**Spending → Record spending** for spending that did not come through an expense. You can **correct** or **void** an entry with a reason; nothing is deleted. You cannot record into a locked year.
+**Spending → Record spending** for spending that did not come through an expense. You can **correct** or **void** an entry with a reason; nothing is deleted. You cannot record into a closed budget year.
 
 ### Reports
 
@@ -291,7 +293,7 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 ### Budget cycles
 
-**Admin → Budget Cycles**: create the year (the first is FY2027), set the deadline and board-approved church total, open and close it, and choose whether decision emails go out immediately or at a scheduled time. The accountant, backup approvers, the Board Chair and the Vice-Chair can do all of this too, from **Annual Budget → Budget cycles**: create a year, open one to **edit its details** (name, start date, tax rate for new submissions, board-approved total and reference, spending period end), change its deadline, give extensions, and open, close or reopen it. A cycle starts as a draft; opening it emails every department. The budget year can't change once a department has a budget for it.
+**Admin → Budget Cycles**: create the year (the first is FY2027), set the deadline and board-approved church total, open it, and choose whether decision emails go out immediately or at a scheduled time. The accountant, backup approvers, the Board Chair and the Vice-Chair can do all of this too, from **Annual Budget → Budget cycles**: create a year, open one to **edit its details** (name, start date, tax rate for new submissions, board-approved total and reference, spending period end), change its deadline, give extensions, and open it. Closing or reopening the year is on **Spending → Close budget year** (section 5), for finance and the board only. A cycle starts as a draft; opening it emails every department. The budget year can't change once a department has a budget for it.
 
 - **Change deadline**: pick the new date and give a reason; departments that haven't submitted are emailed.
 - **Give extension**: a later date for one department only, with a reason.
