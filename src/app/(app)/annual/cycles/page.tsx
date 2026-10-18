@@ -40,7 +40,7 @@ async function StaffCyclesContent() {
   return (
     <>
       <PageHeader title={c.title} intro={c.staffIntro} />
-      <CycleList cycles={cycles} zone={zone} linked={viewer.roles.includes("system_admin")} />
+      <CycleList cycles={cycles} zone={zone} hrefFor={(id) => `/annual/cycles/${id}`} />
       <CreateCycleForm nextYear={nextYear} zone={zone} taxRate={sales_tax_rate} />
     </>
   );

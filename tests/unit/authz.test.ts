@@ -101,6 +101,12 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
   ["manage users and roles", "admin.users", {}, ["no", "no", "no", "no", "no", "no", "act"]],
   ["configure cycles", "admin.cycles", {}, ["no", "no", "no", "no", "no", "no", "act"]],
   ["create a budget cycle", "cycles.create", {}, ["no", "act", "act", "act", "act", "no", "act"]],
+  [
+    "edit, open, close and reopen a cycle",
+    "cycles.manage",
+    {},
+    ["no", "act", "act", "act", "act", "no", "act"],
+  ],
   ["change the sales tax rate", "admin.settings", {}, ["no", "no", "no", "no", "no", "no", "act"]],
   [
     "AC-101 change the logo and colour",
@@ -131,7 +137,7 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     "extend one department's deadline",
     "cycle.extend_deadline",
     YOUTH,
-    ["no", "act", "act", "no", "no", "no", "act"],
+    ["no", "act", "act", "act", "act", "no", "act"],
   ],
   [
     "record and correct spending",

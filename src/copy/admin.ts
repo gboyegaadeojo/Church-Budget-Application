@@ -337,7 +337,7 @@ export const adminCopy = {
     title: "Budget Cycles",
     /** Annual Budget → Budget cycles, for finance and board staff (decided 2026-10-17). */
     staffIntro:
-      "Create the next budget year. It starts as a draft; the System Administrator opens it, which emails every department, and manages its deadline.",
+      "Create and manage budget years: open one when it's ready (every department is emailed), change its deadline or details, give extensions, and close it.",
     columns: {
       name: "Cycle",
       year: "Budget year",
@@ -360,6 +360,17 @@ export const adminCopy = {
     create: "Create cycle",
     created: (name: string) => `${name} was created as a draft.`,
     detailsHeading: "Details",
+    editHeading: "Edit details",
+    editIntro:
+      "The deadline and opening or closing have their own steps below. The budget year can't change once a department has a budget for it.",
+    spendingPeriodEnd: "Spending period ends",
+    spendingPeriodEndHint: "Optional. Blank: the end of the budget year.",
+    taxRateEditHint:
+      "A new rate applies to requests submitted from now on; submitted ones keep theirs.",
+    save: "Save details",
+    saved: "Details saved.",
+    unchanged: "Nothing changed.",
+    back: "Budget cycles",
     open: "Open cycle",
     openTitle: (name: string) => `Open ${name}?`,
     openBody: "Departments can start and submit their budgets until the deadline.",
@@ -400,6 +411,10 @@ export const adminCopy = {
       departmentInactive: "Choose an active department.",
       notAllowed: (from: string) => `This can't be done while the cycle is ${from}.`,
       boardTotalInvalid: "Enter an amount like 250,000.00.",
+      yearInUse:
+        "Departments already have budgets for this cycle, so its budget year can't change.",
+      spendingPeriodEnd: "Enter a date in or after the budget year.",
+      spendingLocked: "Spending for this year is locked, so its period can't change.",
     },
   },
   settings: {

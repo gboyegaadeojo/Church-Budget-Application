@@ -5,6 +5,7 @@ import {
   changeDeadline,
   closeCycle,
   createCycle,
+  updateCycleDetails,
   extendDepartment,
   openCycle,
   reopenCycle,
@@ -14,7 +15,13 @@ import { form, runAction } from "@/lib/admin-server";
 
 const c = adminCopy.cycles;
 const LIST = "/admin/cycles";
-const page = (id: string) => `/admin/cycles/${id}`;
+/** A cycle is managed from Admin and from Annual Budget → Budget cycles; refresh both. */
+const pagesOf = (id: string) => [
+  `/admin/cycles/${id}`,
+  `/annual/cycles/${id}`,
+  LIST,
+  "/annual/cycles",
+];
 
 export async function createCycleAction(_: ActionState, data: FormData): Promise<ActionState> {
   return runAction(
@@ -55,7 +62,7 @@ export async function cycleStatusAction(_: ActionState, data: FormData): Promise
       });
       return c.reopened;
     },
-    { paths: [page(id), LIST] },
+    { paths: pagesOf(id) },
   );
 }
 
@@ -71,7 +78,7 @@ export async function changeDeadlineAction(_: ActionState, data: FormData): Prom
       });
       return c.deadlineChanged;
     },
-    { paths: [page(id), LIST] },
+    { paths: pagesOf(id) },
   );
 }
 
@@ -87,6 +94,30 @@ export async function extendAction(_: ActionState, data: FormData): Promise<Acti
       });
       return c.granted;
     },
-    { paths: [page(cycleId)] },
+    { paths: pagesOf(cycleId) },
+  );
+}
+
+export async function updateCycleDetailsAction(
+  _: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  const id = form.text(data, "id");
+  return runAction(
+    async (tx, viewer) => {
+      const { changed } = await updateCycleDetails(tx, viewer, {
+        id,
+        version: form.text(data, "version"),
+        name: form.text(data, "name"),
+        budgetYear: form.text(data, "budgetYear"),
+        startDate: form.text(data, "startDate"),
+        taxRatePercent: form.text(data, "taxRatePercent"),
+        boardTotal: form.text(data, "boardTotal"),
+        boardReference: form.text(data, "boardReference"),
+        spendingPeriodEnd: form.text(data, "spendingPeriodEnd"),
+      });
+      return changed ? c.saved : c.unchanged;
+    },
+    { paths: pagesOf(id) },
   );
 }
