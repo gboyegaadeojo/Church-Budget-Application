@@ -906,3 +906,15 @@ The Departments item in the accountant's Annual Budget menu (DRD 6.0) was still 
 - **Same figures as elsewhere:** the department rows come from `getReviewDashboard`, Remaining from `budgetFigures`.
 - **Read-only:** leaders are changed in Admin → Departments.
 - The unused `ComingSoon` component is removed.
+
+## Stage 5 step 1: the nightly backup and its restore test (2026-10-17)
+
+- **`.github/workflows/backup.yml`**, nightly at about 04:00 Winnipeg:
+  - `pg_dump` (Postgres 17 client, custom format);
+  - a **restore into a throwaway Postgres in the same job**, comparing users, budgets, expenses and spending entries with production, so every night proves the backup restores (AC-107);
+  - `age` encryption to the church's public key;
+  - upload to the church Drive folder with a resumable upload (`scripts/backup-upload.mjs`, `drive.file` scope only).
+- **Retention (Requirements 10.6):** nightly backups for 35 days, the 1st of each month for 6 years (CRA's usual period). The rule is `scripts/backup-retention.mjs`, unit-tested; anything it can't date is kept.
+- **Skips itself** until all six secrets are set, naming what's missing. A failure emails the repository owner.
+- **Not in the backup:** receipt and attachment files in R2 (durable storage; the database keeps their keys).
+- **Restore guide** and the yearly practice restore: `docs/backup-restore.md`. The upload script was exercised against a fake Google API (sign-in, resumable upload, list, prune); the real run needs the church's Google account.
