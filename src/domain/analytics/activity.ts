@@ -163,6 +163,13 @@ const departmentId = sql<
 >`coalesce(${auditEvents.departmentId}, ${request.departmentId})`;
 const cycleId = sql<string | null>`coalesce(${auditEvents.cycleId}, ${request.budgetCycleId})`;
 
+/** Leaves out a decision event whose decision is still held for scheduled release (FR-19a). */
+const notHeldDecision = sql`not (${inArray(auditEvents.eventType, HELD_EVENTS)} and exists (
+  select 1 from ${approvalDecisions}
+  where ${approvalDecisions.budgetRequestId} = ${request.id}
+    and ${approvalDecisions.releasedAt} is null
+    and ${approvalDecisions.decision} in ('approved', 'declined')))`;
+
 /** Quick views and event groups about sign-ins, settings and emails: administrator only. */
 const ADMIN_QUICK_VIEWS: readonly QuickView[] = ["access", "settings", "emails"];
 const ADMIN_GROUPS: readonly ActivityGroup[] = ["access", "settings", "emails"];
@@ -221,11 +228,7 @@ export function activityScope(actor: Subject): SQL | null {
         inArray(auditEvents.area, FINANCIAL_AREAS),
         notInArray(auditEvents.eventType, NOT_FOR_DEPARTMENTS),
         // A decision held for scheduled release isn't the department's news yet (FR-19a).
-        sql`not (${inArray(auditEvents.eventType, HELD_EVENTS)} and exists (
-          select 1 from ${approvalDecisions}
-          where ${approvalDecisions.budgetRequestId} = ${request.id}
-            and ${approvalDecisions.releasedAt} is null
-            and ${approvalDecisions.decision} in ('approved', 'declined')))`,
+        notHeldDecision,
       )!,
     );
   }
@@ -252,6 +255,15 @@ async function conditions(tx: Tx, actor: Subject, f: ActivityFilters, now: Date)
         and(eq(auditEvents.entityType, "budget_request"), eq(auditEvents.entityId, f.requestId)),
       )!,
     );
+    // "Activity on this budget" for a department the person leads reads as the department
+    // sees it until release, whatever staff roles they also hold (docs/decisions.md
+    // 2026-10-18). Staff views of the log (no requestId) still show the truth.
+    const mine = actor.departments.map((d) => d.id);
+    if (mine.length > 0) {
+      where.push(
+        or(notInArray(departmentId, mine), sql`${departmentId} is null`, notHeldDecision)!,
+      );
+    }
   }
   if (f.recent) {
     where.push(notInArray(auditEvents.area, ["access"]));

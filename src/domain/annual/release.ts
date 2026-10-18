@@ -145,7 +145,10 @@ export async function heldDecisions(
 
 /**
  * For each held request the viewer may not see yet, its cycle's release time. Staff
- * (`annual.view_held`) see decisions as soon as they're made, so they get an empty map.
+ * (`annual.view_held`) see other departments' decisions as soon as they're made, but a
+ * department's own budget reads In Review to every one of its leaders until release,
+ * whatever other roles they hold (decided 2026-10-18): the callers are the department's
+ * screens, and a leader who is also, say, a board member hears with their department.
  */
 export async function hiddenDecisions(
   tx: Tx,
@@ -153,14 +156,20 @@ export async function hiddenDecisions(
   requestIds: string[],
   now: Date = new Date(),
 ): Promise<Map<string, Date | null>> {
-  if (requestIds.length === 0 || authorize(viewer, "annual.view_held").allowed) return new Map();
-  const held = await heldDecisions(tx, { requestIds });
+  if (requestIds.length === 0) return new Map();
+  const staff = authorize(viewer, "annual.view_held").allowed;
+  const mine = new Set(viewer.departments.map((d) => d.id));
+  // Staff see held decisions, except on the budgets of departments they lead.
+  const hides = (departmentId: string) => !staff || mine.has(departmentId);
+  if (staff && mine.size === 0) return new Map();
+  const held = (await heldDecisions(tx, { requestIds })).filter((h) => hides(h.departmentId));
   // A large budget awaiting its second approval (FR-34) gives the decision away too, so
   // while the cycle holds decisions it reads In Review as well.
   const awaiting = await tx
     .select({
       requestId: budgetRequests.id,
       cycleId: budgetRequests.budgetCycleId,
+      departmentId: budgetRequests.departmentId,
       decisionEmailMode: budgetCycles.decisionEmailMode,
       decisionReleaseAt: budgetCycles.decisionReleaseAt,
     })
@@ -174,7 +183,7 @@ export async function hiddenDecisions(
     );
   const out = new Map<string, Date | null>();
   for (const a of awaiting) {
-    if (isHolding(a, now)) out.set(a.requestId, a.decisionReleaseAt);
+    if (hides(a.departmentId) && isHolding(a, now)) out.set(a.requestId, a.decisionReleaseAt);
   }
   if (held.length === 0) return out;
   const cycles = await tx
