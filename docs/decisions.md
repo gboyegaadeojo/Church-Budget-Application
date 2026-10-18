@@ -1010,3 +1010,14 @@ The church asked for the reminders to go by text as well as email, to the mobile
 - **How:** `npm run test:perf` (`tests/perf/volume.perf.ts`, its own Vitest config, not in CI). It seeds a full year at about three times the church's size: 40 departments, 2,000 expenses, 5,000 spending entries and 50,000 activity events. It then times the server work behind each main page, five runs each, with a median limit of 1.5 s. Results and method are in `docs/performance.md`.
 - **Fixed:** the activity log's joins to the budget and the expense compared `id::text` with the entity id, which scanned the expense table for every event. Page 500 of the Activity tab took 10.8 s on PGlite. The joins now compare uuids (a guarded cast) and use the primary-key index: page 500 takes 0.2 s, and page 1 and Home's Recent activity take under 30 ms.
 - **Accepted:** Activity search (about 1.4 s on PGlite, an `ILIKE` over eight columns) and the accountant's At a glance (about 0.5 s with 1,000 expenses waiting). A trigram index is the next step if search ever feels slow on Neon.
+
+## Stage 5 step 8: user manual checked against the app (2026-10-18)
+
+The manual and the Help page were checked against the built app's menus (`src/domain/navigation.ts`), screens and settings. Fixed:
+
+- **Settings** listed items that aren't there (email settings, backup reminder delay, weekly audit summary email). It now lists what Admin → Settings has, including Reminder texts, church time zone and signing authorities.
+- **Away** in the account menu is for accountants, backup approvers, the Board Chair and Vice-Chair. A Primary requester sets it on Annual Budget.
+- **Uploads:** purchase requests take a quote, invoice or photo (2026-10-17), not only claims taking receipts.
+- **Board:** Spending → Budget vs actual and Analytics & Audit are read only; they can manage budget cycles. **System Administrator:** Annual Budget → All budgets.
+- **Help:** "Submit annual budget" is the button's name; spending recording isn't "coming" any more; a new topic on reminder texts.
+- The duplicate tax question was merged, "Notifications" became Admin → Notifications & Audit, and a gendered pronoun became "they".
