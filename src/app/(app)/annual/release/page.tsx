@@ -260,7 +260,7 @@ async function ReleaseContent({ searchParams }: { searchParams: Promise<Search> 
         {held.length === 0 ? (
           <p className="text-sm text-fg-muted">{r.preview.none}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-left text-sm">
               <caption className="sr-only">{r.preview.heading}</caption>
               <thead className="border-b border-border text-fg-muted">

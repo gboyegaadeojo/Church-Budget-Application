@@ -106,7 +106,7 @@ export function DecisionPanel({
                 setKind(o.kind);
                 setState({ status: "idle" });
               }}
-              className="size-4 shrink-0 accent-accent"
+              className="size-6 shrink-0 accent-accent"
             />
             {o.label}
           </label>

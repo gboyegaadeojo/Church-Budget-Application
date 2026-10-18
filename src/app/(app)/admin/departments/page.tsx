@@ -111,7 +111,12 @@ function DepartmentsTable({
   showLeaders: boolean;
 }) {
   return (
-    <div className="-mx-1 overflow-x-auto px-1" tabIndex={0} role="region" aria-label={d.title}>
+    <div
+      className="relative -mx-1 overflow-x-auto px-1"
+      tabIndex={0}
+      role="region"
+      aria-label={d.title}
+    >
       <table className="w-full min-w-[32rem] text-left text-sm">
         <caption className="sr-only">{d.title}</caption>
         <thead className="border-b border-border text-xs text-fg-muted">

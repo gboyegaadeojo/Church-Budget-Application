@@ -101,7 +101,7 @@ export function StartForm({
                       ? `${ids}-${c.id}-tags`
                       : undefined
                   }
-                  className="size-5 shrink-0 accent-accent"
+                  className="size-6 shrink-0 accent-accent"
                 />
                 <span id={`${ids}-${c.id}-name`} className="flex-1 text-sm">
                   {c.name}
@@ -137,7 +137,7 @@ export function StartForm({
                   value={OTHER}
                   checked={selected === OTHER}
                   onChange={() => setSelected(OTHER)}
-                  className="size-5 shrink-0 accent-accent"
+                  className="size-6 shrink-0 accent-accent"
                 />
                 <span className="text-sm">{s.other}</span>
               </label>
@@ -216,7 +216,7 @@ export function StartForm({
               name="fromLastYear"
               value="yes"
               aria-describedby={`${ids}-last-year-hint`}
-              className="size-5 shrink-0 accent-accent"
+              className="size-6 shrink-0 accent-accent"
             />
             {s.lastYear(chosen.lastYear.cycleName, chosen.lastYear.reference)}
           </label>

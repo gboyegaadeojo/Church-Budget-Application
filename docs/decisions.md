@@ -1021,3 +1021,19 @@ The manual and the Help page were checked against the built app's menus (`src/do
 - **Board:** Spending → Budget vs actual and Analytics & Audit are read only; they can manage budget cycles. **System Administrator:** Annual Budget → All budgets.
 - **Help:** "Submit annual budget" is the button's name; spending recording isn't "coming" any more; a new topic on reminder texts.
 - The duplicate tax question was merged, "Notifications" became Admin → Notifications & Audit, and a gendered pronoun became "they".
+
+## No manual screen-reader pass in Stage 5 (2026-10-18)
+
+The church no longer needs the Stage 5 "accessibility pass with a screen reader" (Requirements section 15, DRD 9). It's removed from the Stage 5 list. What stays, already built and tested:
+
+- the screen-reader parts of the design: labels, polite and assertive live regions, hidden decorative icons;
+- axe checks on every page at 360 px and 1440 px in the end-to-end tests;
+- keyboard use;
+- the phone check, which remains in Stage 5.
+
+## Stage 5: the phone check (2026-10-18)
+
+- **Automated:** a `phone` Playwright project (Pixel 7, Chromium, touch) runs `tests/e2e/phone.spec.ts` in CI. It sweeps every main page for a department leader, the accountant, the Board Chair and the System Administrator, checking for no sideways scrolling and controls at least 24 px (WCAG 2.5.8), with 44 px for the bottom bar. It also checks the bottom bar and More work by tap, and that receipts take the camera.
+- **Fixed by it:** links standing on their own (the Help questions, the Spending dashboard's Ledger link, Settings' Change the branding) were 20 px tall. They now use `standaloneLinkClass` (at least 24 px). Checkboxes and radios were 16-20 px; they're 24 px everywhere.
+- **Also fixed by it:** on a phone, Expenses → Ready to process became twice as wide as the screen once it listed an expense. Hidden (sr-only) text in the table is positioned absolutely, and its containing block was outside the table's scroll box, so it escaped the clipping. Every table scroll wrapper is now `relative`.
+- **On real phones:** [phone-check.md](phone-check.md) is a 30-minute script for one iPhone (Safari) and one Android phone (Chrome), covering what emulation can't: the camera, the keyboard over fields, text size and email links. It's run by the church on staging or the demo before the pilot.

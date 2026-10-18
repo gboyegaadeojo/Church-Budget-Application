@@ -19,7 +19,12 @@ export type LineRow = {
 /** The items as a document table (DRD 6.5); links show their domain and open safely. */
 export function LinesTable({ lines, caption }: { lines: LineRow[]; caption: string }) {
   return (
-    <div className="-mx-1 overflow-x-auto px-1" tabIndex={0} role="region" aria-label={caption}>
+    <div
+      className="relative -mx-1 overflow-x-auto px-1"
+      tabIndex={0}
+      role="region"
+      aria-label={caption}
+    >
       <table className="w-full min-w-[32rem] text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-border text-xs text-fg-muted">

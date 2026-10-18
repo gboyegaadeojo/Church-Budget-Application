@@ -96,7 +96,12 @@ async function UsersContent({ searchParams }: Pick<PageProps<"/admin/users">, "s
 
 function UsersTable({ people }: { people: UserListItem[] }) {
   return (
-    <div className="-mx-1 overflow-x-auto px-1" tabIndex={0} role="region" aria-label={u.title}>
+    <div
+      className="relative -mx-1 overflow-x-auto px-1"
+      tabIndex={0}
+      role="region"
+      aria-label={u.title}
+    >
       <table className="w-full min-w-[40rem] text-left text-sm">
         <caption className="sr-only">{u.title}</caption>
         <thead className="border-b border-border text-xs text-fg-muted">

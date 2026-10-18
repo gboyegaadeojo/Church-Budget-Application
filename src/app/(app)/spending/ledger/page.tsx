@@ -202,7 +202,7 @@ async function LedgerContent({
           <EmptyState>{filtered ? f.emptyFiltered : l.empty}</EmptyState>
         ) : (
           <div
-            className="-mx-1 overflow-x-auto px-1"
+            className="relative -mx-1 overflow-x-auto px-1"
             tabIndex={0}
             role="region"
             aria-label={l.entries}

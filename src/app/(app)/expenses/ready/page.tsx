@@ -10,7 +10,7 @@ import {
   Section,
   StatCard,
 } from "@/components/ui/display";
-import { buttonClass, cardClass, linkClass } from "@/components/ui/styles";
+import { buttonClass, cardClass, linkClass, standaloneLinkClass } from "@/components/ui/styles";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
 import { readyQueue, type ReadyRow } from "@/domain/expenses/payment-queries";
@@ -110,7 +110,7 @@ async function ReadyContent({
           <EmptyState>{hasListFilters(filters) ? r.emptyFiltered : p.empty}</EmptyState>
         ) : (
           <div
-            className="-mx-1 overflow-x-auto px-1"
+            className="relative -mx-1 overflow-x-auto px-1"
             tabIndex={0}
             role="region"
             aria-label={p.queueTitle}
@@ -221,7 +221,10 @@ async function ReadyContent({
                 className="flex flex-wrap items-baseline justify-between gap-2 py-2"
               >
                 <span>
-                  <Link href={`/expenses/${paid.id}`} className={linkClass}>
+                  <Link
+                    href={`/expenses/${paid.id}`}
+                    className={cn(linkClass, standaloneLinkClass)}
+                  >
                     {paid.referenceNumber}
                   </Link>{" "}
                   · {paid.department} · {p.methods[paid.method as keyof typeof p.methods]},{" "}

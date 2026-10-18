@@ -777,7 +777,7 @@ function RadioCards({
               type="radio"
               value={o.value}
               {...form.register(name)}
-              className="size-4 shrink-0 accent-accent"
+              className="size-6 shrink-0 accent-accent"
             />
             {o.label}
           </label>
@@ -993,7 +993,7 @@ function NoReceiptFields({ form, values }: FormProps & { values: ExpenseFormValu
           id={id}
           type="checkbox"
           {...form.register("noReceipt")}
-          className="mt-0.5 size-5 shrink-0 accent-accent"
+          className="size-6 shrink-0 accent-accent"
         />
         <label htmlFor={id} className="text-sm">
           {expensesCopy.receipts.noReceipt}
@@ -1256,7 +1256,12 @@ function PreviewRows({ type, values }: { type: ExpenseType; values: ExpenseFormV
   const c = expensesCopy.table;
   if (type === "purchase_request") {
     return (
-      <div className="-mx-1 overflow-x-auto px-1" tabIndex={0} role="region" aria-label={f.items}>
+      <div
+        className="relative -mx-1 overflow-x-auto px-1"
+        tabIndex={0}
+        role="region"
+        aria-label={f.items}
+      >
         <table className="w-full min-w-[30rem] text-left text-sm">
           <caption className="sr-only">{f.items}</caption>
           <thead className="border-b border-border text-xs text-fg-muted">
@@ -1298,7 +1303,12 @@ function PreviewRows({ type, values }: { type: ExpenseType; values: ExpenseFormV
     );
   }
   return (
-    <div className="-mx-1 overflow-x-auto px-1" tabIndex={0} role="region" aria-label={f.lines}>
+    <div
+      className="relative -mx-1 overflow-x-auto px-1"
+      tabIndex={0}
+      role="region"
+      aria-label={f.lines}
+    >
       <table className="w-full min-w-[30rem] text-left text-sm">
         <caption className="sr-only">{f.lines}</caption>
         <thead className="border-b border-border text-xs text-fg-muted">

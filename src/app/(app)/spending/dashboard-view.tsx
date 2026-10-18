@@ -12,7 +12,13 @@ import {
 } from "lucide-react";
 import { DownloadButton } from "@/components/download-button";
 import { Badge, EmptyState, PageHeader, Section, StatCard } from "@/components/ui/display";
-import { buttonClass, cardClass, inputClass, linkClass } from "@/components/ui/styles";
+import {
+  buttonClass,
+  cardClass,
+  inputClass,
+  linkClass,
+  standaloneLinkClass,
+} from "@/components/ui/styles";
 import { expensesCopy } from "@/copy/expenses";
 import { spendingCopy } from "@/copy/spending";
 import { formatPercentTenths, type BudgetStatus } from "@/domain/expenses/budget";
@@ -200,7 +206,10 @@ export function DashboardView({
             icon={BookOpen}
             tone="amber"
             actions={
-              <Link href={`/spending/ledger?cycle=${cycle.id}`} className={linkClass}>
+              <Link
+                href={`/spending/ledger?cycle=${cycle.id}`}
+                className={cn(linkClass, standaloneLinkClass)}
+              >
                 {d.ledger}
               </Link>
             }
@@ -209,7 +218,7 @@ export function DashboardView({
               <EmptyState>{d.empty}</EmptyState>
             ) : (
               <div
-                className="-mx-1 overflow-x-auto px-1"
+                className="relative -mx-1 overflow-x-auto px-1"
                 tabIndex={0}
                 role="region"
                 aria-label={d.departments}

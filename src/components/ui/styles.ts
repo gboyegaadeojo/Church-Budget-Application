@@ -33,5 +33,11 @@ export const cardClass = "rounded-card border border-border bg-surface p-5 shado
 export const interactiveCardClass =
   "transition-[border-color,box-shadow,transform] duration-fast hover:-translate-y-0.5 hover:border-accent hover:shadow-overlay hover:ring-1 hover:ring-accent motion-reduce:hover:translate-y-0";
 
+/**
+ * A link standing on its own (not inside a sentence), at least 24 px tall so it's easy to
+ * tap on a phone (WCAG 2.5.8; the Stage 5 phone check).
+ */
+export const standaloneLinkClass = "inline-flex min-h-6 items-center";
+
 export const linkClass =
   "rounded-[4px] font-medium text-accent underline-offset-4 transition-colors duration-fast hover:bg-accent-soft hover:text-accent-hover hover:underline hover:decoration-2";

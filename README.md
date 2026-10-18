@@ -6,11 +6,11 @@ A web app for Immanuel Fellowship Church to:
 2. **Approve spending during the year (Expenses).** Departments submit purchase requests (before buying) and expense claims (after buying) against their approved budget. The accountant and the Board Chair both approve; then the Church Administrator pays or purchases and records how.
 3. **Track what's left (Spending).** Approved, amendments, committed, spent and remaining for every department, with a ledger, Budget vs actual, alerts, a year-end lock and Excel exports.
 
-Sign-in is with Planning Center (the Church Administrator and System Administrators can also use an emailed code). Only verified Group Leaders can submit. Everything runs on free tiers.
+Sign-in is with Planning Center (the Church Administrator and System Administrators can also use an emailed code). Only verified Group Leaders can submit. Everything runs on free tiers, except Twilio for the optional reminder texts (about CA$5-8 a month).
 
 ## Status
 
-Stages 1 to 4 are built, tested and merged (annual budgets, polish, expenses, spending). Next is **Stage 5: hardening and launch** (Requirements Section 15): security review, screen-reader and mobile passes, the nightly backup job and a restore test, an email deliverability test, a pilot, and the [go-live checklist](docs/go-live-checklist.md).
+Stages 1 to 4 are built, tested and merged (annual budgets, polish, expenses, spending). **Stage 5: hardening and launch** (Requirements Section 15) is under way. Done: the security review, the nightly backup and restore test, reminder texts, the performance check ([docs/performance.md](docs/performance.md)) and the user manual check. Left: the phone check, an email deliverability test, a pilot, and the [go-live checklist](docs/go-live-checklist.md).
 
 Every choice made along the way that the specifications didn't settle is recorded in [docs/decisions.md](docs/decisions.md).
 
@@ -51,16 +51,17 @@ If the requirements and the design disagree about **behaviour**, the requirement
 | Expense approval | The accountant and the Board Chair are asked at the same time; either may approve first, and the lower amount stands | Req 6B.4; decisions 2026-10-16 |
 | Files | Receipts on claims, optional attachments (quote, invoice, photo) on purchase requests, and the admin's logo; nothing else | Req 6B.9, FR-30; decisions 2026-10-17 |
 | Emails | Every update emails the people involved, through an outbox; nobody can turn them off | Req FR-21, FR-49 |
+| Texts | Four reminders also go by text to a Planning Center mobile number, 9:00 a.m. to 8:00 p.m., up to a monthly limit; reply STOP to stop | decisions 2026-10-18 |
 | Sign-in | Planning Center, plus an emailed code for the Church Administrator and System Administrators; requesters need the Group Leader field ("Ministry Leader" = "Yes") | Req FR-01, FR-01a |
 | Year-end | The accountant locks a year's spending; open purchase requests are cancelled or carried into next year | Req FR-29, FR-46 |
 | Audit and analytics | Reports → Analytics & Audit: Overview charts, the full activity log, access checks | Req FR-52 |
-| Cost | Free tiers only: Netlify, Neon, Resend, GitHub Actions, Cloudflare R2 | Req 20.3 |
+| Cost | Free tiers: Netlify, Neon, Resend, GitHub Actions, Cloudflare R2. Paid: Twilio for reminder texts (approved) | Req 20.3; decisions 2026-10-18 |
 
 ## For developers
 
 ### Stack
 
-Next.js (App Router, TypeScript strict) · Tailwind CSS with the DRD tokens · Radix UI · React Hook Form + Zod (shared by client and server) · Neon Postgres with Drizzle ORM and migrations · Auth.js (Planning Center OAuth and emailed codes) · Resend for email · Cloudflare R2 for files · ExcelJS for exports · Vitest and Playwright (Chromium, axe-core) for tests. Hosted on Netlify.
+Next.js (App Router, TypeScript strict) · Tailwind CSS with the DRD tokens · Radix UI · React Hook Form + Zod (shared by client and server) · Neon Postgres with Drizzle ORM and migrations · Auth.js (Planning Center OAuth and emailed codes) · Resend for email · Twilio for reminder texts · Cloudflare R2 for files · ExcelJS for exports · Vitest and Playwright (Chromium, axe-core) for tests. Hosted on Netlify.
 
 ### Run it on your computer
 
@@ -88,6 +89,7 @@ To run against a real database instead, copy `.env.example` to `.env.local`, fil
 | `npm test` | Unit tests (Vitest) |
 | `npm run test:integration` | Service tests against Postgres (PGlite locally, a real Postgres in CI) |
 | `npm run test:e2e` | Playwright end-to-end and accessibility tests; it builds the app and starts the fake server on port 3100 itself |
+| `npm run test:perf` | The performance check: a year of data at three times church scale, timed page by page (not in CI) |
 | `npm run db:generate` · `npm run db:migrate` · `npm run db:check` | Drizzle migrations |
 
 ### Where things are
@@ -95,7 +97,7 @@ To run against a real database instead, copy `.env.example` to `.env.local`, fil
 ```
 src/app/          routes: (auth) sign-in, (app) annual/ expenses/ spending/ reports/ admin/, api/
 src/domain/       business rules: annual, expenses, spending, tasks, analytics, users, settings…
-src/lib/          money.ts (cents and tax), authz.ts (every permission), audit, email outbox, storage, excel
+src/lib/          money.ts (cents and tax), authz.ts (every permission), audit, email and text outboxes, storage, excel
 src/copy/         all UI text (English, Canada)
 src/db/schema.ts  the database schema; migrations are in drizzle/
 tests/            unit, integration, e2e (tests are named after their ACs)

@@ -27,7 +27,12 @@ export function ExpenseLines({
       {rows.length === 0 ? (
         <p className="text-sm text-fg-muted">{v.noLines}</p>
       ) : (
-        <div className="-mx-1 overflow-x-auto px-1" tabIndex={0} role="region" aria-label={caption}>
+        <div
+          className="relative -mx-1 overflow-x-auto px-1"
+          tabIndex={0}
+          role="region"
+          aria-label={caption}
+        >
           <table className="w-full min-w-[30rem] text-left text-sm">
             <caption className="sr-only">{caption}</caption>
             {expense.type === "purchase_request" ? (
