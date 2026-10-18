@@ -1,0 +1,111 @@
+name: Nightly backup
+
+# The database, every night (Requirements 10.6, AC-107; docs/backup-restore.md):
+#   1. pg_dump the production database.
+#   2. Restore the dump into a throwaway Postgres in this job and check the row counts
+#      match, so every backup is known to restore.
+#   3. Encrypt it with age (only the church's offline private key can open it).
+#   4. Upload it to the church's Google Drive folder, keeping 35 days of nightly backups
+#      and the 1st of each month for 6 years.
+# A failure emails the repository's owner (GitHub's default for failed workflows).
+on:
+  schedule:
+    - cron: "0 9 * * *" # 04:00 Winnipeg time in summer (09:00 UTC); 03:00 in winter
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Back up, test the restore, upload
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      restore:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: restore-test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BACKUP_AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+      GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+      GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+      GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+      GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+      RESTORE_URL: postgres://postgres:restore-test@localhost:5432/postgres
+    steps:
+      - name: Check the secrets
+        id: ready
+        run: |
+          missing=""
+          for name in DATABASE_URL BACKUP_AGE_RECIPIENT GDRIVE_FOLDER_ID GDRIVE_CLIENT_ID GDRIVE_CLIENT_SECRET GDRIVE_REFRESH_TOKEN; do
+            [ -z "${!name}" ] && missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "Not set up yet (missing:$missing); skipping. See docs/go-live-checklist.md item 8."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.ready.outputs.skip != 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.ready.outputs.skip != 'true'
+        with:
+          node-version: 22
+
+      - name: Install the Postgres 17 tools and age
+        if: steps.ready.outputs.skip != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common age > /dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y > /dev/null
+          sudo apt-get install -y -qq postgresql-client-17 > /dev/null
+          /usr/lib/postgresql/17/bin/pg_dump --version
+
+      - name: Dump the database
+        if: steps.ready.outputs.skip != 'true'
+        run: |
+          /usr/lib/postgresql/17/bin/pg_dump --format=custom --no-owner --no-acl \
+            --file=backup.dump "$DATABASE_URL"
+          ls -l backup.dump
+
+      - name: Restore into a throwaway database and compare
+        if: steps.ready.outputs.skip != 'true'
+        run: |
+          /usr/lib/postgresql/17/bin/pg_restore --no-owner --no-acl --exit-on-error \
+            --dbname="$RESTORE_URL" backup.dump
+          count() {
+            /usr/lib/postgresql/17/bin/psql "$1" -At -c "select
+              (select count(*) from users) || ' users, ' ||
+              (select count(*) from budget_requests) || ' budgets, ' ||
+              (select count(*) from expense_submissions) || ' expenses, ' ||
+              (select count(*) from spending_entries) || ' entries, ' ||
+              (select count(*) from audit_events) || ' audit events'"
+          }
+          source="$(count "$DATABASE_URL")"
+          restored="$(count "$RESTORE_URL")"
+          echo "Production: $source"
+          echo "Restored:   $restored"
+          # Something could be written between the dump and the count; audit events are
+          # the likeliest, so they aren't compared.
+          # Compare everything but the audit count.
+          [ "${source%, *}" = "${restored%, *}" ] || { echo "The restore doesn't match."; exit 1; }
+
+      - name: Encrypt
+        if: steps.ready.outputs.skip != 'true'
+        run: |
+          age --recipient "$BACKUP_AGE_RECIPIENT" --output backup.dump.age backup.dump
+          rm backup.dump
+
+      - name: Upload to Drive and prune old backups
+        if: steps.ready.outputs.skip != 'true'
+        run: node scripts/backup-upload.mjs backup.dump.age
