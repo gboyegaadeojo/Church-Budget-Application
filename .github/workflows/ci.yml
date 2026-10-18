@@ -1,9 +1,10 @@
 name: CI
 
+# Once per pull request: GitHub tests the PR as it would be merged, so running again
+# on the push to main only repeated it (and spent Actions minutes; docs/decisions.md).
 on:
   pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
