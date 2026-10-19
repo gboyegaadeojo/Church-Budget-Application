@@ -10,7 +10,7 @@ Sign-in is with Planning Center (the Church Administrator and System Administrat
 
 ## Status
 
-Stages 1 to 4 are built, tested and merged (annual budgets, polish, expenses, spending). **Stage 5: hardening and launch** (Requirements Section 15) is under way. Done: the security review, the nightly backup and restore test, reminder texts, the performance check ([docs/performance.md](docs/performance.md)) and the user manual check. Left: the phone check, an email deliverability test, a pilot, and the [go-live checklist](docs/go-live-checklist.md).
+Stages 1 to 4 are built, tested and merged (annual budgets, polish, expenses, spending). **Stage 5: hardening and launch** (Requirements Section 15) is under way. Done: the security review, the nightly backup and restore test, reminder texts, the performance check ([docs/performance.md](docs/performance.md)), the user manual check, the automated phone check, and the email deliverability test script ([docs/email-deliverability.md](docs/email-deliverability.md)). Left for the church: the phone check on real phones, the deliverability test, a pilot, and the [go-live checklist](docs/go-live-checklist.md).
 
 Every choice made along the way that the specifications didn't settle is recorded in [docs/decisions.md](docs/decisions.md).
 

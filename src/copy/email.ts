@@ -506,6 +506,19 @@ export const emailCopy = {
     action: "Check the addresses and the Resend settings.",
   },
 
+  /** Admin → Notifications & Audit → Send a test email (go-live checklist, launch step 3). */
+  testEmail: {
+    subject: "Test email from the budget app",
+    heading: "Email is working",
+    intro: "This is a test email sent from Notifications & Audit to check that email works.",
+    check:
+      "If it arrived in your spam or junk folder, mark it as not spam and tell the System Administrator.",
+    facts: { sentBy: "Sent by", queued: "Sent" },
+    invalid: "Enter an email address, like name@example.org.",
+    tooMany: (n: number) =>
+      `${n} test emails have been sent in the last 24 hours, the most allowed. Try again tomorrow.`,
+  },
+
   /** Admin → Notifications & Audit: the email log (FR-21). */
   admin: {
     title: "Notifications & Audit",
@@ -542,6 +555,15 @@ export const emailCopy = {
     openRequest: "Open request",
     activityNote: "Every change in the app, not only emails, is in the activity log.",
     activityLink: "Open the activity log",
+    test: {
+      heading: "Send a test email",
+      intro:
+        "Check that email works and lands in the inbox, not spam. Send one to a Gmail, an Outlook and an Apple (iCloud) address, or to a mail-tester.com address to get a score.",
+      to: "Send to",
+      hint: (n: number) => `Up to ${n} test emails a day.`,
+      send: "Send test email",
+      queued: (to: string) => `Test email on its way to ${to}. It appears in the email log below.`,
+    },
   },
 
   /** The Emails section of a request's history (AC-58). */

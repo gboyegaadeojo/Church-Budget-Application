@@ -1,11 +1,15 @@
-import { and, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
+import { and, count, desc, eq, gt, ilike, inArray, or } from "drizzle-orm";
 import { z } from "zod";
 import { emailCopy } from "@/copy/email";
 import { emailOutbox, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
-import { RuleError } from "@/domain/errors";
+import { RuleError, ValidationError } from "@/domain/errors";
+import { getChurchTimeZone } from "@/domain/settings";
 import { writeAudit } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
+import { appUrl } from "@/lib/email/layout";
+import { formatDateTime } from "@/lib/time-zone";
+import { queueNotice } from "./notice";
 
 /**
  * Admin → Notifications & Audit (FR-21 "Log attempted notifications, provider outcomes,
@@ -143,4 +147,68 @@ export async function retryFailedEmails(
     details: { count: retried.length, ids: retried.map((r) => r.id).slice(0, 50) },
   });
   return retried.length;
+}
+
+export const TEST_EMAIL_TEMPLATE = "system.test_email";
+/** Test emails share the church's Resend allowance (100 a day), so they're capped. */
+export const TEST_EMAILS_PER_DAY = 20;
+
+const testAddress = z.string().trim().toLowerCase().pipe(z.email().max(254));
+
+/**
+ * Queues a test email to any address (go-live checklist, launch step 3): it goes through
+ * the outbox and the shared layout exactly like a real email, so it shows whether the
+ * Resend settings work and whether Gmail, Outlook and Apple Mail put it in the inbox.
+ * At most TEST_EMAILS_PER_DAY in any 24 hours. Audited with the address.
+ */
+export async function sendTestEmail(
+  tx: Tx,
+  actor: Subject & { name: string },
+  input: { to: string },
+  { now = new Date() }: { now?: Date } = {},
+): Promise<string> {
+  const { actingRole } = assertCan(actor, "admin.notifications");
+  const m = emailCopy.testEmail;
+  const parsed = testAddress.safeParse(input.to);
+  if (!parsed.success) throw new ValidationError({ to: m.invalid });
+  const to = parsed.data;
+
+  const [{ recent }] = await tx
+    .select({ recent: count() })
+    .from(emailOutbox)
+    .where(
+      and(
+        eq(emailOutbox.template, TEST_EMAIL_TEMPLATE),
+        gt(emailOutbox.createdAt, new Date(now.getTime() - 86_400_000)),
+      ),
+    );
+  if (recent >= TEST_EMAILS_PER_DAY) throw new RuleError(m.tooMany(TEST_EMAILS_PER_DAY));
+
+  const zone = await getChurchTimeZone(tx);
+  await queueNotice(tx, {
+    template: TEST_EMAIL_TEMPLATE,
+    audience: "administrator",
+    to: [{ email: to }],
+    now,
+    content: {
+      subject: m.subject,
+      heading: m.heading,
+      status: emailCopy.statuses.forYourRecords,
+      paragraphs: [m.intro, m.check],
+      facts: [
+        { label: m.facts.sentBy, value: actor.name },
+        { label: m.facts.queued, value: formatDateTime(now, zone) },
+      ],
+      action: emailCopy.noAction,
+      button: { label: emailCopy.buttons.openApp, href: appUrl("/admin/audit") },
+    },
+  });
+  await writeAudit(tx, {
+    actor: { kind: "user", userId: actor.id, actingRole },
+    area: "admin",
+    eventType: "admin.test_email_sent",
+    entity: { type: "email_outbox" },
+    details: { to },
+  });
+  return to;
 }

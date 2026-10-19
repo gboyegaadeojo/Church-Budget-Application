@@ -95,7 +95,7 @@ export const helpCopy = {
         "Admin → Budget cycles: open the year's cycle, change its deadline with a reason, or give one department an extension.",
         "Admin → Settings: sales tax rate (applies to new submissions only), Planning Center field, sign-in options, the Primary accountant and the monthly limit on reminder texts.",
         "Admin → Settings → Branding: the logo, church and application names, and the accent colour. A colour that's too light to read is refused, with a passing shade suggested.",
-        "Admin → Notifications & Audit: see every email, and send failed ones again.",
+        "Admin → Notifications & Audit: see every email, send failed ones again, and send a test email to check that email works.",
         "Keep at least two System Administrators, so the church never loses access.",
       ],
     },

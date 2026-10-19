@@ -218,6 +218,7 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "admin.signer_edited": { label: "Changed a cheque signer", group: "settings" },
   "admin.signer_removed": { label: "Removed a cheque signer", group: "settings" },
   "admin.emails_retried": { label: "Sent failed emails again", group: "emails" },
+  "admin.test_email_sent": { label: "Sent a test email", group: "emails" },
   "admin.activity_exported": { label: "Exported the activity log to Excel", group: "exports" },
   // Email
   "notifications.email_sent": { label: "Email sent", group: "emails" },

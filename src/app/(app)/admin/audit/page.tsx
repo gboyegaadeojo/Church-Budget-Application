@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, Clock, Mail, Send, XCircle } from "lucide-react";
-import { ActionForm, SubmitButton } from "@/components/ui/action-form";
+import { ActionForm, SubmitButton, TextField } from "@/components/ui/action-form";
 import {
   AdminSkeleton,
   Badge,
@@ -20,6 +20,7 @@ import { getDb } from "@/db";
 import {
   EMAIL_STATUSES,
   getEmailLog,
+  TEST_EMAILS_PER_DAY,
   type EmailLogItem,
   type EmailStatus,
 } from "@/domain/notifications/admin";
@@ -27,7 +28,7 @@ import { getChurchTimeZone } from "@/domain/settings";
 import { viewerAllowedTo } from "@/lib/admin-server";
 import { cn } from "@/lib/cn";
 import { formatDateTime } from "@/lib/time-zone";
-import { retryEmailsAction } from "./actions";
+import { retryEmailsAction, sendTestEmailAction } from "./actions";
 
 const a = emailCopy.admin;
 const labels = emailCopy.history.statuses;
@@ -98,6 +99,22 @@ async function NotificationsContent({
           <p className="text-sm text-fg-muted">{a.retryAllHint}</p>
         </ActionForm>
       )}
+
+      <Section title={a.test.heading} id="test-email" icon={Send} tone="blue">
+        <p className="text-sm text-fg-muted">{a.test.intro}</p>
+        <ActionForm action={sendTestEmailAction} aria-label={a.test.heading} className="max-w-md">
+          <TextField
+            name="to"
+            type="email"
+            label={a.test.to}
+            hint={a.test.hint(TEST_EMAILS_PER_DAY)}
+            defaultValue={viewer.email}
+            autoComplete="email"
+            required
+          />
+          <SubmitButton tone="secondary">{a.test.send}</SubmitButton>
+        </ActionForm>
+      </Section>
 
       <Section title={a.logHeading} id="email-log" icon={Mail} tone="violet">
         <form
