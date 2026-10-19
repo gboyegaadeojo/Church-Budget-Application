@@ -1100,3 +1100,11 @@ What was built:
   - Already-applied migrations are skipped. The script prefers `DATABASE_URL_UNPOOLED` (Neon's direct connection) when set.
   - Deploy previews and branch deploys don't migrate. The checklist says to give them the staging database.
   - The demo site's production deploys migrate its own database, which the nightly reset does anyway.
+
+## Forms on Netlify: the edge proxy no longer reads form bodies (2026-10-19)
+
+On the staging site, sending a sign-in code failed with a server error. The function log said "Unexpected end of form". The proxy (`src/proxy.ts`) read every multipart form body (`request.clone().formData()`) to refuse files. On Netlify the proxy runs at the edge, and reading the body there left the app an empty form, so **every form on the hosted site** would have failed. Locally, `next start` buffers the body, so tests never saw it.
+
+- **Now:** the proxy decides from headers only. It still refuses any multipart body to an `/api/` route (415).
+- **The no-uploads rule (AC-25) is kept inside the app.** Every server action reads its fields as text (`form.text`, `form.all`, or string comparisons), so a file sent to any form other than Settings → Branding is never read or stored. `tests/unit/no-file-reads.test.ts` fails if a server action other than the branding upload reads a file's contents. The 2 MB limit on every form still applies.
+- **Deviation:** a file sent to an ordinary form used to get a 415 refusal; now the action ignores it. Nothing changes for people, since no form other than the logo offers a file picker. Receipts and attachments go from the browser straight to R2 with a signed link.
