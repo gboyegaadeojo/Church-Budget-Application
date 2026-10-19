@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 20
     services:
       restore:
-        image: postgres:17
+        image: postgres:18
         env:
           POSTGRES_PASSWORD: restore-test
         ports:
@@ -62,29 +62,29 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install the Postgres 17 tools and age
+      - name: Install the Postgres 18 tools and age
         if: steps.ready.outputs.skip != 'true'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-common age > /dev/null
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y > /dev/null
-          sudo apt-get install -y -qq postgresql-client-17 > /dev/null
-          /usr/lib/postgresql/17/bin/pg_dump --version
+          sudo apt-get install -y -qq postgresql-client-18 > /dev/null
+          /usr/lib/postgresql/18/bin/pg_dump --version
 
       - name: Dump the database
         if: steps.ready.outputs.skip != 'true'
         run: |
-          /usr/lib/postgresql/17/bin/pg_dump --format=custom --no-owner --no-acl \
+          /usr/lib/postgresql/18/bin/pg_dump --format=custom --no-owner --no-acl \
             --file=backup.dump "$DATABASE_URL"
           ls -l backup.dump
 
       - name: Restore into a throwaway database and compare
         if: steps.ready.outputs.skip != 'true'
         run: |
-          /usr/lib/postgresql/17/bin/pg_restore --no-owner --no-acl --exit-on-error \
+          /usr/lib/postgresql/18/bin/pg_restore --no-owner --no-acl --exit-on-error \
             --dbname="$RESTORE_URL" backup.dump
           count() {
-            /usr/lib/postgresql/17/bin/psql "$1" -At -c "select
+            /usr/lib/postgresql/18/bin/psql "$1" -At -c "select
               (select count(*) from users) || ' users, ' ||
               (select count(*) from budget_requests) || ' budgets, ' ||
               (select count(*) from expense_submissions) || ' expenses, ' ||
