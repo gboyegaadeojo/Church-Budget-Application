@@ -1141,3 +1141,11 @@ The church found Settings long and crowded, and the signers list would not hold 
 - **Categories, like a phone's settings:** General (branding, time zone), Money (sales tax, second approval), People (Primary accountant, signing authorities), Sign-in (Planning Center, requesters failing verification) and Reminder texts. They sit down the left on a computer and in a row of tabs on a phone. `?section=` keeps the choice in the address. Each category loads only its own data, and the permission check runs before anything shows.
 - **Signers:** one slim row each (initials, name, email, since-date, status), sorted by name, active first. Removed signers sit muted below and stay listed. A row opens to edit or remove that signer; **Add a signer** is folded at the bottom. The section shows "6 active · 1 removed". **Accountants** use the same row style.
 - Tests open each category's address. The AC-103 accessibility check now covers every category.
+## Users & Roles built for 80+ people (2026-10-19)
+
+The church asked for a list that stays clean with about 80 people.
+
+- **Slim rows:** each row shows initials, name and email, the first role plus "+2", the first department and role plus "+1 more", and the status. The name is the link, stretched over the row, so the whole row opens the person while the link keeps a short accessible name.
+- **Filter chips with counts:** All, Staff (any role but Requester), Department leaders, and Needs attention (deactivated, suspended or not yet placed). They combine with the search.
+- **Pages of 25**, with Previous and Next, and "1–25 of 80" in the heading. Everything stays in the address.
+- **Add a staff member** is a button that opens the form, not a large form always on the page.
