@@ -133,6 +133,8 @@ Open one PR per numbered step or per feature. Keep PRs small.
 
 ```
 DATABASE_URL
+DATABASE_URL_UNPOOLED                     # optional: Neon's direct connection, used by scripts/migrate.mjs
+FIRST_ADMIN_EMAIL, FIRST_ADMIN_NAME       # the first System Administrator of an empty app; inert once one exists
 AUTH_SECRET, AUTH_URL
 PCO_CLIENT_ID, PCO_CLIENT_SECRET          # OAuth sign-in
 PCO_APP_ID, PCO_PAT_SECRET                # server-side People API (Personal Access Token)
