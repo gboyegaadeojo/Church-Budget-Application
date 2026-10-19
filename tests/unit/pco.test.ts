@@ -186,18 +186,30 @@ describe("HttpPlanningCenterDirectory", () => {
     await expect(dir.getPerson("42")).rejects.toBeInstanceOf(PlanningCenterUnavailableError);
   });
 
-  it("FR-39 lists teams, groups and tags, leaving archived ones out", async () => {
+  it("FR-39 lists teams (named with their service type), groups and tags, leaving archived ones out", async () => {
     const dir = new HttpPlanningCenterDirectory(
       credentials,
       fakeFetch({
-        "/services/v2/teams?per_page=100": {
+        "/services/v2/teams?include=service_type&per_page=100": {
           data: [
             {
               type: "Team",
               id: "5",
               attributes: { name: "Media / Production", archived_at: null },
+              relationships: { service_type: { data: { type: "ServiceType", id: "1" } } },
+            },
+            {
+              type: "Team",
+              id: "9",
+              attributes: { name: "Media / Production", archived_at: null },
+              relationships: { service_type: { data: { type: "ServiceType", id: "2" } } },
             },
             { type: "Team", id: "6", attributes: { name: "Old", archived_at: "2020-01-01" } },
+            { type: "Team", id: "7", attributes: { name: "No type" } },
+          ],
+          included: [
+            { type: "ServiceType", id: "1", attributes: { name: "Sunday Service" } },
+            { type: "ServiceType", id: "2", attributes: { name: "Midweek" } },
           ],
         },
         "/groups/v2/groups?per_page=100": {
@@ -217,7 +229,9 @@ describe("HttpPlanningCenterDirectory", () => {
       }) as typeof fetch,
     );
     expect(await dir.listSources("services_team")).toEqual([
-      { id: "5", name: "Media / Production" },
+      { id: "5", name: "Sunday Service: Media / Production" },
+      { id: "9", name: "Midweek: Media / Production" },
+      { id: "7", name: "No type" },
     ]);
     expect(await dir.listSources("groups_group")).toEqual([{ id: "8", name: "Youth Leaders" }]);
     expect(await dir.listSources("groups_tag")).toEqual([{ id: "70", name: "Ministry: Youth" }]);
