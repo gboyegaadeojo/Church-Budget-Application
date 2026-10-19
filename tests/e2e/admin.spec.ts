@@ -46,6 +46,30 @@ test.describe("Admin (Stage 1 step 4)", () => {
     await pat.close();
   });
 
+  test("Users & Roles lists people in slim rows, with filters and a folded add form", async ({
+    page,
+  }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.gina);
+    await page.goto("/admin/users");
+    const filters = page.getByRole("navigation", { name: "Show" });
+    await expect(filters.getByRole("link", { name: /^All \d+$/ })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await filters.getByRole("link", { name: /^Staff \d+$/ }).click();
+    await expect(page).toHaveURL(/filter=staff/);
+    const list = page.getByRole("list", { name: "Users & Roles" });
+    await expect(list.getByRole("link", { name: "Pat Accountant", exact: true })).toBeVisible();
+
+    // The add form stays folded until it's wanted.
+    const add = page.getByRole("form", { name: "Add a staff member" });
+    await expect(add).toBeHidden();
+    await page.getByText("Add a staff member", { exact: true }).click();
+    await expect(add).toBeVisible();
+    await expectAxeClean(page);
+  });
+
   test("go-live step 3 the administrator sends a test email and sees it in the log", async ({
     page,
   }) => {
