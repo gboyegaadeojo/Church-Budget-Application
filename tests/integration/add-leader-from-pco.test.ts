@@ -152,6 +152,24 @@ describe("Add a leader from Planning Center", () => {
     );
   });
 
+  it("checks Planning Center for staff whose account was never verified (they skip the check at sign-in)", async () => {
+    const dept = await insertDepartment(db);
+    const person = pcoPerson(true);
+    const staff = await insertUser(db, {
+      pcoPersonId: person.id,
+      displayName: person.name,
+      accessStatus: "active",
+      pcoLeaderVerified: false,
+    });
+    await db.insert(userRoles).values({ userId: staff.id, role: "system_admin" });
+
+    await add(dept.id, person.id, "backup_1");
+    const [after] = await db.select().from(users).where(eq(users.id, staff.id));
+    expect(after.pcoLeaderVerified).toBe(true);
+    const roles = await db.select().from(userRoles).where(eq(userRoles.userId, staff.id));
+    expect(roles.map((r) => r.role).sort()).toEqual(["requester", "system_admin"]);
+  });
+
   it("never joins an existing account by email", async () => {
     const dept = await insertDepartment(db);
     const existing = await insertUser(db, { accessStatus: "active" });
