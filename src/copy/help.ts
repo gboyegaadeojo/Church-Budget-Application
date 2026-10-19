@@ -91,7 +91,7 @@ export const helpCopy = {
       steps: [
         "Admin → Users & Roles: add staff by email address and give them roles. Open a person's page to link their Planning Center profile so they can sign in with Planning Center.",
         "Admin → Departments: keep the list current, set each department's Primary and Backup leaders, and handle proposed departments.",
-        "Admin → Departments → a department → Planning Center mapping: link it to a Services team, group or tag, then Add or Ignore the leaders Planning Center suggests, or let them be added automatically.",
+        "Admin → Departments → a department → Add a leader: search Planning Center and add someone as Primary, Backup or Representative, even before they've signed in.",
         "Admin → Budget cycles: open the year's cycle, change its deadline with a reason, or give one department an extension.",
         "Admin → Settings: sales tax rate (applies to new submissions only), Planning Center field, sign-in options, the Primary accountant and the monthly limit on reminder texts.",
         "Admin → Settings → Branding: the logo, church and application names, and the accent colour. A colour that's too light to read is refused, with a passing shade suggested.",

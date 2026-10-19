@@ -1125,3 +1125,12 @@ What changed:
   - It's audited (`admin.user_added`, with `source: planning_center`), and the person is emailed as for any assignment.
   - This is the one place the app takes a person's name and email from Planning Center without them signing in. It's the administrator's deliberate choice, for one named leader.
 - **#93:** Services teams are fetched with their service type and read **"Sunday Service: Media"**.
+## Department page simplified; team mapping turned off (2026-10-19)
+
+The church found Planning Center team mapping (FR-39) confusing, and doesn't need it. Leaders reach their department through the **Ministry Department** field when they sign in, or through **Add a leader**.
+
+- **Off:** the **Planning Center mapping** panel no longer shows. A department linked before still shows it, so it can be unlinked. The code, nightly sync and tests stay, so the church can turn it back on later.
+- **Redesigned page:**
+  - **Leaders** come first. Each row shows initials, the name, a role badge and the email, with one role dropdown plus **Change** in place of three "Make …" buttons, and **Remove**.
+  - **Add a leader** sits in a panel below. It searches Planning Center; "Or choose someone who has already signed in" is folded away underneath.
+  - **Department details** covers the name and **Name in Planning Center** side by side, with **Deactivate department** at the bottom.
