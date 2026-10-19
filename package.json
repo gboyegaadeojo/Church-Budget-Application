@@ -17,6 +17,7 @@
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "test:e2e": "playwright test",
     "test:perf": "vitest run --config vitest.perf.config.mts",
+    "screenshots": "playwright test --config playwright.screenshots.config.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:check": "drizzle-kit check"

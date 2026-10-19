@@ -90,6 +90,7 @@ To run against a real database instead, copy `.env.example` to `.env.local`, fil
 | `npm run test:integration` | Service tests against Postgres (PGlite locally, a real Postgres in CI) |
 | `npm run test:e2e` | Playwright end-to-end and accessibility tests; it builds the app and starts the fake server on port 3100 itself |
 | `npm run test:perf` | The performance check: a year of data at three times church scale, timed page by page (not in CI) |
+| `npm run screenshots` | Regenerates the user manual's screenshots in `docs/images/manual/` from the fake server (not in CI) |
 | `npm run db:generate` · `npm run db:migrate` · `npm run db:check` | Drizzle migrations |
 
 ### Where things are
