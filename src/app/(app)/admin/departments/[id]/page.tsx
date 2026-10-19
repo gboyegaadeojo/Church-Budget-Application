@@ -16,7 +16,8 @@ import {
   TEAM_SOURCE_TYPES,
 } from "@/domain/departments/pco-mapping";
 import { getPlanningCenterDirectory } from "@/lib/pco-directory";
-import type { PcoTeamSourceType } from "@/lib/pco";
+import type { PcoPerson, PcoTeamSourceType } from "@/lib/pco";
+import { buttonClass, inputClass } from "@/components/ui/styles";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   AdminSkeleton,
@@ -36,6 +37,7 @@ import { LEADER_SLOTS, type LeaderSlot } from "@/domain/departments/slots";
 import { formatDateTime } from "@/lib/time-zone";
 import {
   acceptProposedAction,
+  addFromPlanningCenterAction,
   addSuggestionAction,
   departmentMappingAction,
   ignoreSuggestionAction,
@@ -66,20 +68,28 @@ const STATUS_LABEL = {
   rejected: d.reject,
 };
 
-export default function DepartmentPage({ params }: PageProps<"/admin/departments/[id]">) {
+export default function DepartmentPage({
+  params,
+  searchParams,
+}: PageProps<"/admin/departments/[id]">) {
   return (
     <div className="space-y-6">
       <Suspense fallback={<AdminSkeleton />}>
-        <DepartmentContent params={params} />
+        <DepartmentContent params={params} searchParams={searchParams} />
       </Suspense>
     </div>
   );
 }
 
-async function DepartmentContent({ params }: Pick<PageProps<"/admin/departments/[id]">, "params">) {
+async function DepartmentContent({
+  params,
+  searchParams,
+}: Pick<PageProps<"/admin/departments/[id]">, "params" | "searchParams">) {
   const viewer = await viewerAllowedTo("admin.departments", "/admin/departments");
   if (!viewer) return <PermissionDenied />;
   const { id } = await params;
+  const { pco } = await searchParams;
+  const pcoQuery = typeof pco === "string" ? pco.slice(0, 100) : "";
   const db = getDb();
   const detail = await getDepartmentDetail(db, id);
   if (!detail) notFound();
@@ -252,6 +262,13 @@ async function DepartmentContent({ params }: Pick<PageProps<"/admin/departments/
               <SubmitButton tone="secondary">{d.addPerson}</SubmitButton>
             </ActionForm>
           ))}
+        {editable && (
+          <PcoLeaderSearch
+            departmentId={department.id}
+            query={pcoQuery}
+            hasPrimary={leaders.some((l) => l.slot === "primary")}
+          />
+        )}
       </Section>
 
       {department.status !== "proposed" && department.status !== "rejected" && (
@@ -440,6 +457,104 @@ async function PcoMappingSection({
         </div>
       )}
     </Section>
+  );
+}
+
+/**
+ * Add a leader who hasn't signed in yet: search Planning Center by name or email, then
+ * add a match as Primary, Backup or Representative (FR-38). The service checks they're a
+ * Group Leader and makes their account.
+ */
+async function PcoLeaderSearch({
+  departmentId,
+  query,
+  hasPrimary,
+}: {
+  departmentId: string;
+  query: string;
+  hasPrimary: boolean;
+}) {
+  const f = d.fromPco;
+  const directory = getPlanningCenterDirectory();
+  if (!directory) return null;
+  let people: PcoPerson[] | null = [];
+  if (query.trim().length >= 2) {
+    try {
+      people = await directory.searchPeople(query);
+    } catch {
+      people = null;
+    }
+  }
+  return (
+    <div className="space-y-3 border-t border-border pt-4">
+      <h3 className="text-sm font-semibold">{f.heading}</h3>
+      <p className="text-sm text-fg-muted">{f.hint}</p>
+      <form
+        method="get"
+        action={`/admin/departments/${departmentId}#leaders`}
+        role="search"
+        aria-label={f.heading}
+        className="flex flex-col gap-2 sm:flex-row sm:items-end"
+      >
+        <div className="flex-1 space-y-1.5">
+          <label htmlFor="pco-search" className="block text-sm font-medium">
+            {f.search}
+          </label>
+          <input
+            id="pco-search"
+            type="search"
+            name="pco"
+            defaultValue={query}
+            autoComplete="off"
+            className={inputClass}
+          />
+        </div>
+        <button type="submit" className={buttonClass("secondary")}>
+          {f.find}
+        </button>
+      </form>
+      {people === null ? (
+        <p role="status" className="text-sm text-warning">
+          {f.unavailable}
+        </p>
+      ) : query && people.length === 0 ? (
+        <p className="text-sm text-fg-muted">{f.noResults}</p>
+      ) : (
+        people.length > 0 && (
+          <ul className="divide-y divide-border" aria-label={f.heading}>
+            {people.map((p) => (
+              <li
+                key={p.id}
+                className="flex flex-col gap-3 py-3 lg:flex-row lg:items-end lg:justify-between"
+              >
+                <div className="min-w-0">
+                  <span className="block font-medium">{p.name}</span>
+                  <span className="block text-xs break-all text-fg-muted">{p.emails[0] ?? ""}</span>
+                </div>
+                <ActionForm
+                  action={addFromPlanningCenterAction}
+                  className="flex flex-wrap items-end gap-2 space-y-0"
+                  aria-label={f.addAs(p.name)}
+                >
+                  <input type="hidden" name="departmentId" value={departmentId} />
+                  <input type="hidden" name="pcoPersonId" value={p.id} />
+                  <SelectField
+                    name="type"
+                    label={f.addAs(p.name)}
+                    defaultValue={hasPrimary ? "representative" : "primary"}
+                    options={LEADER_SLOTS.map((slot) => ({
+                      value: slot,
+                      label: d.slotLabels[slot],
+                    }))}
+                  />
+                  <SubmitButton tone="secondary">{f.add}</SubmitButton>
+                </ActionForm>
+              </li>
+            ))}
+          </ul>
+        )
+      )}
+    </div>
   );
 }
 

@@ -1108,3 +1108,20 @@ On the staging site, sending a sign-in code failed with a server error. The func
 - **Now:** the proxy decides from headers only. It still refuses any multipart body to an `/api/` route (415).
 - **The no-uploads rule (AC-25) is kept inside the app.** Every server action reads its fields as text (`form.text`, `form.all`, or string comparisons), so a file sent to any form other than Settings → Branding is never read or stored. `tests/unit/no-file-reads.test.ts` fails if a server action other than the branding upload reads a file's contents. The 2 MB limit on every form still applies.
 - **Deviation:** a file sent to an ordinary form used to get a 415 refusal; now the action ignores it. Nothing changes for people, since no form other than the logo offers a file picker. Receipts and attachments go from the browser straight to R2 with a signed link.
+## Add a leader from Planning Center before they sign in; teams named with their service type (2026-10-19)
+
+Setting up the live site, the church found two things:
+
+- **Leaders couldn't be added before they signed in.** **Add a leader** listed only people with an account.
+- **The team list was unreadable.** **Planning Center mapping** listed the same Services teams three times: each service type has its own "Media", "Tech" and so on.
+
+What changed:
+
+- **Add a leader from Planning Center** (`addLeaderFromPlanningCenter`, `src/domain/departments/add-from-pco.ts`). On a department's page, the administrator searches Planning Center and adds a match as Primary, Backup or Representative.
+  - The person must pass the Group Leader check now, exactly as at sign-in (FR-01a).
+  - Their account is created linked to their Planning Center profile, with the Requester role, so their first sign-in finds it by profile.
+  - Someone already linked is added as they are, and gains the Requester role if they're staff.
+  - An address already used by an unlinked account is refused, not joined, because identities are never joined by email. The administrator links it on the Users & Roles page.
+  - It's audited (`admin.user_added`, with `source: planning_center`), and the person is emailed as for any assignment.
+  - This is the one place the app takes a person's name and email from Planning Center without them signing in. It's the administrator's deliberate choice, for one named leader.
+- **#93:** Services teams are fetched with their service type and read **"Sunday Service: Media"**.
