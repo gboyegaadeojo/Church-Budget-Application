@@ -1081,3 +1081,22 @@ Requirements Section 22 says Stage 5 adds screenshots to the manual.
 - **Not in CI:** images would change with every date and reference. Regenerate them when a screen the manual shows changes.
 - **What's shown:** the test copy with made-up people and amounts. Sam's Home and the budget preview were left out: an empty "all caught up" and a repeat of the items step. The accountant's Home shows My tasks instead. Each image has alt text describing what it shows.
 - **Not included:** the sign-in page, because the test copy shows test-only sign-in buttons.
+
+## Production setup: migrations on deploy and the first System Administrator (2026-10-19)
+
+Two gaps would have stopped launch:
+
+- **A new database has no accounts.** Emailed codes go only to existing administrators, and Planning Center sign-in only creates requesters, so nobody could ever sign in to a fresh production database.
+- **Nothing migrated production.** Only the demo reset and the test servers ran migrations.
+
+What was built:
+
+- **`FIRST_ADMIN_EMAIL`** (and the optional `FIRST_ADMIN_NAME`). While no active System Administrator exists, asking for a sign-in code at that address creates the account with the System Administrator role, or gives an existing account that role. The code is then emailed as usual (`ensureFirstAdministrator` in `src/domain/users/email-sign-in.ts`, audited as `access.first_admin_created`).
+  - Once any System Administrator exists it does nothing, so leaving it set is harmless.
+  - If every System Administrator is later deactivated, it works again as a recovery path; only whoever controls Netlify's variables can use it.
+  - Chosen over a command-line script so the church can set up the app without database access, and over a GitHub Actions form because workflow inputs show in this public repository's logs.
+- **`netlify.toml` and `scripts/migrate.mjs`.**
+  - Production deploys run `npm run build && node scripts/migrate.mjs`. A failed build never touches the database, and a failed migration fails the deploy, so the previous version stays live.
+  - Already-applied migrations are skipped. The script prefers `DATABASE_URL_UNPOOLED` (Neon's direct connection) when set.
+  - Deploy previews and branch deploys don't migrate. The checklist says to give them the staging database.
+  - The demo site's production deploys migrate its own database, which the nightly reset does anyway.

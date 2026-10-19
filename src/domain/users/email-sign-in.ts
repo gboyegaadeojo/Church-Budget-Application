@@ -38,6 +38,10 @@ export type EmailCodeDeps = {
   requestIpHash?: string;
   /** Tests pass a fixed code; otherwise six random digits. */
   generateCode?: () => string;
+  /** FIRST_ADMIN_EMAIL: who becomes the first System Administrator of an empty app. */
+  firstAdminEmail?: string;
+  /** FIRST_ADMIN_NAME: their name, if their account is created (else the address's first part). */
+  firstAdminName?: string;
 };
 
 export type CodeRequestResult =
@@ -124,6 +128,73 @@ async function allowlistedAccount(tx: Tx, email: string) {
   return row ?? null;
 }
 
+/**
+ * The first System Administrator (go-live checklist, launch step 6). A new database has
+ * no accounts, and emailed codes only go to administrators, so nobody could sign in.
+ * While no active System Administrator exists, the address in FIRST_ADMIN_EMAIL becomes
+ * one when it asks for a code: its account is created, or an existing one is given the
+ * role. Once any System Administrator exists this does nothing, so the variable can stay
+ * set. Audited.
+ */
+export async function ensureFirstAdministrator(
+  tx: Tx,
+  email: string,
+  first: { email?: string; name?: string },
+  now: Date,
+): Promise<boolean> {
+  const allowed = first.email ? normalizeEmail(first.email) : null;
+  if (!allowed || allowed !== email) return false;
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext('first-administrator'))`);
+  const [existing] = await tx
+    .select({ id: users.id })
+    .from(users)
+    .innerJoin(userRoles, eq(userRoles.userId, users.id))
+    .where(
+      and(
+        eq(userRoles.role, "system_admin"),
+        eq(users.active, true),
+        ne(users.accessStatus, "inactive"),
+      ),
+    )
+    .limit(1);
+  if (existing) return false;
+
+  const [account] = await tx
+    .select({ id: users.id })
+    .from(users)
+    .where(sql`lower(${users.email}) = ${email}`)
+    .limit(1);
+  const userId = account
+    ? account.id
+    : (
+        await tx
+          .insert(users)
+          .values({
+            email,
+            displayName: first.name?.trim().slice(0, 100) || email.split("@")[0],
+            accessStatus: "active",
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning({ id: users.id })
+      )[0].id;
+  if (account) {
+    await tx
+      .update(users)
+      .set({ active: true, accessStatus: "active", updatedAt: now })
+      .where(eq(users.id, userId));
+  }
+  await tx.insert(userRoles).values({ userId, role: "system_admin" }).onConflictDoNothing();
+  await writeAudit(tx, {
+    actor: { kind: "system" },
+    area: "access",
+    eventType: "access.first_admin_created",
+    entity: { type: "user", id: userId },
+    details: { email, newAccount: !account },
+  });
+  return true;
+}
+
 export async function requestEmailCode(
   tx: Tx,
   deps: EmailCodeDeps,
@@ -163,6 +234,12 @@ export async function requestEmailCode(
     return { ok: false, reason: "too_many", retryAt };
   }
 
+  await ensureFirstAdministrator(
+    tx,
+    email,
+    { email: deps.firstAdminEmail, name: deps.firstAdminName },
+    now,
+  );
   const account = await allowlistedAccount(tx, email);
   const id = randomUUID();
   const code = (deps.generateCode ?? sixDigits)();

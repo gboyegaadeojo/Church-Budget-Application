@@ -74,7 +74,13 @@ export async function requestEmailCodeAction(
   const secret = process.env.AUTH_SECRET;
   if (!secret) return fail(e.unavailable);
 
-  const deps = { now: new Date(), secret, requestIpHash: await requestIpHash() };
+  const deps = {
+    now: new Date(),
+    secret,
+    requestIpHash: await requestIpHash(),
+    firstAdminEmail: process.env.FIRST_ADMIN_EMAIL,
+    firstAdminName: process.env.FIRST_ADMIN_NAME,
+  };
   const { result, ids } = await trackQueuedEmails(() =>
     getDb().transaction((tx) => requestEmailCode(tx, deps, { email })),
   );

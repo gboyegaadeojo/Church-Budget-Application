@@ -10,7 +10,7 @@ Sign-in is with Planning Center (the Church Administrator and System Administrat
 
 ## Status
 
-Stages 1 to 4 are built, tested and merged (annual budgets, polish, expenses, spending). **Stage 5: hardening and launch** (Requirements Section 15) is under way. Done: the security review, the nightly backup and restore test, reminder texts, the performance check ([docs/performance.md](docs/performance.md)), the user manual check, the automated phone check, and the email deliverability test script ([docs/email-deliverability.md](docs/email-deliverability.md)). Left for the church: the phone check on real phones, the deliverability test, a pilot, and the [go-live checklist](docs/go-live-checklist.md).
+Stages 1 to 4 are built, tested and merged (annual budgets, polish, expenses, spending). **Stage 5: hardening and launch** (Requirements Section 15) is under way. Done: the security review, the nightly backup and restore test, reminder texts, the performance check ([docs/performance.md](docs/performance.md)), the user manual check, the automated phone check, the email deliverability test script ([docs/email-deliverability.md](docs/email-deliverability.md)), production setup (migrations on deploy, the first System Administrator), the manual's screenshots and the [pilot plan](docs/pilot-plan.md). Left for the church: the phone check on real phones, the deliverability test, the pilot, and the [go-live checklist](docs/go-live-checklist.md).
 
 Every choice made along the way that the specifications didn't settle is recorded in [docs/decisions.md](docs/decisions.md).
 
@@ -115,7 +115,7 @@ CI must pass lint, typecheck, unit, integration and end-to-end tests (with axe a
 
 ### Deploying
 
-Production is a Netlify site connected to this repository. The environment variables, secrets and scheduled jobs are listed in [CLAUDE.md](CLAUDE.md#environment-variables-names-only-values-live-in-netlify-and-github-secrets) and explained in the [go-live checklist](docs/go-live-checklist.md). The optional training copy is set up as in [docs/demo-site.md](docs/demo-site.md).
+Production is a Netlify site connected to this repository. [netlify.toml](netlify.toml) builds it and, on production deploys only, brings the database up to date afterwards (`scripts/migrate.mjs`); a failed migration fails the deploy and the previous version stays live. On a new, empty database, set `FIRST_ADMIN_EMAIL` and sign in with an emailed code at that address to become the first System Administrator. The environment variables, secrets and scheduled jobs are listed in [CLAUDE.md](CLAUDE.md#environment-variables-names-only-values-live-in-netlify-and-github-secrets) and explained in the [go-live checklist](docs/go-live-checklist.md). The optional training copy is set up as in [docs/demo-site.md](docs/demo-site.md).
 
 ## What the church provides before launch
 
