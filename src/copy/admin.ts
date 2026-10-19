@@ -180,16 +180,25 @@ export const adminCopy = {
       `${added === 1 ? "1 department" : `${added} departments`} added` +
       (skipped ? `, ${skipped} skipped (already on the list)` : "") +
       (other ? ". “Others” is the Other option on the form, so it wasn't added." : "."),
-    renameHeading: "Name",
-    rename: "Rename",
+    intro: "Who leads this department, and its details.",
+    detailsHeading: "Department details",
+    detailsNote:
+      "Leaders whose Ministry Department field in Planning Center names this department join it when they sign in.",
+    renameHeading: "Department name",
+    rename: "Save name",
     renameNote: "Past requests keep the old name.",
     renamed: "Department renamed.",
-    pcoHeading: "Planning Center",
+    pcoHeading: "Name in Planning Center",
     pcoNote:
       "Leaders whose Ministry Department field in Planning Center holds this department's name are linked to it. If Planning Center uses a different name, enter it here.",
-    pcoValue: "Planning Center value",
-    pcoValueHint: (name: string) => `Leave blank to match "${name}".`,
-    pcoSave: "Save Planning Center value",
+    pcoValue: "Name in Planning Center",
+    pcoValueHint: (name: string) =>
+      `Only if Planning Center calls it something else, like "Media". Leave blank to use "${name}".`,
+    pcoSave: "Save",
+    deactivateNote: "Hides it from the budget form. Its history stays.",
+    roleFor: (name: string) => `Role for ${name}`,
+    changeRole: "Change",
+    orSignedIn: "Or choose someone who has already signed in",
     pcoSaved: "Planning Center value saved.",
     fromPlanningCenter: "From Planning Center",
     noLongerListed: "No longer listed in Planning Center",
@@ -269,7 +278,7 @@ export const adminCopy = {
     reactivated: "Department reactivated.",
     leadersHeading: "Leaders",
     leadersHint:
-      "Each department has one Primary requester and can have up to two Backups. If the Primary leaves, Backup 1 takes over and Backup 2 moves up. All must be verified Group Leaders.",
+      "One Primary, up to two Backups, and any number of Representatives. If the Primary leaves, Backup 1 takes over. All must be Group Leaders in Planning Center.",
     typeLabels: { primary: "Primary", backup: "Backup", representative: "Representative" },
     slotLabels: {
       primary: "Primary",
@@ -293,8 +302,8 @@ export const adminCopy = {
     noCandidates:
       "Nobody who has signed in is available to add. Find a leader in Planning Center below.",
     fromPco: {
-      heading: "Add a leader from Planning Center",
-      hint: "Find someone who hasn't signed in yet. They must be a Group Leader in Planning Center; their account is made when you add them, and they sign in with Planning Center.",
+      heading: "Add a leader",
+      hint: "Search Planning Center by name or email. They must be a Group Leader there. If they haven't signed in yet, their account is made when you add them.",
       search: "Name or email in Planning Center",
       find: "Find",
       noResults: "Nobody in Planning Center matches.",

@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { Building2, UserPlus, UsersRound } from "lucide-react";
+import { cn } from "@/lib/cn";
 import { notFound } from "next/navigation";
 import {
   ActionForm,
@@ -22,6 +24,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   AdminSkeleton,
   Badge,
+  type BadgeTone,
   EmptyState,
   PageHeader,
   PermissionDenied,
@@ -100,11 +103,16 @@ async function DepartmentContent({
   );
   const zone = await getChurchTimeZone(db);
   const editable = department.status === "active" || department.status === "proposed";
+  const hasPrimary = leaders.some((l) => l.slot === "primary");
   const statusFormId = `status-${department.id}`;
 
   return (
     <>
-      <PageHeader title={department.name} back={{ href: "/admin/departments", label: d.title }}>
+      <PageHeader
+        title={department.name}
+        intro={d.intro}
+        back={{ href: "/admin/departments", label: d.title }}
+      >
         <Badge tone={STATUS_TONE[department.status]}>{STATUS_LABEL[department.status]}</Badge>
       </PageHeader>
 
@@ -181,39 +189,13 @@ async function DepartmentContent({
         </Section>
       )}
 
-      <Section title={d.renameHeading} description={d.renameNote} id="rename">
-        <ActionForm action={renameAction} aria-label={d.renameHeading}>
-          <input type="hidden" name="id" value={department.id} />
-          <input type="hidden" name="version" value={department.version} />
-          <TextField name="name" label={d.columns.name} defaultValue={department.name} required />
-          <SubmitButton tone="secondary">{d.rename}</SubmitButton>
-        </ActionForm>
-      </Section>
-
-      {department.status === "active" && <PcoMappingSection department={department} zone={zone} />}
-
-      {editable && !isTeamSource(department.pcoSourceType) && (
-        <Section title={d.pcoHeading} description={d.pcoNote} id="planning-center">
-          <ActionForm action={planningCenterValueAction} aria-label={d.pcoHeading}>
-            <input type="hidden" name="id" value={department.id} />
-            <input type="hidden" name="version" value={department.version} />
-            <TextField
-              name="value"
-              label={d.pcoValue}
-              hint={d.pcoValueHint(department.name)}
-              defaultValue={
-                department.pcoSourceType === "people_field_value"
-                  ? (department.pcoSourceId ?? "")
-                  : ""
-              }
-              autoComplete="off"
-            />
-            <SubmitButton tone="secondary">{d.pcoSave}</SubmitButton>
-          </ActionForm>
-        </Section>
-      )}
-
-      <Section title={d.leadersHeading} description={d.leadersHint} id="leaders">
+      <Section
+        title={d.leadersHeading}
+        description={d.leadersHint}
+        id="leaders"
+        icon={UsersRound}
+        tone="blue"
+      >
         {leaders.length === 0 ? (
           <EmptyState>{d.noLeaders}</EmptyState>
         ) : (
@@ -229,54 +211,94 @@ async function DepartmentContent({
             ))}
           </ul>
         )}
-        {editable &&
-          (candidates.length === 0 ? (
-            <p className="text-sm text-fg-muted">{d.noCandidates}</p>
-          ) : (
-            <ActionForm
-              action={setLeaderAction}
-              aria-label={d.addLeader}
-              className="border-t border-border pt-4"
-            >
-              <h3 className="text-sm font-semibold">{d.addLeader}</h3>
-              <input type="hidden" name="departmentId" value={department.id} />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <SelectField
-                  name="userId"
-                  label={d.person}
-                  placeholder={d.choosePerson}
-                  options={candidates.map((c) => ({
-                    value: c.id,
-                    label: `${c.name} (${c.email})`,
-                  }))}
-                />
-                <SelectField
-                  name="type"
-                  label={d.as}
-                  defaultValue={
-                    leaders.some((l) => l.slot === "primary") ? "representative" : "primary"
-                  }
-                  options={LEADER_SLOTS.map((slot) => ({ value: slot, label: d.slotLabels[slot] }))}
-                />
-              </div>
-              <SubmitButton tone="secondary">{d.addPerson}</SubmitButton>
-            </ActionForm>
-          ))}
         {editable && (
-          <PcoLeaderSearch
-            departmentId={department.id}
-            query={pcoQuery}
-            hasPrimary={leaders.some((l) => l.slot === "primary")}
-          />
+          <div className="space-y-4 rounded-[12px] bg-surface-2 p-4 sm:p-5">
+            <PcoLeaderSearch
+              departmentId={department.id}
+              query={pcoQuery}
+              hasPrimary={hasPrimary}
+            />
+            {candidates.length > 0 && (
+              <details className="group border-t border-border pt-4">
+                <summary className="cursor-pointer text-sm font-medium text-fg-muted hover:text-fg">
+                  {d.orSignedIn}
+                </summary>
+                <ActionForm action={setLeaderAction} aria-label={d.orSignedIn} className="pt-3">
+                  <input type="hidden" name="departmentId" value={department.id} />
+                  <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+                    <SelectField
+                      name="userId"
+                      label={d.person}
+                      placeholder={d.choosePerson}
+                      options={candidates.map((c) => ({
+                        value: c.id,
+                        label: `${c.name} (${c.email})`,
+                      }))}
+                    />
+                    <SelectField
+                      name="type"
+                      label={d.as}
+                      defaultValue={hasPrimary ? "representative" : "primary"}
+                      options={LEADER_SLOTS.map((slot) => ({
+                        value: slot,
+                        label: d.slotLabels[slot],
+                      }))}
+                    />
+                  </div>
+                  <SubmitButton tone="secondary">{d.addPerson}</SubmitButton>
+                </ActionForm>
+              </details>
+            )}
+          </div>
         )}
       </Section>
 
-      {department.status !== "proposed" && department.status !== "rejected" && (
-        <Section title={d.statusHeading} id="status">
+      <Section
+        title={d.detailsHeading}
+        description={d.detailsNote}
+        id="details"
+        icon={Building2}
+        tone="slate"
+      >
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ActionForm action={renameAction} aria-label={d.renameHeading}>
+            <input type="hidden" name="id" value={department.id} />
+            <input type="hidden" name="version" value={department.version} />
+            <TextField
+              name="name"
+              label={d.renameHeading}
+              hint={d.renameNote}
+              defaultValue={department.name}
+              required
+            />
+            <SubmitButton tone="secondary">{d.rename}</SubmitButton>
+          </ActionForm>
+          {editable && !isTeamSource(department.pcoSourceType) && (
+            <ActionForm action={planningCenterValueAction} aria-label={d.pcoHeading}>
+              <input type="hidden" name="id" value={department.id} />
+              <input type="hidden" name="version" value={department.version} />
+              <TextField
+                name="value"
+                label={d.pcoValue}
+                hint={d.pcoValueHint(department.name)}
+                defaultValue={
+                  department.pcoSourceType === "people_field_value"
+                    ? (department.pcoSourceId ?? "")
+                    : ""
+                }
+                autoComplete="off"
+              />
+              <SubmitButton tone="secondary">{d.pcoSave}</SubmitButton>
+            </ActionForm>
+          )}
+        </div>
+
+        {department.status !== "proposed" && department.status !== "rejected" && (
           <ActionForm
             action={setDepartmentActiveAction}
             id={statusFormId}
             aria-label={d.statusHeading}
+            className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between"
           >
             <input type="hidden" name="id" value={department.id} />
             <input type="hidden" name="version" value={department.version} />
@@ -285,6 +307,9 @@ async function DepartmentContent({
               name="active"
               value={department.status === "active" ? "false" : "true"}
             />
+            <p className="text-sm text-fg-muted">
+              {department.status === "active" ? d.deactivateNote : STATUS_LABEL.inactive}
+            </p>
             {department.status === "active" ? (
               <ConfirmDialog
                 formId={statusFormId}
@@ -299,7 +324,12 @@ async function DepartmentContent({
               <SubmitButton tone="secondary">{d.reactivate}</SubmitButton>
             )}
           </ActionForm>
-        </Section>
+        )}
+      </Section>
+
+      {/* Team mapping is off (docs/decisions.md 2026-10-19); a department linked before can still be unlinked. */}
+      {department.status === "active" && isTeamSource(department.pcoSourceType) && (
+        <PcoMappingSection department={department} zone={zone} />
       )}
     </>
   );
@@ -486,9 +516,14 @@ async function PcoLeaderSearch({
     }
   }
   return (
-    <div className="space-y-3 border-t border-border pt-4">
-      <h3 className="text-sm font-semibold">{f.heading}</h3>
-      <p className="text-sm text-fg-muted">{f.hint}</p>
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <h3 className="flex items-center gap-2 text-[15px] font-semibold">
+          <UserPlus className="size-4 text-fg-muted" aria-hidden="true" />
+          {f.heading}
+        </h3>
+        <p className="text-sm text-fg-muted">{f.hint}</p>
+      </div>
       <form
         method="get"
         action={`/admin/departments/${departmentId}#leaders`}
@@ -521,7 +556,10 @@ async function PcoLeaderSearch({
         <p className="text-sm text-fg-muted">{f.noResults}</p>
       ) : (
         people.length > 0 && (
-          <ul className="divide-y divide-border" aria-label={f.heading}>
+          <ul
+            className="divide-y divide-border rounded-[12px] border border-border bg-surface px-4"
+            aria-label={f.heading}
+          >
             {people.map((p) => (
               <li
                 key={p.id}
@@ -558,15 +596,21 @@ async function PcoLeaderSearch({
   );
 }
 
-const MAKE: Record<LeaderSlot, string> = {
-  primary: d.makePrimary,
-  backup_1: d.makeBackup1,
-  backup_2: d.makeBackup2,
-  representative: d.makeRepresentative,
+const SLOT_TONE: Record<LeaderSlot, BadgeTone> = {
+  primary: "info",
+  backup_1: "success",
+  backup_2: "success",
+  representative: "neutral",
 };
 
-/** The other slots a leader can move to. */
-const otherSlots = (slot: LeaderSlot) => LEADER_SLOTS.filter((s) => s !== slot);
+/** "Sam Lee" → "SL", for the round marker beside each leader. */
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
 
 function LeaderRow({
   departmentId,
@@ -581,37 +625,55 @@ function LeaderRow({
   teamMapped: boolean;
 }) {
   const removeId = `remove-${departmentId}-${leader.userId}`;
+  const roleId = `role-${departmentId}-${leader.userId}`;
   return (
-    <li className="flex flex-col gap-3 py-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0">
-        <span className="flex flex-wrap items-center gap-2">
-          <span className="font-medium">{leader.name}</span>
-          <Badge tone={leader.slot === "primary" ? "info" : "neutral"}>
-            {d.slotLabels[leader.slot]}
-          </Badge>
-          {leader.source === "pco_mapping" &&
-            (leader.pcoStatus === "no_longer_leader" ? (
-              <Badge tone="warning">{teamMapped ? d.pco.noLongerLeader : d.noLongerListed}</Badge>
-            ) : (
-              <Badge>{d.fromPlanningCenter}</Badge>
-            ))}
+    <li className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-w-0 items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-sm font-semibold text-fg-muted"
+        >
+          {initials(leader.name)}
         </span>
-        <span className="block text-xs break-all text-fg-muted">{leader.email}</span>
+        <div className="min-w-0">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{leader.name}</span>
+            <Badge tone={SLOT_TONE[leader.slot]}>{d.slotLabels[leader.slot]}</Badge>
+            {leader.source === "pco_mapping" &&
+              (leader.pcoStatus === "no_longer_leader" ? (
+                <Badge tone="warning">{teamMapped ? d.pco.noLongerLeader : d.noLongerListed}</Badge>
+              ) : (
+                <Badge>{d.fromPlanningCenter}</Badge>
+              ))}
+          </span>
+          <span className="block text-xs break-all text-fg-muted">{leader.email}</span>
+        </div>
       </div>
       {editable && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-start gap-2 md:justify-end">
           <ActionForm
             action={setLeaderAction}
-            className="flex flex-wrap gap-2 space-y-0"
-            aria-label={leader.name}
+            className="flex flex-wrap items-center gap-2 space-y-0"
+            aria-label={d.roleFor(leader.name)}
           >
             <input type="hidden" name="departmentId" value={departmentId} />
             <input type="hidden" name="userId" value={leader.userId} />
-            {otherSlots(leader.slot).map((slot) => (
-              <SubmitButton key={slot} tone="secondary" name="type" value={slot}>
-                {MAKE[slot]}
-              </SubmitButton>
-            ))}
+            <label htmlFor={roleId} className="sr-only">
+              {d.roleFor(leader.name)}
+            </label>
+            <select
+              id={roleId}
+              name="type"
+              defaultValue={leader.slot}
+              className={cn(inputClass, "w-auto min-w-40")}
+            >
+              {LEADER_SLOTS.map((slot) => (
+                <option key={slot} value={slot}>
+                  {d.slotLabels[slot]}
+                </option>
+              ))}
+            </select>
+            <SubmitButton tone="secondary">{d.changeRole}</SubmitButton>
           </ActionForm>
           <ActionForm
             action={removeLeaderAction}

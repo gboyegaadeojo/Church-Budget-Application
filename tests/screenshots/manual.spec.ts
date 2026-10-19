@@ -125,6 +125,9 @@ test("User manual screenshots", async ({ browser }) => {
   // The Church Administrator and System Administrator (Gina holds every role).
   await shoot(gina.page, "expenses-ready-to-process", "/expenses/ready");
   await shoot(gina.page, "admin-users", "/admin/users");
+  await gina.page.goto("/admin/departments");
+  await gina.page.getByRole("link", { name: "Media Team", exact: true }).click();
+  await shoot(gina.page, "admin-department");
   await gina.page.goto("/reports/analytics");
   await gina.page.getByRole("link", { name: "Overview", exact: true }).click();
   await shoot(gina.page, "analytics-overview");
