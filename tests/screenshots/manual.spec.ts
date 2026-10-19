@@ -128,6 +128,26 @@ test("User manual screenshots", async ({ browser }) => {
   await gina.page.goto("/admin/departments");
   await gina.page.getByRole("link", { name: "Media Team", exact: true }).click();
   await shoot(gina.page, "admin-department");
+  await gina.page.goto("/admin/settings?section=people");
+  const signers = gina.page.getByRole("region", { name: "Signing authorities" });
+  await signers.getByText("Add a signer", { exact: true }).click();
+  const addSigner = signers.getByRole("form", { name: "Add a signer" });
+  for (const name of [
+    "Eunice Oladele",
+    "Gabriel Sanusi",
+    "Isaac Gwendo",
+    "Ndumbuisi Modozie",
+    "Grace Okafor",
+    "Daniel Mensah",
+  ]) {
+    await addSigner.getByLabel("Name").fill(name);
+    await addSigner.getByRole("button", { name: "Add signer" }).click();
+    await expect(addSigner.getByText(`${name} was added.`)).toBeVisible();
+  }
+  await gina.page.reload();
+  await settle(gina.page);
+  await signers.scrollIntoViewIfNeeded();
+  await gina.page.screenshot({ path: `${DIR}/admin-settings-people.png` });
   await gina.page.goto("/reports/analytics");
   await gina.page.getByRole("link", { name: "Overview", exact: true }).click();
   await shoot(gina.page, "analytics-overview");

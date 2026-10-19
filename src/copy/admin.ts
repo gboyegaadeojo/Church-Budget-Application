@@ -446,6 +446,14 @@ export const adminCopy = {
   },
   settings: {
     title: "Settings",
+    navLabel: "Settings categories",
+    sections: {
+      general: { label: "General", hint: "Branding and time zone" },
+      money: { label: "Money", hint: "Sales tax and large approvals" },
+      people: { label: "People", hint: "Accountants and cheque signers" },
+      "sign-in": { label: "Sign-in", hint: "Planning Center and sign-in" },
+      texts: { label: "Reminder texts", hint: "Texts and the monthly limit" },
+    },
     taxHeading: "Sales tax",
     taxRate: "Sales tax rate (%)",
     taxWarning: "Changes apply to new submissions only. Submitted requests keep their rate.",
@@ -572,6 +580,11 @@ export const adminCopy = {
       edit: "Save",
       edited: "Signer updated.",
       editLabel: (name: string) => `Edit ${name}`,
+      editShort: "Edit",
+      since: (date: string) => `Since ${date}`,
+      count: (active: number, removed: number) =>
+        `${active} active` + (removed ? ` · ${removed} removed` : ""),
+      removedHeading: "Removed",
       remove: "Remove",
       removeFrom: "Inactive from",
       removeFromHint: "Past payments they signed keep their name.",

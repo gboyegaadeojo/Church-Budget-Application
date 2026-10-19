@@ -10,7 +10,7 @@ import { DESKTOP, expectAxeClean, PEOPLE, signInAs } from "./helpers";
 test("the administrator sees reminder texts and keeps the monthly limit", async ({ page }) => {
   await page.setViewportSize(DESKTOP);
   await signInAs(page, PEOPLE.gina);
-  await page.goto("/admin/settings");
+  await page.goto("/admin/settings?section=texts");
   const section = page.getByRole("region", { name: "Reminder texts" });
   await expect(section.getByText("Connected")).toBeVisible();
   await expect(section.getByText(/Sent this month: \d+ of 300/)).toBeVisible();
