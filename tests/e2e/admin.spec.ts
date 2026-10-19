@@ -1,4 +1,4 @@
-﻿import { expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   DESKTOP,
   expectAxeClean,
@@ -13,6 +13,10 @@ const ADMIN_PAGES = [
   ["/admin/departments", "Departments"],
   ["/admin/cycles", "Budget Cycles"],
   ["/admin/settings", "Settings"],
+  ["/admin/settings?section=money", "Settings"],
+  ["/admin/settings?section=people", "Settings"],
+  ["/admin/settings?section=sign-in", "Settings"],
+  ["/admin/settings?section=texts", "Settings"],
   ["/admin/audit", "Notifications & Audit"],
 ] as const;
 
@@ -84,7 +88,7 @@ test.describe("Admin (Stage 1 step 4)", () => {
   test("AC-11 test a person against the Group Leader field before saving", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.gina);
-    await page.goto("/admin/settings");
+    await page.goto("/admin/settings?section=sign-in");
 
     await expect(
       page.getByRole("region", { name: "Planning Center" }).getByText("Connected", { exact: true }),
@@ -128,7 +132,7 @@ test.describe("Admin (Stage 1 step 4)", () => {
   test("AC-5 administrator changes the sales tax rate with a confirmation", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.gina);
-    await page.goto("/admin/settings");
+    await page.goto("/admin/settings?section=money");
 
     const rate = page.getByLabel("Sales tax rate (%)");
     await expect(rate).toHaveValue("12");
@@ -152,10 +156,11 @@ test.describe("Admin (Stage 1 step 4)", () => {
   test("AC-134 AC-135 the administrator keeps the cheque signers list", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.gina);
-    await page.goto("/admin/settings");
+    await page.goto("/admin/settings?section=people");
     const section = page.getByRole("region", { name: "Signing authorities" });
     await expect(section.getByText("There are no active signers.", { exact: false })).toBeVisible();
 
+    await section.getByText("Add a signer", { exact: true }).click();
     const add = section.getByRole("form", { name: "Add a signer" });
     for (const name of ["Pat Treasurer", "Lee Chair"]) {
       await add.getByLabel("Name").fill(name);
@@ -164,7 +169,7 @@ test.describe("Admin (Stage 1 step 4)", () => {
     }
     await expect(section.getByText(/Cheque payments need two signers/)).toHaveCount(0);
 
-    await section.getByText("Edit Lee Chair").click();
+    await section.locator('summary[aria-label="Edit Lee Chair"]').click();
     await section
       .getByRole("form", { name: "Remove" })
       .getByRole("button", { name: "Remove" })
@@ -181,7 +186,7 @@ test.describe("Admin (Stage 1 step 4)", () => {
   test("FR-33 the administrator picks the Primary accountant", async ({ page }) => {
     await page.setViewportSize(MOBILE);
     await signInAs(page, PEOPLE.gina);
-    await page.goto("/admin/settings");
+    await page.goto("/admin/settings?section=people");
     const section = page.getByRole("region", { name: "Accountants" });
     await section
       .getByRole("combobox", { name: "Primary accountant" })

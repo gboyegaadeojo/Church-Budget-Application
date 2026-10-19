@@ -11,7 +11,7 @@ import { DESKTOP, expectAxeClean, PEOPLE, signInAs } from "./helpers";
 test("the administrator turns second approval on and off in Settings", async ({ page }) => {
   await page.setViewportSize(DESKTOP);
   await signInAs(page, PEOPLE.gina);
-  await page.goto("/admin/settings");
+  await page.goto("/admin/settings?section=money");
   const section = page.getByRole("region", { name: "Second approval for large budgets" });
   await expect(section.getByText("Off: every approval is final.")).toBeVisible();
   await expectAxeClean(page);

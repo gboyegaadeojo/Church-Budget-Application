@@ -1134,3 +1134,10 @@ The church found Planning Center team mapping (FR-39) confusing, and doesn't nee
   - **Leaders** come first. Each row shows initials, the name, a role badge and the email, with one role dropdown plus **Change** in place of three "Make …" buttons, and **Remove**.
   - **Add a leader** sits in a panel below. It searches Planning Center; "Or choose someone who has already signed in" is folded away underneath.
   - **Department details** covers the name and **Name in Planning Center** side by side, with **Deactivate department** at the bottom.
+## Settings: one category at a time; a compact signers list (2026-10-19)
+
+The church found Settings long and crowded, and the signers list would not hold 15 people well.
+
+- **Categories, like a phone's settings:** General (branding, time zone), Money (sales tax, second approval), People (Primary accountant, signing authorities), Sign-in (Planning Center, requesters failing verification) and Reminder texts. They sit down the left on a computer and in a row of tabs on a phone. `?section=` keeps the choice in the address. Each category loads only its own data, and the permission check runs before anything shows.
+- **Signers:** one slim row each (initials, name, email, since-date, status), sorted by name, active first. Removed signers sit muted below and stay listed. A row opens to edit or remove that signer; **Add a signer** is folded at the bottom. The section shows "6 active · 1 removed". **Accountants** use the same row style.
+- Tests open each category's address. The AC-103 accessibility check now covers every category.
