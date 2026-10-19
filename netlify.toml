@@ -1,0 +1,15 @@
+# Netlify (docs/go-live-checklist.md, item 3). Next.js is detected automatically; the
+# scheduled function in netlify/functions/ runs the 15-minute jobs.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Production deploys bring the database up to date after the build (scripts/migrate.mjs).
+# A failed migration fails the deploy, so the previous version stays live. Deploy previews
+# and branch deploys never change the database: give them the staging DATABASE_URL.
+[context.production]
+  command = "npm run build && node scripts/migrate.mjs"

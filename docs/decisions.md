@@ -1069,3 +1069,22 @@ Go-live launch step 3 asked to "send a test email from the app", but the app had
 - **Limit:** 20 in any 24 hours, counted from the outbox. The Resend free plan's 100 a day are shared with the church's other apps.
 - **The test itself:** [email-deliverability.md](email-deliverability.md). It covers the domain checks in Resend (SPF and DKIM are Resend's records; DMARC added if missing; click and open tracking off), test emails to five providers with their SPF, DKIM and DMARC results, a mail-tester.com score of 9/10 or better, a real budget receipt on a phone, and what to do if emails land in spam. The church runs it on staging before the pilot and again on live.
 - **Go-live checklist pass:** the repository is public (item 2 and the Actions minutes note updated); R2 is in use for receipts and attachments, so the card-on-file is needed (the logo is in the database); launch step 3 links the deliverability test and the phone check; the user manual check is ticked; two new upkeep rows (the Twilio balance monthly, and a test email before each cycle opens).
+
+## Production setup: migrations on deploy and the first System Administrator (2026-10-19)
+
+Two gaps would have stopped launch:
+
+- **A new database has no accounts.** Emailed codes go only to existing administrators, and Planning Center sign-in only creates requesters, so nobody could ever sign in to a fresh production database.
+- **Nothing migrated production.** Only the demo reset and the test servers ran migrations.
+
+What was built:
+
+- **`FIRST_ADMIN_EMAIL`** (and the optional `FIRST_ADMIN_NAME`). While no active System Administrator exists, asking for a sign-in code at that address creates the account with the System Administrator role, or gives an existing account that role. The code is then emailed as usual (`ensureFirstAdministrator` in `src/domain/users/email-sign-in.ts`, audited as `access.first_admin_created`).
+  - Once any System Administrator exists it does nothing, so leaving it set is harmless.
+  - If every System Administrator is later deactivated, it works again as a recovery path; only whoever controls Netlify's variables can use it.
+  - Chosen over a command-line script so the church can set up the app without database access, and over a GitHub Actions form because workflow inputs show in this public repository's logs.
+- **`netlify.toml` and `scripts/migrate.mjs`.**
+  - Production deploys run `npm run build && node scripts/migrate.mjs`. A failed build never touches the database, and a failed migration fails the deploy, so the previous version stays live.
+  - Already-applied migrations are skipped. The script prefers `DATABASE_URL_UNPOOLED` (Neon's direct connection) when set.
+  - Deploy previews and branch deploys don't migrate. The checklist says to give them the staging database.
+  - The demo site's production deploys migrate its own database, which the nightly reset does anyway.

@@ -114,7 +114,7 @@ CI must pass lint, typecheck, unit, integration and end-to-end tests (with axe a
 
 ### Deploying
 
-Production is a Netlify site connected to this repository. The environment variables, secrets and scheduled jobs are listed in [CLAUDE.md](CLAUDE.md#environment-variables-names-only-values-live-in-netlify-and-github-secrets) and explained in the [go-live checklist](docs/go-live-checklist.md). The optional training copy is set up as in [docs/demo-site.md](docs/demo-site.md).
+Production is a Netlify site connected to this repository. [netlify.toml](netlify.toml) builds it and, on production deploys only, brings the database up to date afterwards (`scripts/migrate.mjs`); a failed migration fails the deploy and the previous version stays live. On a new, empty database, set `FIRST_ADMIN_EMAIL` and sign in with an emailed code at that address to become the first System Administrator. The environment variables, secrets and scheduled jobs are listed in [CLAUDE.md](CLAUDE.md#environment-variables-names-only-values-live-in-netlify-and-github-secrets) and explained in the [go-live checklist](docs/go-live-checklist.md). The optional training copy is set up as in [docs/demo-site.md](docs/demo-site.md).
 
 ## What the church provides before launch
 

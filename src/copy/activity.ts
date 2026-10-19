@@ -124,6 +124,10 @@ export const ACTIVITY_EVENTS: Record<string, Entry> = {
   "access.sign_in_code_limited": { label: "Too many sign-in codes asked for", group: "access" },
   "access.denied": { label: "Tried a page or action their roles don't allow", group: "access" },
   "access.identity_linked": { label: "Linked a Planning Center profile", group: "access" },
+  "access.first_admin_created": {
+    label: "Made the first System Administrator (FIRST_ADMIN_EMAIL)",
+    group: "access",
+  },
   "access.identity_unlinked": { label: "Unlinked a Planning Center profile", group: "access" },
   "access.leader_granted": { label: "Confirmed as a Group Leader", group: "access" },
   "access.leader_suspended": {
