@@ -4,6 +4,7 @@ import { userRoles, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
 import { RuleError, ValidationError } from "@/domain/errors";
 import { getSignInSettings } from "@/domain/settings";
+import { applyVerification } from "@/domain/users/verification";
 import { writeAudit } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
 import type { PcoPerson, PlanningCenterDirectory } from "@/lib/pco";
@@ -33,12 +34,28 @@ export async function addLeaderFromPlanningCenter(
     throw new ValidationError({ pcoPersonId: adminCopy.common.notFound });
   }
 
+  const settings = await getSignInSettings(tx);
   const [linked] = await tx
-    .select({ id: users.id, name: users.displayName })
+    .select()
     .from(users)
     .where(eq(users.pcoPersonId, input.pcoPersonId))
     .limit(1);
   if (linked) {
+    // Staff never go through the Group Leader check at sign-in, so an account can be
+    // unverified though Planning Center marks them a leader: check it now, as sign-in would.
+    if (
+      settings.leader.requireForRequesters &&
+      (!linked.pcoLeaderVerified || linked.accessStatus === "suspended_not_leader")
+    ) {
+      const check = await checkLeaderOrTeamLeader(tx, directory, settings.leader, {
+        pcoPersonId: input.pcoPersonId,
+      });
+      if (check.status === "unavailable") throw new RuleError(d.pco.unavailable);
+      await applyVerification(tx, linked, check, {
+        now,
+        actor: { kind: "user", userId: actor.id, actingRole },
+      });
+    }
     // Staff who also lead a department need the requester role too (a union of roles).
     await tx
       .insert(userRoles)
@@ -51,15 +68,14 @@ export async function addLeaderFromPlanningCenter(
       if (error instanceof ValidationError) {
         const reason = Object.values(error.fieldErrors)[0] ?? error.message;
         throw new RuleError(
-          reason === d.errors.notLeader ? d.fromPco.notLeader(linked.name) : reason,
+          reason === d.errors.notLeader ? d.fromPco.notLeader(linked.displayName) : reason,
         );
       }
       throw error;
     }
-    return { name: linked.name };
+    return { name: linked.displayName };
   }
 
-  const settings = await getSignInSettings(tx);
   const check = await checkLeaderOrTeamLeader(tx, directory, settings.leader, {
     pcoPersonId: input.pcoPersonId,
   });
