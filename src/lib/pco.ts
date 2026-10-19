@@ -283,8 +283,20 @@ export class HttpPlanningCenterDirectory implements PlanningCenterDirectory {
         }),
       );
     }
-    const path = type === "services_team" ? "/services/v2/teams" : "/groups/v2/groups";
-    const rows = await this.getList(`${path}?per_page=100`);
+    if (type === "services_team") {
+      // Each service type has its own teams, often with the same names ("Media" under
+      // Sunday and under Midweek), so each is named with its service type.
+      const rows = await this.getList("/services/v2/teams?include=service_type&per_page=100");
+      const serviceTypes = new Map(
+        (rows.included ?? []).filter((t) => t.type === "ServiceType").map((t) => [t.id, t]),
+      );
+      return rows.data.filter(current).map((r) => {
+        const serviceType = serviceTypes.get(relatedIds(r, "service_type")[0] ?? "");
+        const name = text(r, "name");
+        return { id: r.id, name: serviceType ? `${text(serviceType, "name")}: ${name}` : name };
+      });
+    }
+    const rows = await this.getList("/groups/v2/groups?per_page=100");
     return rows.data.filter(current).map((r) => ({ id: r.id, name: text(r, "name") }));
   }
 
