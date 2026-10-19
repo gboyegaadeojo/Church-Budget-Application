@@ -42,6 +42,27 @@ test.describe("Admin (Stage 1 step 4)", () => {
     await pat.close();
   });
 
+  test("go-live step 3 the administrator sends a test email and sees it in the log", async ({
+    page,
+  }) => {
+    const to = `deliverability.${Date.now()}@example.org`;
+    await signInAs(page, PEOPLE.gina);
+    await page.goto("/admin/audit");
+    const form = page.getByRole("form", { name: "Send a test email" });
+    await form.getByLabel("Send to").fill("not an address");
+    await form.getByRole("button", { name: "Send test email" }).click();
+    await expect(form.getByText("Enter an email address, like name@example.org.")).toBeVisible();
+
+    await form.getByLabel("Send to").fill(to);
+    await form.getByRole("button", { name: "Send test email" }).click();
+    await expect(form.getByRole("status")).toContainText(`Test email on its way to ${to}`);
+    await page.getByLabel("Search subject or recipient").fill(to);
+    await page.getByRole("button", { name: "Show" }).click();
+    await expect(
+      page.getByRole("cell", { name: /Test email from the budget app/ }).first(),
+    ).toBeVisible();
+  });
+
   for (const [label, viewport] of [
     ["360 px", MOBILE],
     ["1440 px", DESKTOP],

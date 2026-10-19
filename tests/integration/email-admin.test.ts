@@ -2,8 +2,14 @@ import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { auditEvents, emailOutbox, userRoles } from "@/db/schema";
 import type { Db } from "@/db/types";
-import { RuleError } from "@/domain/errors";
-import { getEmailLog, retryFailedEmails } from "@/domain/notifications/admin";
+import { RuleError, ValidationError } from "@/domain/errors";
+import {
+  getEmailLog,
+  retryFailedEmails,
+  sendTestEmail,
+  TEST_EMAIL_TEMPLATE,
+  TEST_EMAILS_PER_DAY,
+} from "@/domain/notifications/admin";
 import { ForbiddenError, type Subject } from "@/lib/authz";
 import type { Role } from "@/lib/roles";
 import { createTestDb, type TestDb } from "./helpers/db";
@@ -120,5 +126,48 @@ describe("Admin → Notifications & Audit (FR-21)", () => {
     await expect(
       db.transaction((tx) => retryFailedEmails(tx, admin, { ids: ["not-a-uuid"] })),
     ).rejects.toBeInstanceOf(RuleError);
+  });
+});
+
+describe("Send a test email (go-live checklist, launch step 3)", () => {
+  const send = (actor: Subject, to: string, now = NOW) =>
+    db.transaction((tx) => sendTestEmail(tx, { ...actor, name: "Ada Admin" }, { to }, { now }));
+  const tests = () =>
+    db.select().from(emailOutbox).where(eq(emailOutbox.template, TEST_EMAIL_TEMPLATE));
+
+  it("queues one email in the shared layout through the outbox, and audits the address", async () => {
+    expect(await send(admin, "  Tester@Gmail.com ")).toBe("tester@gmail.com");
+    const [row] = await tests();
+    expect(row).toMatchObject({
+      toEmail: "tester@gmail.com",
+      status: "pending",
+      audience: "administrator",
+      subject: "Test email from the budget app",
+    });
+    expect(row.textBody).toContain("Ada Admin");
+    expect(row.htmlBody).toContain("Email is working");
+
+    const [audit] = await db
+      .select()
+      .from(auditEvents)
+      .where(eq(auditEvents.eventType, "admin.test_email_sent"));
+    expect(audit.details).toMatchObject({ to: "tester@gmail.com" });
+  });
+
+  it("refuses a bad address and anyone but the System Administrator", async () => {
+    await expect(send(admin, "not an address")).rejects.toBeInstanceOf(ValidationError);
+    await expect(send(accountant, "a@example.org")).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it(`allows ${TEST_EMAILS_PER_DAY} in 24 hours, then again a day later`, async () => {
+    const later = new Date(NOW.getTime() + 3_600_000);
+    const already = (await tests()).length;
+    for (let i = already; i < TEST_EMAILS_PER_DAY; i++)
+      await send(admin, `t${i}@example.org`, later);
+    await expect(send(admin, "one.more@example.org", later)).rejects.toBeInstanceOf(RuleError);
+    const nextDay = new Date(later.getTime() + 86_400_000 + 1000);
+    await expect(send(admin, "one.more@example.org", nextDay)).resolves.toBe(
+      "one.more@example.org",
+    );
   });
 });

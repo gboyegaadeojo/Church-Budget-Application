@@ -316,7 +316,7 @@ You can **see everything** but cannot approve or pay unless you are also given t
 You're emailed when something needs you: a leader joins or proposes a department, a new leader is waiting for a department, a requester is suspended because Planning Center no longer lists them, Planning Center can't be reached, someone without access tries to sign in, or the Primary accountant is cleared. Once a day you also get a list of any emails that couldn't be sent after every retry.
 
 
-Emails that don't go are retried for about three days. **Admin → Notifications & Audit** lists every email with its status; filter by **Couldn't be sent** to see failures and the reason. After fixing an address or the Resend settings, use **Send again** on one email or **Send all failed again**. Check it, and **Reports → Analytics & Audit → Access** weekly (see the [go-live checklist](go-live-checklist.md), section 4).
+Emails that don't go are retried for about three days. **Admin → Notifications & Audit** lists every email with its status; filter by **Couldn't be sent** to see failures and the reason. After fixing an address or the Resend settings, use **Send again** on one email or **Send all failed again**. **Send a test email**, on the same page, sends a sample email to any address (up to 20 a day) to check that email works and lands in the inbox; the [deliverability test](email-deliverability.md) uses it. Check the page, and **Reports → Analytics & Audit → Access** weekly (see the [go-live checklist](go-live-checklist.md), section 4).
 
 ---
 

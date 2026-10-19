@@ -1059,3 +1059,13 @@ The church asked why FY2026 still showed in departments' budgets when its cycle 
 - **When:** staff close the year by hand. The spending period end stays editable (blank: Dec 31). The nightly reminders job emails the accountants once (`cycle.close_due`) after it passes.
 - **Emails:** `cycle.closed` tells every department leader the year has ended and the unspent budget goes back to the church. `cycle.reopened` follows the same pattern. The office's `spending.locked` email now reads "The FY2026 budget year has closed" and shows the unspent total.
 - **Test data:** the seed's FY2026 is now Open (deadline Nov 30, 2025), like a real year being spent.
+
+## Send a test email; the deliverability test (2026-10-18)
+
+Go-live launch step 3 asked to "send a test email from the app", but the app had no way to. Stage 5's email deliverability test needs one.
+
+- **Where:** Admin → Notifications & Audit → **Send a test email**. It's under `admin.notifications`, so only the System Administrator can use it. It goes to any address, defaulting to the administrator's own, so it can reach Gmail, Outlook, iCloud and mail-tester.com.
+- **How:** `sendTestEmail` (`src/domain/notifications/admin.ts`) queues one `system.test_email` row through the outbox in the shared layout, so it travels the same path as every real email. It's audited as `admin.test_email_sent` with the address.
+- **Limit:** 20 in any 24 hours, counted from the outbox. The Resend free plan's 100 a day are shared with the church's other apps.
+- **The test itself:** [email-deliverability.md](email-deliverability.md). It covers the domain checks in Resend (SPF and DKIM are Resend's records; DMARC added if missing; click and open tracking off), test emails to five providers with their SPF, DKIM and DMARC results, a mail-tester.com score of 9/10 or better, a real budget receipt on a phone, and what to do if emails land in spam. The church runs it on staging before the pilot and again on live.
+- **Go-live checklist pass:** the repository is public (item 2 and the Actions minutes note updated); R2 is in use for receipts and attachments, so the card-on-file is needed (the logo is in the database); launch step 3 links the deliverability test and the phone check; the user manual check is ticked; two new upkeep rows (the Twilio balance monthly, and a test email before each cycle opens).
