@@ -1069,3 +1069,15 @@ Go-live launch step 3 asked to "send a test email from the app", but the app had
 - **Limit:** 20 in any 24 hours, counted from the outbox. The Resend free plan's 100 a day are shared with the church's other apps.
 - **The test itself:** [email-deliverability.md](email-deliverability.md). It covers the domain checks in Resend (SPF and DKIM are Resend's records; DMARC added if missing; click and open tracking off), test emails to five providers with their SPF, DKIM and DMARC results, a mail-tester.com score of 9/10 or better, a real budget receipt on a phone, and what to do if emails land in spam. The church runs it on staging before the pilot and again on live.
 - **Go-live checklist pass:** the repository is public (item 2 and the Actions minutes note updated); R2 is in use for receipts and attachments, so the card-on-file is needed (the logo is in the database); launch step 3 links the deliverability test and the phone check; the user manual check is ticked; two new upkeep rows (the Twilio balance monthly, and a test email before each cycle opens).
+
+## User manual screenshots (2026-10-19)
+
+Requirements Section 22 says Stage 5 adds screenshots to the manual.
+
+- **How:** `npm run screenshots` (`playwright.screenshots.config.ts`, `tests/screenshots/manual.spec.ts`) runs the fake server, then does what people would through the UI:
+  - Media Team submits its FY2027 budget, and Choir Team another;
+  - Media submits three expenses: one approved by both, one approved by the accountant only, and one new.
+  It then captures 14 pages at 1280 × 800 in the light theme into `docs/images/manual/`, about 100 KB each.
+- **Not in CI:** images would change with every date and reference. Regenerate them when a screen the manual shows changes.
+- **What's shown:** the test copy with made-up people and amounts. Sam's Home and the budget preview were left out: an empty "all caught up" and a repeat of the items step. The accountant's Home shows My tasks instead. Each image has alt text describing what it shows.
+- **Not included:** the sign-in page, because the test copy shows test-only sign-in buttons.

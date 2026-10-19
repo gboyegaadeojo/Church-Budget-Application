@@ -3,7 +3,7 @@
 **Organization:** Immanuel Fellowship Church (IFC)
 **Companion documents:** [Requirements](church-media-budget-requirements.md) (Section 22) · [Design](church-media-budget-design.md) · [Go-live checklist](go-live-checklist.md) · [README](../README.md)
 
-This manual explains how to use the app, by role. It was checked against the built app on October 18, 2026 (menus, screens and settings); screenshots are added before launch. The in-app **Help** page is a short version of it.
+This manual explains how to use the app, by role. It was checked against the built app on October 18, 2026 (menus, screens and settings). The screenshots show the test copy of the app with made-up people and amounts; they are regenerated with `npm run screenshots` when a screen changes. The in-app **Help** page is a short version of it.
 
 **Contents**
 
@@ -43,6 +43,8 @@ Everyone lands on **Home**:
 
 You never need to switch accounts. If you are both an accountant and a requester, you see both in one menu.
 
+![Home for the accountant: My tasks lists two budgets to review, a payment to record and an expense to review, each with one button; At a glance and Recent activity are below.](images/manual/home-accountant.png)
+
 ### Getting around
 
 - The menu is grouped by area: **Home, Annual Budget, Expenses, Spending, Reports, Admin**, each with its own colour. You only see what your roles allow.
@@ -76,6 +78,8 @@ All amounts are Canadian dollars. Every total shows **Subtotal**, **Sales tax (1
 
 Each department submits **one** annual budget for the year. Once it has one (a draft or a submitted budget), nobody can start another for it: everyone in the department works on that one, and after submitting you edit it instead. **My department's budget** shows each of your departments' budgets with the next step (**Continue draft**, **Respond**, **Edit budget** or **View budget**); **Submit annual budget** appears only for a department that doesn't have one yet.
 
+![My department budget: the open FY2027 cycle with its deadline and Submit annual budget, the department's budget requests with status and edits left, and the department's budget panel.](images/manual/annual-my-budget.png)
+
 ### Submit your department's budget
 
 1. Go to **Annual Budget → My department's budget** and choose **Submit annual budget** (or **Continue draft** if your department has one). The page shows the open cycle, its deadline and how many days are left.
@@ -84,6 +88,9 @@ Each department submits **one** annual budget for the year. Once it has one (a d
    - New Group Leaders who don't have a department yet see **Choose your department** on the "You're verified" screen while a cycle is open, and become their department's representative by picking it.
 3. **Request information:** give a title and write why the department needs this budget.
 4. **Budget items:** the items are a list with one row each: name, quantity, unit price (before tax) and the line total. Open **Link and notes** under an item to add a product link or a note (a $0.00 item needs a note). Use **Add item** (or press Enter in the last item). Each item's **⋯** menu has **Move up**, **Move down** and **Remove**; removing an item that has details asks first. The summary on the side (a bar at the bottom on a phone; tap **Show breakdown**) updates as you type.
+
+   ![Budget items step: three items with quantity, unit price before tax and line total, and the Financial summary beside them: subtotal $4,156.00, sales tax (12%) $498.72, total $4,654.72.](images/manual/annual-items.png)
+
 5. Your work saves automatically as a **draft** ("Saved just now"). Use **Save and exit** to save and go back to your budget page, or just leave and come back; if your sign-in times out, the app keeps what you typed on this device and offers it back. A draft that was never submitted can be deleted with **Delete draft**.
 6. **Preview:** check everything, including the totals. Use **Edit** to go back to a section.
 7. **Confirm submission**, then **Submit request** in the dialog. You see the reference number (for example IFC-2027-0001), the total including tax, and how many changes you can still make. Your receipt email arrives shortly, and the accountant is told.
@@ -102,6 +109,8 @@ Each department submits **one** annual budget for the year. Once it has one (a d
 ### See how much is left
 
 **Spending → My department's spending** shows, for each department you lead, the approved budget, any amendments, the available budget, committed, spent and remaining, with a bar showing how much is used (On track, Nearing limit or Over budget). Below it is every spending entry: the date, payee, description and amount. Refunds show as a minus amount, and voided entries stay listed, struck through. Choose another **Budget year** to look back. Your annual budget page shows the same panel with the latest five entries.
+
+![My department's spending: Media Team's budget bar (On track, 1.7% used) with Approved, Amendments, Available, Committed, Spent and Remaining, and the spending entries below.](images/manual/spending-my-department.png)
 
 You can only see your own departments. How each item was paid and its receipt or cheque numbers are kept with the accountant.
 
@@ -132,12 +141,16 @@ You can submit expenses once your department's annual budget is approved and the
 6. If it would take the department over budget, you'll see a warning with the amount. You can still submit: explain why it's needed, and the accountant and the Board Chair decide. If it's approved, the department shows as over budget.
 7. **Save draft** keeps it for later. **Preview**, then **Confirm submission**. You get a receipt by email with the reference number, like EXP-2026-0042.
 
+![New expense: choose Purchase request (ask before you buy) or Expense claim (already bought), then the department and budget year, and Continue.](images/manual/expense-new.png)
+
 ### What happens next
 
 - **Messages** at the bottom of an expense let you, the accountant, the Board Chair and the Church Administrator ask and answer questions; each message is emailed to the others. A message doesn't change the expense.
 - The accountant and the Board Chair (or Vice-Chair) are asked at the same time and can approve in either order. Once both have approved, the Church Administrator pays or buys and records how. You and every other leader of the department get an email at each step, and **My expenses** shows a tracker with where it is.
 - You can **change** the expense until the accountant starts reviewing it, or **withdraw** it. If the accountant returns it with a question, change it and send your answer.
 - An approved purchase request you buy yourself stays set aside until you submit the claim linked to it. If it won't go ahead, **cancel** it with a reason so the money goes back to the budget.
+
+![My expenses: each expense with its reference, type, amount and where it is.](images/manual/expenses-mine.png)
 
 ---
 
@@ -163,6 +176,9 @@ Each department has a **Primary requester** (accountable for the department's bu
    - Budgets waiting for you also appear in **My tasks** on Home.
    - **Annual Budget → Departments** lists every department with its leaders (Primary and Backups, each an email link), whether the Primary is away and who covers, its budget status, requested and approved amounts, what is left to spend, and any deadline extension. Leaders are changed by the System Administrator.
    - When the cycle has a board-approved church total, a bar shows how much is allocated so far, for example "Allocated $140,000.00 of $150,000.00 board total · $10,000.00 left to allocate".
+
+   ![Review dashboard: filters for cycle, status, department and search, then cards for awaiting review, submitted, outstanding, total requested, total approved and decided.](images/manual/annual-review-dashboard.png)
+
 2. Open a budget with **Review**. Opening it marks it **In Review**. You see the details, the items, the revision history (what changed in each version) and earlier decisions. Then choose:
    - **Approve as requested**;
    - **Approve a different amount**: type the one approved total **including tax**, a note, and optionally the board reference. The app shows the tax inside it as you type (for example $30,000.00 includes $3,214.29 sales tax on $26,785.71) and how it compares with what was asked;
@@ -171,6 +187,9 @@ Each department has a **Primary requester** (accountable for the department's bu
    - **Decline** with a reason.
    If approving would take the year's approved budgets past the board total, the app warns you by how much. You can still approve.
    A budget for a department that's still **proposed** (typed under **Other**) can't be approved until the System Administrator adds it to the list or merges it. You can still return or decline it.
+
+   ![Reviewing a budget: the request details and items on the left; the requested Subtotal, Sales tax and Total, and the Decision choices with Approve as requested, on the right.](images/manual/annual-review-request.png)
+
 3. **Review decision**, check the summary (requested, approved and the difference, all including tax), and confirm. The department sees the decision on its budget straight away and is emailed; you get a copy for your records.
 4. **Decision release** (Annual Budget → Decision release) chooses how departments hear about approvals and declines:
    - **Send immediately** (the usual): each department is emailed when you confirm.
@@ -185,6 +204,9 @@ Each department has a **Primary requester** (accountable for the department's bu
 ### Expenses (first approval)
 
 1. **Expenses → Review queue** shows what's waiting, the total, how many are over budget and the oldest. Filter by department, type, status or over budget only. New ones are also in My tasks.
+
+   ![Expenses review queue: cards for waiting, total, over budget and oldest, the filters, and the expenses waiting for a decision.](images/manual/expenses-review.png)
+
 2. Open a submission to see its items or receipt lines, the receipt files, and the department's Remaining now and if approved. Opening it marks it In Review, so the department can't change it any more.
 3. Warnings show above your decision:
    - it takes the department over budget (by how much, worked out now, with the requester's explanation);
@@ -199,6 +221,8 @@ Each department has a **Primary requester** (accountable for the department's bu
 ### Spending
 
 Record spending, refunds and corrections, make **budget amendments** with a reason, and **close the budget year** at year-end (**Spending** area).
+
+![Spending dashboard: Available, Spent, Remaining and Used for the budget year, with Export to Excel, Close budget year and Record spending, and each department's figures below.](images/manual/spending-dashboard.png)
 
 **A budget cycle is the budget year.** While it's **Open**, departments submit their annual budget until the deadline, and spend from their approved budget all year. Submissions end at the deadline (or a department's extension), not when the year closes. **Closing** the year ends it: spending stops, and the budget left unspent goes back to the church. So last year and next year can both be Open for a while: one being spent, the other taking budgets.
 
@@ -231,6 +255,9 @@ Every workbook has a **Summary** sheet (one row per budget, requested and approv
 
 1. When an expense is submitted, you and the accountant are both emailed at the same time, and it's in your tasks: **Expense to approve**. Either of you can approve first.
 2. Open it from the email or **Expenses → Awaiting my approval**. You see the amount, the accountant's approval and note if they've already approved, receipts, and the department's remaining budget. If it takes the department over budget, a warning shows by how much, with the requester's explanation; the second approval is what charges it, and the department then shows as over budget.
+
+   ![Awaiting my approval: cards for how many are waiting, the total, over budget and the oldest, then the list: a claim the accountant has approved (Awaiting Board Chair) and a new purchase request.](images/manual/expenses-board-approval.png)
+
 3. Choose **Approve**, **Approve a smaller amount** (including tax, with a reason), **Return for clarification** to the department with a question, or **Decline** with a reason.
 4. Once both of you have approved, the budget is charged, and the requester and the Church Administrator are emailed. If your amounts differ, the lower one is approved.
 5. The Chair can turn on **Away** (account menu); the Vice-Chair then gets the emails and tasks. The Vice-Chair also decides when the Chair represents the department, submitted it, or is the payee. Otherwise the Vice-Chair's screen says the Chair decides it. Decisions show who made them, and in which role.
@@ -247,6 +274,9 @@ You can also read **Spending → Budget vs actual** (every department's approved
 ### Pay or buy approved expenses
 
 1. You get an email "Approved, ready for processing" and a task. Open **Expenses → Ready to process** (oldest first). It shows the total waiting, how much is owed to people, and what was paid in the last 30 days.
+
+   ![Ready to process: cards for waiting, total, owed to people and oldest, then each fully approved expense with its payee, amount, approval date and how it should be bought or paid.](images/manual/expenses-ready-to-process.png)
+
 2. Select **Start processing**. The requester is told.
 3. Pay or buy outside the app, then select **Record payment**. Choose how it was paid; the form asks for what that needs:
    - **Cheque:** the cheque number and the two signers, from the active signing authorities. With fewer than two, a cheque can't be recorded; ask the administrator.
@@ -277,6 +307,8 @@ You can **see everything** but cannot approve or pay unless you are also given t
 ### Users and roles
 
 **Admin → Users & Roles**: add people, assign roles and departments, deactivate people who leave. Keep at least two System Administrators.
+
+![Users & Roles: everyone with an account, their roles, departments and status.](images/manual/admin-users.png)
 
 - **Link each staff member's Planning Center profile** so they can sign in: open their page and, under **Planning Center profile**, choose **Link to {name}** for the person with their email address, or search by name. Check it's the right person: Planning Center sign-in never links accounts by email on its own, because people can change the email on their own profile. Department leaders don't need this; they're linked when they first sign in.
 - **Expense submitter:** to let someone who doesn't lead a department submit expenses for it (for example a volunteer who buys for Media), open their page and, under **Expense submitter**, choose the department and **Add**. They need the Requester role and must be a verified Group Leader in Planning Center, like every requester. The Church Administrator can be made a submitter too, to submit on a department's behalf; someone else then records the payment. They see and change only what they submit; the department's leaders see it too and get its emails. **Remove** stops new submissions; what they already submitted stays.
@@ -323,6 +355,8 @@ Emails that don't go are retried for about three days. **Admin → Notifications
 ## 9. Analytics and Audit (staff)
 
 **Reports → Analytics & Audit** is for church staff: the accountant and backup approver, the Board Chair and Vice-Chair (read only), the Church Administrator and the System Administrator. Department leaders don't have it; each of their budgets has its own **Activity on this budget** page instead. It has three tabs, and what you see depends on your roles.
+
+![Analytics & Audit, Overview tab: filters for budget cycle, department and dates, then cards for the board-approved total, requested, approved and average time to a decision.](images/manual/analytics-overview.png)
 
 - **Overview** (accountant, backup approver and System Administrator): for the chosen budget cycle, the board-approved total and how much is approved, requested and approved totals including tax, the average days to a decision, where each department's budget is (select a bar to open those budgets on the review dashboard), requested against approved by department, and the budgets waiting longest. **Show as a table** under each chart lists the same figures; **Export to Excel** downloads them.
 - **Overview, Spending and expenses** (accountant, backup approvers, Church Administrator, Board Chair, Vice-Chair and System Administrator): Available, Spent, Remaining and how much is used (the same figures as the Spending dashboard, to the cent); how many expenses wait for the accountant, the Board Chair, the requester, or to be paid, and how long payments take after approval; budget used by department (select a bar to open the department); spending by month against last year (select a month to open its ledger); how many expenses are at each status; and **How long expenses take** (days to the accountant's and the Board Chair's decisions and from approval to payment, with the expenses waiting longest). Choose a **Department** and a **From/To** date range to narrow this half; **Clear filters** shows everything again. **Export spending to Excel** downloads the spending workbook (not for the board).
