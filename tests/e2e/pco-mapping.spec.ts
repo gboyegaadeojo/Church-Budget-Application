@@ -9,7 +9,9 @@ import { DESKTOP, expectAxeClean, MOBILE, PEOPLE, signInAs } from "./helpers";
  * so nothing here is changed for good.
  */
 
-test("a department's page shows its leaders and details, with no team mapping", async ({ page }) => {
+test("a department's page shows its leaders and details, with no team mapping", async ({
+  page,
+}) => {
   await page.setViewportSize(DESKTOP);
   await signInAs(page, PEOPLE.gina);
   await page.goto("/admin/departments");
