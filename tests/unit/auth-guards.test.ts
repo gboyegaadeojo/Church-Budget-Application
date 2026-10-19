@@ -99,32 +99,29 @@ describe("no file uploads (FR-23, AC-25)", () => {
     return new Request(`http://localhost${path}`, { method: "POST", body: form });
   };
 
-  it("AC-25 refuses a file in a form post, and any multipart body to an API route", async () => {
+  it("AC-25 refuses any multipart body to an API route", () => {
+    expect(refusesFiles(multipart("/api/exports/annual", (f) => f.append("a", "b")))).toBe(true);
     expect(
-      await refusesFiles(
-        multipart("/annual/new", (f) => f.append("receipt", new Blob(["x"]), "receipt.pdf")),
+      refusesFiles(
+        multipart("/api/expenses/x/receipts", (f) => f.append("f", new Blob(["x"]), "r.pdf")),
       ),
     ).toBe(true);
-    expect(await refusesFiles(multipart("/api/exports/annual", (f) => f.append("a", "b")))).toBe(
-      true,
-    );
   });
 
-  it("FR-30 lets the logo through on Settings → Branding only", async () => {
-    const logo = (path: string) =>
-      multipart(path, (f) => f.append("logo", new Blob(["x"]), "logo.png"));
-    expect(await refusesFiles(logo("/admin/settings/branding"))).toBe(false);
-    expect(await refusesFiles(logo("/admin/settings"))).toBe(true);
-    expect(await refusesFiles(logo("/admin/settings/branding/x"))).toBe(true);
+  it("never reads a form's body at the edge (a file is ignored by the action instead)", async () => {
+    const request = multipart("/annual/new", (f) =>
+      f.append("receipt", new Blob(["x"]), "receipt.pdf"),
+    );
+    expect(refusesFiles(request)).toBe(false);
+    // The body is still whole for the app (Netlify runs this proxy at the edge).
+    expect((await request.formData()).get("receipt")).toBeInstanceOf(Blob);
   });
 
-  it("lets ordinary forms and reads through", async () => {
-    expect(await refusesFiles(multipart("/annual/new", (f) => f.append("title", "Mics")))).toBe(
-      false,
-    );
-    expect(await refusesFiles(new Request("http://localhost/api/exports/annual"))).toBe(false);
+  it("lets ordinary forms and reads through", () => {
+    expect(refusesFiles(multipart("/annual/new", (f) => f.append("title", "Mics")))).toBe(false);
+    expect(refusesFiles(new Request("http://localhost/api/exports/annual"))).toBe(false);
     expect(
-      await refusesFiles(
+      refusesFiles(
         new Request("http://localhost/x", {
           method: "POST",
           headers: { "content-type": "application/x-www-form-urlencoded" },
