@@ -291,7 +291,24 @@ export const adminCopy = {
     as: "As",
     addPerson: "Add",
     noCandidates:
-      "No verified Group Leaders are available yet. Leaders appear here after they sign in.",
+      "Nobody who has signed in is available to add. Find a leader in Planning Center below.",
+    fromPco: {
+      heading: "Add a leader from Planning Center",
+      hint: "Find someone who hasn't signed in yet. They must be a Group Leader in Planning Center; their account is made when you add them, and they sign in with Planning Center.",
+      search: "Name or email in Planning Center",
+      find: "Find",
+      noResults: "Nobody in Planning Center matches.",
+      unavailable: "Planning Center can't be reached right now. Try again later.",
+      addAs: (name: string) => `Add ${name} as`,
+      add: "Add",
+      added: (name: string) => `${name} added.`,
+      notLeader: (name: string) =>
+        `${name} isn't marked as a Group Leader in Planning Center, so they can't lead a department. Ask your Planning Center administrator to set their Group Leader field.`,
+      noEmail: (name: string) =>
+        `${name} has no email address in Planning Center. Add one there, then try again.`,
+      emailTaken: (email: string) =>
+        `An account already uses ${email}. Link its Planning Center profile on its Users & Roles page, then add it from the list above.`,
+    },
     leaderSaved: "Leaders updated.",
     noLeaders: "No leaders yet.",
     proposedHeading: "Proposed department",

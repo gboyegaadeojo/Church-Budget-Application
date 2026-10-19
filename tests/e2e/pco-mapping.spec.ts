@@ -51,6 +51,25 @@ test("AC-121 AC-122 the administrator links a department to a team and handles a
   await expect(cleared.getByText("Planning Center mapping saved.")).toBeVisible();
 });
 
+test("the administrator finds a person in Planning Center to add as a leader, and is told who can't lead", async ({
+  page,
+}) => {
+  // Jo Member isn't a Group Leader, so nothing is added (tests share one database).
+  await page.setViewportSize(DESKTOP);
+  await signInAs(page, PEOPLE.gina);
+  await page.goto("/admin/departments");
+  await page.getByRole("link", { name: "Visitation Team" }).click();
+  const search = page.getByRole("search", { name: "Add a leader from Planning Center" });
+  await search.getByLabel("Name or email in Planning Center").fill("Jo Member");
+  await search.getByRole("button", { name: "Find" }).click();
+  await expect(page).toHaveURL(/pco=Jo/);
+  const add = page.getByRole("form", { name: "Add Jo Member as" });
+  await expect(add).toBeVisible();
+  await expectAxeClean(page);
+  await add.getByRole("button", { name: "Add" }).click();
+  await expect(add.getByRole("alert")).toContainText("Jo Member isn't marked as a Group Leader");
+});
+
 test("the mapping panel works on a phone", async ({ page }) => {
   await page.setViewportSize(MOBILE);
   await signInAs(page, PEOPLE.gina);

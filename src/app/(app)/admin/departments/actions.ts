@@ -12,6 +12,7 @@ import {
   setPlanningCenterValue,
   setRepresentative,
 } from "@/domain/departments/service";
+import { addLeaderFromPlanningCenter } from "@/domain/departments/add-from-pco";
 import {
   addSuggestedLeader,
   ignoreSuggestedLeader,
@@ -119,6 +120,25 @@ export async function setLeaderAction(_: ActionState, data: FormData): Promise<A
         type: form.text(data, "type"),
       });
       return d.leaderSaved;
+    },
+    { paths: [page(departmentId), LIST, "/admin/users"] },
+  );
+}
+
+/** Adds a leader found in Planning Center, making their account if needed (FR-38). */
+export async function addFromPlanningCenterAction(
+  _: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  const departmentId = form.text(data, "departmentId");
+  return runAction(
+    async (tx, viewer) => {
+      const { name } = await addLeaderFromPlanningCenter(tx, viewer, getPlanningCenterDirectory(), {
+        departmentId,
+        pcoPersonId: form.text(data, "pcoPersonId"),
+        type: form.text(data, "type"),
+      });
+      return d.fromPco.added(name);
     },
     { paths: [page(departmentId), LIST, "/admin/users"] },
   );
