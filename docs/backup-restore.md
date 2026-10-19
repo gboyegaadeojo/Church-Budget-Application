@@ -39,7 +39,7 @@ Do this for real after a disaster, and once a year as practice, into a **new Neo
 1. Download the backup you want from the Drive folder.
 2. Decrypt it on the trusted computer: `age --decrypt --identity ifc-budget-backup-key.txt --output backup.dump ifc-budget-2027-03-15.dump.age`
 3. In Neon, create a new **empty** branch (or a new database) and copy its direct connection string.
-4. Restore with the Postgres 17 tools: `pg_restore --no-owner --no-acl --exit-on-error --dbname="<connection string>" backup.dump`
+4. Restore with the Postgres 18 tools (the same major version as Neon, shown under Postgres → Version): `pg_restore --no-owner --no-acl --exit-on-error --dbname="<connection string>" backup.dump`
 5. Check it: run the app locally against it (`DATABASE_URL=<connection string> npm run dev`) and sign in, or count rows with `psql` (`select count(*) from budget_requests;`).
 6. **To replace production after a disaster:** point Netlify's `DATABASE_URL` at the restored branch, redeploy, and tell the staff what time the backup was from. Anything entered after that time must be entered again.
 7. Delete the decrypted `backup.dump` when you're done.
