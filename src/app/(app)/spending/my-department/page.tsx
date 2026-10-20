@@ -77,7 +77,12 @@ async function MyDepartmentContent({
         <EmptyState>{m.noDepartment}</EmptyState>
       ) : (
         view.departments.map((b) => (
-          <MyDepartmentPanel key={b.departmentId} budget={b} cycleId={cycle.id} />
+          <MyDepartmentPanel
+            key={b.departmentId}
+            budget={b}
+            cycleId={cycle.id}
+            cycleName={cycle.name}
+          />
         ))
       )}
     </>
