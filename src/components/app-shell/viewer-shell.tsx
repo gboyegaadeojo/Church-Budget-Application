@@ -5,7 +5,7 @@ import { hasRole } from "@/lib/roles";
 import { getViewerAllowingWaiting as getViewer } from "@/lib/viewer";
 import { AccountMenu } from "./account-menu";
 import { Brand, currentBrandView } from "./live-brand";
-import { MobileMenu } from "./mobile-menu";
+import { BottomBar } from "./bottom-bar";
 import { Sidebar } from "./sidebar";
 
 /*
@@ -25,10 +25,10 @@ export async function ViewerSidebar() {
   );
 }
 
-export async function ViewerMobileMenu() {
+export async function ViewerBottomBar() {
   const viewer = await getViewer();
   return (
-    <MobileMenu
+    <BottomBar
       areas={navigationFor(viewer.roles, {
         expenseSubmitter: (viewer.expenseDepartments?.length ?? 0) > 0,
       })}
@@ -60,16 +60,6 @@ export function SidebarFallback() {
         <Brand className="hidden lg:flex" />
       </div>
     </div>
-  );
-}
-
-/** Placeholder the size of the phone Menu button, so the header does not jump. */
-export function MobileMenuFallback() {
-  return (
-    <span
-      aria-hidden="true"
-      className="block size-11 shrink-0 rounded-control bg-surface-2 md:hidden"
-    />
   );
 }
 

@@ -13,15 +13,14 @@ import {
   AccountMenuFallback,
   SidebarFallback,
   ViewerAccountMenu,
-  MobileMenuFallback,
-  ViewerMobileMenu,
+  ViewerBottomBar,
   ViewerSidebar,
 } from "@/components/app-shell/viewer-shell";
 import { copy } from "@/copy/en-CA";
 
 /**
- * One application for every role (DRD 6.0, FR-37): side rail on tablets, sidebar on desktop, a Menu
- * button on phones, header with search, the notification bell and the account menu, footer with Help and Privacy.
+ * One application for every role (DRD 6.0, FR-37): side rail on tablets, sidebar on desktop, a bottom
+ * bar on phones, header with search, the notification bell and the account menu, footer with Help and Privacy.
  * Everything that reads the viewer streams in behind its own Suspense boundary, so
  * the rest of the shell is part of the static prerender.
  */
@@ -42,13 +41,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <ViewerSidebar />
         </Suspense>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 print:pb-0">
           <header className="sticky top-0 z-(--z-sticky) flex h-16 items-center justify-between gap-4 border-b border-border bg-bg/90 px-4 backdrop-blur md:justify-end lg:px-8 print:hidden">
             <div className="flex min-w-0 items-center gap-3 md:hidden">
-              <Suspense fallback={<MobileMenuFallback />}>
-                <ViewerMobileMenu />
-              </Suspense>
-              {/* Logo only on narrow phones, where the menu, search, bell and account need the room. */}
+              {/* Logo only on narrow phones, where search, the bell and the account need the room. */}
               <Link href="/" className="min-w-0 rounded-control">
                 <Brand compact className="sm:hidden" />
                 <Brand className="hidden sm:flex" />
@@ -81,6 +77,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <Footer />
         </div>
       </div>
+      <Suspense fallback={null}>
+        <ViewerBottomBar />
+      </Suspense>
     </>
   );
 }
