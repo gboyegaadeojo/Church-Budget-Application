@@ -62,11 +62,21 @@ test.describe("Admin (Stage 1 step 4)", () => {
     const list = page.getByRole("list", { name: "Users & Roles" });
     await expect(list.getByRole("link", { name: "Pat Accountant", exact: true })).toBeVisible();
 
-    // The add form stays folded until it's wanted.
-    const add = page.getByRole("form", { name: "Add a staff member" });
-    await expect(add).toBeHidden();
+    // Adding stays folded until it's wanted, and starts from Planning Center (2026-10-20).
     await page.getByText("Add a staff member", { exact: true }).click();
-    await expect(add).toBeVisible();
+    const search = page.getByRole("search", { name: "Find them in Planning Center" });
+    await search.getByLabel("Name or email").fill("Jo Member");
+    await search.getByRole("button", { name: "Find" }).click();
+    await expect(page).toHaveURL(/pco=Jo/);
+    // Opening a person shows the roles to give; nothing is added here (shared test data).
+    await page.locator('summary[aria-label="Add Jo Member"]').click();
+    const pcoForm = page.getByRole("form", { name: "Add Jo Member" });
+    await expect(pcoForm.getByRole("button", { name: "Add staff member" })).toBeVisible();
+    // People who aren't in Planning Center are added by email, folded below.
+    const byEmail = page.getByRole("form", { name: "Add a staff member" });
+    await expect(byEmail).toBeHidden();
+    await page.getByText("Not in Planning Center? Add by email", { exact: true }).click();
+    await expect(byEmail).toBeVisible();
     await expectAxeClean(page);
   });
 

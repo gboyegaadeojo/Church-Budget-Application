@@ -323,7 +323,9 @@ You can **see everything** but cannot approve or pay unless you are also given t
 
 ![Users & Roles: everyone with an account, their roles, departments and status.](images/manual/admin-users.png)
 
-- **Link each staff member's Planning Center profile** so they can sign in: open their page and, under **Planning Center profile**, choose **Link to {name}** for the person with their email address, or search by name. Check it's the right person: Planning Center sign-in never links accounts by email on its own, because people can change the email on their own profile. Department leaders don't need this; they're linked when they first sign in.
+- **Staff sign in like leaders.** Anyone marked as a Ministry Leader in Planning Center can sign in by themselves. A new staff member who signs in lands on a "You're verified" screen; find them under **Needs attention** and give them their roles.
+- **Add a staff member** ahead of time: choose **Add a staff member**, find them under **Find them in Planning Center**, open their name, tick their roles and **Add staff member**. They're linked to their Planning Center profile, so they can sign in straight away. **Not in Planning Center? Add by email** is for people like the Church Administrator who sign in with an emailed code.
+- **Linking by hand:** an account added by email can be linked on the person's page under **Planning Center profile**. Planning Center sign-in never links accounts by email on its own, because people can change the email on their own profile.
 - **Expense submitter:** to let someone who doesn't lead a department submit expenses for it (for example a volunteer who buys for Media), open their page and, under **Expense submitter**, choose the department and **Add**. They need the Requester role and must be a verified Group Leader in Planning Center, like every requester. The Church Administrator can be made a submitter too, to submit on a department's behalf; someone else then records the payment. They see and change only what they submit; the department's leaders see it too and get its emails. **Remove** stops new submissions; what they already submitted stays.
 
 ### Departments

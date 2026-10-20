@@ -62,7 +62,7 @@ export const adminCopy = {
     addHeading: "Add a staff member",
     email: "Email address",
     emailHint:
-      "Any address works. Staff sign in with Planning Center once you link their profile on their page. The Church Administrator and System Administrators can also sign in with a code sent to this address.",
+      "For someone who isn't in Planning Center. The Church Administrator and System Administrators sign in with a code sent to this address.",
     displayName: "Name",
     roles: "Roles",
     add: "Add staff member",
@@ -155,6 +155,24 @@ export const adminCopy = {
       pcoPersonTaken: (name: string) =>
         `That Planning Center profile is already linked to ${name}. Unlink it there first.`,
       pcoQuery: "Type at least 2 characters.",
+      hasAccount: (name: string) =>
+        `${name} already has an account. Open their page to change their roles.`,
+      pcoNoEmail:
+        "This person has no email address in Planning Center. Add one there first, or add them by email below.",
+    },
+    fromPco: {
+      heading: "Find them in Planning Center",
+      hint: "Staff added from Planning Center are linked to their profile, so they can sign in with Planning Center straight away.",
+      search: "Name or email",
+      find: "Find",
+      noResults: "No one in Planning Center matches that search.",
+      unavailable:
+        "Planning Center can't be reached right now. Try again shortly, or add them by email.",
+      add: (name: string) => `Add ${name}`,
+      submit: "Add staff member",
+      hasAccount: "Has an account",
+      byEmail: "Not in Planning Center? Add by email",
+      added: (name: string) => `${name} was added and can sign in with Planning Center.`,
     },
   },
   departments: {
