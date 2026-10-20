@@ -4,6 +4,7 @@ import { adminCopy } from "@/copy/admin";
 import { RuleError } from "@/domain/errors";
 import {
   addStaff,
+  addStaffFromPlanningCenter,
   linkPlanningCenterPerson,
   searchPlanningCenterPeople,
   setUserActive,
@@ -28,6 +29,21 @@ export async function addStaffAction(_: ActionState, data: FormData): Promise<Ac
         roles: form.all(data, "roles"),
       });
       return u.added(name);
+    },
+    { paths: ["/admin/users"] },
+  );
+}
+
+export async function addStaffFromPcoAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const directory = getPlanningCenterDirectory();
+  if (!directory) return { status: "error", message: u.fromPco.unavailable };
+  return runAction(
+    async (tx, viewer) => {
+      const { name } = await addStaffFromPlanningCenter(tx, viewer, directory, {
+        pcoPersonId: form.text(data, "pcoPersonId"),
+        roles: form.all(data, "roles"),
+      });
+      return u.fromPco.added(name);
     },
     { paths: ["/admin/users"] },
   );

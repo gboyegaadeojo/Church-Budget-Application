@@ -229,7 +229,7 @@ export const copy = {
       },
       waiting: {
         heading: "You're verified",
-        body: "An administrator will assign your department shortly. You'll get an email when it's done.",
+        body: "An administrator will add you to your department, or give church staff their role, shortly. You'll get an email when it's done.",
       },
       unavailable: {
         heading: "We can't reach Planning Center",
@@ -241,7 +241,7 @@ export const copy = {
       },
       "link-required": {
         heading: "Your Planning Center profile isn't linked yet",
-        body: "Your Church Budget account is set up, but it isn't linked to this Planning Center profile yet. Ask the administrator to link it, then sign in again.",
+        body: "There's a Church Budget account with your email address, but it isn't linked to this Planning Center profile yet. For your security it isn't linked automatically: ask the administrator to link it on your page in Users & Roles, then sign in again.",
       },
     },
   },

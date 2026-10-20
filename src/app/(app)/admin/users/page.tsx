@@ -22,9 +22,13 @@ import { adminCopy } from "@/copy/admin";
 import { copy } from "@/copy/en-CA";
 import { getDb } from "@/db";
 import { listUsers, type UserListItem } from "@/domain/users/admin-queries";
+import { users } from "@/db/schema";
+import type { PcoPerson } from "@/lib/pco";
+import { getPlanningCenterDirectory } from "@/lib/pco-directory";
+import { inArray } from "drizzle-orm";
 import { viewerAllowedTo } from "@/lib/admin-server";
 import { cn } from "@/lib/cn";
-import { addStaffAction } from "./actions";
+import { addStaffAction, addStaffFromPcoAction } from "./actions";
 import { ROLE_OPTIONS } from "./role-options";
 import { UserStatusBadge } from "./status-badge";
 
@@ -69,6 +73,7 @@ async function UsersContent({ searchParams }: Pick<PageProps<"/admin/users">, "s
   if (!viewer) return <PermissionDenied />;
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
+  const pco = typeof params.pco === "string" ? params.pco.trim() : "";
   const filter: Filter = isFilter(params.filter) ? params.filter : "all";
   const everyone = await listUsers(getDb(), q);
   const counts = Object.fromEntries(
@@ -85,7 +90,7 @@ async function UsersContent({ searchParams }: Pick<PageProps<"/admin/users">, "s
     <>
       <PageHeader title={u.title} intro={u.intro} />
 
-      <details className="group">
+      <details className="group" open={pco.length > 0}>
         <summary
           className={buttonClass(
             "primary",
@@ -95,22 +100,32 @@ async function UsersContent({ searchParams }: Pick<PageProps<"/admin/users">, "s
           <UserPlus className="size-4" aria-hidden="true" />
           {u.addHeading}
         </summary>
-        <div className={cn(cardClass, "mt-4")}>
-          <ActionForm action={addStaffAction} resetOnSuccess aria-label={u.addHeading}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField
-                name="email"
-                type="email"
-                label={u.email}
-                hint={u.emailHint}
-                autoComplete="off"
-                required
+        <div className={cn(cardClass, "mt-4 space-y-5")}>
+          <PcoStaffSearch query={pco} />
+          <details className="group/email border-t border-border pt-4">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-medium text-accent [&::-webkit-details-marker]:hidden">
+              <ChevronRight
+                className="size-4 transition-transform duration-150 group-open/email:rotate-90 motion-reduce:transition-none"
+                aria-hidden="true"
               />
-              <TextField name="displayName" label={u.displayName} autoComplete="off" required />
-            </div>
-            <CheckboxGroup name="roles" legend={u.roles} options={ROLE_OPTIONS} />
-            <SubmitButton>{u.add}</SubmitButton>
-          </ActionForm>
+              {u.fromPco.byEmail}
+            </summary>
+            <ActionForm action={addStaffAction} resetOnSuccess aria-label={u.addHeading}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField
+                  name="email"
+                  type="email"
+                  label={u.email}
+                  hint={u.emailHint}
+                  autoComplete="off"
+                  required
+                />
+                <TextField name="displayName" label={u.displayName} autoComplete="off" required />
+              </div>
+              <CheckboxGroup name="roles" legend={u.roles} options={ROLE_OPTIONS} />
+              <SubmitButton>{u.add}</SubmitButton>
+            </ActionForm>
+          </details>
         </div>
       </details>
 
@@ -282,5 +297,135 @@ function PersonRow({ person: p }: { person: UserListItem }) {
         <RowChevron className="hidden size-4 text-fg-muted sm:block" aria-hidden="true" />
       </div>
     </li>
+  );
+}
+
+/**
+ * "Find them in Planning Center": the administrator picks the person, so the account is
+ * linked to their profile from the start and Planning Center sign-in reaches it at once.
+ */
+async function PcoStaffSearch({ query }: { query: string }) {
+  const f = u.fromPco;
+  const directory = getPlanningCenterDirectory();
+  if (!directory) return null;
+  let people: PcoPerson[] | null = [];
+  if (query.length >= 2) {
+    try {
+      people = (await directory.searchPeople(query)).slice(0, 10);
+    } catch {
+      people = null;
+    }
+  }
+  const linked =
+    people && people.length > 0
+      ? new Map(
+          (
+            await getDb()
+              .select({ id: users.id, pcoPersonId: users.pcoPersonId })
+              .from(users)
+              .where(
+                inArray(
+                  users.pcoPersonId,
+                  people.map((p) => p.id),
+                ),
+              )
+          ).map((r) => [r.pcoPersonId, r.id]),
+        )
+      : new Map<string | null, string>();
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <h2 className="text-[15px] font-semibold">{f.heading}</h2>
+        <p className="text-sm text-fg-muted">{f.hint}</p>
+      </div>
+      <form
+        method="get"
+        action="/admin/users"
+        role="search"
+        aria-label={f.heading}
+        className="flex flex-col gap-2 sm:flex-row sm:items-end"
+      >
+        <div className="flex-1 space-y-1.5">
+          <label htmlFor="pco-staff-search" className="block text-sm font-medium">
+            {f.search}
+          </label>
+          <input
+            id="pco-staff-search"
+            type="search"
+            name="pco"
+            defaultValue={query}
+            autoComplete="off"
+            className={inputClass}
+          />
+        </div>
+        <button type="submit" className={buttonClass("secondary")}>
+          {f.find}
+        </button>
+      </form>
+      {people === null ? (
+        <p role="status" className="text-sm text-warning">
+          {f.unavailable}
+        </p>
+      ) : query && people.length === 0 ? (
+        <p className="text-sm text-fg-muted">{f.noResults}</p>
+      ) : (
+        people.length > 0 && (
+          <ul
+            aria-label={f.heading}
+            className="divide-y divide-border overflow-hidden rounded-[12px] border border-border"
+          >
+            {people.map((p) => {
+              const account = linked.get(p.id);
+              return (
+                <li key={p.id}>
+                  {account ? (
+                    <div className="flex items-center gap-3 px-4 py-3 text-sm">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{p.name}</span>
+                        <span className="block truncate text-xs text-fg-muted">{p.emails[0]}</span>
+                      </span>
+                      <Link
+                        href={`/admin/users/${account}`}
+                        className="text-sm font-medium text-accent underline-offset-4 hover:underline"
+                      >
+                        {f.hasAccount}
+                      </Link>
+                    </div>
+                  ) : (
+                    <details className="group/person">
+                      <summary
+                        aria-label={f.add(p.name)}
+                        className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-3 text-sm transition-colors duration-150 hover:bg-surface-2 motion-reduce:transition-none [&::-webkit-details-marker]:hidden"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium">{p.name}</span>
+                          <span className="block truncate text-xs text-fg-muted">
+                            {p.emails[0] ?? ""}
+                          </span>
+                        </span>
+                        <span className="flex items-center gap-1 font-medium text-accent">
+                          <UserPlus className="size-4" aria-hidden="true" />
+                          <ChevronRight
+                            className="size-4 transition-transform duration-150 group-open/person:rotate-90 motion-reduce:transition-none"
+                            aria-hidden="true"
+                          />
+                        </span>
+                      </summary>
+                      <div className="border-t border-border bg-surface-2/50 px-4 py-4">
+                        <ActionForm action={addStaffFromPcoAction} aria-label={f.add(p.name)}>
+                          <input type="hidden" name="pcoPersonId" value={p.id} />
+                          <CheckboxGroup name="roles" legend={u.roles} options={ROLE_OPTIONS} />
+                          <SubmitButton>{f.submit}</SubmitButton>
+                        </ActionForm>
+                      </div>
+                    </details>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )
+      )}
+    </div>
   );
 }

@@ -119,6 +119,58 @@ export async function addStaff(
   return { userId: created.id, name: data.displayName };
 }
 
+/**
+ * Adds a staff member picked from Planning Center, linked to their profile from the start,
+ * so Planning Center sign-in reaches the account at once (no linking step). Their email
+ * comes from Planning Center; an account is never matched by email alone.
+ */
+export async function addStaffFromPlanningCenter(
+  tx: Tx,
+  actor: Subject,
+  directory: PlanningCenterDirectory,
+  input: { pcoPersonId: string; roles: string[] },
+): Promise<{ userId: string; name: string }> {
+  const { actingRole } = assertCan(actor, "admin.users");
+  const data = parseInput(z.object({ pcoPersonId: pcoPersonIdSchema, roles: rolesSchema }), input);
+  const person = await directory.getPerson(data.pcoPersonId);
+  if (!person) throw new RuleError(u.errors.pcoPersonMissing);
+  const [linked] = await tx
+    .select({ name: users.displayName })
+    .from(users)
+    .where(eq(users.pcoPersonId, person.id))
+    .limit(1);
+  if (linked) throw new RuleError(u.errors.hasAccount(linked.name));
+  const email = person.emails[0]?.trim().toLowerCase();
+  if (!email) throw new RuleError(u.errors.pcoNoEmail);
+  const [taken] = await tx
+    .select({ id: users.id })
+    .from(users)
+    .where(sql`lower(${users.email}) = ${email}`)
+    .limit(1);
+  if (taken) throw new RuleError(u.errors.emailTaken);
+
+  const roles = [...new Set(data.roles)];
+  const [created] = await tx
+    .insert(users)
+    .values({ email, displayName: person.name, pcoPersonId: person.id, accessStatus: "active" })
+    .returning({ id: users.id });
+  await tx
+    .insert(userRoles)
+    .values(roles.map((role) => ({ userId: created.id, role, assignedByUserId: actor.id })));
+  await writeAudit(tx, {
+    actor: actorOf(actor, actingRole),
+    area: "admin",
+    eventType: "admin.user_added",
+    entity: { type: "user", id: created.id },
+    details: {
+      source: "planning_center",
+      after: { email, name: person.name, roles, pcoPersonId: person.id },
+    },
+  });
+  await emailStaffAdded(tx, created.id, roles);
+  return { userId: created.id, name: person.name };
+}
+
 // ---------------------------------------------------------------- roles
 
 /**

@@ -1194,3 +1194,9 @@ The church asked for a list that stays clean with about 80 people.
 - **Activity search** matches budgets, expenses, people and departments first and filters the log by their ids, instead of matching text on every joined event: 2.1 s to 0.19 s at three times the church's size.
 - **The notification bell** checks its count at most once a minute while moving between pages, and straight away after something is marked read; each check is a server call.
 - **Recent activity on Home is for the System Administrator only** (decided by the church 2026-10-20). Other staff found it noise; they have the full, role-scoped log in Reports → Analytics & Audit.
+
+## 2026-10-20: Staff sign in by Planning Center; add staff from Planning Center
+
+- **Staff use the Ministry Leader field** (decided by the church). Anyone who passes it signs in by themselves, as leaders always could; a new staff member waits on the "You're verified" screen (now worded for staff too) until the administrator gives them roles in Users & Roles (Needs attention).
+- **Add a staff member starts from Planning Center.** The administrator searches Planning Center and picks the person; the account is created linked to their profile, with their Planning Center email, so Planning Center sign-in reaches it at once. Adding by email remains, folded, for people not in Planning Center.
+- **Why accounts are never linked by email alone:** people can change the email on their own Planning Center profile, so matching by email would let someone take over a staff account that approves or pays money. Linking is by Planning Center person id (set by picking the person). The "isn't linked yet" screen now says so.
