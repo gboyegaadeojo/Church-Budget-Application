@@ -176,9 +176,9 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await expect(emails.getByText(/New budget submitted/)).toHaveCount(0);
 
     await page.goto("/annual");
-    const mine = page.getByRole("table", { name: "My budget requests" });
+    const mine = page.getByRole("list", { name: "My budget requests" });
     await expect(mine.getByRole("link", { name: "Drama Team 2027" })).toHaveCount(1);
-    const row = mine.getByRole("row", { name: /Drama Team 2027/ });
+    const row = mine.getByRole("listitem").filter({ hasText: "Drama Team 2027" });
     await expect(row.getByText("$1,148.00")).toBeVisible();
     await expect(row.getByText("2 of 2 edits left")).toBeVisible();
   });
@@ -246,7 +246,8 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await reviseQuantity(sam, "2");
     await expect(sam.getByText("You can make 1 change before it's reviewed.")).toBeVisible();
     await sam.goto("/annual");
-    const budget = sam.getByRole("listitem").filter({ hasText: "Evangelism Team" });
+    // This year's budget, on the cycle card at the top.
+    const budget = sam.getByRole("listitem").filter({ hasText: "Evangelism Team" }).first();
     await expect(budget.getByText("1 of 2 edits left")).toBeVisible();
     await expect(budget.getByRole("link", { name: "Edit budget" })).toBeVisible();
     await expect(sam.getByRole("link", { name: "Submit annual budget" })).toHaveCount(0);
@@ -306,8 +307,14 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     // Gina is Media Team's seeded Primary, with Sam Lee as Backup 1. The nomination
     // itself is covered by the integration tests, so seeded leaders stay as they are.
     const panel = page.getByRole("region", { name: "Media Team: leaders" });
-    await expect(panel.getByText("Primary · Gina Admin")).toBeVisible();
-    await expect(panel.getByText("Backup 1 · Sam Lee")).toBeVisible();
+    // Gina leads several departments, so each one's leaders open from its row.
+    await panel.getByRole("heading", { name: "Media Team: leaders" }).click();
+    const gina = panel.getByRole("listitem").filter({ hasText: "Gina Admin" });
+    await expect(gina.getByText("Primary", { exact: true })).toBeVisible();
+    const sam = panel.getByRole("listitem").filter({ hasText: "Sam Lee" });
+    await expect(sam.getByText("Backup 1", { exact: true })).toBeVisible();
+    // Naming a Backup opens from its row.
+    await panel.getByText("Make someone a Backup", { exact: true }).click();
     await expect(panel.getByRole("combobox", { name: "Group Leader" })).toBeVisible();
     await expect(panel.getByRole("button", { name: "Make Backup" })).toBeVisible();
     await expectAxeClean(page);

@@ -2,23 +2,9 @@ import { Suspense } from "react";
 import { UnreadMessages } from "@/components/request-messages";
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  CalendarClock,
-  CheckCircle2,
-  MessageCircleQuestion,
-  Plane,
-  FileText,
-  CalendarX,
-} from "lucide-react";
-import {
-  AdminSkeleton,
-  EmptyState,
-  PageHeader,
-  PermissionDenied,
-  Section,
-  IconChip,
-} from "@/components/ui/display";
-import { buttonClass, cardClass, linkClass } from "@/components/ui/styles";
+import { CalendarClock, CheckCircle2, MessageCircleQuestion, Plane, CalendarX } from "lucide-react";
+import { AdminSkeleton, PageHeader, PermissionDenied, IconChip } from "@/components/ui/display";
+import { buttonClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
 import { getDb } from "@/db";
 import { daysUntil, getOpenCycle, listMyRequests, type MyRequest } from "@/domain/annual/queries";
@@ -35,7 +21,9 @@ import { formatCAD } from "@/lib/money";
 import { formatDate, formatDateTime, zonedDate } from "@/lib/time-zone";
 import { accountCopy } from "@/copy/account";
 import { departmentCover } from "@/domain/users/away";
-import { myDepartmentSpending } from "@/domain/spending/my-department";
+import { myDepartmentSpending, type MyDepartmentBudget } from "@/domain/spending/my-department";
+import { adminCopy } from "@/copy/admin";
+import { spendingCopy } from "@/copy/spending";
 import { MyDepartmentPanel } from "../spending/my-department-panel";
 import { AnnualStatusBadge } from "./status-badge";
 
@@ -53,6 +41,9 @@ export default function AnnualDashboardPage({ searchParams }: PageProps<"/annual
     </div>
   );
 }
+
+/** A department with an approved budget, or spending recorded against none (FR-24). */
+const hasBudget = (b: MyDepartmentBudget) => b.status !== "no_budget" || b.entries.length > 0;
 
 /** The one action that fits a request's state (a department has one budget a year). */
 function openAction(r: MyRequest): { href: string; label: string; primary: boolean } {
@@ -134,6 +125,8 @@ async function DashboardContent({
     )
   ).filter((c) => c.cover.away && c.cover.backups.length > 0);
   const others = requests.filter((r) => r.status !== "returned");
+  // Departments with nothing approved or spent yet share one small card.
+  const pending = (budgets?.departments ?? []).filter((b) => !hasBudget(b));
 
   return (
     <>
@@ -150,33 +143,44 @@ async function DashboardContent({
       )}
 
       {cycle && deadline ? (
-        <section aria-labelledby="cycle-heading" className={cn(cardClass, "space-y-4")}>
-          <div className="flex items-start gap-3">
-            <IconChip icon={CalendarClock} tone="blue" />
-            <div className="space-y-1">
-              <h2
-                id="cycle-heading"
-                className="text-[17px] leading-tight font-semibold tracking-tight"
-              >
-                {d.cycleOpen(cycle.name)}
-              </h2>
-              <p className="text-sm text-fg-muted">
-                {d.deadline(formatDateTime(deadline, zone))}
-                {" · "}
-                <span className="font-medium text-fg">{d.daysLeft(daysLeft)}</span>
-              </p>
+        <section
+          aria-labelledby="cycle-heading"
+          className="overflow-hidden rounded-card border border-border bg-surface shadow-card"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3 p-5 sm:px-6">
+            <div className="flex min-w-0 items-start gap-3">
+              <IconChip icon={CalendarClock} tone="blue" />
+              <div className="min-w-0">
+                <h2
+                  id="cycle-heading"
+                  className="text-[17px] leading-tight font-semibold tracking-tight"
+                >
+                  {d.cycleOpen(cycle.name)}
+                </h2>
+                <p className="mt-1 text-sm text-fg-muted">
+                  {d.deadline(formatDateTime(deadline, zone))}
+                </p>
+              </div>
             </div>
+            <span
+              className={cn(
+                "inline-flex shrink-0 items-center rounded-full border bg-surface px-2.5 py-0.5 text-xs font-semibold",
+                daysLeft <= 7 ? "border-warning text-warning" : "border-info text-info",
+              )}
+            >
+              {d.daysLeft(daysLeft)}
+            </span>
           </div>
           {thisYear.length > 0 && (
-            <ul className="divide-y divide-border overflow-hidden rounded-[14px] bg-surface-2/60">
+            <ul className="divide-y divide-border border-t border-border">
               {thisYear.map((r) => {
                 const action = openAction(r);
                 return (
                   <li
                     key={r.id}
-                    className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
                   >
-                    <div className="min-w-0 space-y-1">
+                    <div className="min-w-0 space-y-1.5">
                       <p className="font-medium">
                         {r.departmentName}
                         {r.title && <span className="font-normal text-fg-muted"> · {r.title}</span>}
@@ -185,7 +189,7 @@ async function DashboardContent({
                         <AnnualStatusBadge status={r.status} />
                         <UnreadMessages count={r.unreadMessages} />
                         {r.totalCents !== null && (
-                          <span className="tabular font-medium text-fg">
+                          <span className="tabular font-semibold text-fg">
                             {formatCAD(r.totalCents)}
                           </span>
                         )}
@@ -207,21 +211,28 @@ async function DashboardContent({
             </ul>
           )}
           {canStart && (
-            <Link
-              href="/annual/new"
-              className={buttonClass(
-                thisYear.length === 0 ? "primary" : "ghost",
-                "w-full sm:w-auto",
+            <div
+              className={cn(
+                "px-5 pb-5 sm:px-6",
+                thisYear.length > 0 && "border-t border-border pt-4",
               )}
             >
-              {thisYear.length === 0 ? d.start : d.startAnother}
-            </Link>
+              <Link
+                href="/annual/new"
+                className={buttonClass(
+                  thisYear.length === 0 ? "primary" : "ghost",
+                  "w-full sm:w-auto",
+                )}
+              >
+                {thisYear.length === 0 ? d.start : d.startAnother}
+              </Link>
+            </div>
           )}
         </section>
       ) : (
         <section
           aria-labelledby="cycle-heading"
-          className={cn(cardClass, "flex items-start gap-3")}
+          className="flex items-start gap-3 rounded-card border border-border bg-surface p-5 shadow-card sm:px-6"
         >
           <IconChip icon={CalendarX} tone="slate" />
           <div className="space-y-1">
@@ -237,21 +248,7 @@ async function DashboardContent({
       )}
 
       {returned.length > 0 && (
-        <section
-          aria-labelledby="needs-action-heading"
-          className={cn(cardClass, "space-y-3 border-warning")}
-        >
-          <div className="flex items-center gap-3">
-            <IconChip icon={MessageCircleQuestion} tone="amber" />
-            <h2
-              id="needs-action-heading"
-              className="text-[17px] leading-tight font-semibold tracking-tight"
-            >
-              {d.needsAction}
-            </h2>
-          </div>
-          <RequestTable requests={returned} caption={d.needsAction} />
-        </section>
+        <RequestList requests={returned} title={d.needsAction} id="needs-action" warning />
       )}
 
       {covered.map(({ name, cover }) => (
@@ -271,91 +268,158 @@ async function DashboardContent({
         </p>
       ))}
 
-      {leaderPanels.map((panel) => (
-        <LeadersPanel
-          key={panel.department.id}
-          department={panel.department}
-          leaders={panel.leaders.map((l) => ({ userId: l.userId, name: l.name, slot: l.slot }))}
-          candidates={panel.candidates.map((c) => ({ id: c.id, name: c.name }))}
-          away={panel.away}
-          today={zonedDate(new Date(), zone)}
-        />
-      ))}
-
-      <Section title={d.myRequests} id="my-requests" icon={FileText} tone="violet">
-        {others.length === 0 && returned.length === 0 ? (
-          <EmptyState>{d.empty}</EmptyState>
-        ) : others.length > 0 ? (
-          <RequestTable requests={others} caption={d.myRequests} />
-        ) : null}
-      </Section>
-
       {/* DRD 6.2a: each department's budget and what's been spent against it. */}
       {budgets &&
         budgetCycle &&
-        budgets.departments.map((b) => (
-          <MyDepartmentPanel key={b.departmentId} budget={b} cycleId={budgetCycle.id} limit={5} />
-        ))}
+        budgets.departments
+          .filter(hasBudget)
+          .map((b) => (
+            <MyDepartmentPanel
+              key={b.departmentId}
+              budget={b}
+              cycleId={budgetCycle.id}
+              cycleName={budgetCycle.name}
+              limit={5}
+            />
+          ))}
+
+      {budgetCycle && pending.length > 0 && (
+        <section
+          aria-labelledby="not-approved-heading"
+          className="rounded-card border border-border bg-surface p-5 shadow-card sm:px-6"
+        >
+          <h2
+            id="not-approved-heading"
+            className="text-[17px] leading-tight font-semibold tracking-tight"
+          >
+            {spendingCopy.mine.notApprovedHeading(budgetCycle.name)}
+          </h2>
+          <p className="mt-1 text-sm text-fg-muted">{spendingCopy.mine.notApprovedList}</p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {pending.map((b) => (
+              <li
+                key={b.departmentId}
+                className="rounded-full border border-border bg-surface-2 px-3 py-1 text-sm"
+              >
+                {b.department}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {others.length === 0 && returned.length === 0 ? (
+        <section
+          aria-labelledby="my-requests-heading"
+          className="rounded-card border border-border bg-surface p-5 shadow-card sm:px-6"
+        >
+          <h2
+            id="my-requests-heading"
+            className="text-[17px] leading-tight font-semibold tracking-tight"
+          >
+            {d.myRequests}
+          </h2>
+          <p className="mt-2 text-sm text-fg-muted">{d.empty}</p>
+        </section>
+      ) : others.length > 0 ? (
+        <RequestList requests={others} title={d.myRequests} id="my-requests" />
+      ) : null}
+
+      {leaderPanels.length > 0 && (
+        <section
+          aria-labelledby="leaders-heading"
+          className="overflow-hidden rounded-card border border-border bg-surface shadow-card"
+        >
+          <div className="space-y-1 p-5 sm:px-6">
+            <h2
+              id="leaders-heading"
+              className="text-[17px] leading-tight font-semibold tracking-tight"
+            >
+              {adminCopy.departments.nominate.groupHeading}
+            </h2>
+            <p className="text-sm text-fg-muted">{adminCopy.departments.nominate.intro}</p>
+          </div>
+          <div className="divide-y divide-border border-t border-border">
+            {leaderPanels.map((panel) => (
+              <LeadersPanel
+                key={panel.department.id}
+                defaultOpen={leaderPanels.length === 1}
+                department={panel.department}
+                leaders={panel.leaders.map((l) => ({
+                  userId: l.userId,
+                  name: l.name,
+                  slot: l.slot,
+                }))}
+                candidates={panel.candidates.map((c) => ({ id: c.id, name: c.name }))}
+                away={panel.away}
+                today={zonedDate(new Date(), zone)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 }
 
-function RequestTable({ requests, caption }: { requests: MyRequest[]; caption: string }) {
+/** Budget requests as slim rows: title and where it belongs, status, total and edits left. */
+function RequestList({
+  requests,
+  title,
+  id,
+  warning = false,
+}: {
+  requests: MyRequest[];
+  title: string;
+  id: string;
+  warning?: boolean;
+}) {
   return (
-    <div
-      className="relative -mx-1 overflow-x-auto px-1"
-      tabIndex={0}
-      role="region"
-      aria-label={caption}
+    <section
+      aria-labelledby={`${id}-heading`}
+      className={cn(
+        "overflow-hidden rounded-card border bg-surface shadow-card",
+        warning ? "border-warning" : "border-border",
+      )}
     >
-      <table className="w-full min-w-[36rem] text-left text-sm">
-        <caption className="sr-only">{caption}</caption>
-        <thead className="border-b border-border text-xs text-fg-muted">
-          <tr>
-            <th scope="col" className="py-2 pr-4 font-medium">
-              {d.columns.request}
-            </th>
-            <th scope="col" className="py-2 pr-4 font-medium">
-              {d.columns.status}
-            </th>
-            <th scope="col" className="py-2 pr-4 text-right font-medium">
-              {d.columns.total}
-            </th>
-            <th scope="col" className="py-2 font-medium">
-              {d.columns.edits}
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {requests.map((r) => (
-            <tr key={r.id}>
-              <td className="py-3 pr-4">
-                <Link
-                  href={r.status === "draft" ? `/annual/${r.id}/edit` : `/annual/${r.id}`}
-                  className={linkClass}
-                >
-                  {r.title || d.untitled}
-                </Link>
-                <p className="text-xs text-fg-muted">
-                  {[r.departmentName, r.cycleName, r.referenceNumber].filter(Boolean).join(" · ")}
-                </p>
-              </td>
-              <td className="py-3 pr-4">
-                <span className="flex flex-wrap gap-2">
-                  <AnnualStatusBadge status={r.status} />
-                  <UnreadMessages count={r.unreadMessages} />
-                </span>
-              </td>
-              <td className="tabular py-3 pr-4 text-right">
+      <div className="flex items-center gap-3 p-5 pb-3 sm:px-6">
+        {warning && <IconChip icon={MessageCircleQuestion} tone="amber" size="sm" />}
+        <h2 id={`${id}-heading`} className="text-[17px] leading-tight font-semibold tracking-tight">
+          {title}
+        </h2>
+      </div>
+      <ul aria-label={title}>
+        {requests.map((r) => (
+          <li
+            key={r.id}
+            className="relative flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-5 py-3 transition-colors duration-150 hover:bg-surface-2 sm:px-6"
+          >
+            <div className="min-w-0 flex-1">
+              <Link
+                href={r.status === "draft" ? `/annual/${r.id}/edit` : `/annual/${r.id}`}
+                className="block truncate font-medium text-accent after:absolute after:inset-0"
+              >
+                {r.title || d.untitled}
+              </Link>
+              <p className="truncate text-xs text-fg-muted">
+                {[r.departmentName, r.cycleName, r.referenceNumber].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+            <span className="flex flex-wrap items-center gap-2">
+              <AnnualStatusBadge status={r.status} />
+              <UnreadMessages count={r.unreadMessages} />
+            </span>
+            <span className="w-full text-sm sm:w-auto sm:text-right">
+              <span className="tabular block font-semibold">
                 {r.totalCents === null ? d.notSubmitted : formatCAD(r.totalCents)}
-              </td>
-              <td className="py-3 text-fg-muted">
-                {r.status === "draft" ? "—" : d.editsLeft(r.editsRemaining)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              </span>
+              <span className="block text-xs text-fg-muted">
+                {r.status === "draft" ? null : d.editsLeft(r.editsRemaining)}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

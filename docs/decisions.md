@@ -1174,3 +1174,10 @@ The church asked for a list that stays clean with about 80 people.
 - **Board Chair and Vice-Chair:** what waits for their approval (oldest first, five shown), the year against the board's approval, budget years, departments to watch and their own recent decisions. A Vice-Chair sees the same list read-only, "with the Board Chair", until every Board Chair is Away; then "Covering for ...". No annual budget review, which their roles don't have.
 - **Church Administrator** (lighter): Ready to pay (count, total, longest wait, five oldest, paid in the last 30 days) and the year's spending.
 - Every figure comes from the read model of the screen it links to (review dashboard, approval queues, Ready to process, spending overview), so Home and those screens agree. At a glance keeps only the cards no dashboard above covers. My tasks and Recent activity stay.
+
+## 2026-10-20: My department budget, cleaner
+
+- The open cycle's card lists each department's budget for the year as a row (status, total, edits left, one action), with the days left as a pill.
+- Each department's budget shows what's left first (with what was available), a used bar, the figures in one strip, and spending entries as slim rows. Departments with nothing approved or spent yet share one small card. The same panel is on Spending → My department's spending.
+- Budget requests are slim rows instead of a table.
+- **Leaders and Away** is one card with a row per department the person leads as Primary; each row shows its leaders and Away state and opens in place (open on arrival when there's only one). Making a Backup and setting Away open from their own rows.

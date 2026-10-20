@@ -55,6 +55,8 @@ test("a department's Primary sees the Away form under their leaders", async ({ p
   await signInAs(page, PEOPLE.gina);
   await page.goto("/annual");
   const panel = page.getByRole("region", { name: "Media Team: leaders" });
+  await panel.getByRole("heading", { name: "Media Team: leaders" }).click();
   await expect(panel.getByRole("heading", { name: "Away" })).toBeVisible();
+  await panel.locator("summary", { hasText: /^(Set Away|Change Away dates)$/ }).click();
   await expect(panel.getByLabel("Away from")).toBeVisible();
 });

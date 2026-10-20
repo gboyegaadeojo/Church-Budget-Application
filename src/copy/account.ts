@@ -41,6 +41,12 @@ export const accountCopy = {
     covered: (names: string, until: string | null) =>
       until ? `Covered by ${names} until ${until}.` : `Covered by ${names}.`,
     noBackup: "Name a Backup first, so someone can cover while you're away.",
+    statusOff: "Off",
+    statusOn: "On",
+    statusFrom: (when: string) => `From ${when}`,
+    statusUntil: (when: string) => `Until ${when}`,
+    setRow: "Set Away",
+    changeRow: "Change Away dates",
     saved: "Away is set. Your Backups are covering.",
     cleared: "Away is off.",
   },

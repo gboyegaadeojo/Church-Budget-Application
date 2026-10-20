@@ -117,6 +117,9 @@ export const spendingCopy = {
     refund: "Refund",
     latest: (shown: number, all: number) => `The latest ${shown} of ${all} entries.`,
     seeAll: "See all entries",
+    ofAvailable: (amount: string) => `of ${amount} available`,
+    notApprovedHeading: (cycle: string) => `Not approved yet for ${cycle}`,
+    notApprovedList: "Their budgets will appear here once they're approved.",
   },
   yearEnd: {
     title: "Close budget year",
