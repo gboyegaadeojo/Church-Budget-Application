@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { and, asc, eq, inArray, lt, lte, or, sql } from "drizzle-orm";
 import { emailOutbox } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
+import { addNotifications } from "@/domain/notifications/in-app";
 import { writeAudit } from "@/lib/audit";
 import { renderEmail, type EmailBrand, type EmailContent } from "./layout";
 import type { EmailSender } from "./sender";
@@ -92,9 +93,28 @@ export async function enqueueEmail(tx: Tx, email: QueuedEmail): Promise<number> 
       })),
     )
     .onConflictDoNothing()
-    .returning({ id: emailOutbox.id });
+    .returning({ id: emailOutbox.id, toEmail: emailOutbox.toEmail });
   const store = queuedInAction.getStore();
   if (store) store.ids.push(...inserted.map((r) => r.id));
+  // The bell gets the same news, for everyone the email actually went to (not a
+  // dedupe-skipped repeat). A secret, such as a sign-in code, never goes there.
+  if (!email.sensitive && inserted.length > 0) {
+    const sent = new Set(inserted.map((r) => r.toEmail.toLowerCase()));
+    await addNotifications(
+      tx,
+      {
+        template: email.template,
+        title: email.content.heading,
+        body: email.content.subject,
+        href: email.content.button.href,
+        budgetRequestId: email.budgetRequestId,
+        expenseSubmissionId: email.expenseSubmissionId,
+        cycleId: email.cycleId,
+        createdAt: now,
+      },
+      recipients.filter((r) => sent.has(r.email.trim().toLowerCase())),
+    );
+  }
   return inserted.length;
 }
 

@@ -139,6 +139,14 @@ export const helpCopy = {
       ],
     },
     {
+      id: "notifications",
+      question: "Where do I see my notifications?",
+      answer: [
+        "Select the bell in the top bar. Everything the app emails you also shows there, newest first, with a red number for the ones you haven't opened.",
+        "Needs action shows only what's waiting for you, such as an approval or a question. Select a notification to open what it's about; it's then marked as read. On a phone, the bell opens the Notifications page.",
+      ],
+    },
+    {
       id: "reminders",
       question: "Can I get reminders by text?",
       answer: [

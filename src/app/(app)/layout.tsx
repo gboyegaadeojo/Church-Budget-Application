@@ -6,6 +6,10 @@ import { DemoBanner } from "@/components/app-shell/demo-banner";
 import { Footer } from "@/components/app-shell/footer";
 import { GlobalSearch } from "@/components/app-shell/global-search";
 import {
+  NotificationBell,
+  NotificationBellFallback,
+} from "@/components/app-shell/notification-bell";
+import {
   AccountMenuFallback,
   SidebarFallback,
   ViewerAccountMenu,
@@ -17,7 +21,7 @@ import { copy } from "@/copy/en-CA";
 
 /**
  * One application for every role (DRD 6.0, FR-37): side rail on tablets, sidebar on desktop, a Menu
- * button on phones, header with the account menu, footer with Help and Privacy.
+ * button on phones, header with search, the notification bell and the account menu, footer with Help and Privacy.
  * Everything that reads the viewer streams in behind its own Suspense boundary, so
  * the rest of the shell is part of the static prerender.
  */
@@ -44,12 +48,17 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
               <Suspense fallback={<MobileMenuFallback />}>
                 <ViewerMobileMenu />
               </Suspense>
+              {/* Logo only on narrow phones, where the menu, search, bell and account need the room. */}
               <Link href="/" className="min-w-0 rounded-control">
-                <Brand />
+                <Brand compact className="sm:hidden" />
+                <Brand className="hidden sm:flex" />
               </Link>
             </div>
             <div className="flex items-center gap-2">
               <GlobalSearch />
+              <Suspense fallback={<NotificationBellFallback />}>
+                <NotificationBell />
+              </Suspense>
               <Suspense fallback={<AccountMenuFallback />}>
                 <ViewerAccountMenu />
               </Suspense>
