@@ -1,15 +1,4 @@
-import {
-  Globe2,
-  MessageSquare,
-  Palette,
-  Percent,
-  Plug,
-  Settings2,
-  ShieldCheck,
-  UserX,
-  UsersRound,
-  type LucideIcon,
-} from "lucide-react";
+import { MessageSquare, Percent, Plug, Settings2, UsersRound, type LucideIcon } from "lucide-react";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -17,17 +6,14 @@ import { ActionForm, SelectField, SubmitButton, TextField } from "@/components/u
 import {
   AdminSkeleton,
   Badge,
-  EmptyState,
   IconChip,
   PageHeader,
   PermissionDenied,
-  Section,
   type Tone,
 } from "@/components/ui/display";
 import { linkClass, standaloneLinkClass } from "@/components/ui/styles";
 import { cn } from "@/lib/cn";
 import { adminCopy } from "@/copy/admin";
-import { brandingCopy } from "@/copy/branding";
 import { getDb } from "@/db";
 import {
   getChurchTimeZone,
@@ -49,6 +35,12 @@ import { smsUsage } from "@/lib/sms/outbox";
 import { secondApprovalAction, smsLimitAction, timeZoneAction } from "./actions";
 import { AccountantsSection, SignersSection } from "./people-sections";
 import { SignInSettingsForm, TaxRateForm } from "./settings-forms";
+import {
+  SettingsDisclosure,
+  SettingsGroup,
+  SettingsLinkRow,
+  SettingsRow,
+} from "@/components/ui/grouped-list";
 
 const s = adminCopy.settings;
 
@@ -79,10 +71,11 @@ type Category = (typeof CATEGORIES)[number]["key"];
 const isCategory = (value: unknown): value is Category => CATEGORIES.some((c) => c.key === value);
 
 /**
- * Admin → Settings (DRD 6.11), one category at a time: General (branding, time zone),
- * Money (sales tax, second approval), People (Primary accountant, cheque signers),
- * Sign-in (Planning Center, requesters failing verification) and Reminder texts
- * (FR-07a, FR-30, FR-33, FR-34, FR-53, FR-01a).
+ * Admin → Settings (DRD 6.11), one category at a time, as groups of slim rows that show
+ * each current value and open in place to change it (decided by the church 2026-10-20):
+ * General (branding, time zone), Money (sales tax, second approval), People (Primary
+ * accountant, cheque signers), Sign-in (Planning Center, requesters failing verification)
+ * and Reminder texts (FR-07a, FR-30, FR-33, FR-34, FR-53, FR-01a).
  */
 export default function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
   return (
@@ -99,12 +92,22 @@ async function SettingsBody({ searchParams }: Pick<PageProps<"/admin/settings">,
   if (!viewer) return <PermissionDenied />;
   const { section } = await searchParams;
   const current: Category = isCategory(section) ? section : "general";
+  const category = CATEGORIES.find((c) => c.key === current)!;
   return (
     <>
       <PageHeader title={s.title} />
-      <div className="grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
+      <div className="grid gap-6 lg:grid-cols-[14rem_minmax(0,46rem)] lg:items-start lg:gap-10">
         <SettingsNav current={current} />
-        <div className="min-w-0 space-y-6">
+        <div className="min-w-0 space-y-8">
+          <div className="flex items-center gap-3">
+            <IconChip icon={category.icon} tone={category.tone} />
+            <div className="min-w-0">
+              <h2 className="text-xl leading-tight font-semibold tracking-tight">
+                {s.sections[current].label}
+              </h2>
+              <p className="text-sm text-fg-muted">{s.sections[current].hint}</p>
+            </div>
+          </div>
           <Suspense key={current} fallback={<AdminSkeleton />}>
             <CategoryContent category={current} />
           </Suspense>
@@ -117,7 +120,7 @@ async function SettingsBody({ searchParams }: Pick<PageProps<"/admin/settings">,
 function SettingsNav({ current }: { current: Category }) {
   return (
     <nav aria-label={s.navLabel} className="min-w-0 lg:sticky lg:top-24">
-      <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+      <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:pb-0">
         {CATEGORIES.map(({ key, icon, tone }) => {
           const active = key === current;
           return (
@@ -126,19 +129,14 @@ function SettingsNav({ current }: { current: Category }) {
                 href={`/admin/settings?section=${key}`}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 items-center gap-3 rounded-[12px] px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150 motion-reduce:transition-none lg:whitespace-normal",
+                  "flex min-h-11 items-center gap-2.5 rounded-[10px] px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-150 motion-reduce:transition-none",
                   active
                     ? "bg-surface text-fg shadow-sm ring-1 ring-border"
                     : "text-fg-muted hover:bg-surface-2 hover:text-fg",
                 )}
               >
                 <IconChip icon={icon} tone={tone} size="sm" />
-                <span className="min-w-0">
-                  <span className="block">{s.sections[key].label}</span>
-                  <span className="hidden text-xs font-normal text-fg-muted lg:block">
-                    {s.sections[key].hint}
-                  </span>
-                </span>
+                {s.sections[key].label}
               </Link>
             </li>
           );
@@ -176,27 +174,19 @@ async function GeneralSettings() {
     settingVersions(db, ["church_timezone"]),
   ]);
   return (
-    <>
-      <Section
-        title={brandingCopy.settingsHeading}
-        description={brandingCopy.settingsIntro}
-        id="branding"
-        icon={Palette}
-        tone="pink"
-      >
-        <Link href="/admin/settings/branding" className={cn(linkClass, standaloneLinkClass)}>
-          {brandingCopy.settingsLink}
-        </Link>
-      </Section>
-
-      <Section title={s.timeZoneHeading} id="time-zone" icon={Globe2} tone="blue">
+    <SettingsGroup title={s.groups.church} id="church" footer={s.timeZoneHint}>
+      <SettingsLinkRow
+        href="/admin/settings/branding"
+        label={s.rows.branding}
+        value={s.rows.brandingValue}
+      />
+      <SettingsDisclosure label={s.timeZone} value={zone}>
         <ActionForm action={timeZoneAction} aria-label={s.timeZoneHeading}>
           <input type="hidden" name="versions" value={JSON.stringify(zoneVersions)} />
           <div className="max-w-md">
             <SelectField
               name="timeZone"
               label={s.timeZone}
-              hint={s.timeZoneHint}
               defaultValue={zone}
               options={timeZoneOptions(zone).map((z) => ({ value: z, label: z }))}
               required
@@ -204,8 +194,8 @@ async function GeneralSettings() {
           </div>
           <SubmitButton tone="secondary">{adminCopy.common.save}</SubmitButton>
         </ActionForm>
-      </Section>
-    </>
+      </SettingsDisclosure>
+    </SettingsGroup>
   );
 }
 
@@ -217,37 +207,39 @@ async function MoneySettings() {
     secondApprovalThreshold(db),
     settingVersions(db, ["second_approval_threshold"]),
   ]);
+  const percent = taxRateToPercent(sales_tax_rate);
   return (
     <>
-      <Section title={s.taxHeading} id="tax" icon={Percent} tone="teal">
-        <TaxRateForm percent={taxRateToPercent(sales_tax_rate)} versions={taxVersions} />
-      </Section>
+      <SettingsGroup title={s.groups.tax} id="tax" footer={s.taxWarning}>
+        <SettingsDisclosure label={s.rows.taxRate} value={`${percent}%`}>
+          <TaxRateForm percent={percent} versions={taxVersions} />
+        </SettingsDisclosure>
+      </SettingsGroup>
 
-      <Section
-        title={s.threshold.heading}
-        description={s.threshold.intro}
-        id="second-approval"
-        icon={ShieldCheck}
-        tone="violet"
-      >
-        <ActionForm action={secondApprovalAction} aria-label={s.threshold.heading}>
-          <input type="hidden" name="versions" value={JSON.stringify(thresholdVersions)} />
-          <p className="text-sm font-medium">
-            {threshold === null ? s.threshold.off : s.threshold.on(formatCAD(threshold))}
-          </p>
-          <div className="max-w-xs">
-            <TextField
-              name="amount"
-              label={s.threshold.label}
-              hint={s.threshold.hint}
-              defaultValue={threshold === null ? "" : centsToInput(threshold)}
-              inputMode="decimal"
-              autoComplete="off"
-            />
-          </div>
-          <SubmitButton tone="secondary">{s.threshold.save}</SubmitButton>
-        </ActionForm>
-      </Section>
+      <SettingsGroup title={s.groups.largeBudgets} id="second-approval" footer={s.threshold.intro}>
+        <SettingsDisclosure
+          label={s.rows.secondApproval}
+          value={threshold === null ? s.rows.off : s.rows.atOrAbove(formatCAD(threshold))}
+        >
+          <ActionForm action={secondApprovalAction} aria-label={s.threshold.heading}>
+            <input type="hidden" name="versions" value={JSON.stringify(thresholdVersions)} />
+            <p className="text-sm">
+              {threshold === null ? s.threshold.off : s.threshold.on(formatCAD(threshold))}
+            </p>
+            <div className="max-w-xs">
+              <TextField
+                name="amount"
+                label={s.threshold.label}
+                hint={s.threshold.hint}
+                defaultValue={threshold === null ? "" : centsToInput(threshold)}
+                inputMode="decimal"
+                autoComplete="off"
+              />
+            </div>
+            <SubmitButton tone="secondary">{s.threshold.save}</SubmitButton>
+          </ActionForm>
+        </SettingsDisclosure>
+      </SettingsGroup>
     </>
   );
 }
@@ -303,63 +295,61 @@ async function SignInSettings() {
   ]);
   return (
     <>
-      <Section title={s.pcoHeading} id="planning-center" icon={Plug} tone="amber">
-        <p className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-fg-muted">{s.connection}</span>
+      <SettingsGroup title={s.pcoHeading} id="planning-center">
+        <SettingsRow label={s.connection}>
           {pco.connection === "connected" ? (
             <Badge tone="success">{s.connected}</Badge>
           ) : (
-            <span className="text-warning">
+            <span className="text-right text-warning">
               {pco.connection === "not_configured" ? s.notConfigured : s.unreachable}
             </span>
           )}
-        </p>
-        <SignInSettingsForm
-          values={{
-            adminContactEmail: signIn.adminContactEmail,
-            fieldName: signIn.leader.fieldName,
-            acceptedValues: signIn.leader.acceptedValues,
-            requireForRequesters: signIn.leader.requireForRequesters,
-            requireForStaff: signIn.leader.requireForStaff,
-            departmentFieldName: departmentField.fieldName,
-            departmentMode: departmentField.mode,
-            planningCenterEnabled: signIn.planningCenterEnabled,
-            emailEnabled: signIn.emailEnabled,
-          }}
-          versions={signInVersions}
-          fields={pco.fields?.map((f) => ({ name: f.name, dataType: f.dataType })) ?? null}
-        />
-      </Section>
+        </SettingsRow>
+      </SettingsGroup>
 
-      <Section title={s.failingHeading} id="failing" icon={UserX} tone="red">
+      <SettingsGroup
+        title={s.failingHeading}
+        id="failing"
+        actions={failing.length > 0 ? String(failing.length) : undefined}
+      >
         {failing.length === 0 ? (
-          <EmptyState>{s.failingEmpty}</EmptyState>
+          <SettingsRow label={s.failingEmpty} />
         ) : (
-          <ul className="divide-y divide-border text-sm">
-            {failing.map((p) => (
-              <li
-                key={p.id}
-                className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between"
-              >
-                <span>
-                  <Link
-                    href={`/admin/users/${p.id}`}
-                    className={cn(linkClass, standaloneLinkClass)}
-                  >
-                    {p.name}
-                  </Link>
-                  <span className="block text-fg-muted">{p.email}</span>
-                </span>
-                <Badge tone={p.accessStatus === "suspended_not_leader" ? "danger" : "warning"}>
-                  {p.accessStatus === "suspended_not_leader"
-                    ? s.failingSuspended
-                    : s.failingUnverified}
-                </Badge>
-              </li>
-            ))}
-          </ul>
+          failing.map((p) => (
+            <SettingsRow
+              key={p.id}
+              label={
+                <Link href={`/admin/users/${p.id}`} className={cn(linkClass, standaloneLinkClass)}>
+                  {p.name}
+                </Link>
+              }
+              description={p.email}
+            >
+              <Badge tone={p.accessStatus === "suspended_not_leader" ? "danger" : "warning"}>
+                {p.accessStatus === "suspended_not_leader"
+                  ? s.failingSuspended
+                  : s.failingUnverified}
+              </Badge>
+            </SettingsRow>
+          ))
         )}
-      </Section>
+      </SettingsGroup>
+
+      <SignInSettingsForm
+        values={{
+          adminContactEmail: signIn.adminContactEmail,
+          fieldName: signIn.leader.fieldName,
+          acceptedValues: signIn.leader.acceptedValues,
+          requireForRequesters: signIn.leader.requireForRequesters,
+          requireForStaff: signIn.leader.requireForStaff,
+          departmentFieldName: departmentField.fieldName,
+          departmentMode: departmentField.mode,
+          planningCenterEnabled: signIn.planningCenterEnabled,
+          emailEnabled: signIn.emailEnabled,
+        }}
+        versions={signInVersions}
+        fields={pco.fields?.map((f) => ({ name: f.name, dataType: f.dataType })) ?? null}
+      />
     </>
   );
 }
@@ -371,37 +361,41 @@ async function TextSettings() {
     settingVersions(db, ["sms_monthly_limit"]),
   ]);
   return (
-    <Section
-      title={s.sms.heading}
-      description={s.sms.intro}
-      id="reminder-texts"
-      icon={MessageSquare}
-      tone="green"
-    >
-      <p className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-fg-muted">{s.sms.connection}</span>
+    <SettingsGroup title={s.sms.heading} id="reminder-texts" footer={s.sms.intro}>
+      <SettingsRow label={s.sms.connection.replace(/:$/, "")}>
         {smsConfigured() ? (
           <Badge tone="success">{s.sms.connected}</Badge>
         ) : (
-          <span className="text-warning">{s.sms.notConfigured}</span>
+          <span className="text-right text-warning">{s.sms.notConfigured}</span>
         )}
-      </p>
-      <p className="text-sm">{s.sms.usage(sms.sent, sms.limit)}</p>
-      {sms.failed > 0 ? <p className="text-sm text-fg-muted">{s.sms.failed(sms.failed)}</p> : null}
-      <ActionForm action={smsLimitAction} aria-label={s.sms.heading}>
-        <input type="hidden" name="versions" value={JSON.stringify(smsVersions)} />
-        <div className="max-w-xs">
-          <TextField
-            name="limit"
-            label={s.sms.label}
-            hint={s.sms.hint}
-            defaultValue={String(sms.limit)}
-            inputMode="numeric"
-            autoComplete="off"
-          />
-        </div>
-        <SubmitButton tone="secondary">{s.sms.save}</SubmitButton>
-      </ActionForm>
-    </Section>
+      </SettingsRow>
+      <SettingsRow label={s.rows.sentThisMonth}>
+        <span className="tabular">{s.rows.sentValue(sms.sent, sms.limit)}</span>
+      </SettingsRow>
+      {sms.failed > 0 && (
+        <SettingsRow label={s.rows.failedThisMonth}>
+          <span className="tabular">{sms.failed}</span>
+        </SettingsRow>
+      )}
+      <SettingsDisclosure
+        label={s.rows.monthlyLimit}
+        value={<span className="tabular">{sms.limit}</span>}
+      >
+        <ActionForm action={smsLimitAction} aria-label={s.sms.heading}>
+          <input type="hidden" name="versions" value={JSON.stringify(smsVersions)} />
+          <div className="max-w-xs">
+            <TextField
+              name="limit"
+              label={s.sms.label}
+              hint={s.sms.hint}
+              defaultValue={String(sms.limit)}
+              inputMode="numeric"
+              autoComplete="off"
+            />
+          </div>
+          <SubmitButton tone="secondary">{s.sms.save}</SubmitButton>
+        </ActionForm>
+      </SettingsDisclosure>
+    </SettingsGroup>
   );
 }

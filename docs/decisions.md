@@ -1161,3 +1161,8 @@ The church asked for a list that stays clean with about 80 people.
 - **Areas and Needs action** come from the template name (`src/domain/notifications/in-app.ts`). A unit test fails if a new template has no area.
 - **Privacy:** each person sees and marks only their own; the System Administrator can't read anyone else's. Marking as read isn't a business change and isn't audited.
 - **No timed polling:** the count refreshes when the page changes or the window regains focus, to keep Netlify function use low.
+
+## 2026-10-20: Settings and budget cycles as grouped rows
+
+- **Settings** shows each category as short groups of slim rows, each with its current value on the right ("Sales tax rate · 12%%", "Second approval · Off", "Primary accountant · Pat"). A row opens in place to change it; explanations are small notes under each group instead of paragraphs in large cards. Sign-in keeps its fields open, so a save error is never hidden in a folded row. The shared pieces are in `src/components/ui/grouped-list.tsx`.
+- **A budget cycle's page** uses the same rows: Details (with **Edit details** folded in), **Submission deadline** and **Department extensions** side by side. The deadline card lists every change (new and old date, reason, who, when), read from the activity log, so nobody has to open the log to see it; extensions show their reason, who gave them and when.

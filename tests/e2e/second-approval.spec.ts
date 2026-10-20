@@ -12,7 +12,10 @@ test("the administrator turns second approval on and off in Settings", async ({ 
   await page.setViewportSize(DESKTOP);
   await signInAs(page, PEOPLE.gina);
   await page.goto("/admin/settings?section=money");
-  const section = page.getByRole("region", { name: "Second approval for large budgets" });
+  const section = page.getByRole("region", { name: "Large budgets" });
+  // The row shows the current value; it opens in place to change it.
+  await expect(section.getByText("Off", { exact: true })).toBeVisible();
+  await section.getByText("Second approval", { exact: true }).click();
   await expect(section.getByText("Off: every approval is final.")).toBeVisible();
   await expectAxeClean(page);
 
@@ -20,7 +23,9 @@ test("the administrator turns second approval on and off in Settings", async ({ 
   await section.getByRole("button", { name: "Save" }).click();
   await expect(section.getByText("Second approval threshold saved.")).toBeVisible();
   await page.reload();
-  const after = page.getByRole("region", { name: "Second approval for large budgets" });
+  const after = page.getByRole("region", { name: "Large budgets" });
+  await expect(after.getByText("$5,000,000.00 and above")).toBeVisible();
+  await after.getByText("Second approval", { exact: true }).click();
   await expect(
     after.getByText("On: approvals of $5,000,000.00 or more need a second sign-off."),
   ).toBeVisible();

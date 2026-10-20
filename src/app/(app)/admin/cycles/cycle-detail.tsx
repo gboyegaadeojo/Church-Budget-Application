@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PenLine } from "lucide-react";
 import {
   ActionForm,
   SelectField,
@@ -9,7 +8,8 @@ import {
   TextField,
 } from "@/components/ui/action-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Badge, EmptyState, PageHeader, Section } from "@/components/ui/display";
+import { Badge, PageHeader } from "@/components/ui/display";
+import { SettingsDisclosure, SettingsGroup, SettingsRow } from "@/components/ui/grouped-list";
 import { buttonClass } from "@/components/ui/styles";
 import { adminCopy } from "@/copy/admin";
 import { getDb } from "@/db";
@@ -20,7 +20,7 @@ import { getChurchTimeZone } from "@/domain/settings";
 import { authorize } from "@/lib/authz";
 import { formatCAD, formatTaxRate, taxRateToPercent } from "@/lib/money";
 import { getViewer } from "@/lib/viewer";
-import { formatDateTime, utcToZonedLocal } from "@/lib/time-zone";
+import { formatDate, formatDateTime, utcToZonedLocal } from "@/lib/time-zone";
 import {
   changeDeadlineAction,
   cycleStatusAction,
@@ -48,7 +48,7 @@ export async function CycleDetail({
   const db = getDb();
   const detail = await getCycleDetail(db, id);
   if (!detail) notFound();
-  const { cycle, extensions, activeDepartments } = detail;
+  const { cycle, extensions, activeDepartments, deadlineChanges } = detail;
   const zone = await getChurchTimeZone(db);
   const statusFormId = `cycle-status-${cycle.id}`;
   const canClose = authorize(await getViewer(), "cycles.close").allowed;
@@ -60,27 +60,79 @@ export async function CycleDetail({
         <Badge tone={CYCLE_TONE[cycle.status]}>{c.statusLabels[cycle.status]}</Badge>
       </PageHeader>
 
-      <Section title={c.detailsHeading} id="details">
-        <dl className="grid gap-3 text-sm sm:grid-cols-[16rem_1fr]">
-          <dt className="text-fg-muted">{c.budgetYear}</dt>
-          <dd>{cycle.budgetYear}</dd>
-          <dt className="text-fg-muted">{c.startDate}</dt>
-          <dd>{cycle.startDate}</dd>
-          <dt className="text-fg-muted">{c.deadline}</dt>
-          <dd>{formatDateTime(cycle.submissionDeadline, zone)}</dd>
-          <dt className="text-fg-muted">{c.taxRate}</dt>
-          <dd>{formatTaxRate(cycle.defaultTaxRate)}</dd>
-          <dt className="text-fg-muted">{c.boardTotal}</dt>
-          <dd className="tabular">
+      <SettingsGroup title={c.detailsHeading} id="details" footer={c.editIntro}>
+        <SettingsRow label={c.budgetYear}>
+          <span className="tabular">{cycle.budgetYear}</span>
+        </SettingsRow>
+        <SettingsRow label={c.startDate}>{formatDate(cycle.startDate)}</SettingsRow>
+        <SettingsRow label={c.spendingPeriodEnd}>
+          {formatDate(cycle.spendingPeriodEnd ?? `${cycle.budgetYear}-12-31`)}
+        </SettingsRow>
+        <SettingsRow label={c.taxRate}>{formatTaxRate(cycle.defaultTaxRate)}</SettingsRow>
+        <SettingsRow label={c.boardTotal}>
+          <span className="tabular">
             {cycle.boardTotalCents === null
               ? adminCopy.common.none
               : formatCAD(cycle.boardTotalCents)}
-            {cycle.boardReference && (
-              <span className="text-fg-muted"> · {cycle.boardReference}</span>
-            )}
-          </dd>
-        </dl>
+            {cycle.boardReference && <span> · {cycle.boardReference}</span>}
+          </span>
+        </SettingsRow>
+        <SettingsDisclosure accent label={c.editHeading}>
+          <ActionForm action={updateCycleDetailsAction} aria-label={c.editHeading}>
+            <input type="hidden" name="id" value={cycle.id} />
+            <input type="hidden" name="version" value={cycle.version} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField name="name" label={c.name} defaultValue={cycle.name} required />
+              <TextField
+                name="budgetYear"
+                type="number"
+                inputMode="numeric"
+                label={c.budgetYear}
+                defaultValue={String(cycle.budgetYear)}
+                required
+              />
+              <TextField
+                name="startDate"
+                type="date"
+                label={c.startDate}
+                defaultValue={cycle.startDate}
+                required
+              />
+              <TextField
+                name="taxRatePercent"
+                inputMode="decimal"
+                label={c.taxRate}
+                hint={c.taxRateEditHint}
+                defaultValue={taxRateToPercent(cycle.defaultTaxRate)}
+                required
+              />
+              <TextField
+                name="boardTotal"
+                inputMode="decimal"
+                label={c.boardTotal}
+                defaultValue={
+                  cycle.boardTotalCents === null ? "" : centsToInput(cycle.boardTotalCents)
+                }
+              />
+              <TextField
+                name="boardReference"
+                label={c.boardReference}
+                defaultValue={cycle.boardReference ?? ""}
+              />
+              <TextField
+                name="spendingPeriodEnd"
+                type="date"
+                label={c.spendingPeriodEnd}
+                hint={c.spendingPeriodEndHint}
+                defaultValue={cycle.spendingPeriodEnd ?? ""}
+              />
+            </div>
+            <SubmitButton tone="secondary">{c.save}</SubmitButton>
+          </ActionForm>
+        </SettingsDisclosure>
+      </SettingsGroup>
 
+      <section aria-label={c.statusLabels[cycle.status]} className="space-y-2 px-1">
         {cycle.status === "draft" && (
           <ActionForm action={cycleStatusAction} id={statusFormId} aria-label={c.open}>
             <input type="hidden" name="id" value={cycle.id} />
@@ -122,136 +174,103 @@ export async function CycleDetail({
             )}
           </div>
         )}
-      </Section>
+      </section>
 
-      <Section
-        title={c.editHeading}
-        description={c.editIntro}
-        id="edit"
-        icon={PenLine}
-        tone="violet"
-      >
-        <ActionForm action={updateCycleDetailsAction} aria-label={c.editHeading}>
-          <input type="hidden" name="id" value={cycle.id} />
-          <input type="hidden" name="version" value={cycle.version} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField name="name" label={c.name} defaultValue={cycle.name} required />
-            <TextField
-              name="budgetYear"
-              type="number"
-              inputMode="numeric"
-              label={c.budgetYear}
-              defaultValue={String(cycle.budgetYear)}
-              required
-            />
-            <TextField
-              name="startDate"
-              type="date"
-              label={c.startDate}
-              defaultValue={cycle.startDate}
-              required
-            />
-            <TextField
-              name="taxRatePercent"
-              inputMode="decimal"
-              label={c.taxRate}
-              hint={c.taxRateEditHint}
-              defaultValue={taxRateToPercent(cycle.defaultTaxRate)}
-              required
-            />
-            <TextField
-              name="boardTotal"
-              inputMode="decimal"
-              label={c.boardTotal}
-              defaultValue={
-                cycle.boardTotalCents === null ? "" : centsToInput(cycle.boardTotalCents)
-              }
-            />
-            <TextField
-              name="boardReference"
-              label={c.boardReference}
-              defaultValue={cycle.boardReference ?? ""}
-            />
-            <TextField
-              name="spendingPeriodEnd"
-              type="date"
-              label={c.spendingPeriodEnd}
-              hint={c.spendingPeriodEndHint}
-              defaultValue={cycle.spendingPeriodEnd ?? ""}
-            />
-          </div>
-          <SubmitButton tone="secondary">{c.save}</SubmitButton>
-        </ActionForm>
-      </Section>
-
-      {deadlineEditable(cycle.status) && (
-        <Section title={c.deadlineHeading} id="deadline">
-          <ActionForm action={changeDeadlineAction} aria-label={c.deadlineHeading}>
-            <input type="hidden" name="id" value={cycle.id} />
-            <input type="hidden" name="version" value={cycle.version} />
-            <TextField
-              name="newDeadline"
-              type="datetime-local"
-              label={c.newDeadline}
-              hint={c.deadlineHint(zone)}
-              defaultValue={deadlineLocal}
-              required
-            />
-            <TextAreaField name="reason" label={adminCopy.common.reason} rows={2} required />
-            <SubmitButton tone="secondary">{c.changeDeadline}</SubmitButton>
-          </ActionForm>
-        </Section>
-      )}
-
-      <Section title={c.extensionsHeading} description={c.extensionsHint} id="extensions">
-        {extensions.length === 0 ? (
-          <EmptyState>{c.noExtensions}</EmptyState>
-        ) : (
-          <ul className="divide-y divide-border text-sm">
-            {extensions.map((x) => (
-              <li
-                key={x.id}
-                className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between"
-              >
-                <span>
-                  <span className="font-medium">{x.department}</span>
-                  <span className="block text-fg-muted">{`${x.reason} · ${x.grantedBy}`}</span>
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+        <SettingsGroup title={c.deadlineGroup} id="deadline" footer={c.deadlineFooter}>
+          <SettingsRow label={c.currentDeadline}>
+            <span className="text-right font-medium text-fg">
+              {formatDateTime(cycle.submissionDeadline, zone)}
+            </span>
+          </SettingsRow>
+          {deadlineChanges.map((d) => (
+            <SettingsRow
+              key={d.id}
+              label={
+                <span className="font-normal">
+                  {d.to ? c.changedTo(formatDateTime(d.to, zone)) : c.deadlineChanged}
                 </span>
-                <Badge tone={x.supersededAt ? "neutral" : "info"}>
-                  {x.supersededAt ? c.superseded : c.extendedTo(formatDateTime(x.deadline, zone))}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-        )}
-        {cycle.status === "open" && (
-          <ActionForm
-            action={extendAction}
-            aria-label={c.grant}
-            className="border-t border-border pt-4"
-            resetOnSuccess
-          >
-            <input type="hidden" name="cycleId" value={cycle.id} />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SelectField
-                name="departmentId"
-                label={c.department}
-                placeholder={c.chooseDepartment}
-                options={activeDepartments.map((dep) => ({ value: dep.id, label: dep.name }))}
-              />
-              <TextField
-                name="newDeadline"
-                type="datetime-local"
-                label={c.extendTo}
-                hint={c.deadlineHint(zone)}
-                required
-              />
-            </div>
-            <TextAreaField name="reason" label={adminCopy.common.reason} rows={2} required />
-            <SubmitButton tone="secondary">{c.grant}</SubmitButton>
-          </ActionForm>
-        )}
-      </Section>
+              }
+              description={[
+                d.from ? c.changedFrom(formatDateTime(d.from, zone)) : null,
+                d.reason,
+                d.changedBy,
+                formatDateTime(d.changedAt, zone),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            />
+          ))}
+          {deadlineEditable(cycle.status) && (
+            <SettingsDisclosure accent label={c.deadlineHeading}>
+              <ActionForm action={changeDeadlineAction} aria-label={c.deadlineHeading}>
+                <input type="hidden" name="id" value={cycle.id} />
+                <input type="hidden" name="version" value={cycle.version} />
+                <TextField
+                  name="newDeadline"
+                  type="datetime-local"
+                  label={c.newDeadline}
+                  hint={c.deadlineHint(zone)}
+                  defaultValue={deadlineLocal}
+                  required
+                />
+                <TextAreaField name="reason" label={adminCopy.common.reason} rows={2} required />
+                <SubmitButton tone="secondary">{c.changeDeadline}</SubmitButton>
+              </ActionForm>
+            </SettingsDisclosure>
+          )}
+        </SettingsGroup>
+
+        <SettingsGroup
+          title={c.extensionsHeading}
+          id="extensions"
+          footer={c.extensionsFooter}
+          actions={extensions.length > 0 ? String(extensions.length) : undefined}
+        >
+          {extensions.length === 0 && (
+            <SettingsRow
+              label={<span className="font-normal text-fg-muted">{c.noExtensions}</span>}
+            />
+          )}
+          {extensions.map((x) => (
+            <SettingsRow
+              key={x.id}
+              label={x.department}
+              description={[
+                x.reason,
+                x.grantedBy,
+                c.givenOn(formatDateTime(x.createdAt, zone)),
+              ].join(" · ")}
+            >
+              <Badge tone={x.supersededAt ? "neutral" : "info"}>
+                {x.supersededAt ? c.superseded : c.extendedTo(formatDateTime(x.deadline, zone))}
+              </Badge>
+            </SettingsRow>
+          ))}
+          {cycle.status === "open" && (
+            <SettingsDisclosure accent label={c.giveExtension}>
+              <ActionForm action={extendAction} aria-label={c.grant} resetOnSuccess>
+                <input type="hidden" name="cycleId" value={cycle.id} />
+                <SelectField
+                  name="departmentId"
+                  label={c.department}
+                  placeholder={c.chooseDepartment}
+                  options={activeDepartments.map((dep) => ({ value: dep.id, label: dep.name }))}
+                />
+                <TextField
+                  name="newDeadline"
+                  type="datetime-local"
+                  label={c.extendTo}
+                  hint={c.deadlineHint(zone)}
+                  required
+                />
+                <TextAreaField name="reason" label={adminCopy.common.reason} rows={2} required />
+                <SubmitButton tone="secondary">{c.grant}</SubmitButton>
+              </ActionForm>
+            </SettingsDisclosure>
+          )}
+        </SettingsGroup>
+      </div>
     </>
   );
 }
