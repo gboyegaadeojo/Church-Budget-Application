@@ -957,6 +957,51 @@ export const smsOutbox = pgTable(
   ],
 );
 
+export const notificationAreaEnum = pgEnum("notification_area", [
+  "annual",
+  "expenses",
+  "spending",
+  "cycles",
+  "people",
+]);
+
+/**
+ * In-app notifications (the bell, docs/decisions.md 2026-10-19): one row for each person
+ * an email goes to, written by `enqueueEmail` in the same transaction, so the bell and
+ * the inbox always agree. Only the person it belongs to can see or mark it.
+ */
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    /** The email template it came from, e.g. "expenses.board_needed". */
+    template: text("template").notNull(),
+    area: notificationAreaEnum("area").notNull(),
+    /** Asks the person to do something (approve, answer, finish, pay). */
+    actionNeeded: boolean("action_needed").notNull().default(false),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    /** An app path such as "/expenses/…"; never an outside address. */
+    href: text("href").notNull(),
+    budgetRequestId: uuid("budget_request_id").references(() => budgetRequests.id),
+    expenseSubmissionId: uuid("expense_submission_id").references(
+      (): AnyPgColumn => expenseSubmissions.id,
+    ),
+    cycleId: uuid("cycle_id").references(() => budgetCycles.id),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("notifications_user_idx").on(t.userId, t.createdAt),
+    index("notifications_unread_idx")
+      .on(t.userId)
+      .where(sql`${t.readAt} is null`),
+  ],
+);
+
 /** Raw bytes; PGlite and node-postgres both hand back a Uint8Array/Buffer. */
 const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({
   dataType: () => "bytea",

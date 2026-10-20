@@ -1153,3 +1153,11 @@ The church asked for a list that stays clean with about 80 people.
 
 - **Phones get one Menu button, not a bottom bar.** The church found the bottom bar plus More confusing: More listed the same areas again. Below 768 px there is now one **Menu** button at the top left of the header that opens every page, grouped by area (the same accordion as the desktop sidebar), plus Help and Privacy. This departs from DRD 6.0 ("a bottom bar plus a More menu"). Tablets and desktops are unchanged.
 - **My expenses is a plain list.** FR-48 asks for filters on every list; the church asked for My expenses to drop them (search, department, type, status, dates and amounts), since a department's own expenses are few. The staff lists (review queue, Awaiting my approval, Ready to process, All expenses) keep their filters.
+
+## 2026-10-19: In-app notifications (the bell)
+
+- **What:** a bell in the header, for everyone, with an unread count. From tablet width it opens a panel with the latest 8 (All or Needs action), **Mark all as read**, and **See all notifications**. On a phone it opens the **Notifications** page: filter chips (All, Unread, Needs action and one per area) and date sections (Today, Yesterday, This week, Earlier), in pages of 25. Not in the specs; the church asked for it.
+- **Source:** every email the app queues also creates a notification for each recipient with an account, inside `enqueueEmail`, in the same transaction. So the bell covers every FR-21 and FR-49 event, messages and reminders, and can never disagree with the email log. Recipients given only by email are matched to an account by address. Sign-in codes, the test email and the failure digest (`system.*`) stay email-only, as do dedupe-skipped repeats. Emails are unchanged and can't be turned off.
+- **Areas and Needs action** come from the template name (`src/domain/notifications/in-app.ts`). A unit test fails if a new template has no area.
+- **Privacy:** each person sees and marks only their own; the System Administrator can't read anyone else's. Marking as read isn't a business change and isn't audited.
+- **No timed polling:** the count refreshes when the page changes or the window regains focus, to keep Netlify function use low.

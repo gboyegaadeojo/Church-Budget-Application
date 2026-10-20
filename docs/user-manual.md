@@ -55,6 +55,15 @@ You never need to switch accounts. If you are both an accountant and a requester
 - **Breadcrumbs** under the top bar show where you are; click any part to go back up.
 - Every reference number, department and person name is a link.
 
+### Notifications
+
+The **bell** in the top bar shows what has happened to your budgets and expenses: everything the app emails you also lands here. A red number shows how many you haven't opened yet.
+
+- **Computer and tablet:** select the bell to see the latest, either **All** or only those that **Need action** (an approval, a question to answer, a reminder). **Mark all as read** clears the number; **See all notifications** opens the full list.
+- **Phone:** the bell opens the **Notifications** page.
+- The **Notifications** page groups them by **Today**, **Yesterday**, **This week** and **Earlier**. The buttons along the top show **Unread**, **Needs action**, or one area (Annual Budget, Expenses, Spending, Budget years, Departments & people).
+- Select one to open what it's about; it is then marked as read. Only you see your notifications. Emails still come as before.
+
 ### Your account
 
 From the account menu: theme (light, dark or system), **Away** (accountants, backup approvers, Board Chair and Vice-Chair), and sign out. A department's Primary sets Away on **Annual Budget** instead (section 4).
