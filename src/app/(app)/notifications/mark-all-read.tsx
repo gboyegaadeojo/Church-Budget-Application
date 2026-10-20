@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { CheckCheck } from "lucide-react";
 import { markAllNotificationsReadAction } from "@/app/actions/notifications";
 import { buttonClass } from "@/components/ui/styles";
+import { NOTIFICATIONS_CHANGED } from "@/components/notifications/format";
 import { notificationsCopy as n } from "@/copy/notifications";
 
 /** Marks every notification read, then reloads the list and the bell's count. */
@@ -18,6 +19,7 @@ export function MarkAllReadButton() {
       onClick={() =>
         start(async () => {
           await markAllNotificationsReadAction();
+          window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED));
           router.refresh();
         })
       }

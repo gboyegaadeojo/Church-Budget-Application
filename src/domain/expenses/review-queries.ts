@@ -110,14 +110,24 @@ async function queueFor(
     )
     .orderBy(asc(expenseSubmissions.submittedAt));
 
-  const figures = new Map<string, BudgetFigures>();
+  // Each department's figures once, all fetched together.
+  const scopes = [
+    ...new Map(
+      raw.map(({ full }) => [`${full.budgetCycleId}:${full.departmentId}`, full] as const),
+    ).entries(),
+  ];
+  const figures = new Map<string, BudgetFigures>(
+    await Promise.all(
+      scopes.map(
+        async ([scope, full]) =>
+          [scope, await budgetFigures(tx, full.budgetCycleId, full.departmentId)] as const,
+      ),
+    ),
+  );
   const today = zonedDate(options.now, zone);
   const rows: QueueRow[] = [];
   for (const { full, ...r } of raw) {
     const scope = `${full.budgetCycleId}:${full.departmentId}`;
-    if (!figures.has(scope)) {
-      figures.set(scope, await budgetFigures(tx, full.budgetCycleId, full.departmentId));
-    }
     const amount = full.approvedTotalCents ?? full.totalCents ?? 0;
     const impact = impactOf(
       figures.get(scope)!,

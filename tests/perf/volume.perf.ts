@@ -13,6 +13,12 @@ import { boardDecide } from "@/domain/expenses/board";
 import { accountantDecide } from "@/domain/expenses/review";
 import { allExpenses } from "@/domain/expenses/review-queries";
 import { loadExpense } from "@/domain/expenses/service";
+import {
+  accountantDashboard,
+  boardApprovals,
+  paymentsToday,
+  spendingSummary,
+} from "@/domain/home/dashboards";
 import { atAGlance } from "@/domain/home/glance";
 import { globalSearch } from "@/domain/search";
 import { spendingDashboard } from "@/domain/spending/dashboard";
@@ -196,6 +202,19 @@ describe("main pages stay fast with a full year of data", () => {
   const cases: [string, () => Promise<unknown>][] = [
     ["Home: At a glance (accountant)", () => atAGlance(db, viewer(world.accountant))],
     ["Home: expense tasks (accountant)", () => expenseTasks(db, viewer(world.accountant))],
+    [
+      "Home: Needs you today and season (accountant)",
+      () => accountantDashboard(db, viewer(world.accountant), new Date()),
+    ],
+    [
+      "Home: spending and pipeline (accountant)",
+      () => spendingSummary(db, viewer(world.accountant), new Date()),
+    ],
+    [
+      "Home: approvals waiting (Board Chair)",
+      () => boardApprovals(db, viewer(world.chair), new Date()),
+    ],
+    ["Home: Ready to pay (office)", () => paymentsToday(db, viewer(world.office), new Date())],
     [
       "Home: Recent activity (admin)",
       () => listActivity(db, admin, { recent: true }, { pageSize: 8 }),

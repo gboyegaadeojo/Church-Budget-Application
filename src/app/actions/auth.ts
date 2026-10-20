@@ -60,7 +60,7 @@ const minutesUntil = (at: Date) => Math.max(1, Math.ceil((at.getTime() - Date.no
 
 /**
  * Emails a code to an address on the allowlist. The answer is the same for any address
- * (AC-133). The email is sent straight after commit, not left for the 15-minute job.
+ * (AC-133). The email is sent straight after commit, not left for the hourly job.
  */
 export async function requestEmailCodeAction(
   _: EmailCodeState,

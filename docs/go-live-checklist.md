@@ -41,10 +41,10 @@ Also set in Netlify: `AUTH_SECRET` (a long random value) and `APP_TIMEZONE=Ameri
 
 Private repositories get about 2,000 free Actions minutes a month, and a job every 15 minutes would use about 2,900 on its own. Two decisions keep this free:
 
-- The 15-minute job runs as a **Netlify Scheduled Function** (included in the free plan), not in GitHub Actions.
+- The frequent job runs **hourly** as a **Netlify Scheduled Function** (included in the free plan), not in GitHub Actions. It was every 15 minutes until 2026-10-20; hourly keeps the database's free compute allowance safe (docs/decisions.md).
 - The repository is **public** (2026-10-18): public repositories get unlimited free minutes for CI and the nightly jobs. If it is ever made private again, CI (about 5 minutes per pull request) and the three nightly workflows fit within 2,000 minutes only with care.
 
-**Chosen (step 7a): Netlify Scheduled Functions.** `netlify/functions/send-outbox.mts` runs every 15 minutes on the free plan (it also sends reminder texts held overnight, from 9:00 a.m.). It needs `JOBS_SECRET` set in Netlify; Netlify provides `URL` itself. GitHub Actions runs only the nightly jobs (Planning Center check, deadline reminders and the failed-email digest, and an outbox backstop), which need the `APP_URL` and `JOBS_SECRET` repository secrets.
+**Chosen (step 7a): Netlify Scheduled Functions.** `netlify/functions/send-outbox.mts` runs every hour on the free plan (it also sends reminder texts held overnight, from 9:00 a.m.). It needs `JOBS_SECRET` set in Netlify; Netlify provides `URL` itself. GitHub Actions runs only the nightly jobs (Planning Center check, deadline reminders and the failed-email digest, and an outbox backstop), which need the `APP_URL` and `JOBS_SECRET` repository secrets.
 
 ## 2. Information the church provides
 

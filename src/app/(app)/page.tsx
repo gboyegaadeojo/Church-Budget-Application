@@ -43,7 +43,7 @@ import { activityCopy, activityLabel } from "@/copy/activity";
 import { annualCopy } from "@/copy/annual";
 import { getDb } from "@/db";
 import { listActivity } from "@/domain/analytics/activity";
-import { atAGlance } from "@/domain/home/glance";
+import { atAGlance, type GlanceCard } from "@/domain/home/glance";
 import { getChurchTimeZone } from "@/domain/settings";
 import { authorize } from "@/lib/authz";
 import { cn } from "@/lib/cn";
@@ -93,15 +93,16 @@ async function HomeContent() {
       hasRole(viewer, "board_chair", "vice_chair") ? budgetYears(db) : Promise.resolve([]),
     ]);
   const firstName = viewer.name.split(" ")[0] ?? viewer.name;
-  const staff = authorize(viewer, "analytics.view").allowed;
+  // Recent activity is for the System Administrator; others have the full log in Reports.
+  const admin = hasRole(viewer, "system_admin");
   const oldest =
     tasks.length > 0 ? Math.max(...tasks.map((t) => daysWaiting(t.waitingSince, now))) : null;
   const board = approvals !== null;
   // Cards the dashboards above already cover leave At a glance.
-  const covered = new Set<string>([
-    ...(accountant ? ["review"] : []),
-    ...(board ? ["board"] : []),
-    ...(payments ? ["pay"] : []),
+  const covered = new Set<GlanceCard["kind"]>([
+    ...(accountant ? (["review"] as const) : []),
+    ...(board ? (["board"] as const) : []),
+    ...(payments ? (["pay"] as const) : []),
   ]);
   const dashboards = accountant !== null || board || payments !== null;
 
@@ -153,7 +154,7 @@ async function HomeContent() {
       <div
         className={cn(
           "grid items-start gap-6",
-          (dashboards || staff) && "lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]",
+          (dashboards || admin) && "lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]",
         )}
       >
         <div className="min-w-0 space-y-6">
@@ -172,7 +173,7 @@ async function HomeContent() {
           {board && <YearsCard years={years} zone={zone} now={now} />}
           {spending && (accountant || board) && <WatchCard year={spending.year} />}
           <AtAGlance viewer={viewer} hide={covered} hideWhenEmpty={dashboards} />
-          {staff && <RecentActivity viewer={viewer} />}
+          {admin && <RecentActivity viewer={viewer} />}
         </div>
       </div>
     </>
@@ -294,10 +295,10 @@ async function AtAGlance({
   hideWhenEmpty,
 }: {
   viewer: Viewer;
-  hide: Set<string>;
+  hide: ReadonlySet<GlanceCard["kind"]>;
   hideWhenEmpty: boolean;
 }) {
-  const cards = (await atAGlance(getDb(), viewer)).filter((c) => !hide.has(c.kind));
+  const cards = await atAGlance(getDb(), viewer, new Date(), hide);
   if (cards.length === 0 && hideWhenEmpty) return null;
   if (cards.length === 0) {
     return (

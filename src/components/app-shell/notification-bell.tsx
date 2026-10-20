@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { NOTIFICATIONS_CHANGED } from "@/components/notifications/format";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Bell, X } from "lucide-react";
 import {
@@ -46,7 +47,11 @@ export function NotificationBell() {
   const pathname = usePathname();
   const [unread, setUnread] = useState(0);
 
-  const refresh = useCallback(() => {
+  // Each check is a server call, so moving between pages checks at most once a minute.
+  const lastChecked = useRef(0);
+  const refresh = useCallback((force = false) => {
+    if (!force && Date.now() - lastChecked.current < 60_000) return;
+    lastChecked.current = Date.now();
     notificationsPreviewAction()
       .then((p) => setUnread(p.unread))
       .catch(() => {});
@@ -57,8 +62,15 @@ export function NotificationBell() {
   }, [pathname, refresh]);
 
   useEffect(() => {
-    window.addEventListener("focus", refresh);
-    return () => window.removeEventListener("focus", refresh);
+    const onFocus = () => refresh();
+    // Something was marked read elsewhere on the page: check now.
+    const onChange = () => refresh(true);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener(NOTIFICATIONS_CHANGED, onChange);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener(NOTIFICATIONS_CHANGED, onChange);
+    };
   }, [refresh]);
 
   const label = n.bell(unread);
