@@ -50,7 +50,7 @@ You never need to switch accounts. If you are both an accountant and a requester
 - The menu is grouped by area: **Home, Annual Budget, Expenses, Spending, Reports, Admin**, each with its own colour. You only see what your roles allow.
   - **Computer:** choose an area in the sidebar to open its pages; the area you are in opens by itself, and a dot marks it when it is closed. **Collapse sidebar** shrinks it to coloured icons.
   - **Tablet:** the coloured icons down the left side are the areas; tap one to see its pages.
-  - **Phone:** the **Menu** button at the top left opens every page, grouped by area, plus Help and Privacy.
+  - **Phone:** the bar at the bottom has Home and your main areas; each opens your most-used page there. **More** opens only the pages the bar doesn't show, grouped by area, plus Help and Privacy.
 - **Search** (top bar, or press `/`): type a reference number such as `EXP-2027-0042` or `IFC-2027-0007`, a department, or a person.
 - **Breadcrumbs** under the top bar show where you are; click any part to go back up.
 - Every reference number, department and person name is a link.

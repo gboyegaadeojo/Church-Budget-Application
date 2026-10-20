@@ -1181,3 +1181,8 @@ The church asked for a list that stays clean with about 80 people.
 - Each department's budget shows what's left first (with what was available), a used bar, the figures in one strip, and spending entries as slim rows. Departments with nothing approved or spent yet share one small card. The same panel is on Spending → My department's spending.
 - Budget requests are slim rows instead of a table.
 - **Leaders and Away** is one card with a row per department the person leads as Primary; each row shows its leaders and Away state and opens in place (open on arrival when there's only one). Making a Backup and setting Away open from their own rows.
+
+## 2026-10-20: The bottom bar returns, with More showing only what it lacks
+
+- Reaching to the top left on a phone was hard, so the Menu button (2026-10-19) is replaced by a bottom bar again, within reach of the thumb. It holds Home and the person's first three areas; each button opens the area's first page that isn't a "new" form (a leader's Expenses opens My expenses).
+- **More** opens a sheet with only the pages the bar doesn't open, grouped by area, plus Help and Privacy, so nothing appears twice (the reason for removing the earlier bar). This matches DRD 6.0 again.

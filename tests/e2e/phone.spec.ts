@@ -92,19 +92,22 @@ test.describe("Phone check (Stage 5)", () => {
     });
   }
 
-  test("the Menu works by touch", async ({ page }) => {
+  test("the bottom bar and More work by touch", async ({ page }) => {
     await signInAs(page, PEOPLE.sam);
-    const open = page.getByRole("button", { name: "Open the menu" });
-    const box = (await open.boundingBox())!;
-    expect(box.height).toBeGreaterThanOrEqual(44);
-    await open.tap();
-    const sheet = page.getByRole("dialog", { name: "Menu" });
-    await sheet.getByRole("button", { name: "Expenses" }).tap();
-    await sheet.getByRole("link", { name: "My expenses" }).tap();
-    await expect(sheet).toBeHidden();
+    const bar = page.getByRole("navigation", { name: "Quick navigation" });
+    for (const item of await bar.getByRole("link").or(bar.getByRole("button")).all()) {
+      expect((await item.boundingBox())!.height, "bottom bar item height").toBeGreaterThanOrEqual(
+        44,
+      );
+    }
+    // A leader's Expenses button opens their list; New expense is under More.
+    await bar.getByRole("link", { name: "Expenses" }).tap();
     await expect(page).toHaveURL(/\/expenses\/mine$/);
+    const open = bar.getByRole("button", { name: "More" });
     await open.tap();
-    await expect(sheet).toBeVisible();
+    const sheet = page.getByRole("dialog", { name: "More" });
+    await expect(sheet.getByRole("link", { name: "New expense" })).toBeVisible();
+    await expect(sheet.getByRole("link", { name: "My expenses" })).toHaveCount(0);
     await sheet.getByRole("link", { name: "Help" }).tap();
     await expect(sheet).toBeHidden();
     await expect(page.getByRole("heading", { level: 1, name: "Help" })).toBeVisible();
