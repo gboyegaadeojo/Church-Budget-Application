@@ -127,9 +127,20 @@ test.describe("Activity, search and breadcrumbs (FR-22, FR-52, DRD 6.0, 6.13)", 
     await expect(page.getByRole("region", { name: "Recent activity" })).toHaveCount(0);
   });
 
-  test("staff see Recent activity on Home, linked to the full log", async ({ page }) => {
+  test("the System Administrator sees Recent activity on Home, linked to the full log; other staff don't", async ({
+    page,
+    browser,
+  }) => {
+    // Other staff use the full log in Reports; Home stays focused on their work.
+    const pat = await browser.newContext({ viewport: DESKTOP });
+    const patPage = await pat.newPage();
+    await signInAs(patPage, PEOPLE.pat);
+    await expect(patPage.getByRole("heading", { level: 2, name: "My tasks" })).toBeVisible();
+    await expect(patPage.getByRole("region", { name: "Recent activity" })).toHaveCount(0);
+    await pat.close();
+
     await page.setViewportSize(DESKTOP);
-    await signInAs(page, PEOPLE.pat);
+    await signInAs(page, PEOPLE.gina);
     const recent = page.getByRole("region", { name: "Recent activity" });
     await expect(recent).toBeVisible();
     await recent.getByRole("link", { name: "See all activity" }).click();

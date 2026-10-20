@@ -1186,3 +1186,11 @@ The church asked for a list that stays clean with about 80 people.
 
 - Reaching to the top left on a phone was hard, so the Menu button (2026-10-19) is replaced by a bottom bar again, within reach of the thumb. It holds Home and the person's first three areas; each button opens the area's first page that isn't a "new" form (a leader's Expenses opens My expenses).
 - **More** opens a sheet with only the pages the bar doesn't open, grouped by area, plus Help and Privacy, so nothing appears twice (the reason for removing the earlier bar). This matches DRD 6.0 again.
+
+## 2026-10-20: General check (speed, scheduled jobs)
+
+- **Frequent job hourly, not every 15 minutes.** Each run wakes the database, which then stays up at least 5 minutes. On Neon's free plan (about 100 compute-hours a month per project, shared by the live and staging branches), four wakes an hour on two sites would use about 120: the database would be paused until the next month. Emails already go straight after each action, so the job only retries; held decisions now go out within the hour after their release time (Release now is still instant).
+- **Faster pages.** Each department's budget figures now read their parts together, and the spending dashboard and approval queues fetch all departments' figures together, so the hosted database's round trips overlap. Home no longer works out At a glance cards the dashboards already show (about half a second saved for the accountant).
+- **Activity search** matches budgets, expenses, people and departments first and filters the log by their ids, instead of matching text on every joined event: 2.1 s to 0.19 s at three times the church's size.
+- **The notification bell** checks its count at most once a minute while moving between pages, and straight away after something is marked read; each check is a server call.
+- **Recent activity on Home is for the System Administrator only** (decided by the church 2026-10-20). Other staff found it noise; they have the full, role-scoped log in Reports → Analytics & Audit.

@@ -45,6 +45,8 @@ export async function atAGlance(
   tx: Tx,
   viewer: Viewer,
   now: Date = new Date(),
+  /** Cards Home already shows another way: not worked out at all. */
+  skip: ReadonlySet<GlanceCard["kind"]> = new Set(),
 ): Promise<GlanceCard[]> {
   const cards: GlanceCard[] = [];
 
@@ -64,7 +66,7 @@ export async function atAGlance(
     }
   }
 
-  if (hasRole(viewer, "accountant", "backup_approver")) {
+  if (!skip.has("review") && hasRole(viewer, "accountant", "backup_approver")) {
     const queue = await accountantQueue(tx, viewer, {}, now);
     cards.push({
       kind: "review",
@@ -74,7 +76,7 @@ export async function atAGlance(
     });
   }
 
-  if (hasRole(viewer, "board_chair", "vice_chair")) {
+  if (!skip.has("board") && hasRole(viewer, "board_chair", "vice_chair")) {
     const queue = await boardQueue(tx, viewer, {}, now);
     cards.push({
       kind: "board",
@@ -83,7 +85,7 @@ export async function atAGlance(
     });
   }
 
-  if (hasRole(viewer, "church_admin")) {
+  if (!skip.has("pay") && hasRole(viewer, "church_admin")) {
     const queue = await readyQueue(tx, viewer, {}, now);
     if (queue) {
       cards.push({

@@ -324,14 +324,37 @@ async function conditions(tx: Tx, actor: Subject, f: ActivityFilters, now: Date)
   const q = f.q?.trim();
   if (q) {
     const pattern = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+    // Match the small tables first, then filter the log by their ids: matching the text of
+    // every joined event row made search slow on a full year (docs/performance.md).
+    const [requestIds, expenseIds, userIds, departmentIds] = await Promise.all([
+      tx
+        .select({ id: budgetRequests.id })
+        .from(budgetRequests)
+        .where(
+          or(ilike(budgetRequests.referenceNumber, pattern), ilike(budgetRequests.title, pattern)),
+        ),
+      tx
+        .select({ id: expenseSubmissions.id })
+        .from(expenseSubmissions)
+        .where(ilike(expenseSubmissions.referenceNumber, pattern)),
+      tx
+        .select({ id: users.id })
+        .from(users)
+        .where(or(ilike(users.displayName, pattern), ilike(users.email, pattern))),
+      tx.select({ id: departments.id }).from(departments).where(ilike(departments.name, pattern)),
+    ]);
+    const ids = (rows: { id: string }[]) => rows.map((r) => r.id);
     where.push(
       or(
-        ilike(request.referenceNumber, pattern),
-        ilike(expense.referenceNumber, pattern),
-        ilike(request.title, pattern),
-        ilike(actorUser.displayName, pattern),
-        ilike(actorUser.email, pattern),
-        ilike(department.name, pattern),
+        requestIds.length > 0 ? inArray(request.id, ids(requestIds)) : undefined,
+        expenseIds.length > 0 ? inArray(expense.id, ids(expenseIds)) : undefined,
+        userIds.length > 0 ? inArray(auditEvents.actorUserId, ids(userIds)) : undefined,
+        departmentIds.length > 0
+          ? sql`${departmentId} in (${sql.join(
+              ids(departmentIds).map((id) => sql`${id}::uuid`),
+              sql`, `,
+            )})`
+          : undefined,
         ilike(auditEvents.reason, pattern),
         ilike(auditEvents.eventType, pattern),
       )!,

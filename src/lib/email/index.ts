@@ -24,7 +24,7 @@ export function getEmailSender(): EmailSender | null {
 
 /**
  * Sends the outbox once the response has gone (Next.js `after`), so emails from an
- * action leave within seconds instead of waiting for the 15-minute job. Errors are
+ * action leave within seconds instead of waiting for the hourly job. Errors are
  * logged; the job retries whatever is still pending. With `ids`, only those emails are
  * sent, so a sign-in code never waits behind a backlog.
  */

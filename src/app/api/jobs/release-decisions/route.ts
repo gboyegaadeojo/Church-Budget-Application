@@ -5,9 +5,9 @@ import { deliverOutbox } from "@/lib/email/outbox";
 import { isAuthorizedJobRequest } from "@/lib/jobs";
 
 /**
- * Every 15 minutes (FR-19a): releases held annual budget decisions whose time has come,
+ * Every hour (FR-19a): releases held annual budget decisions whose time has come,
  * and a day ahead warns the accountants about departments still undecided. Then it sends
- * what it queued, so held emails go out within 15 minutes of the scheduled time. Each
+ * what it queued, so held emails go out within the hour after the scheduled time. Each
  * release, warning and summary happens once, so a repeated run sends nothing new.
  */
 export async function POST(request: Request) {

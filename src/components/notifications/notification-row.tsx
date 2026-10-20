@@ -8,7 +8,7 @@ import { notificationsCopy as n } from "@/copy/notifications";
 import type { NotificationArea, NotificationItem } from "@/domain/notifications/in-app";
 import type { AreaId } from "@/domain/navigation";
 import { cn } from "@/lib/cn";
-import { whenLabel } from "./format";
+import { NOTIFICATIONS_CHANGED, whenLabel } from "./format";
 
 /** Each notification area wears the colour and icon of the app area it belongs to. */
 const AREA_ICON: Record<NotificationArea, AreaId> = {
@@ -49,7 +49,11 @@ export function NotificationRow({
           <Link
             href={item.href}
             onClick={() => {
-              if (!item.read) void markNotificationReadAction(item.id);
+              if (!item.read) {
+                void markNotificationReadAction(item.id).then(() =>
+                  window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED)),
+                );
+              }
               onOpen?.();
             }}
             className={cn(

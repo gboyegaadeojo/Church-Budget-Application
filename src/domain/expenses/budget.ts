@@ -98,41 +98,44 @@ export async function budgetFigures(
   cycleId: string,
   departmentId: string,
 ): Promise<BudgetFigures> {
-  const annual = await approvedAnnualBudget(tx, cycleId, departmentId);
   const scope = and(
     eq(expenseSubmissions.budgetCycleId, cycleId),
     eq(expenseSubmissions.departmentId, departmentId),
   );
-  const [committed] = await tx
-    .select({ cents: sql<string>`coalesce(sum(${expenseSubmissions.approvedTotalCents}), 0)` })
-    .from(expenseSubmissions)
-    .where(
-      and(
-        scope,
-        eq(expenseSubmissions.type, "purchase_request"),
-        inArray(expenseSubmissions.status, [...COMMITTED_STATUSES]),
+  // Independent reads, sent together: on the hosted database each is a round trip.
+  const [annual, [committed], [pending], [spent]] = await Promise.all([
+    approvedAnnualBudget(tx, cycleId, departmentId),
+    tx
+      .select({ cents: sql<string>`coalesce(sum(${expenseSubmissions.approvedTotalCents}), 0)` })
+      .from(expenseSubmissions)
+      .where(
+        and(
+          scope,
+          eq(expenseSubmissions.type, "purchase_request"),
+          inArray(expenseSubmissions.status, [...COMMITTED_STATUSES]),
+        ),
       ),
-    );
-  // An item the accountant has approved counts at the amount they approved.
-  const [pending] = await tx
-    .select({
-      cents: sql<string>`coalesce(sum(coalesce(${expenseSubmissions.approvedTotalCents}, ${expenseSubmissions.totalCents})), 0)`,
-    })
-    .from(expenseSubmissions)
-    .where(and(scope, inArray(expenseSubmissions.status, [...PENDING_STATUSES])));
-  const [spent] = await tx
-    .select({
-      cents: sql<string>`coalesce(sum(case when ${spendingEntries.entryType} = 'refund'
+    // An item the accountant has approved counts at the amount they approved.
+    tx
+      .select({
+        cents: sql<string>`coalesce(sum(coalesce(${expenseSubmissions.approvedTotalCents}, ${expenseSubmissions.totalCents})), 0)`,
+      })
+      .from(expenseSubmissions)
+      .where(and(scope, inArray(expenseSubmissions.status, [...PENDING_STATUSES]))),
+    tx
+      .select({
+        cents: sql<string>`coalesce(sum(case when ${spendingEntries.entryType} = 'refund'
         then -${spendingEntries.amountCents} else ${spendingEntries.amountCents} end), 0)`,
-    })
-    .from(spendingEntries)
-    .where(
-      and(
-        eq(spendingEntries.budgetCycleId, cycleId),
-        eq(spendingEntries.departmentId, departmentId),
-        eq(spendingEntries.status, "recorded"),
+      })
+      .from(spendingEntries)
+      .where(
+        and(
+          eq(spendingEntries.budgetCycleId, cycleId),
+          eq(spendingEntries.departmentId, departmentId),
+          eq(spendingEntries.status, "recorded"),
+        ),
       ),
-    );
+  ]);
   const [amended] = annual
     ? await tx
         .select({ cents: sql<string>`coalesce(sum(${budgetAmendments.amountCents}), 0)` })

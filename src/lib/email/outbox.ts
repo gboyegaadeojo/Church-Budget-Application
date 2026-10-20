@@ -10,8 +10,8 @@ import type { EmailSender } from "./sender";
 /**
  * The email outbox (CLAUDE.md constraint 7, FR-11, FR-21). A service calls
  * `enqueueEmail` inside its transaction, so the email exists exactly when the change
- * commits. `deliverOutbox` runs after commit (straight after the action, and every 15
- * minutes from the scheduled job) and never inside a business transaction, so a slow or
+ * commits. `deliverOutbox` runs after commit (straight after the action, and hourly from
+ * the scheduled job) and never inside a business transaction, so a slow or
  * failed send cannot hold up or undo the action.
  */
 

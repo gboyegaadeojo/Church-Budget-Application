@@ -154,8 +154,10 @@ export async function spendingDashboard(
   const unbudgetedOf = new Map(unbudgeted.map((u) => [u.id, Number(u.cents)]));
 
   const rows: DashboardRow[] = [];
-  for (const d of depts) {
-    const figures = await budgetFigures(tx, chosen.id, d.id);
+  // Every department's figures at once; the rows keep the departments' order.
+  const allFigures = await Promise.all(depts.map((d) => budgetFigures(tx, chosen.id, d.id)));
+  for (const [i, d] of depts.entries()) {
+    const figures = allFigures[i];
     const hasActivity =
       figures.annualRequestId !== null || figures.spent !== 0 || figures.committed !== 0;
     // A department with nothing this year and no longer active isn't listed.

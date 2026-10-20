@@ -29,7 +29,7 @@ import { isSubmitted } from "./status";
  *
  * In Hold mode, an approval or decline is saved and locked when the accountant confirms
  * it, with `released_at` left empty: the staff see it at once, the department keeps
- * seeing In Review and gets no email. At the release time (the 15-minute job), or on
+ * seeing In Review and gets no email. At the release time (the hourly job), or on
  * Release now, each held decision gets its release time (the one change the history
  * table allows), its audit event and the department's email. Returns are never held.
  */
@@ -486,7 +486,7 @@ export async function releaseNow(
   const { actingRole } = assertCan(actor, "annual.release");
   const version = parseVersion(input.version);
   const cycle = await loadCycle(tx, input.cycleId);
-  // Also once the release time has passed but the 15-minute job hasn't run yet: the
+  // Also once the release time has passed but the hourly job hasn't run yet: the
   // decisions are still held, and the accountant can send them without waiting.
   if (!isHolding(cycle, now) && (await heldDecisions(tx, { cycleId: cycle.id })).length === 0) {
     throw new RuleError(e.notHolding);
@@ -518,7 +518,7 @@ export async function releaseNow(
   return result;
 }
 
-// ---------------------------------------------------------------- the 15-minute job
+// ---------------------------------------------------------------- the hourly job
 
 export type ReleaseJobSummary = { released: number; warnings: number; summaries: number };
 

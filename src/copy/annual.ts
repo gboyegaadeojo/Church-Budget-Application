@@ -150,7 +150,7 @@ export const annualCopy = {
         `The release time (${when}) has passed, but ${n === 1 ? "1 decision hasn't" : `${n} decisions haven't`} been sent yet. Use Release now to send ${n === 1 ? "it" : "them"}.`,
     },
     releaseAt: "Release date and time",
-    releaseAtHint: (zone: string) => `Church time (${zone}). Emails go within 15 minutes of it.`,
+    releaseAtHint: (zone: string) => `Church time (${zone}). Emails go within the hour after it.`,
     message: "Message for every release email",
     messageHint:
       "Optional, for example: Thank you for your work this year. The board approved the 2027 budget on Nov 12.",

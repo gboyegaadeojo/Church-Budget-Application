@@ -34,3 +34,6 @@ export function groupBySection(items: NotificationItem[], now: Date, zone: strin
   }
   return groups;
 }
+
+/** A window event: notifications were marked read, so the bell checks its count now. */
+export const NOTIFICATIONS_CHANGED = "notifications:changed";

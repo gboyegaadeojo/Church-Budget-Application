@@ -37,13 +37,17 @@ Two-step verification isn't required for any role. Turning it on for your own Pl
 
 Everyone lands on **Home**:
 
+- At the top: a greeting, how many things need you (and how long the oldest has waited), your Available or Away status, and your main button.
 - **My tasks** lists everything waiting for you across all your roles, oldest first, with one button each. When it is empty it says "You're all caught up."
-- **At a glance** shows a card for each of your roles, such as your department's remaining budget.
-- **Recent activity** (staff) shows what changed on items you are involved in, with a link to the full log.
+- **Accountant:** **Needs you today** (expenses to approve, annual budgets to review, unread messages, decisions to release), the **budget season** (departments by stage, days left), **expenses** by stage, the year's **spending** against the calendar, and **departments to watch**.
+- **Board Chair and Vice-Chair:** what's **waiting for your approval**, the year **against the board's approval**, **budget years**, departments to watch and **your recent decisions**.
+- **Church Administrator:** **Ready to pay** and the year's spending.
+- **At a glance** shows any other role's card, such as your department's remaining budget.
+- **Recent activity** (System Administrator) shows the latest changes, with a link to the full log.
 
 You never need to switch accounts. If you are both an accountant and a requester, you see both in one menu.
 
-![Home for the accountant: My tasks lists two budgets to review, a payment to record and an expense to review, each with one button; At a glance and Recent activity are below.](images/manual/home-accountant.png)
+![Home for the accountant: My tasks lists two budgets to review, a payment to record and an expense to review, each with one button; the accountant's dashboard cards are around it.](images/manual/home-accountant.png)
 
 ### Getting around
 
@@ -202,7 +206,7 @@ Each department has a **Primary requester** (accountable for the department's bu
 3. **Review decision**, check the summary (requested, approved and the difference, all including tax), and confirm. The department sees the decision on its budget straight away and is emailed; you get a copy for your records.
 4. **Decision release** (Annual Budget → Decision release) chooses how departments hear about approvals and declines:
    - **Send immediately** (the usual): each department is emailed when you confirm.
-   - **Hold and release on a date:** choose the date and time (church time) and, if you like, one message for every email ("Thank you for your work this year…"). Decide every department; they keep seeing **In Review** and get nothing until then. Questions are never held. All the emails go out within 15 minutes of the time. You're warned the day before if some departments aren't decided, and budgets decided after the time go straight out.
+   - **Hold and release on a date:** choose the date and time (church time) and, if you like, one message for every email ("Thank you for your work this year…"). Decide every department; they keep seeing **In Review** and get nothing until then. Questions are never held. All the emails go out within the hour after that time; **Release now** sends them at once. You're warned the day before if some departments aren't decided, and budgets decided after the time go straight out.
    - The page shows Approved, Declined, Undecided and Not submitted, and who gets which email. **Release now** sends everything held at once, even after the release time if the emails haven't gone yet; **Cancel schedule** goes back to sending immediately and sends what's held. A banner on every review screen reminds you while decisions are held.
 5. **Second approval for large budgets** (if the administrator has turned it on): when an approval reaches the set amount, the button reads **Approve (needs second sign-off)**. After you confirm, the budget is **Awaiting Second Approval** and the department is told it's awaiting final sign-off. Another accountant or backup approver (not you, and nobody who leads the department) gets a task: they open it and choose **Give second approval**, or **Refuse** with a reason, which sends it back to In Review for you.
 6. **Reopen** an approved or declined budget with a reason if the board reconsiders. It goes back to the department as Returned for Clarification, without using one of its edits, and the earlier decision stays in the history. If expenses already rely on an approved budget, the dialog shows how much is committed, spent and waiting, and you tick a box to confirm before it reopens.
@@ -383,7 +387,7 @@ Emails that don't go are retried for about three days. **Admin → Notifications
 
 The address keeps your filters, so you can bookmark a view or send the link to a colleague who has the same access.
 
-**Finding things:** **Search** in the top bar (or press **/** or **Ctrl+K**) finds a budget by reference number, title, department or item, a department, a page, and (for the System Administrator) a person. Use the arrow keys and Enter, or click. Pages below the main ones show **breadcrumbs** above the title, such as "Annual Budget / Review dashboard", to step back up. For staff, **Home** shows **Recent activity** on your budgets and tasks.
+**Finding things:** **Search** in the top bar (or press **/** or **Ctrl+K**) finds a budget by reference number, title, department or item, a department, a page, and (for the System Administrator) a person. Use the arrow keys and Enter, or click. Pages below the main ones show **breadcrumbs** above the title, such as "Annual Budget / Review dashboard", to step back up. For the System Administrator, **Home** shows **Recent activity**; everyone else finds it in Analytics & Audit.
 
 ---
 

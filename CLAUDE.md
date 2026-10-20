@@ -38,7 +38,7 @@ Read the relevant FRs and the DRD screen section before starting any feature. If
 | Files (receipts, logo) | Cloudflare R2 (S3 API), private bucket, signed URLs |
 | Excel | ExcelJS, server-side |
 | Hosting | Netlify free (Next.js runtime) |
-| Scheduled jobs | GitHub Actions cron every 15 min, calling `POST /api/jobs/<name>` with `Authorization: Bearer $JOBS_SECRET` |
+| Scheduled jobs | Netlify Scheduled Function hourly (release-decisions, send-outbox) and GitHub Actions nightly, calling `POST /api/jobs/<name>` with `Authorization: Bearer $JOBS_SECRET` (docs/decisions.md 2026-10-20) |
 | Backups | Nightly GitHub Action: `pg_dump` → encrypted → upload to a church Google Drive folder |
 | Tests | Vitest (unit and integration), Playwright (end-to-end) using Chromium; axe-core for accessibility |
 | Quality | ESLint, Prettier, `tsc --noEmit`, and GitHub Actions CI on every PR |
@@ -149,7 +149,7 @@ BACKUP_AGE_RECIPIENT, GDRIVE_FOLDER_ID, GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET, 
 
 See `docs/go-live-checklist.md` for where each value comes from. Note its warning on GitHub Actions minutes for the 15-minute jobs.
 
-## Scheduled jobs (`.github/workflows/jobs.yml`, every 15 min unless noted)
+## Scheduled jobs (`netlify/functions/send-outbox.mts` hourly; `.github/workflows/jobs.yml` nightly)
 
 - `send-outbox`: retries pending or failed emails with backoff.
 - `release-decisions`: sends held annual decisions whose release time has passed (FR-19a).

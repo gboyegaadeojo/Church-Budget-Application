@@ -222,7 +222,7 @@ describe("Hold and release on a schedule (AC-18)", () => {
     expect(warnings).toHaveLength(1);
     expect(warnings[0].textBody).toContain(`${c.dept.name}: Submitted, not decided yet`);
 
-    // The 15-minute job after 9:00 releases both held decisions, once.
+    // The hourly job after 9:00 releases both held decisions, once.
     const at = new Date("2026-12-01T15:10:00Z");
     expect(await runScheduledReleases(db, at)).toMatchObject({ released: 2, summaries: 1 });
     expect(await runScheduledReleases(db, at)).toMatchObject({ released: 0, summaries: 0 });
@@ -405,7 +405,7 @@ describe("Release now and Cancel schedule (AC-19)", () => {
     await hold(cycle.id);
     await decide(a.requestId, { kind: "approve_as_requested" });
 
-    // Past Dec 1, 9:00 a.m., but the 15-minute job never ran (as on a local server).
+    // Past Dec 1, 9:00 a.m., but the hourly job never ran (as on a local server).
     const after = new Date("2026-12-01T16:00:00Z");
     const overview = await run((tx) => getReleaseOverview(tx, accountant, cycle.id, after));
     expect(overview!.holding).toBe(false);
