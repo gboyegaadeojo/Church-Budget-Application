@@ -157,6 +157,9 @@ test.describe("Admin (Stage 1 step 4)", () => {
     await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.gina);
     await page.goto("/admin/settings?section=money");
+    const tax = page.getByRole("region", { name: "Sales tax" });
+    await expect(tax.getByText("12%", { exact: true })).toBeVisible();
+    await tax.getByText("Sales tax rate", { exact: true }).click();
 
     const rate = page.getByLabel("Sales tax rate (%)");
     await expect(rate).toHaveValue("12");
@@ -212,6 +215,7 @@ test.describe("Admin (Stage 1 step 4)", () => {
     await signInAs(page, PEOPLE.gina);
     await page.goto("/admin/settings?section=people");
     const section = page.getByRole("region", { name: "Accountants" });
+    await section.getByText("Primary accountant", { exact: true }).first().click();
     await section
       .getByRole("combobox", { name: "Primary accountant" })
       .selectOption({ label: "Pat Accountant" });
@@ -250,7 +254,11 @@ test.describe("Budget cycles for finance and board staff (decided 2026-10-17)", 
     // other tests share FY2026; editing is covered by integration tests.
     await page.getByRole("link", { name: "FY2026", exact: true }).click();
     await expect(page.getByRole("heading", { level: 1, name: "FY2026" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Edit details" })).toBeVisible();
+    // The details read as rows; "Edit details" opens the form in place.
+    await expect(
+      page.getByRole("region", { name: "Details" }).getByText("Jan 1, 2026"),
+    ).toBeVisible();
+    await page.getByText("Edit details", { exact: true }).click();
     await expect(
       page
         .getByRole("form", { name: "Edit details" })

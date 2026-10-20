@@ -13,7 +13,9 @@ test("the administrator sees reminder texts and keeps the monthly limit", async 
   await page.goto("/admin/settings?section=texts");
   const section = page.getByRole("region", { name: "Reminder texts" });
   await expect(section.getByText("Connected")).toBeVisible();
-  await expect(section.getByText(/Sent this month: \d+ of 300/)).toBeVisible();
+  await expect(section.getByText("Sent this month")).toBeVisible();
+  await expect(section.getByText(/^\d+ of 300$/)).toBeVisible();
+  await section.getByText("Most texts a month", { exact: true }).click();
   await expectAxeClean(page);
 
   const limit = section.getByLabel("Most texts a month");
