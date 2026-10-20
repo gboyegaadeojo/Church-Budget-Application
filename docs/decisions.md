@@ -1149,3 +1149,7 @@ The church asked for a list that stays clean with about 80 people.
 - **Filter chips with counts:** All, Staff (any role but Requester), Department leaders, and Needs attention (deactivated, suspended or not yet placed). They combine with the search.
 - **Pages of 25**, with Previous and Next, and "1–25 of 80" in the heading. Everything stays in the address.
 - **Add a staff member** is a button that opens the form, not a large form always on the page.
+## 2026-10-19: One Menu button on phones; My expenses without filters
+
+- **Phones get one Menu button, not a bottom bar.** The church found the bottom bar plus More confusing: More listed the same areas again. Below 768 px there is now one **Menu** button at the top left of the header that opens every page, grouped by area (the same accordion as the desktop sidebar), plus Help and Privacy. This departs from DRD 6.0 ("a bottom bar plus a More menu"). Tablets and desktops are unchanged.
+- **My expenses is a plain list.** FR-48 asks for filters on every list; the church asked for My expenses to drop them (search, department, type, status, dates and amounts), since a department's own expenses are few. The staff lists (review queue, Awaiting my approval, Ready to process, All expenses) keep their filters.

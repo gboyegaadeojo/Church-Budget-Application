@@ -87,7 +87,7 @@ test.describe("Home and app shell", () => {
     await gotoHome(page);
 
     await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Quick navigation" })).toBeHidden();
+    await expect(page.getByRole("button", { name: "Open the menu" })).toBeHidden();
     await expect(page.getByRole("contentinfo").getByRole("link", { name: "Help" })).toBeVisible();
     await expect(
       page.getByRole("contentinfo").getByRole("link", { name: "Privacy" }),
@@ -95,31 +95,21 @@ test.describe("Home and app shell", () => {
     await expectNoHorizontalScroll(page);
   });
 
-  test("AC-102 Home works at 360 px with the bottom bar and More menu", async ({ page }) => {
+  test("AC-102 Home works at 360 px with one Menu button", async ({ page }) => {
     await page.setViewportSize(MOBILE);
     await gotoHome(page);
 
     await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeHidden();
-    const bar = page.getByRole("navigation", { name: "Quick navigation" });
-    await expect(bar).toBeVisible();
-    for (const name of ["Home", "Annual Budget", "Expenses", "Spending", "More"]) {
-      await expect(bar.getByRole(name === "More" ? "button" : "link", { name })).toBeVisible();
-    }
-    await expect(bar.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
     await expectNoHorizontalScroll(page);
 
-    // The footer is not hidden behind the fixed bottom bar.
-    const footer = page.getByRole("contentinfo");
-    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    const footerBox = await footer.boundingBox();
-    const barBox = await bar.boundingBox();
-    expect(footerBox!.y + footerBox!.height).toBeLessThanOrEqual(barBox!.y + 1);
-
-    // More opens a sheet with every page, grouped by area like the sidebar.
-    const more = bar.getByRole("button", { name: "More" });
+    // One Menu opens a sheet with every page, grouped by area like the sidebar.
+    const more = page.getByRole("button", { name: "Open the menu" });
     await more.click();
-    const sheet = page.getByRole("dialog", { name: "All pages" });
+    const sheet = page.getByRole("dialog", { name: "Menu" });
     await expect(sheet).toBeVisible();
+    await expect(
+      sheet.getByRole("navigation", { name: "Menu" }).getByRole("link", { name: "Home" }),
+    ).toHaveAttribute("aria-current", "page");
     await expectAxeClean(page);
     await page.keyboard.press("Escape");
     await expect(sheet).toBeHidden();
@@ -140,7 +130,7 @@ test.describe("Home and app shell", () => {
 
     const nav = page.getByRole("navigation", { name: "Main navigation" });
     await expect(nav).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Quick navigation" })).toBeHidden();
+    await expect(page.getByRole("button", { name: "Open the menu" })).toBeHidden();
     await expect(nav.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
     await expectNoHorizontalScroll(page);
 

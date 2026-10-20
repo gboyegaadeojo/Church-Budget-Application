@@ -9,14 +9,15 @@ import {
   AccountMenuFallback,
   SidebarFallback,
   ViewerAccountMenu,
-  ViewerBottomBar,
+  MobileMenuFallback,
+  ViewerMobileMenu,
   ViewerSidebar,
 } from "@/components/app-shell/viewer-shell";
 import { copy } from "@/copy/en-CA";
 
 /**
- * One application for every role (DRD 6.0, FR-37): side rail on tablets, sidebar on desktop, bottom bar
- * plus More on mobile, header with the account menu, footer with Help and Privacy.
+ * One application for every role (DRD 6.0, FR-37): side rail on tablets, sidebar on desktop, a Menu
+ * button on phones, header with the account menu, footer with Help and Privacy.
  * Everything that reads the viewer streams in behind its own Suspense boundary, so
  * the rest of the shell is part of the static prerender.
  */
@@ -37,11 +38,16 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <ViewerSidebar />
         </Suspense>
 
-        <div className="flex min-w-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 print:pb-0">
+        <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-(--z-sticky) flex h-16 items-center justify-between gap-4 border-b border-border bg-bg/90 px-4 backdrop-blur md:justify-end lg:px-8 print:hidden">
-            <Link href="/" className="rounded-control md:hidden">
-              <Brand />
-            </Link>
+            <div className="flex min-w-0 items-center gap-3 md:hidden">
+              <Suspense fallback={<MobileMenuFallback />}>
+                <ViewerMobileMenu />
+              </Suspense>
+              <Link href="/" className="min-w-0 rounded-control">
+                <Brand />
+              </Link>
+            </div>
             <div className="flex items-center gap-2">
               <GlobalSearch />
               <Suspense fallback={<AccountMenuFallback />}>
@@ -66,9 +72,6 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <Footer />
         </div>
       </div>
-      <Suspense fallback={null}>
-        <ViewerBottomBar />
-      </Suspense>
     </>
   );
 }
