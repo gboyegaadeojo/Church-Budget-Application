@@ -880,8 +880,8 @@ function SummaryPanel({
         <FinancialSummary totals={totals} rate={rate} heading={f.summary} />
         {save && <SaveStatus save={save} onRetry={onRetry} />}
       </aside>
-      {/* Mobile: a bar above the navigation showing the total; it expands for the breakdown. */}
-      <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-(--z-sticky) border-t border-border bg-surface px-4 py-3 shadow-overlay lg:hidden">
+      {/* Mobile: a bar at the bottom showing the total; it expands for the breakdown. */}
+      <div className="fixed inset-x-0 bottom-0 z-(--z-sticky) border-t border-border bg-surface px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-overlay lg:hidden">
         {open && <FinancialSummary totals={totals} rate={rate} className="pb-3" />}
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">

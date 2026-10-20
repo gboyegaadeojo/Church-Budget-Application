@@ -9,7 +9,7 @@ import { expectNoHorizontalScroll, PEOPLE, signInAs } from "./helpers";
  * role. The real-device part is docs/phone-check.md.
  */
 
-/** Touch targets: 24 px minimum (WCAG 2.5.8), 44 px for the bottom bar (DRD 9). */
+/** Touch targets: 24 px minimum (WCAG 2.5.8); the Menu button's 44 px is checked below (DRD 9). */
 async function expectTappable(page: Page) {
   const small = await page.evaluate(() => {
     const visible = (el: Element) => {
@@ -36,11 +36,6 @@ async function expectTappable(page: Page) {
       .map((el) => `${el.tagName.toLowerCase()} "${(el.textContent ?? "").trim().slice(0, 40)}"`);
   });
   expect.soft(small, `Too small to tap on ${page.url()}:\n${small.join("\n")}`).toEqual([]);
-  const bar = page.getByRole("navigation", { name: "Quick navigation" });
-  for (const item of await bar.getByRole("link").or(bar.getByRole("button")).all()) {
-    const box = (await item.boundingBox())!;
-    expect.soft(box.height, "bottom bar item height").toBeGreaterThanOrEqual(44);
-  }
 }
 
 const PAGES: [string, string, string[]][] = [
@@ -97,13 +92,18 @@ test.describe("Phone check (Stage 5)", () => {
     });
   }
 
-  test("the bottom bar and More work by touch", async ({ page }) => {
+  test("the Menu works by touch", async ({ page }) => {
     await signInAs(page, PEOPLE.sam);
-    const bar = page.getByRole("navigation", { name: "Quick navigation" });
-    await bar.getByRole("link", { name: "Expenses" }).tap();
-    await expect(page).toHaveURL(/\/expenses/);
-    await bar.getByRole("button", { name: "More" }).tap();
-    const sheet = page.getByRole("dialog", { name: "All pages" });
+    const open = page.getByRole("button", { name: "Open the menu" });
+    const box = (await open.boundingBox())!;
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    await open.tap();
+    const sheet = page.getByRole("dialog", { name: "Menu" });
+    await sheet.getByRole("button", { name: "Expenses" }).tap();
+    await sheet.getByRole("link", { name: "My expenses" }).tap();
+    await expect(sheet).toBeHidden();
+    await expect(page).toHaveURL(/\/expenses\/mine$/);
+    await open.tap();
     await expect(sheet).toBeVisible();
     await sheet.getByRole("link", { name: "Help" }).tap();
     await expect(sheet).toBeHidden();

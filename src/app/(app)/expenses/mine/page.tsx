@@ -17,24 +17,24 @@ import {
   myDepartmentBudgets,
   type ExpenseListRow,
 } from "@/domain/expenses/queries";
-import { hasListFilters, parseListFilters } from "@/domain/expenses/list-filters";
-import { EXPENSE_STATUSES } from "@/domain/expenses/status";
 import { hasRole } from "@/lib/roles";
 import { getViewer } from "@/lib/viewer";
 import { BudgetStrip } from "../budget-strip";
 import { ExpenseTable } from "../expense-table";
-import { ExpenseFilterForm } from "../filter-form";
 
 const m = expensesCopy.mine;
 
 export const metadata: Metadata = { title: m.title };
 
-/** The requester's expenses and their departments' budgets (FR-48, DRD 6.9a). */
-export default function MyExpensesPage({ searchParams }: PageProps<"/expenses/mine">) {
+/**
+ * The requester's expenses and their departments' budgets (FR-48, DRD 6.9a). A plain list
+ * with no filters: a department's own expenses are few (decided by the church 2026-10-19).
+ */
+export default function MyExpensesPage() {
   return (
     <div className="space-y-6">
       <Suspense fallback={<AdminSkeleton />}>
-        <MyExpensesContent searchParams={searchParams} />
+        <MyExpensesContent />
       </Suspense>
     </div>
   );
@@ -54,19 +54,13 @@ function needs(row: ExpenseListRow): string {
   return expensesCopy.status[row.status].explain;
 }
 
-async function MyExpensesContent({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const filters = parseListFilters(await searchParams);
-  const filtered = hasListFilters(filters);
+async function MyExpensesContent() {
   const viewer = await getViewer();
   const submitter = (viewer.expenseDepartments?.length ?? 0) > 0;
   if (!hasRole(viewer, "requester") && !submitter) return <PermissionDenied />;
   const db = getDb();
   const [rows, budgets] = await Promise.all([
-    listMyExpenses(db, viewer, filters),
+    listMyExpenses(db, viewer),
     myDepartmentBudgets(db, viewer),
   ]);
   // Things waiting for the department come first.
@@ -96,19 +90,8 @@ async function MyExpensesContent({
         </Section>
       )}
 
-      <Section title={m.title} icon={Receipt} tone="teal">
-        <ExpenseFilterForm
-          basePath="/expenses/mine"
-          filters={filters}
-          departments={[...viewer.departments, ...(viewer.expenseDepartments ?? [])].map((d) => ({
-            id: d.id,
-            name: d.name,
-          }))}
-          statuses={EXPENSE_STATUSES}
-        />
-        {sorted.length === 0 && filtered ? (
-          <EmptyState>{expensesCopy.review.emptyFiltered}</EmptyState>
-        ) : sorted.length === 0 ? (
+      <Section title={m.listHeading} icon={Receipt} tone="teal">
+        {sorted.length === 0 ? (
           <EmptyState>
             {m.empty}{" "}
             <Link href="/expenses/new" className={linkClass}>

@@ -432,6 +432,7 @@ export const expensesCopy = {
     title: "My expenses",
     intro: "Purchase requests and claims for your departments.",
     newExpense: "New expense",
+    listHeading: "Purchase requests and claims",
     empty: "No expenses yet.",
     columns: {
       reference: "Reference",
