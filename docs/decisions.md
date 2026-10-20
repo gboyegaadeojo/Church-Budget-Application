@@ -1166,3 +1166,11 @@ The church asked for a list that stays clean with about 80 people.
 
 - **Settings** shows each category as short groups of slim rows, each with its current value on the right ("Sales tax rate · 12%%", "Second approval · Off", "Primary accountant · Pat"). A row opens in place to change it; explanations are small notes under each group instead of paragraphs in large cards. Sign-in keeps its fields open, so a save error is never hidden in a folded row. The shared pieces are in `src/components/ui/grouped-list.tsx`.
 - **A budget cycle's page** uses the same rows: Details (with **Edit details** folded in), **Submission deadline** and **Department extensions** side by side. The deadline card lists every change (new and old date, reason, who, when), read from the activity log, so nobody has to open the log to see it; extensions show their reason, who gave them and when.
+
+## 2026-10-20: Home dashboards for the accountant, the board and the Church Administrator
+
+- Home opens with a greeting, the date and how many things need the person (oldest waiting), their Available/Away status and their main action.
+- **Accountant:** Needs you today (expenses to approve with amount, over-budget count and oldest; annual budgets to review; unread messages from departments; decisions held for release), the open cycle's budget season (departments by stage, requested vs the board total, days left), expenses in the year by stage with average decision times, the year's spending against the calendar, and departments to watch.
+- **Board Chair and Vice-Chair:** what waits for their approval (oldest first, five shown), the year against the board's approval, budget years, departments to watch and their own recent decisions. A Vice-Chair sees the same list read-only, "with the Board Chair", until every Board Chair is Away; then "Covering for ...". No annual budget review, which their roles don't have.
+- **Church Administrator** (lighter): Ready to pay (count, total, longest wait, five oldest, paid in the last 30 days) and the year's spending.
+- Every figure comes from the read model of the screen it links to (review dashboard, approval queues, Ready to process, spending overview), so Home and those screens agree. At a glance keeps only the cards no dashboard above covers. My tasks and Recent activity stay.

@@ -21,8 +21,10 @@ test.describe("Sign-in (FR-01, FR-01a, DRD 6.1, 6.1a)", () => {
   test("AC-1 a signed-in person lands on Home, and sign out ends the session", async ({ page }) => {
     await signInAs(page, PEOPLE.gina);
     await expect(page).toHaveURL("/");
-    await expect(page.getByRole("heading", { level: 1, name: "Home" })).toBeVisible();
-    await expect(page.getByText("Welcome, Gina")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: /^Good (morning|afternoon|evening), / }),
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /, Gina$/ })).toBeVisible();
 
     await page.getByRole("button", { name: "Open account menu" }).click();
     await page.getByRole("menuitem", { name: "Sign out" }).click();
@@ -48,7 +50,9 @@ test.describe("Sign-in (FR-01, FR-01a, DRD 6.1, 6.1a)", () => {
     await page.goto("/");
     await expect(page).toHaveURL(/\/sign-in/);
     await signInAs(page, PEOPLE.gina);
-    await expect(page.getByRole("heading", { level: 1, name: "Home" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: /^Good (morning|afternoon|evening), / }),
+    ).toBeVisible();
   });
 
   test("returns to the page that asked for sign-in", async ({ page }) => {
@@ -244,7 +248,7 @@ test.describe("Continue with email (FR-01b, DRD 6.1)", () => {
     await page.getByLabel("6-digit code").fill(await emailedCode(page, CAROL));
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(page).toHaveURL("/");
-    await expect(page.getByText("Welcome, Carol")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /, Carol$/ })).toBeVisible();
   });
 
   test("AC-133 an unknown address sees the same message, and a wrong code says so", async ({
