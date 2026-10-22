@@ -43,7 +43,8 @@ describe("Planning Center phone numbers", () => {
 });
 
 describe("Quiet hours (texts go 9:00 a.m. to 8:00 p.m. church time)", () => {
-  const zone = "America/Winnipeg";
+  // A zone that still changes clocks (Manitoba stopped on 2026-11-01, tzdata 2026e).
+  const zone = "America/Chicago";
   it("sends straight away in the daytime", () => {
     const noon = new Date("2026-11-10T18:00:00Z"); // 12:00 CST
     expect(nextSendTime(noon, zone)).toEqual(noon);

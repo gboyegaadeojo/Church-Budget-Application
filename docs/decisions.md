@@ -1224,3 +1224,8 @@ The church asked for a list that stays clean with about 80 people.
 - **What can't be enforced:** Apple and Google let only the person holding the phone allow notifications, and they can always block them in the phone's own settings. So, in the installed app, a card at the top of every page asks them to **Allow alerts** and has no close button; it says how to unblock them if they were blocked. The website in a browser tab doesn't show it (Get the app explains installing first).
 - **Signing out no longer turns alerts off.** The device stays with its last person until someone else signs in on it; it then moves to them straight away (the browser re-saves it when the signed-in person changes), so alerts never reach two people. Supersedes the sign-out rule in the entry above.
 - **Settings shows "Alert keys: Set up / Not set up"** so the administrator can confirm the Netlify keys are in without anyone seeing them.
+
+## 2026-10-22: Manitoba stays on daylight time (tzdata 2026e)
+
+- Manitoba moves to permanent UTC−5 from 2026-11-01 (announced 2026-09-17; IANA tzdata 2026e). The app stores UTC and shows times with the IANA zone `America/Winnipeg`, so it follows the new rule wherever the runtime has current time-zone data (Netlify and CI use the latest Node 22). Nothing in the app hard-codes UTC−6.
+- Tests that check daylight-saving mechanics (deadline conversion, skipped spring-forward times, quiet hours across the clock change) now use `America/Chicago`, which keeps the old rules, so they pass on old and new time-zone data alike.
