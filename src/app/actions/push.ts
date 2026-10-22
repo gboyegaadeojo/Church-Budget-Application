@@ -6,7 +6,6 @@ import { auth } from "@/auth";
 import { getDb } from "@/db";
 import { getAppCopy as g } from "@/copy/get-app";
 import {
-  removePushSubscription,
   savePushSubscription,
   sendTestPush,
   type PushSubscriptionInput,
@@ -34,17 +33,6 @@ export async function savePushAction(input: PushSubscriptionInput): Promise<Push
   } catch {
     return { ok: false, message: g.errors.save };
   }
-  revalidatePath("/get-app");
-  return { ok: true };
-}
-
-/** Turns alerts off: for this device by its endpoint, or a device from the list by id. */
-export async function removePushAction(
-  which: { endpoint: string } | { id: string },
-): Promise<PushActionResult> {
-  const id = await viewerId();
-  if (!id) return { ok: false, message: g.errors.signedOut };
-  await getDb().transaction((tx) => removePushSubscription(tx, id, which));
   revalidatePath("/get-app");
   return { ok: true };
 }

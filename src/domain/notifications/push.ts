@@ -1,6 +1,6 @@
 import { and, asc, count, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import { z } from "zod";
-import { notifications, pushSubscriptions } from "@/db/schema";
+import { appSettings, notifications, pushSubscriptions, users } from "@/db/schema";
 import type { Db, Tx } from "@/db/types";
 import type { PushSender } from "@/lib/push/sender";
 
@@ -9,7 +9,35 @@ import type { PushSender } from "@/lib/push/sender";
  * in the bell also pops up on the devices where its person turned alerts on. Marked in the
  * same transaction as the notification (`addNotifications`), sent after commit. Alerts are
  * a convenience: one that fails isn't retried, because the bell and the email have it.
+ *
+ * Alerts are on for everyone; nobody turns them off for themselves. Only the System
+ * Administrator does: for the whole church (Settings, `push_enabled`) or for one person
+ * (Users & Roles, `users.push_alerts`). Decided by the church 2026-10-22.
  */
+
+/** The church-wide switch; on unless the System Administrator turned it off. */
+export async function pushEnabled(tx: Tx | Db): Promise<boolean> {
+  const [row] = await tx
+    .select({ value: appSettings.value })
+    .from(appSettings)
+    .where(eq(appSettings.key, "push_enabled"))
+    .limit(1);
+  return (row?.value ?? "true") !== "false";
+}
+
+/** Whether this person gets alerts: "on", or which switch turned them off. */
+export async function alertsFor(
+  tx: Tx | Db,
+  userId: string,
+): Promise<"on" | "church_off" | "person_off"> {
+  if (!(await pushEnabled(tx))) return "church_off";
+  const [row] = await tx
+    .select({ on: users.pushAlerts })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return row?.on === false ? "person_off" : "on";
+}
 
 /** The push services browsers use. The app posts to the endpoint, so nothing else is allowed. */
 const PUSH_HOSTS = [
@@ -84,22 +112,20 @@ export async function savePushSubscription(
     });
 }
 
-/** Turns alerts off for one device: by its endpoint (this device) or its id (the list). */
-export async function removePushSubscription(
+/**
+ * Removes one of a person's devices (a lost phone). Only the System Administrator calls
+ * this, through Users & Roles; the caller checks the permission and audits it.
+ */
+export async function removePushDevice(
   tx: Tx,
   userId: string,
-  which: { endpoint: string } | { id: string },
-): Promise<void> {
-  await tx
+  deviceId: string,
+): Promise<{ device: string } | null> {
+  const [row] = await tx
     .delete(pushSubscriptions)
-    .where(
-      and(
-        eq(pushSubscriptions.userId, userId),
-        "endpoint" in which
-          ? eq(pushSubscriptions.endpoint, which.endpoint)
-          : eq(pushSubscriptions.id, which.id),
-      ),
-    );
+    .where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.id, deviceId)))
+    .returning({ device: pushSubscriptions.device });
+  return row ?? null;
 }
 
 export type PushDevice = { id: string; device: string; createdAt: Date; lastSentAt: Date | null };
@@ -117,13 +143,17 @@ export function listPushDevices(tx: Tx | Db, userId: string): Promise<PushDevice
     .orderBy(asc(pushSubscriptions.createdAt));
 }
 
-/** Of these people, the ones with at least one device, so only their notifications wait to be pushed. */
+/**
+ * Of these people, the ones who get alerts and have at least one device, so only their
+ * notifications wait to be pushed.
+ */
 export async function withPushDevices(tx: Tx, userIds: string[]): Promise<Set<string>> {
-  if (userIds.length === 0) return new Set();
+  if (userIds.length === 0 || !(await pushEnabled(tx))) return new Set();
   const rows = await tx
     .selectDistinct({ userId: pushSubscriptions.userId })
     .from(pushSubscriptions)
-    .where(inArray(pushSubscriptions.userId, userIds));
+    .innerJoin(users, eq(users.id, pushSubscriptions.userId))
+    .where(and(inArray(pushSubscriptions.userId, userIds), eq(users.pushAlerts, true)));
   return new Set(rows.map((r) => r.userId));
 }
 
@@ -181,10 +211,22 @@ export async function deliverPushes(
       });
   });
   if (claimed.length === 0) return summary;
+  // Turned off since these were marked: they are dropped, not held for later.
+  if (!(await pushEnabled(db))) return summary;
 
   const userIds = [...new Set(claimed.map((n) => n.userId))];
   const [devices, unread] = await Promise.all([
-    db.select().from(pushSubscriptions).where(inArray(pushSubscriptions.userId, userIds)),
+    db
+      .select({
+        id: pushSubscriptions.id,
+        userId: pushSubscriptions.userId,
+        endpoint: pushSubscriptions.endpoint,
+        p256dh: pushSubscriptions.p256dh,
+        auth: pushSubscriptions.auth,
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(users.id, pushSubscriptions.userId))
+      .where(and(inArray(pushSubscriptions.userId, userIds), eq(users.pushAlerts, true))),
     db
       .select({ userId: notifications.userId, n: count() })
       .from(notifications)
@@ -255,6 +297,21 @@ export async function sendTestPush(
     } else summary.failed++;
   }
   return summary;
+}
+
+/** For Settings: the church-wide switch, devices with alerts, and people turned off. */
+export async function pushDeviceCounts(
+  db: Db,
+): Promise<{ enabled: boolean; devices: number; peopleOff: number }> {
+  const [enabled, [devices], [off]] = await Promise.all([
+    pushEnabled(db),
+    db.select({ n: count() }).from(pushSubscriptions),
+    db
+      .select({ n: count() })
+      .from(users)
+      .where(and(eq(users.pushAlerts, false), eq(users.active, true))),
+  ]);
+  return { enabled, devices: Number(devices?.n ?? 0), peopleOff: Number(off?.n ?? 0) };
 }
 
 /** Notifications waiting to be pushed (for tests and the job's summary). */

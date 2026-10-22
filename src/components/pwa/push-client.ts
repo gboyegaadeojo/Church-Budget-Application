@@ -1,4 +1,4 @@
-import { removePushAction, savePushAction } from "@/app/actions/push";
+import { savePushAction } from "@/app/actions/push";
 
 /*
  * The browser side of installing the app and phone alerts (docs/decisions.md 2026-10-22).
@@ -96,30 +96,27 @@ export async function turnOnAlerts(publicKey: string): Promise<"on" | "declined"
   return result.ok ? "on" : result.message;
 }
 
-/** Turns alerts off for this device, in the app and in the browser. */
-export async function turnOffAlerts(): Promise<void> {
-  const subscription = await currentSubscription();
-  if (!subscription) return;
-  await removePushAction({ endpoint: subscription.endpoint }).catch(() => undefined);
-  await subscription.unsubscribe().catch(() => false);
-}
-
-const RESYNC_KEY = "push-resynced-at";
+const RESYNC_KEY = "push-resynced";
 const DAY = 24 * 60 * 60 * 1000;
 
 /**
- * Browsers renew their push address now and then. Once a day, re-save this device's
- * current one so alerts keep arriving (and move to whoever is signed in now).
+ * Browsers renew their push address now and then, so once a day this device's current
+ * one is saved again. It is saved at once when someone else signs in on the device, so
+ * alerts move to them and stop reaching the previous person.
  */
-export async function resyncAlerts(): Promise<void> {
+export async function resyncAlerts(userId: string): Promise<void> {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
   try {
-    const last = Number(localStorage.getItem(RESYNC_KEY) ?? 0);
-    if (Date.now() - last < DAY) return;
+    const last = JSON.parse(localStorage.getItem(RESYNC_KEY) ?? "{}") as {
+      at?: number;
+      user?: string;
+    };
+    if (last.user === userId && Date.now() - (last.at ?? 0) < DAY) return;
     const subscription = await currentSubscription();
     if (!subscription) return;
     const result = await save(subscription);
-    if (result.ok) localStorage.setItem(RESYNC_KEY, String(Date.now()));
+    if (result.ok)
+      localStorage.setItem(RESYNC_KEY, JSON.stringify({ at: Date.now(), user: userId }));
   } catch {
     // Storage blocked or offline: try again next visit.
   }

@@ -136,6 +136,8 @@ export const users = pgTable(
     phoneCheckedAt: timestamp("phone_checked_at", { withTimezone: true }),
     accessStatus: accessStatusEnum("access_status").notNull().default("pending_department"),
     active: boolean("active").notNull().default(true),
+    /** Phone alerts for this person; only the System Administrator changes it (2026-10-22). */
+    pushAlerts: boolean("push_alerts").notNull().default(true),
     version: version(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

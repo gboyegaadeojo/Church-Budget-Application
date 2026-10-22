@@ -151,8 +151,8 @@ export const helpCopy = {
       question: "Can I put the app on my phone and get alerts?",
       answer: [
         "Yes. Open Get the app, at the bottom of every page or in your account menu. On an iPhone, open the app in Safari, tap Share, then Add to Home Screen. On Android, tap Install the app or choose Install app from Chrome's menu.",
-        "Then, in the installed app, open Get the app again and tap Turn on alerts. The same news as the bell pops up on your phone, and the app's icon shows how many you haven't read. Emails still come. On an iPhone, alerts work only in the app opened from your home screen.",
-        "Signing out turns alerts off on that phone or computer. Turn them off on another device, such as a lost phone, from the list on Get the app.",
+        "When you open the installed app, it asks you to allow alerts; tap Allow. The same news as the bell pops up on your phone, and the app's icon shows how many you haven't read. Emails still come. On an iPhone, alerts work only in the app opened from your home screen.",
+        "Alerts stay on: only a System Administrator can turn them off, for you or for the whole church. Lost a phone? Ask them to remove it.",
       ],
     },
     {

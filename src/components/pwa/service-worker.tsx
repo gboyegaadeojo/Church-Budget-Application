@@ -7,7 +7,7 @@ import { INSTALLABLE_EVENT, resyncAlerts, type InstallPrompt } from "./push-clie
  * Registers the service worker that shows phone alerts, and keeps the browser's install
  * prompt for the Get the app page (docs/decisions.md 2026-10-22). Renders nothing.
  */
-export function ServiceWorker() {
+export function ServiceWorker({ userId }: { userId: string }) {
   useEffect(() => {
     const keep = (event: Event) => {
       // Chrome shows its own banner unless the page keeps the prompt for its own button.
@@ -24,13 +24,13 @@ export function ServiceWorker() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js", { scope: "/" })
-        .then(() => resyncAlerts())
+        .then(() => resyncAlerts(userId))
         .catch(() => undefined);
     }
     return () => {
       window.removeEventListener("beforeinstallprompt", keep);
       window.removeEventListener("appinstalled", installed);
     };
-  }, []);
+  }, [userId]);
   return null;
 }

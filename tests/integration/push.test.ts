@@ -1,14 +1,23 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { notifications, pushSubscriptions } from "@/db/schema";
+import {
+  appSettings,
+  auditEvents,
+  notifications,
+  pushSubscriptions,
+  userRoles,
+  users,
+} from "@/db/schema";
 import type { Db } from "@/db/types";
 import {
   deliverPushes,
   listPushDevices,
   pendingPushCount,
-  removePushSubscription,
   savePushSubscription,
 } from "@/domain/notifications/push";
+import { updatePushEnabled } from "@/domain/settings/service";
+import { removeUserPushDevice, setUserPushAlerts } from "@/domain/users/admin";
+import { ForbiddenError, type Subject } from "@/lib/authz";
 import { enqueueEmail, type QueuedEmail } from "@/lib/email/outbox";
 import { FakePushSender } from "@/lib/push/fake";
 import { createTestDb, type TestDb } from "./helpers/db";
@@ -28,10 +37,14 @@ const SECRET = "a".repeat(22);
 let t: TestDb;
 let db: Db;
 let seq = 0;
+let admin: Subject;
 
 beforeAll(async () => {
   t = await createTestDb();
   db = t.db;
+  const row = await insertUser(db, { accessStatus: "active" });
+  await db.insert(userRoles).values({ userId: row.id, role: "system_admin" });
+  admin = { id: row.id, roles: ["system_admin"], departments: [] };
 });
 
 afterAll(async () => {
@@ -122,19 +135,73 @@ describe("phone alerts", () => {
     expect(sender.sent).toHaveLength(0);
   });
 
-  it("moves a shared device to whoever turned alerts on last, and only owners remove it", async () => {
+  it("moves a shared device to whoever signed in last", async () => {
     const ana = await insertUser(db);
     const ben = await insertUser(db);
     const shared = await turnOn(ana.id);
     await turnOn(ben.id, shared);
     expect(await listPushDevices(db, ana.id)).toEqual([]);
     expect(await listPushDevices(db, ben.id)).toHaveLength(1);
+  });
 
-    // Ana can't turn off Ben's device.
-    await db.transaction((tx) => removePushSubscription(tx, ana.id, { endpoint: shared }));
-    expect(await listPushDevices(db, ben.id)).toHaveLength(1);
-    await db.transaction((tx) => removePushSubscription(tx, ben.id, { endpoint: shared }));
-    expect(await listPushDevices(db, ben.id)).toEqual([]);
+  it("only the System Administrator turns a person's alerts off, and it is audited", async () => {
+    const joy = await insertUser(db);
+    await turnOn(joy.id);
+    const accountant: Subject = { id: joy.id, roles: ["accountant"], departments: [] };
+    await expect(
+      db.transaction((tx) =>
+        setUserPushAlerts(tx, accountant, { userId: joy.id, on: false, version: 1 }),
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+
+    const [before] = await db.select().from(users).where(eq(users.id, joy.id));
+    await db.transaction((tx) =>
+      setUserPushAlerts(tx, admin, { userId: joy.id, on: false, version: before.version }),
+    );
+    const [audit] = await db
+      .select()
+      .from(auditEvents)
+      .where(eq(auditEvents.eventType, "admin.user_alerts_off"));
+    expect(audit.entityId).toBe(joy.id);
+
+    // Off: her notifications no longer wait to be pushed, though the bell still has them.
+    const sender = new FakePushSender();
+    await notify([joy]);
+    await deliverPushes(db, sender, { now: NOW });
+    expect(sender.sent).toHaveLength(0);
+    const rows = await db.select().from(notifications).where(eq(notifications.userId, joy.id));
+    expect(rows).toHaveLength(1);
+  });
+
+  it("the System Administrator removes a lost phone; nobody else can", async () => {
+    const max = await insertUser(db);
+    await turnOn(max.id);
+    const [device] = await listPushDevices(db, max.id);
+    const leader: Subject = { id: max.id, roles: ["requester"], departments: [] };
+    await expect(
+      db.transaction((tx) =>
+        removeUserPushDevice(tx, leader, { userId: max.id, deviceId: device.id }),
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    const result = await db.transaction((tx) =>
+      removeUserPushDevice(tx, admin, { userId: max.id, deviceId: device.id }),
+    );
+    expect(result.device).toBe("iPhone");
+    expect(await listPushDevices(db, max.id)).toEqual([]);
+  });
+
+  it("the church-wide switch stops every alert", async () => {
+    const zoe = await insertUser(db);
+    await turnOn(zoe.id);
+    await db.transaction((tx) => updatePushEnabled(tx, admin, { enabled: false, versions: {} }));
+    const sender = new FakePushSender();
+    await notify([zoe]);
+    await deliverPushes(db, sender, { now: NOW });
+    expect(sender.sent).toHaveLength(0);
+    const [row] = await db.select().from(appSettings).where(eq(appSettings.key, "push_enabled"));
+    await db.transaction((tx) =>
+      updatePushEnabled(tx, admin, { enabled: true, versions: { push_enabled: row.version } }),
+    );
   });
 
   it("refuses an address that isn't a browser push service", async () => {

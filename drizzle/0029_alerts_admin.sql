@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "push_alerts" boolean DEFAULT true NOT NULL;

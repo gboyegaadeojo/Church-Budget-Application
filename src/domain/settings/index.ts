@@ -55,6 +55,8 @@ export const SETTING_DEFAULTS = {
   approval_reminder_days: "5",
   /** Reminder texts sent per calendar month before the rest are held back (cost guard). */
   sms_monthly_limit: "300",
+  /** Phone alerts (web push) for the whole church; the System Administrator's switch. */
+  push_enabled: "true",
 } as const;
 
 /** A whole-number-of-days setting, or its default when the stored value is unusable. */

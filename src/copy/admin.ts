@@ -103,6 +103,25 @@ export const adminCopy = {
     deactivateBody:
       "They won't be able to sign in. Their history stays. If they're a department's Primary requester, the Backup becomes Primary. You can reactivate them later.",
     deactivated: (name: string) => `${name} was deactivated.`,
+    alerts: {
+      heading: "Phone alerts",
+      intro:
+        "Notifications from the bell pop up on this person's phones and computers once they install the app and tap Allow. Only a System Administrator can turn them off.",
+      on: "On",
+      off: "Off",
+      churchOff: "Phone alerts are off for the whole church (Settings → Texts and alerts).",
+      turnOff: "Turn off alerts",
+      turnOn: "Turn on alerts",
+      turnedOn: (name: string) => `Phone alerts are on for ${name}.`,
+      turnedOff: (name: string) => `Phone alerts are off for ${name}.`,
+      noDevices:
+        "No phone or computer yet. They're asked to allow alerts when they open the installed app.",
+      added: (date: string) => `Added ${date}`,
+      remove: "Remove",
+      removeLabel: (device: string) => `Remove ${device}`,
+      removed: (device: string) => `${device} removed. It gets no more alerts.`,
+      notFound: "That device was already removed.",
+    },
     reactivated: (name: string) => `${name} was reactivated.`,
     verification: "Planning Center check",
     verifiedAt: (when: string) => `Group Leader, checked ${when}`,
@@ -497,7 +516,7 @@ export const adminCopy = {
       money: { label: "Money", hint: "Sales tax and large approvals" },
       people: { label: "People", hint: "Accountants and cheque signers" },
       "sign-in": { label: "Sign-in", hint: "Planning Center and sign-in" },
-      texts: { label: "Reminder texts", hint: "Texts and the monthly limit" },
+      texts: { label: "Texts and alerts", hint: "Reminder texts and phone alerts" },
     },
     groups: {
       church: "Church",
@@ -538,6 +557,23 @@ export const adminCopy = {
       saved: "Second approval threshold saved.",
       off: "Off: every approval is final.",
       on: (amount: string) => `On: approvals of ${amount} or more need a second sign-off.`,
+    },
+    alerts: {
+      heading: "Phone alerts",
+      intro:
+        "Everything in the bell also pops up on the phones and computers where people installed the app and tapped Allow. People can't turn alerts off themselves; only a System Administrator can, here for everyone or on a person's page in Users & Roles.",
+      keys: "Alert keys",
+      keysSet: "Set up",
+      keysMissing: "Not set up (add the keys in Netlify)",
+      church: "Alerts for the church",
+      on: "On",
+      off: "Off",
+      devices: "Devices with alerts",
+      peopleOff: "People with alerts turned off",
+      choose: "Phone alerts",
+      save: "Save",
+      savedOn: "Phone alerts are on for the church.",
+      savedOff: "Phone alerts are off for the church.",
     },
     sms: {
       heading: "Reminder texts",

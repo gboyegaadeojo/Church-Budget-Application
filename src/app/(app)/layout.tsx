@@ -16,7 +16,7 @@ import {
   ViewerBottomBar,
   ViewerSidebar,
 } from "@/components/app-shell/viewer-shell";
-import { ServiceWorker } from "@/components/pwa/service-worker";
+import { ViewerAlertsPrompt, ViewerServiceWorker } from "@/components/pwa/viewer-alerts";
 import { copy } from "@/copy/en-CA";
 
 /**
@@ -69,6 +69,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
                 <Brand />
               </div>
               <Suspense fallback={null}>
+                <ViewerAlertsPrompt />
+              </Suspense>
+              <Suspense fallback={null}>
                 <Breadcrumbs />
               </Suspense>
               {children}
@@ -81,7 +84,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       <Suspense fallback={null}>
         <ViewerBottomBar />
       </Suspense>
-      <ServiceWorker />
+      <Suspense fallback={null}>
+        <ViewerServiceWorker />
+      </Suspense>
     </>
   );
 }

@@ -4,12 +4,12 @@ import { AdminSkeleton, PageHeader } from "@/components/ui/display";
 import { SettingsGroup, SettingsRow } from "@/components/ui/grouped-list";
 import { getAppCopy as g } from "@/copy/get-app";
 import { getDb } from "@/db";
-import { listPushDevices } from "@/domain/notifications/push";
+import { alertsFor, listPushDevices } from "@/domain/notifications/push";
 import { getChurchTimeZone } from "@/domain/settings";
 import { getPushPublicKey } from "@/lib/push";
 import { formatDate, zonedDate } from "@/lib/time-zone";
 import { getViewer } from "@/lib/viewer";
-import { AlertsSetup, InstallSetup, RemoveDeviceButton } from "./device-setup";
+import { AlertsSetup, InstallSetup } from "./device-setup";
 
 export const metadata: Metadata = { title: g.title };
 
@@ -29,16 +29,17 @@ export default function GetAppPage() {
 async function Alerts() {
   const viewer = await getViewer();
   const db = getDb();
-  const [devices, zone] = await Promise.all([
+  const [devices, zone, allowed] = await Promise.all([
     listPushDevices(db, viewer.id),
     getChurchTimeZone(db),
+    alertsFor(db, viewer.id),
   ]);
   const day = (at: Date) => formatDate(zonedDate(at, zone));
   return (
     <>
-      <AlertsSetup publicKey={getPushPublicKey()} />
+      <AlertsSetup publicKey={getPushPublicKey()} allowed={allowed} />
       {devices.length > 0 && (
-        <SettingsGroup id="devices" title={g.devices.heading}>
+        <SettingsGroup id="devices" title={g.devices.heading} footer={g.devices.lost}>
           {devices.map((d) => (
             <SettingsRow
               key={d.id}
@@ -49,9 +50,7 @@ async function Alerts() {
               ]
                 .filter(Boolean)
                 .join(" · ")}
-            >
-              <RemoveDeviceButton id={d.id} device={d.device} />
-            </SettingsRow>
+            />
           ))}
         </SettingsGroup>
       )}
