@@ -68,6 +68,17 @@ The **bell** in the top bar shows what has happened to your budgets and expenses
 - The **Notifications** page groups them by **Today**, **Yesterday**, **This week** and **Earlier**. The buttons along the top show **Unread**, **Needs action**, or one area (Annual Budget, Expenses, Spending, Budget years, Departments & people).
 - Select one to open what it's about; it is then marked as read. Only you see your notifications. Emails still come as before.
 
+### Get the app (install it and get alerts)
+
+Church Budget can sit on your phone's home screen and alert you like any other app. It's free. Open **Get the app**, at the bottom of every page, in your account menu, or from **Get these on your phone** on the Notifications page.
+
+- **iPhone or iPad:** open the app in **Safari**, tap **Share** (the square with an arrow), then **Add to Home Screen** and **Add**. Open it from the home screen and sign in.
+- **Android:** in **Chrome**, tap **Install the app** on Get the app, or choose **Install app** (or **Add to Home screen**) from Chrome's menu.
+- **Computer:** in Chrome or Edge, select **Install the app**, or the install icon in the address bar. It opens in its own window.
+- **Alerts:** in the installed app, open Get the app and tap **Turn on alerts**, then **Allow**. Every notification in the bell also pops up on that phone or computer, and the app's icon shows how many you haven't read. Tap an alert to open what it's about. **Send a test alert** checks it works. On an iPhone, alerts work only in the app opened from the home screen (iOS 16.4 or later).
+- Alerts show a short line such as "An expense needs your approval" on the lock screen. Amounts and details stay in the app. Emails still come; alerts are extra.
+- **Signing out** turns alerts off on that device. **Devices with alerts**, on Get the app, lists your phones and computers; **Turn off** removes one you no longer use.
+
 ### Your account
 
 From the account menu: theme (light, dark or system), **Away** (accountants, backup approvers, Board Chair and Vice-Chair), and sign out. A department's Primary sets Away on **Annual Budget** instead (section 4).

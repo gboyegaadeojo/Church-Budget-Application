@@ -1,7 +1,9 @@
 import "server-only";
 import { after } from "next/server";
 import { getDb } from "@/db";
+import { deliverPushes } from "@/domain/notifications/push";
 import { fakeSignInEnabled } from "@/lib/auth-mode";
+import { getPushSender } from "@/lib/push";
 import { FakeEmailSender } from "./fake";
 import { deliverOutbox } from "./outbox";
 import { ResendEmailSender } from "./resend";
@@ -30,13 +32,20 @@ export function getEmailSender(): EmailSender | null {
  */
 export function sendOutboxAfterResponse(options: { ids?: string[] } = {}): void {
   const sender = getEmailSender();
-  if (!sender) return;
+  // The same change put its notifications in the bell; phone alerts for them go now too.
+  const push = getPushSender();
+  if (!sender && !push) return;
   try {
     after(async () => {
       try {
-        await deliverOutbox(getDb(), sender, { limit: 25, ids: options.ids });
+        if (sender) await deliverOutbox(getDb(), sender, { limit: 25, ids: options.ids });
       } catch (error) {
         console.error("Sending the email outbox failed; the scheduled job will retry", error);
+      }
+      try {
+        if (push) await deliverPushes(getDb(), push, { limit: 50 });
+      } catch (error) {
+        console.error("Sending phone alerts failed; the scheduled job will try again", error);
       }
     });
   } catch (error) {

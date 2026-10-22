@@ -147,6 +147,15 @@ export const helpCopy = {
       ],
     },
     {
+      id: "get-app",
+      question: "Can I put the app on my phone and get alerts?",
+      answer: [
+        "Yes. Open Get the app, at the bottom of every page or in your account menu. On an iPhone, open the app in Safari, tap Share, then Add to Home Screen. On Android, tap Install the app or choose Install app from Chrome's menu.",
+        "Then, in the installed app, open Get the app again and tap Turn on alerts. The same news as the bell pops up on your phone, and the app's icon shows how many you haven't read. Emails still come. On an iPhone, alerts work only in the app opened from your home screen.",
+        "Signing out turns alerts off on that phone or computer. Turn them off on another device, such as a lost phone, from the list on Get the app.",
+      ],
+    },
+    {
       id: "reminders",
       question: "Can I get reminders by text?",
       answer: [
@@ -224,7 +233,7 @@ export const privacyCopy = {
         "Department leaders see their own department's budgets.",
         "The accountant and backup approver see the budgets they review. The Board Chair and Vice-Chair can follow them.",
         "System Administrators can see everything, to run and support the app.",
-        "The services that host the app, its database, its email and its backups (Netlify, Neon, Resend, Twilio, Cloudflare and Google Drive) store it for us under their own security and privacy terms. Some of them store data outside Canada, usually in the United States, where it may be subject to that country's laws.",
+        "The services that host the app, its database, its email and its backups (Netlify, Neon, Resend, Twilio, Cloudflare and Google Drive) store it for us under their own security and privacy terms. Some of them store data outside Canada, usually in the United States, where it may be subject to that country's laws. If you turn on phone alerts, your phone's push service (Apple, Google, Mozilla or Microsoft) carries each alert to your device, encrypted; the app keeps only that device's push address, until you turn alerts off.",
       ],
     },
     {

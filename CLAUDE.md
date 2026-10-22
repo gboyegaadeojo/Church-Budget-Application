@@ -141,6 +141,7 @@ PCO_APP_ID, PCO_PAT_SECRET                # server-side People API (Personal Acc
 RESEND_API_KEY, RESEND_FROM               # email sending (From is on the church's verified domain)
 TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM   # reminder texts (the one paid service, docs/decisions.md 2026-10-18)
 R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
+VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT   # phone alerts (web push, free; docs/decisions.md 2026-10-22)
 JOBS_SECRET
 APP_TIMEZONE=America/Winnipeg
 # GitHub Actions only (backup.yml)

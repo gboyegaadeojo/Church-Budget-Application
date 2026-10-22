@@ -1,6 +1,7 @@
 import { and, count, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
 import { notificationAreaEnum, notifications, users } from "@/db/schema";
 import type { Tx } from "@/db/types";
+import { withPushDevices } from "./push";
 
 /**
  * In-app notifications: the bell (docs/decisions.md 2026-10-19). Every email the app
@@ -106,6 +107,8 @@ export async function addNotifications(
   }
   if (ids.size === 0) return 0;
   const body = draft.body.length > 200 ? `${draft.body.slice(0, 199)}…` : draft.body;
+  // People with alerts turned on also get it on their phones, sent after commit.
+  const pushed = await withPushDevices(tx, [...ids]);
   await tx.insert(notifications).values(
     [...ids].map((userId) => ({
       userId,
@@ -118,6 +121,7 @@ export async function addNotifications(
       budgetRequestId: draft.budgetRequestId ?? null,
       expenseSubmissionId: draft.expenseSubmissionId ?? null,
       cycleId: draft.cycleId ?? null,
+      pushPending: pushed.has(userId),
       createdAt: draft.createdAt,
     })),
   );

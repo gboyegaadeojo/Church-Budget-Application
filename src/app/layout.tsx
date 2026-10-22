@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { BrandStyle } from "@/components/app-shell/live-brand";
 import { ThemeProvider } from "@/components/theme-provider";
 import { copy } from "@/copy/en-CA";
+import { getAppCopy } from "@/copy/get-app";
 // Inter (variable, self-hosted from npm) is loaded by globals.css (DRD 3.4).
 import "./globals.css";
 
@@ -12,7 +13,10 @@ export const metadata: Metadata = {
   },
   description: copy.app.metaDescription,
   // The administrator's square icon, or the default (FR-30).
-  icons: { icon: "/brand/icon", apple: "/brand/icon" },
+  icons: { icon: "/brand/icon", apple: "/brand/icon?home" },
+  // Installable on phones and computers (docs/decisions.md 2026-10-22).
+  manifest: "/app.webmanifest",
+  appleWebApp: { capable: true, title: getAppCopy.manifest.shortName, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

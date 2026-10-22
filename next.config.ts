@@ -26,7 +26,17 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "2mb" },
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // The service worker is checked for updates on every visit, so a new one takes over at once.
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+    ];
   },
   turbopack: {
     rules: {
