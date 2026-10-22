@@ -1212,3 +1212,8 @@ The church asked for a list that stays clean with about 80 people.
 - **Security:** the server posts to the device's endpoint, so only the browsers' push service hosts are accepted (https, no port), which rules out requests to internal addresses. Everyone manages only their own devices; the System Administrator can't see or remove anyone else's.
 - **The service worker caches nothing**, so every page and amount always comes fresh from the server; it only shows alerts, opens the tapped page, and sets the app icon's unread number.
 - **Known limit:** on an iPhone, signing in with Planning Center inside the installed app may open Safari for the Planning Center step. Check during the real-phone check; signing in with an emailed code always works in the app.
+
+## 2026-10-22: Sign-in page redesign
+
+- **Asked for by the user:** a calmer, premium sign-in page. The church's mark sits above the card like an app icon (or the uploaded logo), over a soft glow of the accent colour. Continue with Planning Center is the one filled button; Continue with email is an equal-height outlined button under an "or" divider and opens the email and code fields in place. Who can get in is folded into "Need access?", and the privacy note sits at the foot of the card. The access-denied screens share the new layout.
+- The access text now matches 2026-10-20: staff sign in with Planning Center's Ministry Leader field and get their role from the administrator; the emailed code is for anyone not in Planning Center.

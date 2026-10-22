@@ -158,13 +158,13 @@ export const copy = {
     description:
       "Plan your department's annual budget, submit expenses and follow spending, all in one place.",
     continueWithPlanningCenter: "Continue with Planning Center",
+    or: "or",
     email: {
-      prompt: "Not in Planning Center?",
       open: "Continue with email",
       formLabel: "Sign in with an emailed code",
       emailLabel: "Email address",
       emailHint:
-        "For the Church Administrator and System Administrators. We'll email a 6-digit code to the address the church has for you.",
+        "For anyone not in Planning Center, such as the Church Administrator. We'll email a 6-digit code to the address the church has for you.",
       sendCode: "Email me a code",
       // The same words whether or not the address has an account (AC-133).
       sent: (email: string) =>
@@ -186,12 +186,12 @@ export const copy = {
       unavailable: "Email sign-in isn't available right now. Please try again shortly.",
     },
     leaderNote:
-      "Department leaders: your Group Leader status in Planning Center is checked when you sign in.",
+      "Ministry leaders and church staff sign in with Planning Center. Your Ministry Leader status there is checked each time.",
     accessHeading: "Need access?",
     accessLeaders:
-      "Department leaders get access once Planning Center shows them as a Group Leader. Ask your Planning Center administrator if you're not marked yet.",
+      "If you're told you can't get in, ask your Planning Center administrator to mark you as a Ministry Leader.",
     accessStaff:
-      "Church staff: ask the administrator to add you and link your Planning Center profile. The Church Administrator and System Administrators can also sign in with an emailed code.",
+      "New staff: after your first sign-in, the administrator gives you your role. If you're not in Planning Center, ask them to add you by email and sign in with an emailed code.",
     contact: (email: string) => `Questions? Email ${email}.`,
     privacyNote:
       "We store your name, email address and your budget activity, only to run the church's budgets.",

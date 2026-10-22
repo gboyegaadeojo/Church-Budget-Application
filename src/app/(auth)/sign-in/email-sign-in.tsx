@@ -9,11 +9,17 @@ import {
 } from "@/app/actions/auth";
 import { buttonClass, inputClass, linkClass } from "@/components/ui/styles";
 import { copy } from "@/copy/en-CA";
+import { cn } from "@/lib/cn";
 
 const e = copy.signIn.email;
 
+/** Full width and tall, matching the Planning Center button above it. */
+const secondaryClass =
+  "flex min-h-[52px] w-full items-center justify-center gap-3 rounded-[14px] border border-border-strong bg-surface px-5 text-[15px] font-semibold transition-colors duration-150 hover:bg-surface-hover motion-reduce:transition-none";
+const fieldClass = "min-h-12 rounded-[12px] text-base";
+
 /**
- * "Continue with email" (FR-01b, DRD 6.1): a quieter text button that opens an email
+ * "Continue with email" (FR-01b, DRD 6.1): a quieter outlined button that opens an email
  * field, then one 6-digit code field (autocomplete="one-time-code", paste-friendly).
  * The server decides every step; this only shows where it says the person is.
  */
@@ -45,13 +51,10 @@ export function EmailSignIn({ callbackUrl }: { callbackUrl: string }) {
 
   if (!open) {
     return (
-      <p className="flex flex-wrap items-center justify-center gap-x-1 text-sm text-fg-muted">
-        {e.prompt}
-        <button type="button" onClick={() => setOpen(true)} className={buttonClass("ghost")}>
-          <Mail className="size-4" aria-hidden="true" />
-          {e.open}
-        </button>
-      </p>
+      <button type="button" onClick={() => setOpen(true)} className={secondaryClass}>
+        <Mail className="size-[18px]" aria-hidden="true" />
+        {e.open}
+      </button>
     );
   }
 
@@ -68,12 +71,7 @@ export function EmailSignIn({ callbackUrl }: { callbackUrl: string }) {
   );
 
   return (
-    <form
-      action={formAction}
-      aria-label={e.formLabel}
-      noValidate
-      className="space-y-4 rounded-control border border-border p-4"
-    >
+    <form action={formAction} aria-label={e.formLabel} noValidate className="space-y-4 pt-1">
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
       {state.step === "email" ? (
         <>
@@ -92,7 +90,7 @@ export function EmailSignIn({ callbackUrl }: { callbackUrl: string }) {
               required
               aria-invalid={state.error ? true : undefined}
               aria-describedby={[hintId, state.error && errorId].filter(Boolean).join(" ")}
-              className={inputClass}
+              className={cn(inputClass, fieldClass)}
             />
             <p id={hintId} className="text-xs text-fg-muted">
               {e.emailHint}
@@ -105,7 +103,7 @@ export function EmailSignIn({ callbackUrl }: { callbackUrl: string }) {
             value="request"
             disabled={pending}
             aria-busy={pending || undefined}
-            className={buttonClass("primary", "w-full")}
+            className={buttonClass("primary", "min-h-12 w-full rounded-[12px] text-[15px]")}
           >
             {spinner}
             {e.sendCode}
@@ -139,7 +137,7 @@ export function EmailSignIn({ callbackUrl }: { callbackUrl: string }) {
                 [state.notice && hintId, state.error && errorId].filter(Boolean).join(" ") ||
                 undefined
               }
-              className={`${inputClass} tabular text-base tracking-widest`}
+              className={cn(inputClass, fieldClass, "tabular text-center text-xl tracking-[0.4em]")}
             />
           </div>
           {error}
@@ -149,7 +147,7 @@ export function EmailSignIn({ callbackUrl }: { callbackUrl: string }) {
             value="verify"
             disabled={pending}
             aria-busy={pending || undefined}
-            className={buttonClass("primary", "w-full")}
+            className={buttonClass("primary", "min-h-12 w-full rounded-[12px] text-[15px]")}
           >
             {spinner}
             {e.signIn}
