@@ -6,8 +6,10 @@ import {
   addStaff,
   addStaffFromPlanningCenter,
   linkPlanningCenterPerson,
+  removeUserPushDevice,
   searchPlanningCenterPeople,
   setUserActive,
+  setUserPushAlerts,
   setUserRoles,
   unlinkPlanningCenterPerson,
   type PcoCandidate,
@@ -77,6 +79,38 @@ export async function setActiveAction(_: ActionState, data: FormData): Promise<A
       return active ? u.reactivated(name) : u.deactivated(name);
     },
     { paths: ["/admin/users", `/admin/users/${userId}`] },
+  );
+}
+
+// ---------------------------------------------------------------- phone alerts (2026-10-22)
+
+export async function setPushAlertsAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const userId = form.text(data, "userId");
+  const on = form.text(data, "on") === "true";
+  return runAction(
+    async (tx, viewer) => {
+      const { name } = await setUserPushAlerts(tx, viewer, {
+        userId,
+        on,
+        version: form.text(data, "version"),
+      });
+      return on ? u.alerts.turnedOn(name) : u.alerts.turnedOff(name);
+    },
+    { paths: ["/admin/users", `/admin/users/${userId}`] },
+  );
+}
+
+export async function removePushDeviceAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const userId = form.text(data, "userId");
+  return runAction(
+    async (tx, viewer) => {
+      const { device } = await removeUserPushDevice(tx, viewer, {
+        userId,
+        deviceId: form.text(data, "deviceId"),
+      });
+      return device ? u.alerts.removed(device) : u.alerts.notFound;
+    },
+    { paths: [`/admin/users/${userId}`] },
   );
 }
 

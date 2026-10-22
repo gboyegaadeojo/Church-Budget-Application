@@ -150,6 +150,24 @@ export async function updateSmsMonthlyLimit(
   );
 }
 
+// ---------------------------------------------------------------- phone alerts
+
+/** Turns phone alerts on or off for the whole church (System Administrator only). */
+export async function updatePushEnabled(
+  tx: Tx,
+  actor: Subject,
+  input: { enabled: boolean; versions: Record<string, unknown> },
+): Promise<boolean> {
+  assertCan(actor, "admin.settings");
+  return writeSettings(
+    tx,
+    actor,
+    { push_enabled: input.enabled ? "true" : "false" },
+    input.versions,
+    "admin.phone_alerts_changed",
+  );
+}
+
 // ---------------------------------------------------------------- time zone
 
 export async function updateTimeZone(

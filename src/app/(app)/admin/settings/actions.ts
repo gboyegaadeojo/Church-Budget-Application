@@ -8,6 +8,7 @@ import {
   testPerson,
   updateSignInSettings,
   updateSecondApprovalThreshold,
+  updatePushEnabled,
   updateSmsMonthlyLimit,
   updateTaxRate,
   updateTimeZone,
@@ -115,6 +116,17 @@ export async function smsLimitAction(_: ActionState, data: FormData): Promise<Ac
         versions: form.json(data, "versions"),
       });
       return s.sms.saved;
+    },
+    { paths: [PAGE] },
+  );
+}
+
+export async function pushEnabledAction(_: ActionState, data: FormData): Promise<ActionState> {
+  const enabled = form.text(data, "enabled") === "true";
+  return runAction(
+    async (tx, viewer) => {
+      await updatePushEnabled(tx, viewer, { enabled, versions: form.json(data, "versions") });
+      return enabled ? s.alerts.savedOn : s.alerts.savedOff;
     },
     { paths: [PAGE] },
   );

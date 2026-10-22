@@ -32,7 +32,9 @@ import type { PcoFieldDefinition } from "@/lib/pco";
 import { getPlanningCenterDirectory } from "@/lib/pco-directory";
 import { smsConfigured } from "@/lib/sms/config";
 import { smsUsage } from "@/lib/sms/outbox";
-import { secondApprovalAction, smsLimitAction, timeZoneAction } from "./actions";
+import { pushDeviceCounts } from "@/domain/notifications/push";
+import { getPushPublicKey } from "@/lib/push";
+import { pushEnabledAction, secondApprovalAction, smsLimitAction, timeZoneAction } from "./actions";
 import { AccountantsSection, SignersSection } from "./people-sections";
 import { SignInSettingsForm, TaxRateForm } from "./settings-forms";
 import {
@@ -156,7 +158,12 @@ function CategoryContent({ category }: { category: Category }) {
     case "sign-in":
       return <SignInSettings />;
     case "texts":
-      return <TextSettings />;
+      return (
+        <>
+          <PhoneAlertSettings />
+          <TextSettings />
+        </>
+      );
     default:
       return <GeneralSettings />;
   }
@@ -351,6 +358,61 @@ async function SignInSettings() {
         fields={pco.fields?.map((f) => ({ name: f.name, dataType: f.dataType })) ?? null}
       />
     </>
+  );
+}
+
+/** Phone alerts (2026-10-22): whether the keys are in, and the church-wide switch. */
+async function PhoneAlertSettings() {
+  const db = getDb();
+  const a = s.alerts;
+  const [counts, versions] = await Promise.all([
+    pushDeviceCounts(db),
+    settingVersions(db, ["push_enabled"]),
+  ]);
+  // The keys are checked by name only; their values are never shown.
+  const keysSet = getPushPublicKey() !== null;
+  return (
+    <SettingsGroup title={a.heading} id="phone-alerts" footer={a.intro}>
+      <SettingsRow label={a.keys}>
+        {keysSet ? (
+          <Badge tone="success">{a.keysSet}</Badge>
+        ) : (
+          <span className="text-right text-warning">{a.keysMissing}</span>
+        )}
+      </SettingsRow>
+      <SettingsDisclosure
+        label={a.church}
+        value={
+          counts.enabled ? (
+            <Badge tone="success">{a.on}</Badge>
+          ) : (
+            <Badge tone="neutral">{a.off}</Badge>
+          )
+        }
+      >
+        <ActionForm action={pushEnabledAction} aria-label={a.heading}>
+          <input type="hidden" name="versions" value={JSON.stringify(versions)} />
+          <div className="max-w-xs">
+            <SelectField
+              name="enabled"
+              label={a.choose}
+              defaultValue={counts.enabled ? "true" : "false"}
+              options={[
+                { value: "true", label: a.on },
+                { value: "false", label: a.off },
+              ]}
+            />
+          </div>
+          <SubmitButton tone="secondary">{a.save}</SubmitButton>
+        </ActionForm>
+      </SettingsDisclosure>
+      <SettingsRow label={a.devices}>
+        <span className="tabular">{counts.devices}</span>
+      </SettingsRow>
+      <SettingsRow label={a.peopleOff}>
+        <span className="tabular">{counts.peopleOff}</span>
+      </SettingsRow>
+    </SettingsGroup>
   );
 }
 

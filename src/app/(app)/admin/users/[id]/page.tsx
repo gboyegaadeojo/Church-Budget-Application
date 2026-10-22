@@ -24,8 +24,15 @@ import { viewerAllowedTo } from "@/lib/admin-server";
 import { PlanningCenterUnavailableError } from "@/lib/pco";
 import { getPlanningCenterDirectory } from "@/lib/pco-directory";
 import type { Viewer } from "@/lib/roles";
-import { formatDateTime } from "@/lib/time-zone";
-import { addSubmitterAction, removeSubmitterAction, setActiveAction } from "../actions";
+import { formatDate, formatDateTime, zonedDate } from "@/lib/time-zone";
+import { alertsFor, listPushDevices } from "@/domain/notifications/push";
+import {
+  addSubmitterAction,
+  removePushDeviceAction,
+  removeSubmitterAction,
+  setActiveAction,
+  setPushAlertsAction,
+} from "../actions";
 import { PcoLink } from "./pco-link";
 import { UserStatusBadge } from "../status-badge";
 import { RolesForm } from "./roles-form";
@@ -52,11 +59,14 @@ async function UserContent({ params }: Pick<PageProps<"/admin/users/[id]">, "par
   const detail = await getUserDetail(db, id);
   if (!detail) notFound();
   const { user, roles, departments } = detail;
-  const [zone, submitterOf, active] = await Promise.all([
+  const [zone, submitterOf, active, devices, alerts] = await Promise.all([
     getChurchTimeZone(db),
     submitterDepartmentsOf(db, viewer, user.id),
     listDepartments(db, "active"),
+    listPushDevices(db, user.id),
+    alertsFor(db, user.id),
   ]);
+  const a = u.alerts;
   const canAddSubmitter = active.filter(
     (d) =>
       !departments.some((mine) => mine.id === d.id) &&
@@ -103,6 +113,45 @@ async function UserContent({ params }: Pick<PageProps<"/admin/users/[id]">, "par
             <SubmitButton tone="secondary">{u.reactivate}</SubmitButton>
           )}
         </ActionForm>
+      </Section>
+
+      <Section title={a.heading} id="phone-alerts">
+        <p className="text-sm text-fg-muted">{a.intro}</p>
+        {alerts === "church_off" && <p className="text-sm text-warning">{a.churchOff}</p>}
+        <ActionForm
+          action={setPushAlertsAction}
+          className="flex flex-wrap items-center gap-3"
+          aria-label={a.heading}
+        >
+          <input type="hidden" name="userId" value={user.id} />
+          <input type="hidden" name="version" value={user.version} />
+          <input type="hidden" name="on" value={user.pushAlerts ? "false" : "true"} />
+          <Badge tone={user.pushAlerts ? "success" : "neutral"}>
+            {user.pushAlerts ? a.on : a.off}
+          </Badge>
+          <SubmitButton tone="secondary">{user.pushAlerts ? a.turnOff : a.turnOn}</SubmitButton>
+        </ActionForm>
+        {devices.length === 0 ? (
+          <EmptyState>{a.noDevices}</EmptyState>
+        ) : (
+          <ul className="divide-y divide-border text-sm">
+            {devices.map((d) => (
+              <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span>
+                  <span className="font-medium">{d.device}</span>
+                  <span className="ml-2 text-fg-muted">
+                    {a.added(formatDate(zonedDate(d.createdAt, zone)))}
+                  </span>
+                </span>
+                <ActionForm action={removePushDeviceAction} aria-label={a.removeLabel(d.device)}>
+                  <input type="hidden" name="userId" value={user.id} />
+                  <input type="hidden" name="deviceId" value={d.id} />
+                  <SubmitButton tone="secondary">{a.remove}</SubmitButton>
+                </ActionForm>
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
 
       <Section title={u.pco.heading} id="planning-center">

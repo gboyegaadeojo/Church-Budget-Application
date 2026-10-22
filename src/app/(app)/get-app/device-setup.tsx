@@ -2,13 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, useTransition } from "react";
-import { Bell, BellOff, CheckCircle2, Download, Send } from "lucide-react";
-import { removePushAction, testPushAction } from "@/app/actions/push";
+import { Bell, CheckCircle2, Download, Send } from "lucide-react";
+import { testPushAction } from "@/app/actions/push";
 import {
   currentSubscription,
   deviceState,
   INSTALLABLE_EVENT,
-  turnOffAlerts,
   turnOnAlerts,
   type DeviceKind,
   type DeviceState,
@@ -98,8 +97,17 @@ export function InstallSetup() {
 
 type Message = { tone: "ok" | "error"; text: string };
 
-/** Alerts on this device: on, off, or why they can't be turned on here. */
-export function AlertsSetup({ publicKey }: { publicKey: string | null }) {
+/**
+ * Alerts on this device: on, or why they aren't yet. People can allow them but not turn
+ * them off; only the System Administrator can (decided by the church 2026-10-22).
+ */
+export function AlertsSetup({
+  publicKey,
+  allowed,
+}: {
+  publicKey: string | null;
+  allowed: "on" | "church_off" | "person_off";
+}) {
   const router = useRouter();
   const device = useDevice();
   const [on, setOn] = useState<boolean | null>(null);
@@ -129,14 +137,6 @@ export function AlertsSetup({ publicKey }: { publicKey: string | null }) {
       }
     });
 
-  const turnOff = () =>
-    start(async () => {
-      setMessage(null);
-      await turnOffAlerts();
-      setOn(false);
-      router.refresh();
-    });
-
   const test = () =>
     start(async () => {
       const result = await testPushAction();
@@ -146,6 +146,12 @@ export function AlertsSetup({ publicKey }: { publicKey: string | null }) {
   let body: React.ReactNode;
   if (!device || (device.pushable && on === null && !!publicKey)) {
     body = <SettingsCell className="text-fg-muted">…</SettingsCell>;
+  } else if (allowed !== "on") {
+    body = (
+      <SettingsCell className="text-fg-muted">
+        {allowed === "church_off" ? g.alerts.churchOff : g.alerts.personOff}
+      </SettingsCell>
+    );
   } else if (!publicKey) {
     body = <SettingsCell className="text-fg-muted">{g.alerts.notSetUp}</SettingsCell>;
   } else if (device.kind === "iphone" && !device.installed) {
@@ -169,15 +175,6 @@ export function AlertsSetup({ publicKey }: { publicKey: string | null }) {
           >
             <Send className="size-4" aria-hidden="true" />
             {g.alerts.test}
-          </button>
-          <button
-            type="button"
-            onClick={turnOff}
-            disabled={pending}
-            className={buttonClass("ghost")}
-          >
-            <BellOff className="size-4" aria-hidden="true" />
-            {g.alerts.turnOff}
           </button>
         </div>
       </>
@@ -220,27 +217,5 @@ export function AlertsSetup({ publicKey }: { publicKey: string | null }) {
         </div>
       )}
     </SettingsGroup>
-  );
-}
-
-/** Turns alerts off on one device from the list (a lost phone, an old computer). */
-export function RemoveDeviceButton({ id, device }: { id: string; device: string }) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
-  return (
-    <button
-      type="button"
-      aria-label={g.devices.remove(device)}
-      disabled={pending}
-      onClick={() =>
-        start(async () => {
-          await removePushAction({ id });
-          router.refresh();
-        })
-      }
-      className="min-h-11 rounded-control px-3 text-sm font-medium text-accent transition-colors duration-150 hover:bg-surface-2 motion-reduce:transition-none lg:min-h-9"
-    >
-      {g.devices.removeShort}
-    </button>
   );
 }

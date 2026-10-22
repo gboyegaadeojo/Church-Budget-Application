@@ -28,10 +28,12 @@ describe("church time zone", () => {
     expect(isValidTimeZone(zone)).toBe(false),
   );
 
-  it("shows Winnipeg time correctly across daylight saving", () => {
+  // Daylight-saving mechanics use US Central (old Winnipeg rules): Manitoba stays on
+  // UTC−5 all year from 2026-11-01 (tzdata 2026e), so Winnipeg no longer changes clocks.
+  it("shows church time correctly across daylight saving", () => {
     const format = (iso: string) =>
       new Intl.DateTimeFormat("en-CA", {
-        timeZone: CHURCH_TIME_ZONE_DEFAULT,
+        timeZone: "America/Chicago",
         hour: "2-digit",
         minute: "2-digit",
         hourCycle: "h23",
@@ -42,7 +44,8 @@ describe("church time zone", () => {
 });
 
 describe("church-local times", () => {
-  const WPG = "America/Winnipeg";
+  // A zone that still changes clocks (Manitoba stopped on 2026-11-01, tzdata 2026e).
+  const WPG = "America/Chicago";
 
   it("converts a winter deadline (CST, UTCâˆ’6) both ways", () => {
     const utc = zonedLocalToUtc("2026-11-30T17:00", WPG);
@@ -57,7 +60,7 @@ describe("church-local times", () => {
   });
 
   it("refuses a time skipped when clocks spring forward", () => {
-    // 2027-03-14: 02:00 jumps to 03:00 in Winnipeg.
+    // 2027-03-14: 02:00 jumps to 03:00 in US Central.
     expect(zonedLocalToUtc("2027-03-14T02:30", WPG)).toBeNull();
     expect(zonedLocalToUtc("2027-03-14T03:30", WPG)?.toISOString()).toBe(
       "2027-03-14T08:30:00.000Z",

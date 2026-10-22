@@ -204,6 +204,13 @@
       "when": 1792678888841,
       "tag": "0028_push",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792683239239,
+      "tag": "0029_alerts_admin",
+      "breakpoints": true
     }
   ]
 }

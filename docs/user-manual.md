@@ -75,9 +75,9 @@ Church Budget can sit on your phone's home screen and alert you like any other a
 - **iPhone or iPad:** open the app in **Safari**, tap **Share** (the square with an arrow), then **Add to Home Screen** and **Add**. Open it from the home screen and sign in.
 - **Android:** in **Chrome**, tap **Install the app** on Get the app, or choose **Install app** (or **Add to Home screen**) from Chrome's menu.
 - **Computer:** in Chrome or Edge, select **Install the app**, or the install icon in the address bar. It opens in its own window.
-- **Alerts:** in the installed app, open Get the app and tap **Turn on alerts**, then **Allow**. Every notification in the bell also pops up on that phone or computer, and the app's icon shows how many you haven't read. Tap an alert to open what it's about. **Send a test alert** checks it works. On an iPhone, alerts work only in the app opened from the home screen (iOS 16.4 or later).
+- **Alerts:** when you open the installed app, a card at the top asks you to **Allow alerts**; it stays until you do. (**Turn on alerts** on Get the app does the same.) Every notification in the bell also pops up on that phone or computer, and the app's icon shows how many you haven't read. Tap an alert to open what it's about. **Send a test alert** checks it works. On an iPhone, alerts work only in the app opened from the home screen (iOS 16.4 or later).
 - Alerts show a short line such as "An expense needs your approval" on the lock screen. Amounts and details stay in the app. Emails still come; alerts are extra.
-- **Signing out** turns alerts off on that device. **Devices with alerts**, on Get the app, lists your phones and computers; **Turn off** removes one you no longer use.
+- Alerts stay on. Only a **System Administrator** can turn them off: for everyone in **Admin → Settings → Texts and alerts**, or for one person on their page in **Users & Roles** (**Phone alerts**), which also lists their devices and removes a lost phone. Changes are recorded in the activity log.
 
 ### Your account
 

@@ -60,5 +60,33 @@ test.describe("Get the app", () => {
     await page.goto("/notifications");
     await page.getByRole("link", { name: "Get these on your phone" }).click();
     await expect(page).toHaveURL(/\/get-app$/);
+    // Alerts can be allowed but not turned off by the person (decided 2026-10-22).
+    await expect(page.getByRole("button", { name: /Turn off/ })).toHaveCount(0);
+  });
+
+  test("the System Administrator controls alerts: church-wide in Settings, and per person", async ({
+    page,
+  }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.gina);
+    await page.goto("/admin/settings?section=texts");
+    const group = page.getByRole("region", { name: "Phone alerts" });
+    await expect(group.getByText("Alert keys")).toBeVisible();
+    await expect(group.getByText("Set up", { exact: true })).toBeVisible();
+    await expect(group.getByText("Alerts for the church")).toBeVisible();
+    await expectAxeClean(page);
+
+    // Vic's alerts: off, then back on (shared test data stays as it was).
+    await page.goto("/admin/users");
+    await page
+      .getByRole("list", { name: "Users & Roles" })
+      .getByRole("link", { name: PEOPLE.vic, exact: true })
+      .click();
+    const alerts = page.getByRole("region", { name: "Phone alerts" });
+    await alerts.getByRole("button", { name: "Turn off alerts" }).click();
+    await expect(page.getByText(`Phone alerts are off for ${PEOPLE.vic}.`)).toBeVisible();
+    await alerts.getByRole("button", { name: "Turn on alerts" }).click();
+    await expect(page.getByText(`Phone alerts are on for ${PEOPLE.vic}.`)).toBeVisible();
+    await expectAxeClean(page);
   });
 });

@@ -41,10 +41,9 @@ export const getAppCopy = {
   },
   alerts: {
     heading: "Alerts on this device",
-    hint: "The same news as your bell and your emails: approvals waiting, decisions, payments and reminders. Emails still come.",
+    hint: "The same news as your bell and your emails: approvals waiting, decisions, payments and reminders. Emails still come. Alerts stay on; only a System Administrator can turn them off.",
     turnOn: "Turn on alerts",
     turningOn: "Turning on…",
-    turnOff: "Turn off on this device",
     on: "On",
     off: "Off",
     onHint: "Alerts are on for this device.",
@@ -56,17 +55,24 @@ export const getAppCopy = {
     blocked:
       "Alerts are blocked for this site. Allow notifications for Church Budget in your phone's or browser's settings, then come back.",
     notSetUp: "Alerts aren't set up on this site yet. Ask the System Administrator.",
+    churchOff: "Phone alerts are turned off for the church by the System Administrator.",
+    personOff: "The System Administrator has turned phone alerts off for you.",
     declined: "Alerts weren't allowed. You can try again any time.",
     lockScreen:
       'Alerts show a short line, such as "An expense needs your approval", on your lock screen. Amounts and details stay in the app.',
   },
   devices: {
-    heading: "Devices with alerts",
-    empty: "No devices yet.",
+    heading: "Your devices with alerts",
     added: (date: string) => `Added ${date}`,
     lastAlert: (date: string) => `last alert ${date}`,
-    remove: (device: string) => `Turn off alerts on ${device}`,
-    removeShort: "Turn off",
+    lost: "Lost a phone or stopped using a computer? Ask the System Administrator to remove it.",
+  },
+  prompt: {
+    heading: "Allow alerts on this device",
+    body: "Church Budget sends alerts for approvals, decisions, payments and reminders. Tap Allow to get them here.",
+    button: "Allow alerts",
+    blocked:
+      "Alerts are blocked on this device. Open your phone's Settings, find Church Budget (or this browser), and allow notifications.",
   },
   test: {
     title: "Alerts are working",

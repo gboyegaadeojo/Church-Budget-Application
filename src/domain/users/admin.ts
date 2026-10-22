@@ -10,6 +10,7 @@ import { writeAudit, type AuditActor } from "@/lib/audit";
 import { assertCan, type Subject } from "@/lib/authz";
 import type { PcoPerson, PlanningCenterDirectory } from "@/lib/pco";
 import { ROLES, type Role } from "@/lib/roles";
+import { removePushDevice } from "@/domain/notifications/push";
 import { emailRolesChanged, emailStaffAdded } from "./emails";
 
 /**
@@ -284,6 +285,56 @@ export async function setUserActive(
     );
   }
   return { name: user.displayName };
+}
+
+// ---------------------------------------------------------------- phone alerts (2026-10-22)
+
+/** Turns phone alerts on or off for one person. Only the System Administrator can. */
+export async function setUserPushAlerts(
+  tx: Tx,
+  actor: Subject,
+  input: { userId: string; on: boolean; version: unknown },
+): Promise<{ name: string }> {
+  const { actingRole } = assertCan(actor, "admin.users");
+  const { version } = parseInput(z.object({ version: versionSchema }), input);
+  const user = await loadUser(tx, input.userId);
+  if (user.pushAlerts === input.on) return { name: user.displayName };
+  await bumpUser(tx, user.id, version, { pushAlerts: input.on });
+  await writeAudit(tx, {
+    actor: actorOf(actor, actingRole),
+    area: "admin",
+    eventType: input.on ? "admin.user_alerts_on" : "admin.user_alerts_off",
+    entity: { type: "user", id: user.id },
+    details: {
+      person: { id: user.id, name: user.displayName },
+      before: { pushAlerts: user.pushAlerts },
+      after: { pushAlerts: input.on },
+    },
+  });
+  return { name: user.displayName };
+}
+
+/** Removes one of a person's alert devices, such as a lost phone. */
+export async function removeUserPushDevice(
+  tx: Tx,
+  actor: Subject,
+  input: { userId: string; deviceId: string },
+): Promise<{ name: string; device: string | null }> {
+  const { actingRole } = assertCan(actor, "admin.users");
+  const user = await loadUser(tx, input.userId);
+  const removed = z.uuid().safeParse(input.deviceId).success
+    ? await removePushDevice(tx, user.id, input.deviceId)
+    : null;
+  if (removed) {
+    await writeAudit(tx, {
+      actor: actorOf(actor, actingRole),
+      area: "admin",
+      eventType: "admin.user_device_removed",
+      entity: { type: "user", id: user.id },
+      details: { person: { id: user.id, name: user.displayName }, device: removed.device },
+    });
+  }
+  return { name: user.displayName, device: removed?.device ?? null };
 }
 
 // ---------------------------------------------------------------- Planning Center link (FR-01a)
