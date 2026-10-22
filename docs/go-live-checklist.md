@@ -52,9 +52,9 @@ Private repositories get about 2,000 free Actions minutes a month, and a job eve
 - [ ] For each department, the Planning Center team, group or tag it maps to, if any (FR-39)
 - [x] The Planning Center custom field and accepted value for Group Leader: **"Ministry Leader" = "Yes"** (confirmed by G, 2026-10-15)
 - [ ] A **"Ministry Department"** People custom field in Planning Center, ideally checkboxes whose options match the app's department names (a different name can be set per department in Admin → Departments → Planning Center value). Choose Suggest or Restrict in Settings → Planning Center
-- [ ] Email addresses for the accountant, backup approver, Board Chair, Vice-Chair, Church Administrator, and two System Administrators. **Any email address works**. Staff sign in with Planning Center once an administrator links their profile (Admin → Users & Roles → their page); the Church Administrator and System Administrators can also sign in with an emailed code (FR-01b)
-- [ ] Cheque signing authorities' names (G). They are entered in Admin → Settings → Signing authorities and can be added or removed later (FR-53)
-- [ ] Logo (PNG or SVG) and brand colour. G can change them any time in Admin → Settings → Branding (FR-30)
+- [ ] Who holds each staff role: accountant, backup approver, Board Chair, Vice-Chair, Church Administrator, and two System Administrators. Add staff from Admin → Users & Roles → Add a staff member → Find them in Planning Center, which links them so they can sign in straight away; staff who sign in first wait under Needs attention for their roles. Someone not in Planning Center is added by email and signs in with an emailed code (FR-01b)
+- [x] Cheque signing authorities' names (G). They are entered in Admin → Settings → Signing authorities and can be added or removed later (FR-53)
+- [x] Logo (PNG or SVG) and brand colour. G can change them any time in Admin → Settings → Branding (FR-30)
 - [ ] FY2027 budget year dates, the first submission deadline, and the board-approved church total. The deadline can be changed later or extended for one department (Requirements 4.3)
 - [ ] Privacy contact person for the privacy notice (FR-36). Their address goes in Admin → Settings → "Contact email on access screens", which the notice shows
 - [ ] **The church reviews the privacy notice** (`/privacy`, text in `src/copy/help.ts`) before launch: retention (at least six years, per CRA), the service providers named and where they store data, and the 30-day reply to access requests. It was written from what the app stores, not by a lawyer

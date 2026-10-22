@@ -120,9 +120,9 @@ Production is a Netlify site connected to this repository. [netlify.toml](netlif
 ## What the church provides before launch
 
 - [x] Department list (18 departments, Req FR-03). Leaders join by signing in or through Planning Center mapping
-- [ ] Planning Center: the OAuth app and API key, and the Group Leader custom field and value (default "Ministry Leader" = "Yes")
-- [ ] Email addresses for the accountant, Board Chair, Vice-Chair, backup approver, Church Administrator and two System Administrators
+- [x] Planning Center: the OAuth app and API key, and the leader custom field and value ("Ministry Leader" = "Yes", used for leaders and staff)
+- [ ] Who holds each staff role: accountant, Board Chair, Vice-Chair, backup approver, Church Administrator and two System Administrators. Staff in Planning Center are added from it; an email address is needed only for someone who isn't
 - [ ] A church-owned Google account to own hosting, database, email and code (see the [go-live checklist](docs/go-live-checklist.md))
-- [ ] Cheque signing authorities' names (editable later, Req FR-53)
-- [ ] Logo and brand colour (editable later by the administrator, Req FR-30)
+- [x] Cheque signing authorities' names (editable later, Req FR-53)
+- [x] Logo and brand colour (editable later by the administrator, Req FR-30)
 - [ ] FY2027 budget year dates and submission deadline (changeable and extendable per department, Req 4.3)
