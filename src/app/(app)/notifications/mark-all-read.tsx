@@ -23,7 +23,7 @@ export function MarkAllReadButton() {
           router.refresh();
         })
       }
-      className={buttonClass("secondary", "sm:ml-auto")}
+      className={buttonClass("secondary")}
     >
       <CheckCheck className="size-4" aria-hidden="true" />
       {n.markAllRead}

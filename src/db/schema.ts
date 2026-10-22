@@ -992,6 +992,8 @@ export const notifications = pgTable(
     ),
     cycleId: uuid("cycle_id").references(() => budgetCycles.id),
     readAt: timestamp("read_at", { withTimezone: true }),
+    /** Waiting to pop up on the person's phones and computers (web push, 2026-10-22). */
+    pushPending: boolean("push_pending").notNull().default(false),
     createdAt: createdAt(),
   },
   (t) => [
@@ -999,7 +1001,34 @@ export const notifications = pgTable(
     index("notifications_unread_idx")
       .on(t.userId)
       .where(sql`${t.readAt} is null`),
+    index("notifications_push_idx")
+      .on(t.createdAt)
+      .where(sql`${t.pushPending}`),
   ],
+);
+
+/**
+ * A phone or computer where someone turned on alerts (web push, docs/decisions.md
+ * 2026-10-22). The endpoint is the push service's address for that browser; signing in
+ * as someone else on the same device moves it to them. Removed when the person turns
+ * alerts off or the push service says the device is gone: it holds no financial history.
+ */
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    /** "iPhone", "Android phone", "Windows computer": shown so people can tell devices apart. */
+    device: text("device").notNull(),
+    lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("push_subscriptions_user_idx").on(t.userId)],
 );
 
 /** Raw bytes; PGlite and node-postgres both hand back a Uint8Array/Buffer. */

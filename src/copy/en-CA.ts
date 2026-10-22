@@ -56,6 +56,7 @@ export const copy = {
     settings: "Settings",
     notificationsAndAudit: "Notifications & Audit",
     help: "Help",
+    getApp: "Get the app",
     privacy: "Privacy",
     more: "More",
     mainNavigation: "Main navigation",

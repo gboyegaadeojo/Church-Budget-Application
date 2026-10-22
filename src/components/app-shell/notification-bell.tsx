@@ -14,6 +14,7 @@ import {
 import { groupBySection } from "@/components/notifications/format";
 import { NotificationRow } from "@/components/notifications/notification-row";
 import { notificationsCopy as n } from "@/copy/notifications";
+import { showAppBadge } from "@/components/pwa/push-client";
 import { cn } from "@/lib/cn";
 
 const bellClass =
@@ -60,6 +61,9 @@ export function NotificationBell() {
   useEffect(() => {
     refresh();
   }, [pathname, refresh]);
+
+  // The installed app's icon shows the same number.
+  useEffect(() => showAppBadge(unread), [unread]);
 
   useEffect(() => {
     const onFocus = () => refresh();

@@ -16,6 +16,7 @@ import {
   ViewerBottomBar,
   ViewerSidebar,
 } from "@/components/app-shell/viewer-shell";
+import { ServiceWorker } from "@/components/pwa/service-worker";
 import { copy } from "@/copy/en-CA";
 
 /**
@@ -80,6 +81,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       <Suspense fallback={null}>
         <ViewerBottomBar />
       </Suspense>
+      <ServiceWorker />
     </>
   );
 }

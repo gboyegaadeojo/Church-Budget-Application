@@ -128,6 +128,7 @@ export const AREAS: readonly AreaDef[] = [
 
 /** Pages linked from the footer, open to everyone signed in. */
 export const FOOTER_LINKS = [
+  { href: "/get-app", label: n.getApp },
   { href: "/help", label: n.help },
   { href: "/privacy", label: n.privacy },
 ] as const;

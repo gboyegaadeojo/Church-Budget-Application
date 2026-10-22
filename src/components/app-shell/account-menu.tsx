@@ -4,8 +4,9 @@ import { useRef } from "react";
 import Link from "next/link";
 import * as Menu from "@radix-ui/react-dropdown-menu";
 import { useTheme } from "next-themes";
-import { Check, LogOut, Monitor, Moon, Plane, Sun } from "lucide-react";
+import { Check, LogOut, Monitor, Moon, Plane, Smartphone, Sun } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
+import { turnOffAlerts } from "@/components/pwa/push-client";
 import { copy } from "@/copy/en-CA";
 
 const a = copy.account;
@@ -116,7 +117,21 @@ export function AccountMenu({ name, email, roleChips, canBeAway }: AccountMenuPr
                 </Link>
               </Menu.Item>
             )}
-            <Menu.Item className={itemClass} onSelect={() => signOutForm.current?.requestSubmit()}>
+            <Menu.Item asChild className={itemClass}>
+              <Link href="/get-app">
+                <Smartphone className="size-4" aria-hidden="true" />
+                <span className="flex-1">{copy.nav.getApp}</span>
+              </Link>
+            </Menu.Item>
+            <Menu.Item
+              className={itemClass}
+              onSelect={() => {
+                // A shared phone or computer stops getting this person's alerts.
+                const done = turnOffAlerts().catch(() => undefined);
+                const timeout = new Promise((resolve) => setTimeout(resolve, 2000));
+                void Promise.race([done, timeout]).then(() => signOutForm.current?.requestSubmit());
+              }}
+            >
               <LogOut className="size-4" aria-hidden="true" />
               <span className="flex-1">{a.signOut}</span>
             </Menu.Item>

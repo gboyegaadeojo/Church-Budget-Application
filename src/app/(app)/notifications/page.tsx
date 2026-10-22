@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Smartphone } from "lucide-react";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -6,6 +6,7 @@ import { AdminSkeleton, PageHeader } from "@/components/ui/display";
 import { buttonClass, cardClass } from "@/components/ui/styles";
 import { groupBySection } from "@/components/notifications/format";
 import { NotificationRow } from "@/components/notifications/notification-row";
+import { getAppCopy } from "@/copy/get-app";
 import { notificationsCopy as n } from "@/copy/notifications";
 import { getDb } from "@/db";
 import {
@@ -70,7 +71,13 @@ async function NotificationsContent({
   return (
     <>
       <PageHeader title={n.title} intro={n.intro}>
-        {counts.unread > 0 && <MarkAllReadButton />}
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
+          <Link href="/get-app" className={buttonClass("ghost")}>
+            <Smartphone className="size-4" aria-hidden="true" />
+            {getAppCopy.notificationsPrompt}
+          </Link>
+          {counts.unread > 0 && <MarkAllReadButton />}
+        </div>
       </PageHeader>
 
       <nav aria-label={n.filtersLabel}>
