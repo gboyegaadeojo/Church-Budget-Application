@@ -1234,3 +1234,10 @@ The church asked for a list that stays clean with about 80 people.
 
 - **Asked for by the user:** Help's common questions grew to about 40, for leaders and staff, grouped by topic (Getting started, Your annual budget, Purchases and expense claims, What's left in your budget, Emails notifications and the app, For church staff). Each question opens in place; a link to `/help#<id>` opens that answer. The stale "Spending tracking is coming later" note is gone and the sign-in answer uses the Ministry Leader field.
 - **Home's department card** keeps its look; what's left is now a coloured pill, green on track, amber nearing the limit (the Settings threshold), red over budget, with the same words as before.
+
+## 2026-10-23: The app can be hosted on Vercel as well as Netlify
+
+- **Asked for by the user:** make Vercel possible. The same code runs on either: `vercel.json` builds, migrates on production deploys only (`scripts/migrate.mjs --production-only`), skips preview builds, and runs functions in `cle1` (Cleveland) next to Neon in Ohio. Node 22 comes from `package.json` `engines`.
+- **Hourly jobs:** Vercel's free plan allows scheduled jobs only once a day, so on Vercel the hourly decision release and outbox run from `.github/workflows/hourly.yml` (free: public repository), switched on with the repository variable `HOURLY_JOBS_FROM_GITHUB=true`. Off by default, so the Netlify function and GitHub never both wake the database.
+- **Fake sign-in** also refuses Vercel builds (`VERCEL`, `VERCEL_ENV`). The demo rebuild hook accepts a Vercel deploy hook (`DEMO_BUILD_HOOK`).
+- **Not decided:** Vercel's Hobby plan is for non-commercial personal use only. A church's internal budget app has no payments or ads but is an organisation's tool; docs/vercel.md says to ask Vercel support before moving the live site. Pro would be a paid service and needs the church's approval (constraint 1).

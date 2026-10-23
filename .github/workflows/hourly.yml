@@ -1,0 +1,40 @@
+name: Hourly jobs
+
+# The hourly jobs (decision release, then the email outbox and phone alerts) for a site on
+# Vercel, whose free plan runs its own schedules only once a day. On Netlify these run as
+# netlify/functions/send-outbox.mts instead, so this stays off until the repository variable
+# HOURLY_JOBS_FROM_GITHUB is "true" (Settings → Secrets and variables → Actions → Variables);
+# running both would only wake the database twice an hour. Free: the repository is public.
+on:
+  schedule:
+    - cron: "7 * * * *" # every hour, a few minutes past to avoid the busiest moment
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hourly:
+    name: Release decisions and send the outbox
+    if: vars.HOURLY_JOBS_FROM_GITHUB == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the app
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          JOBS_SECRET: ${{ secrets.JOBS_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$JOBS_SECRET" ]; then
+            echo "APP_URL or JOBS_SECRET is not set yet; skipping."
+            exit 0
+          fi
+          status=0
+          for job in release-decisions send-outbox; do
+            # One job failing doesn't stop the next: the outbox still goes out.
+            curl --fail-with-body --silent --show-error --max-time 120 \
+              -X POST -H "Authorization: Bearer $JOBS_SECRET" \
+              "$APP_URL/api/jobs/$job" || status=1
+            echo
+          done
+          exit $status

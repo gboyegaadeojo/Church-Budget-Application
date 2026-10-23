@@ -21,6 +21,8 @@ describe("fake sign-in can never reach a real site", () => {
     [{ ...local, NETLIFY: "true" }],
     [{ ...local, CONTEXT: "production" }],
     [{ ...local, CONTEXT: "deploy-preview" }],
+    [{ ...local, VERCEL: "1" }],
+    [{ ...local, VERCEL_ENV: "preview" }],
   ])("stays off for %o", (env) => {
     expect(fakeSignInEnabled(env)).toBe(false);
   });
