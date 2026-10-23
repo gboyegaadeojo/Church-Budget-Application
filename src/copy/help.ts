@@ -127,7 +127,7 @@ export const helpCopy = {
       group: "start",
       question: "How do I sign in?",
       answer: [
-        "Choose Continue with Planning Center and sign in with your usual church account. Ministry leaders and church staff need the Ministry Leader field in Planning Center set to Yes.",
+        "Go to budget.ifcwpg.com, choose Continue with Planning Center and sign in with your usual church account. Ministry leaders and church staff need the Ministry Leader field in Planning Center set to Yes.",
         "If you're not in the church's Planning Center (for example the Church Administrator), choose Continue with email: we email a 6-digit code that works once, for 10 minutes.",
       ],
     },

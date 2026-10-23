@@ -24,10 +24,10 @@ This manual explains how to use the app, by role. It was checked against the bui
 
 ### Signing in
 
-1. Open the app's web address on a computer or phone.
+1. Open **https://budget.ifcwpg.com** on a computer or phone. To keep it on your phone like an app, see [Get the app](#get-the-app-install-it-and-get-alerts).
 2. Choose **Continue with Planning Center**. If your **Ministry Department** field in Planning Center names your department, you are added to it when you sign in.
-   - **Staff added by the administrator:** the first time, you may see "Your Planning Center profile isn't linked yet". Ask the administrator to link it, then sign in again.
-   - **Not in the church's Planning Center?** The Church Administrator and System Administrators can choose **Continue with email** instead: enter the address the church has for you, and type in the 6-digit code we email you. A code works once, for 10 minutes. After 5 wrong codes, wait 15 minutes. Everyone else signs in with Planning Center.
+   - **Church staff** sign in the same way (Ministry Leader = Yes in Planning Center). A System Administrator then gives you your role; if they added you from Planning Center first, you go straight in. If you ever see "Your Planning Center profile isn't linked yet", ask them to link it, then sign in again.
+   - **Not in the church's Planning Center?** Anyone the administrator added by email, such as the Church Administrator, can choose **Continue with email** instead: enter the address the church has for you, and type in the 6-digit code we email you. A code works once, for 10 minutes. After 5 wrong codes, wait 15 minutes. Everyone else signs in with Planning Center.
 3. Department leaders must be marked as a **Group Leader** in Planning Center: **Ministry Leader** set to **Yes** on their Planning Center profile. If you see "Your Group Leader status in Planning Center could not be confirmed", ask your ministry's Planning Center administrator.
 4. If you see "Waiting for department assignment", the System Administrator has been told and will add you.
 
