@@ -251,6 +251,18 @@ test.describe("Continue with email (FR-01b, DRD 6.1)", () => {
     await expect(page.getByRole("heading", { level: 1, name: /, Carol$/ })).toBeVisible();
   });
 
+  test("a ministry leader with only a Church Center login signs in with an emailed code", async ({
+    page,
+  }) => {
+    // Decided 2026-10-23: the code goes to the email on a verified leader's Planning Center
+    // profile, and the sign-in counts as that Planning Center person's.
+    const lena = "lena.centre@example.org";
+    await askForCode(page, lena);
+    await page.getByLabel("6-digit code").fill(await emailedCode(page, lena));
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "You're verified" })).toBeVisible();
+  });
+
   test("AC-133 an unknown address sees the same message, and a wrong code says so", async ({
     page,
   }) => {

@@ -8,15 +8,23 @@ import { emailBrand, queueNotice } from "@/domain/notifications/notice";
 import { getChurchTimeZone, getSignInSettings } from "@/domain/settings";
 import { writeAudit } from "@/lib/audit";
 import { appUrl } from "@/lib/email/layout";
+import type { PlanningCenterDirectory } from "@/lib/pco";
 import { EMAIL_SIGN_IN_ROLES } from "@/lib/roles";
+import { checkLeaderOrTeamLeader } from "@/domain/departments/pco-mapping";
 import { formatDateTime } from "@/lib/time-zone";
 
 /**
  * Sign-in with an emailed code (FR-01b, AC-132, AC-133). Anyone can type any address, so
  * the answer never says whether it has an account: every request writes a code row and
- * counts towards the same limits, but only the address of a Church Administrator or System
- * Administrator account is emailed (EMAIL_SIGN_IN_ROLES); everyone else uses Planning Center. The
- * code itself is stored only as a keyed hash.
+ * counts towards the same limits. A code is emailed to the address of a Church
+ * Administrator or System Administrator account (EMAIL_SIGN_IN_ROLES), or to a verified
+ * ministry leader whose Planning Center profile has that address (decided 2026-10-23: most
+ * leaders only have a Church Center login, not a Planning Center one). Nobody else gets one.
+ * The code itself is stored only as a keyed hash.
+ *
+ * A leader's code is tied to their Planning Center person id, so signing in with it is
+ * exactly a Planning Center sign-in for that person: same account, same checks. The code
+ * proves they read that inbox; the address alone never links an account.
  *
  * Checking the code runs in its own transaction, before Auth.js signs the person in,
  * so a wrong try is counted even though the sign-in fails. `resolveSignIn` then decides
@@ -42,6 +50,8 @@ export type EmailCodeDeps = {
   firstAdminEmail?: string;
   /** FIRST_ADMIN_NAME: their name, if their account is created (else the address's first part). */
   firstAdminName?: string;
+  /** Planning Center, to find a verified ministry leader with this address. */
+  directory?: PlanningCenterDirectory | null;
 };
 
 export type CodeRequestResult =
@@ -50,7 +60,7 @@ export type CodeRequestResult =
   | { ok: false; reason: "too_many"; retryAt: Date };
 
 export type CodeCheckResult =
-  | { ok: true; email: string }
+  | { ok: true; email: string; pcoPersonId: string | null }
   | { ok: false; reason: "disabled" | "expired" }
   | { ok: false; reason: "wrong"; triesLeft: number }
   | { ok: false; reason: "locked"; retryAt: Date };
@@ -126,6 +136,47 @@ async function allowlistedAccount(tx: Tx, email: string) {
     )
     .limit(1);
   return row ?? null;
+}
+
+/**
+ * The one verified ministry leader in Planning Center with this address, or null: none,
+ * several (a shared family address, so nobody can tell who is signing in), Planning Center
+ * unreachable, or Planning Center sign-in turned off. Team leaders of departments mapped
+ * to count as leaders (FR-39) qualify too, as they do at Planning Center sign-in.
+ */
+export async function leaderForEmail(
+  tx: Tx,
+  directory: PlanningCenterDirectory | null | undefined,
+  email: string,
+): Promise<{ pcoPersonId: string | null; detail: string }> {
+  const settings = await getSignInSettings(tx);
+  if (!directory || !settings.planningCenterEnabled || !settings.leader.requireForRequesters) {
+    return { pcoPersonId: null, detail: "leader sign-in not available" };
+  }
+  try {
+    const people = (await directory.findPeopleByEmail(email)).filter(
+      (p) => p.status !== "inactive",
+    );
+    const leaders: string[] = [];
+    for (const person of people) {
+      const check = await checkLeaderOrTeamLeader(tx, directory, settings.leader, {
+        pcoPersonId: person.id,
+      });
+      if (check.status === "leader") leaders.push(person.id);
+    }
+    if (leaders.length === 1) return { pcoPersonId: leaders[0], detail: "ministry leader" };
+    return {
+      pcoPersonId: null,
+      detail:
+        leaders.length > 1
+          ? "several ministry leaders share this address"
+          : people.length > 0
+            ? "not a ministry leader"
+            : "not in Planning Center",
+    };
+  } catch {
+    return { pcoPersonId: null, detail: "Planning Center could not be reached" };
+  }
 }
 
 /**
@@ -241,6 +292,10 @@ export async function requestEmailCode(
     now,
   );
   const account = await allowlistedAccount(tx, email);
+  // Not an administrator account: a verified ministry leader with this address may sign in.
+  const leader = account
+    ? { pcoPersonId: null, detail: "administrator account" }
+    : await leaderForEmail(tx, deps.directory, email);
   const id = randomUUID();
   const code = (deps.generateCode ?? sixDigits)();
   const expiresAt = new Date(now.getTime() + CODE_LIFETIME_MS);
@@ -248,19 +303,25 @@ export async function requestEmailCode(
     id,
     email,
     userId: account?.id ?? null,
+    pcoPersonId: leader.pcoPersonId,
     codeHash: hashCode(deps.secret, id, code),
     expiresAt,
     requestIpHash: deps.requestIpHash ?? null,
     createdAt: now,
   });
 
-  if (account) {
+  const sendTo = account
+    ? { email: account.email, userId: account.id }
+    : leader.pcoPersonId
+      ? { email, userId: null }
+      : null;
+  if (sendTo) {
     const brand = await emailBrand(tx);
     const m = emailCopy.access.signInCode;
     await queueNotice(tx, {
       template: "access.sign_in_code",
       audience: "person",
-      to: [{ email: account.email, userId: account.id }],
+      to: [sendTo],
       content: {
         subject: m.subject(brand.appName),
         heading: m.heading,
@@ -285,7 +346,13 @@ export async function requestEmailCode(
     eventType: "access.sign_in_code_requested",
     entity: { type: "user", id: account?.id },
     // Whether a code went out is for the administrator; the person is never told.
-    details: { method: "email", email, sent: account !== null },
+    details: {
+      method: "email",
+      email,
+      sent: sendTo !== null,
+      for: account ? "account" : leader.pcoPersonId ? "ministry leader" : leader.detail,
+      pcoPersonId: leader.pcoPersonId ?? undefined,
+    },
     requestIpHash: deps.requestIpHash,
   });
   return { ok: true, email };
@@ -332,7 +399,7 @@ export async function checkEmailCode(
 
   if (code && sameHash(hashCode(deps.secret, latest.id, code), latest.codeHash)) {
     await tx.update(emailLoginCodes).set({ usedAt: now }).where(eq(emailLoginCodes.id, latest.id));
-    return { ok: true, email };
+    return { ok: true, email, pcoPersonId: latest.pcoPersonId ?? null };
   }
 
   const attempts = latest.attempts + 1;

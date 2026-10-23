@@ -106,6 +106,15 @@
       "fieldValues": {
         "77": ["false"]
       }
+    },
+    {
+      "id": "1090",
+      "name": "Lena Centre",
+      "status": "active",
+      "emails": ["lena.centre@example.org"],
+      "fieldValues": {
+        "77": ["true"]
+      }
     }
   ],
   "teams": [

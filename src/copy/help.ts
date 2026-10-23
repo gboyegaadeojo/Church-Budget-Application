@@ -128,7 +128,7 @@ export const helpCopy = {
       question: "How do I sign in?",
       answer: [
         "Go to budget.ifcwpg.com, choose Continue with Planning Center and sign in with your usual church account. Ministry leaders and church staff need the Ministry Leader field in Planning Center set to Yes.",
-        "If you're not in the church's Planning Center (for example the Church Administrator), choose Continue with email: we email a 6-digit code that works once, for 10 minutes.",
+        "Only use Church Center, with no Planning Center password? Choose Continue with email and type the email on your Planning Center profile, the one Church Center uses. If you're a ministry leader, we email you a 6-digit code that works once, for 10 minutes. The Church Administrator and anyone else not in Planning Center sign in the same way, with the address the church has for them.",
       ],
     },
     {
@@ -136,7 +136,8 @@ export const helpCopy = {
       group: "start",
       question: "It says I can't get in. What do I do?",
       answer: [
-        "If it says your leader status couldn't be confirmed, ask your ministry's Planning Center administrator to set Ministry Leader to Yes on your profile, then sign in again.",
+        "Planning Center says there's no account with your email? You probably only have a Church Center login. Use Continue with email instead.",
+        "If it says your leader status couldn't be confirmed, or no code arrives, ask your ministry's Planning Center administrator to set Ministry Leader to Yes on your profile and check its email address, then try again. A code isn't sent when two leaders share one email address.",
         "If it says your profile isn't linked yet, there's already an account with your email: ask a System Administrator to link it. For your security, accounts are never linked by email alone.",
         "The screen shows who to contact if you're stuck.",
       ],

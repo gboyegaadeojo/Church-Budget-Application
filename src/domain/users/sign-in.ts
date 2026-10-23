@@ -34,6 +34,8 @@ export type ExternalIdentity = {
   name: string | null;
   /** Planning Center only: the organization the person signed in to. */
   organizationId?: string | null;
+  /** A Planning Center sign-in made with an emailed code to a verified leader (2026-10-23). */
+  via?: "email-code";
 };
 
 export type SignInResult =
@@ -109,7 +111,7 @@ export async function resolveSignIn(
       eventType: "access.sign_in_failed",
       entity: { type: "user", id: userId },
       reason: detail,
-      details: { method, result: reason, email },
+      details: { method, via: identity.via, result: reason, email },
       requestIpHash: deps.requestIpHash,
     });
     return { ok: false, reason, email };
@@ -121,7 +123,7 @@ export async function resolveSignIn(
       area: "access",
       eventType: "access.sign_in_succeeded",
       entity: { type: "user", id: userId },
-      details: { method },
+      details: { method, via: identity.via },
       requestIpHash: deps.requestIpHash,
     });
     return { ok: true, userId, landing };
