@@ -10,6 +10,7 @@ import { fakeSignInAllowed } from "@/lib/demo";
 import { rememberDeniedEmail } from "@/lib/denied-email";
 import { sendOutboxAfterResponse } from "@/lib/email";
 import { trackQueuedEmails } from "@/lib/email/outbox";
+import { getPlanningCenterDirectory } from "@/lib/pco-directory";
 import { requestIpHash } from "@/lib/request-ip";
 
 const e = copy.signIn.email;
@@ -80,6 +81,7 @@ export async function requestEmailCodeAction(
     requestIpHash: await requestIpHash(),
     firstAdminEmail: process.env.FIRST_ADMIN_EMAIL,
     firstAdminName: process.env.FIRST_ADMIN_NAME,
+    directory: getPlanningCenterDirectory(),
   };
   const { result, ids } = await trackQueuedEmails(() =>
     getDb().transaction((tx) => requestEmailCode(tx, deps, { email })),

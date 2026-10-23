@@ -31,6 +31,8 @@ declare module "next-auth" {
   interface User {
     /** Our users.id, set once resolveSignIn accepts the identity. */
     appUserId?: string;
+    /** An emailed code sent to a verified ministry leader: their Planning Center person. */
+    pcoLeader?: { personId: string; organizationId: string | null };
   }
 }
 
@@ -97,6 +99,17 @@ const EmailCodeProvider = Credentials({
     const input = { email: String(c.email ?? ""), code: String(c.code ?? "") };
     const result = await getDb().transaction((tx) => checkEmailCode(tx, deps, input));
     if (!result.ok) throw new EmailCodeError(result);
+    if (result.pcoPersonId) {
+      // The code went to a verified ministry leader: sign in as that Planning Center person.
+      const organizationId = await getPlanningCenterDirectory()
+        ?.organizationId()
+        .catch(() => null);
+      return {
+        id: `pco:${result.pcoPersonId}`,
+        email: result.email,
+        pcoLeader: { personId: result.pcoPersonId, organizationId: organizationId ?? null },
+      };
+    }
     return { id: `email:${result.email}`, email: result.email };
   },
 });
@@ -117,7 +130,7 @@ function toIdentity(params: {
   account?: { provider: string; providerAccountId: string } | null;
   profile?: Record<string, unknown>;
   credentials?: Record<string, unknown>;
-  user?: { email?: string | null };
+  user?: { email?: string | null; pcoLeader?: { personId: string; organizationId: string | null } };
 }): ExternalIdentity | null {
   const { account, profile, credentials, user } = params;
   const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
@@ -131,6 +144,19 @@ function toIdentity(params: {
       emailVerified: false,
       name: str(profile.name),
       organizationId: profile.organization_id == null ? null : String(profile.organization_id),
+    };
+  }
+  // A ministry leader's code: a Planning Center sign-in for the person it was sent for.
+  if (account?.provider === "email-code" && user?.pcoLeader) {
+    return {
+      provider: "planningcenter",
+      subject: user.pcoLeader.personId,
+      email: user.email ?? null,
+      // As for Planning Center: the address never links an account by itself.
+      emailVerified: false,
+      name: null,
+      organizationId: user.pcoLeader.organizationId,
+      via: "email-code",
     };
   }
   // The address comes from authorize (the code was right), never from the posted form.

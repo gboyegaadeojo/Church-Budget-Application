@@ -164,7 +164,7 @@ export const copy = {
       formLabel: "Sign in with an emailed code",
       emailLabel: "Email address",
       emailHint:
-        "For anyone not in Planning Center, such as the Church Administrator. We'll email a 6-digit code to the address the church has for you.",
+        "Ministry leaders: use the email on your Planning Center profile, the one you use for Church Center. Church Administrator and administrators: the address the church has for you. We'll email you a 6-digit code.",
       sendCode: "Email me a code",
       // The same words whether or not the address has an account (AC-133).
       sent: (email: string) =>
@@ -186,7 +186,7 @@ export const copy = {
       unavailable: "Email sign-in isn't available right now. Please try again shortly.",
     },
     leaderNote:
-      "Ministry leaders and church staff sign in with Planning Center. Your Ministry Leader status there is checked each time.",
+      "Ministry leaders and church staff need Ministry Leader = Yes in Planning Center; it's checked each time. Only use Church Center? Choose Continue with email and type the email on your Planning Center profile.",
     accessHeading: "Need access?",
     accessLeaders:
       "If you're told you can't get in, ask your Planning Center administrator to mark you as a Ministry Leader.",

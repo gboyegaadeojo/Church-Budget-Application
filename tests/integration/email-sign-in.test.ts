@@ -85,7 +85,11 @@ describe("Sign-in with an emailed code (FR-01b)", () => {
       .where(eq(emailLoginCodes.email, admin.email));
     expect(row.codeHash).not.toContain("123456");
 
-    expect(await check(admin.email, "123 456", at(9))).toEqual({ ok: true, email: admin.email });
+    expect(await check(admin.email, "123 456", at(9))).toEqual({
+      ok: true,
+      email: admin.email,
+      pcoPersonId: null,
+    });
     // Single use.
     expect(await check(admin.email, "123456", at(9))).toEqual({ ok: false, reason: "expired" });
 

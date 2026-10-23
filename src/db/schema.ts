@@ -498,6 +498,12 @@ export const emailLoginCodes = pgTable(
     email: text("email").notNull(),
     /** The account the code was emailed to; null when no email went (unknown address). */
     userId: uuid("user_id").references(() => users.id),
+    /**
+     * The verified ministry leader in Planning Center the code was emailed for, when it went
+     * to a leader rather than an account (decided 2026-10-23). The sign-in then counts as
+     * that Planning Center person's.
+     */
+    pcoPersonId: text("pco_person_id"),
     codeHash: text("code_hash").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     attempts: integer("attempts").notNull().default(0),
