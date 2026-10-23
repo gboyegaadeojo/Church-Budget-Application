@@ -13,14 +13,14 @@ import { cn } from "@/lib/cn";
 
 const e = copy.signIn.email;
 
-/** Full width and tall, matching the Planning Center button above it. */
-const secondaryClass =
-  "flex min-h-[52px] w-full items-center justify-center gap-3 rounded-[14px] border border-border-strong bg-surface px-5 text-[15px] font-semibold transition-colors duration-150 hover:bg-surface-hover motion-reduce:transition-none";
+/** The main way in: filled, full width and tall, like the page's other sign-in button. */
+const primaryClass =
+  "flex min-h-[52px] w-full items-center justify-center gap-3 rounded-[14px] bg-fg px-5 text-[15px] font-semibold text-bg shadow-sm transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.99] motion-reduce:transition-none";
 const fieldClass = "min-h-12 rounded-[12px] text-base";
 
 /**
- * "Continue with email" (FR-01b, DRD 6.1): a quieter outlined button that opens an email
- * field, then one 6-digit code field (autocomplete="one-time-code", paste-friendly).
+ * "Sign in with email" (FR-01b, DRD 6.1): the main way in since most leaders only have a
+ * Church Center login (docs/decisions.md 2026-10-23). The button opens an email field, then one 6-digit code field (autocomplete="one-time-code", paste-friendly).
  * The server decides every step; this only shows where it says the person is.
  */
 export function EmailSignIn({ callbackUrl }: { callbackUrl: string }) {
@@ -51,10 +51,20 @@ export function EmailSignIn({ callbackUrl }: { callbackUrl: string }) {
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className={secondaryClass}>
-        <Mail className="size-[18px]" aria-hidden="true" />
-        {e.open}
-      </button>
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-describedby={`${id}-open-note`}
+          className={primaryClass}
+        >
+          <Mail className="size-[18px]" aria-hidden="true" />
+          {e.open}
+        </button>
+        <p id={`${id}-open-note`} className="text-center text-xs text-fg-muted">
+          {e.openNote}
+        </p>
+      </div>
     );
   }
 

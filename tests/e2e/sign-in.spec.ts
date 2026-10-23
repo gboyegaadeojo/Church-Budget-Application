@@ -236,7 +236,7 @@ test.describe("Continue with email (FR-01b, DRD 6.1)", () => {
 
   async function askForCode(page: Page, email: string) {
     await page.goto("/sign-in");
-    await page.getByRole("button", { name: "Continue with email" }).click();
+    await page.getByRole("button", { name: "Sign in with email" }).click();
     await page.getByLabel("Email address").fill(email);
     await page.getByRole("button", { name: "Email me a code" }).click();
     await expect(page.getByText(`If ${email} can sign in here`)).toBeVisible();
@@ -284,7 +284,7 @@ test.describe("Continue with email (FR-01b, DRD 6.1)", () => {
     test(`the email and code steps are axe clean at ${name}`, async ({ page }) => {
       await page.setViewportSize(size);
       await page.goto("/sign-in");
-      await page.getByRole("button", { name: "Continue with email" }).click();
+      await page.getByRole("button", { name: "Sign in with email" }).click();
       await expectNoHorizontalScroll(page);
       await expectAxeClean(page);
       await page.getByLabel("Email address").fill(`axe-${size.width}@outlook.com`);

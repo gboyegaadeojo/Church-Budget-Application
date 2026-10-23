@@ -1253,3 +1253,9 @@ The church asked for a list that stays clean with about 80 people.
 - **Decided by the church:** every merged pull request should go live with no extra step, so Vercel's production branch is `main` (Settings → Environments → Production → Branch Tracking), not the separate `release` branch used with Netlify.
 - **Still safe:** CI must pass on the pull request before it can merge, and a failed build or migration leaves the previous version live.
 - **How:** `vercel.json`'s `ignoreCommand` builds only `main` and skips every other branch and pull request, so nothing else builds against the live database. It checks the branch name rather than `VERCEL_ENV`, which kept skipping production pushes. The `release` branch is no longer used.
+
+## 2026-10-23: Sign in with email comes first
+
+- **Why:** department leaders all sign in with an emailed code, because most only have a Church Center login. A Planning Center button on top, worded much like the email one, confused people.
+- **Now (DRD 6.1 deviation):** **Sign in with email** is the filled main button, with the note "For most people, including Church Center users". Below it, an outlined **Use a Planning Center login**, with the note "Only if you log in to Planning Center itself, not just Church Center". When email sign-in is off, the Planning Center button is the filled one again.
+- **Kept, not removed:** it's the only way in for two leaders who share one email address (no code is sent then), and it still works if email delivery is down. Both ways reach the same account through the same checks.
