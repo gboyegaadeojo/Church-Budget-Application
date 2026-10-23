@@ -4,7 +4,12 @@ import type { Tx } from "@/db/types";
 import { myDepartmentBudgets } from "@/domain/expenses/queries";
 import { readyQueue } from "@/domain/expenses/payment-queries";
 import { accountantQueue, boardQueue } from "@/domain/expenses/review-queries";
-import type { BudgetFigures } from "@/domain/expenses/budget";
+import {
+  budgetStatus,
+  nearLimitThreshold,
+  type BudgetFigures,
+  type BudgetStatus,
+} from "@/domain/expenses/budget";
 import { hasRole, type Viewer } from "@/lib/roles";
 
 /**
@@ -19,6 +24,8 @@ export type GlanceCard =
       department: string;
       cycle: string;
       figures: BudgetFigures;
+      /** On track, nearing the limit or over, for the colour of what's left. */
+      status: BudgetStatus;
       href: string;
     }
   | { kind: "review"; annual: number; expenses: number; href: string }
@@ -52,7 +59,10 @@ export async function atAGlance(
 
   // Department leaders: each department's budget for its latest year.
   if (viewer.roles.includes("requester") && viewer.departments.length > 0) {
-    const budgets = await myDepartmentBudgets(tx, viewer, now);
+    const [budgets, threshold] = await Promise.all([
+      myDepartmentBudgets(tx, viewer, now),
+      nearLimitThreshold(tx),
+    ]);
     const latest = new Map<string, (typeof budgets)[number]>();
     for (const b of budgets) if (!latest.has(b.departmentId)) latest.set(b.departmentId, b);
     for (const b of latest.values()) {
@@ -61,6 +71,7 @@ export async function atAGlance(
         department: b.department,
         cycle: b.cycleName,
         figures: b.figures,
+        status: budgetStatus(b.figures, threshold),
         href: "/expenses/mine",
       });
     }

@@ -2,12 +2,14 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminSkeleton, PageHeader, Section } from "@/components/ui/display";
-import { cardClass, linkClass, standaloneLinkClass } from "@/components/ui/styles";
+import { cardClass } from "@/components/ui/styles";
 import { helpCopy, type HelpGuide } from "@/copy/help";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/roles";
 import { getViewer } from "@/lib/viewer";
 import { MyInfoForm } from "./my-info-form";
+import { OpenFromHash } from "./open-from-hash";
+import { ChevronRight } from "lucide-react";
 
 const h = helpCopy;
 
@@ -22,7 +24,10 @@ const GUIDE_ROLES: Record<string, readonly Role[]> = {
   system_admin: ["system_admin"],
 };
 
-/** Help (FR-36, DRD 6.11c): guides for your roles first, then the rest, and the FAQ. */
+/**
+ * Help (FR-36, DRD 6.11c): the common questions by topic, guides for your roles, then the
+ * rest. Each question opens in place; a link to #its-id opens it.
+ */
 export default function HelpPage() {
   return (
     <div className="space-y-6">
@@ -43,13 +48,16 @@ async function HelpContent() {
     <>
       <PageHeader title={h.title} intro={h.intro} />
 
-      <nav aria-label={h.faqHeading} className={cn(cardClass, "space-y-2")}>
+      <nav aria-label={h.faqHeading} className={cn(cardClass, "space-y-3")}>
         <h2 className="text-lg font-semibold">{h.faqHeading}</h2>
-        <ul className="space-y-1 text-sm">
-          {h.topics.map((t) => (
-            <li key={t.id}>
-              <Link href={`#${t.id}`} className={cn(linkClass, standaloneLinkClass)}>
-                {t.question}
+        <ul className="flex flex-wrap gap-2 text-sm">
+          {h.faqGroups.map((group) => (
+            <li key={group.id}>
+              <Link
+                href={`#faq-${group.id}`}
+                className="inline-flex min-h-9 items-center rounded-full border border-border bg-surface px-3.5 font-medium text-fg-muted transition-colors duration-150 hover:bg-surface-2 hover:text-fg motion-reduce:transition-none"
+              >
+                {group.title}
               </Link>
             </li>
           ))}
@@ -66,21 +74,44 @@ async function HelpContent() {
         </Section>
       )}
 
-      <Section title={h.faqHeading} id="faq">
-        <div className="space-y-6">
-          {h.topics.map((t) => (
-            <section key={t.id} id={t.id} aria-labelledby={`${t.id}-q`} className="scroll-mt-24">
-              <h3 id={`${t.id}-q`} className="font-semibold">
-                {t.question}
+      <Section title={h.faqHeading} description={h.faqIntro} id="faq">
+        <OpenFromHash />
+        <div className="space-y-8">
+          {h.faqGroups.map((group) => (
+            <section
+              key={group.id}
+              id={`faq-${group.id}`}
+              aria-labelledby={`faq-${group.id}-title`}
+              className="scroll-mt-24"
+            >
+              <h3
+                id={`faq-${group.id}-title`}
+                className="mb-2 text-sm font-semibold tracking-wide text-fg-muted uppercase"
+              >
+                {group.title}
               </h3>
-              <div className="mt-2 space-y-2 text-sm">
-                {t.answer.map((a) => (
-                  <p key={a}>{a}</p>
-                ))}
+              <div className="divide-y divide-border overflow-hidden rounded-[14px] border border-border">
+                {h.topics
+                  .filter((t) => t.group === group.id)
+                  .map((t) => (
+                    <details key={t.id} id={t.id} className="group scroll-mt-24">
+                      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-3 font-medium transition-colors duration-150 hover:bg-surface-2 motion-reduce:transition-none [&::-webkit-details-marker]:hidden">
+                        <span className="min-w-0 flex-1">{t.question}</span>
+                        <ChevronRight
+                          className="size-4 shrink-0 text-fg-muted transition-transform duration-150 group-open:rotate-90 motion-reduce:transition-none"
+                          aria-hidden="true"
+                        />
+                      </summary>
+                      <div className="space-y-2 px-4 pb-4 text-sm leading-relaxed">
+                        {t.answer.map((a) => (
+                          <p key={a}>{a}</p>
+                        ))}
+                      </div>
+                    </details>
+                  ))}
               </div>
             </section>
           ))}
-          <p className="text-sm text-fg-muted">{h.laterNote}</p>
         </div>
       </Section>
 

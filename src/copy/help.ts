@@ -4,7 +4,8 @@
  */
 
 export type HelpGuide = { id: string; title: string; who: string; steps: string[] };
-export type HelpTopic = { id: string; question: string; answer: string[] };
+export type HelpTopicGroup = "start" | "annual" | "expenses" | "budget" | "alerts" | "staff";
+export type HelpTopic = { id: string; group: HelpTopicGroup; question: string; answer: string[] };
 
 export const helpCopy = {
   title: "Help",
@@ -12,7 +13,7 @@ export const helpCopy = {
   yourGuides: "Guides for your roles",
   otherGuides: "Other roles",
   faqHeading: "Common questions",
-  laterNote: "Spending tracking is coming later; its guide will appear here.",
+  faqIntro: "Tap a question to see the answer.",
 
   guides: [
     {
@@ -101,9 +102,107 @@ export const helpCopy = {
     },
   ] satisfies HelpGuide[],
 
+  faqGroups: [
+    { id: "start", title: "Getting started" },
+    { id: "annual", title: "Your annual budget" },
+    { id: "expenses", title: "Purchases and expense claims" },
+    { id: "budget", title: "What's left in your budget" },
+    { id: "alerts", title: "Emails, notifications and the app" },
+    { id: "staff", title: "For church staff" },
+  ] as const,
+
   topics: [
+    // ---------------------------------------------------------------- Getting started
+    {
+      id: "what-for",
+      group: "start",
+      question: "What is Church Budget for?",
+      answer: [
+        "It's where ministries ask for their yearly budget, ask before buying something, claim back what they've paid, and see what's left, all in one place.",
+        "The accountant, the Board Chair and the Church Administrator use the same app to approve, pay and keep the records, so everyone sees the same numbers.",
+      ],
+    },
+    {
+      id: "sign-in",
+      group: "start",
+      question: "How do I sign in?",
+      answer: [
+        "Choose Continue with Planning Center and sign in with your usual church account. Ministry leaders and church staff need the Ministry Leader field in Planning Center set to Yes.",
+        "If you're not in the church's Planning Center (for example the Church Administrator), choose Continue with email: we email a 6-digit code that works once, for 10 minutes.",
+      ],
+    },
+    {
+      id: "cant-sign-in",
+      group: "start",
+      question: "It says I can't get in. What do I do?",
+      answer: [
+        "If it says your leader status couldn't be confirmed, ask your ministry's Planning Center administrator to set Ministry Leader to Yes on your profile, then sign in again.",
+        "If it says your profile isn't linked yet, there's already an account with your email: ask a System Administrator to link it. For your security, accounts are never linked by email alone.",
+        "The screen shows who to contact if you're stuck.",
+      ],
+    },
+    {
+      id: "waiting",
+      group: "start",
+      question: "I signed in, but it says I'm verified and waiting.",
+      answer: [
+        "Your Planning Center check passed. A System Administrator now adds you to your department, or gives church staff their role. You get an email when it's done.",
+      ],
+    },
+    {
+      id: "department-missing",
+      group: "start",
+      question: "My department isn't listed.",
+      answer: [
+        "When you submit your annual budget, choose Other and type the department's name. The administrator adds it, and your budget carries on.",
+      ],
+    },
+    {
+      id: "several-departments",
+      group: "start",
+      question: "I lead more than one department.",
+      answer: [
+        "You see every department you lead. Each form asks which department it's for, and My department's budget shows each one, with a card for any that has no approved budget yet.",
+      ],
+    },
+    {
+      id: "who-sees",
+      group: "start",
+      question: "Who can see my department's budget and expenses?",
+      answer: [
+        "The department's leaders, the accountant, the Board Chair and Vice-Chair, the Church Administrator and the System Administrators. Leaders of other departments can't.",
+      ],
+    },
+
+    // ---------------------------------------------------------------- Annual budget
+    {
+      id: "deadline",
+      group: "annual",
+      question: "When is the deadline, and what if I miss it?",
+      answer: [
+        "The deadline is on Annual Budget → My department's budget, and you're reminded 7 days and 1 day before.",
+        "After the deadline the form closes. If you need more time, ask the accountant: the department can be given an extension.",
+      ],
+    },
+    {
+      id: "last-year",
+      group: "annual",
+      question: "Can I start from last year's budget?",
+      answer: [
+        "Yes. If your department submitted last year, tick Start from last year's request on the first step, then change what you need.",
+      ],
+    },
+    {
+      id: "who-edits",
+      group: "annual",
+      question: "Who in my department can work on the budget?",
+      answer: [
+        "Every leader of the department: the Primary and up to two Backups. The draft saves itself as you type, so any of you can pick it up and finish it. There's one budget per department per year.",
+      ],
+    },
     {
       id: "tax",
+      group: "annual",
       question: "How is sales tax calculated?",
       answer: [
         "You enter every price before tax. Each line total is quantity × unit price, and the subtotal is the sum of the lines.",
@@ -114,6 +213,7 @@ export const helpCopy = {
     },
     {
       id: "edits",
+      group: "annual",
       question: "How do edits work after I submit?",
       answer: [
         "A submitted budget can be changed twice, and the 2 changes are shared by everyone who leads the department. The request page and every receipt say how many are left.",
@@ -123,14 +223,123 @@ export const helpCopy = {
     },
     {
       id: "approvals",
+      group: "annual",
       question: "How are budgets approved?",
       answer: [
         "The accountant reviews each department's budget and approves it as requested, approves a different total, adjusts individual items, returns it with a question, or declines it with a reason.",
-        "The department sees the decision on its budget at once and is emailed. A decision can be reopened if the board reconsiders, and the earlier decision stays in the history.",
+        "A decision can be reopened if the board reconsiders, and the earlier decision stays in the history.",
+      ],
+    },
+    {
+      id: "approved-yet",
+      group: "annual",
+      question: "How do I know my budget was approved?",
+      answer: [
+        "You're emailed the moment the decision is shared, it appears in your notifications, and Annual Budget → My department's budget shows it with the approved amount.",
+        "Some years every department's decision is shared on the same day. Until then your budget shows In Review, even if it's already been decided.",
+      ],
+    },
+    {
+      id: "approved-less",
+      group: "annual",
+      question: "The accountant approved less than we asked for.",
+      answer: [
+        "The approved amount is one total including tax, often the figure the board agreed. The decision shows the accountant's note. Use Messages on the budget to ask about it.",
+      ],
+    },
+
+    // ---------------------------------------------------------------- Expenses
+    {
+      id: "request-or-claim",
+      group: "expenses",
+      question: "Purchase request or expense claim: which do I use?",
+      answer: [
+        'Purchase request: ask before you buy ("May we buy 2 microphones?"). Once approved, the money is set aside for it, and the Church Administrator buys it or you buy it and then claim.',
+        "Expense claim: you've already paid and want to be paid back. Add one line per receipt with a photo of each.",
+      ],
+    },
+    {
+      id: "claim-deadline",
+      group: "expenses",
+      question: "How long do I have to claim?",
+      answer: [
+        "Submit a claim within 90 days of buying. A later claim can still be sent, but it asks you to explain why it's late.",
+      ],
+    },
+    {
+      id: "receipts",
+      group: "expenses",
+      question: "What receipts do I need?",
+      answer: [
+        "A photo or PDF of every receipt, one per line of the claim. On a phone, Take photo opens the camera. Type the amount you paid, including tax.",
+        "Never type bank account numbers anywhere in the app.",
+      ],
+    },
+    {
+      id: "who-approves",
+      group: "expenses",
+      question: "Who approves an expense?",
+      answer: [
+        "Both the accountant and the Board Chair, at the same time and in either order. If they approve different amounts, the lower one stands. The Vice-Chair steps in when the Chair is away or involved.",
+        "Nobody approves an expense for their own department or one that pays them.",
+      ],
+    },
+    {
+      id: "where-is-it",
+      group: "expenses",
+      question: "Where is my expense up to?",
+      answer: [
+        'Expenses → My expenses lists each one with its status and What\'s needed, such as "Waiting for the Board Chair" or "The Church Administrator will process it". Every step is also emailed to you and to the department\'s other leaders.',
+      ],
+    },
+    {
+      id: "change-expense",
+      group: "expenses",
+      question: "Can I change or withdraw an expense?",
+      answer: [
+        "Yes, until the accountant starts reviewing it. If an approver returns it with a question, you can answer and change it then.",
+      ],
+    },
+    {
+      id: "over-budget",
+      group: "expenses",
+      question: "What if an expense takes us over budget?",
+      answer: [
+        "The form shows by how much. You can still submit it with an explanation; the accountant and the Board Chair decide.",
+      ],
+    },
+    {
+      id: "when-paid",
+      group: "expenses",
+      question: "When do I get paid back?",
+      answer: [
+        "Once both approvals are in, the Church Administrator pays it, usually by cheque or e-transfer, and records it. You're emailed when it's paid. If it waits more than 14 days, they're reminded.",
+      ],
+    },
+
+    // ---------------------------------------------------------------- What's left
+    {
+      id: "budget-words",
+      group: "budget",
+      question: "What do Available, Committed, Pending, Spent and Remaining mean?",
+      answer: [
+        "Available: the approved budget, plus any change the accountant made during the year.",
+        "Committed: set aside for approved purchase requests not yet bought. Pending: expenses submitted but not yet approved.",
+        "Spent: paid out, including approved claims. Remaining: what the department can still spend.",
+      ],
+    },
+    {
+      id: "see-remaining",
+      group: "budget",
+      question: "Where can I see what's left?",
+      answer: [
+        "On Home, your department's card shows what's remaining: green when you're on track, amber when you're nearing the limit, red when you're over.",
+        "Spending → My department's spending shows every entry, and the form for a new expense shows what's left before and after it.",
       ],
     },
     {
       id: "spending",
+      group: "budget",
       question: "How is spending recorded?",
       answer: [
         "Approved expense claims and purchases are added to the spending ledger automatically, so departments see what's left on the budget strip and in My expenses.",
@@ -139,7 +348,19 @@ export const helpCopy = {
       ],
     },
     {
+      id: "year-end",
+      group: "budget",
+      question: "What happens at the end of the year?",
+      answer: [
+        "The accountant or the board closes the budget year. Spending stops, every leader is emailed, and what wasn't spent goes back to the church.",
+        "An approved purchase that hasn't been bought yet can be carried into next year's budget, with a reason.",
+      ],
+    },
+
+    // ---------------------------------------------------------------- Emails and alerts
+    {
       id: "notifications",
+      group: "alerts",
       question: "Where do I see my notifications?",
       answer: [
         "Select the bell in the top bar. Everything the app emails you also shows there, newest first, with a red number for the ones you haven't opened.",
@@ -148,6 +369,7 @@ export const helpCopy = {
     },
     {
       id: "get-app",
+      group: "alerts",
       question: "Can I put the app on my phone and get alerts?",
       answer: [
         "Yes. Open Get the app, at the bottom of every page or in your account menu. On an iPhone, open the app in Safari, tap Share, then Add to Home Screen. On Android, tap Install the app or choose Install app from Chrome's menu.",
@@ -156,20 +378,81 @@ export const helpCopy = {
       ],
     },
     {
+      id: "no-email",
+      group: "alerts",
+      question: "I'm not getting the emails.",
+      answer: [
+        "Check your spam or junk folder. If an email is there, mark it Not spam and add the sender to your contacts, so the rest reach your inbox.",
+        "My tasks on Home always shows what needs you, emails or not. A System Administrator can check whether an email was sent.",
+      ],
+    },
+    {
+      id: "stop-emails",
+      group: "alerts",
+      question: "Can I turn the emails off?",
+      answer: [
+        "No. Every step is emailed so nobody misses a decision or an approval. The bell and phone alerts are extra copies of the same news.",
+      ],
+    },
+    {
       id: "reminders",
+      group: "alerts",
       question: "Can I get reminders by text?",
       answer: [
         "Yes, if your Planning Center profile has a mobile number: the budget deadline, expenses waiting for your approval, approved expenses waiting to be paid and unclaimed purchases also come as a short text, between 9:00 a.m. and 8:00 p.m.",
         "Update your number in Planning Center to change it; the app picks it up overnight. Reply STOP to any text to stop them. Reminder emails always come.",
       ],
     },
+
+    // ---------------------------------------------------------------- Church staff
     {
-      id: "sign-in",
-      question: "How do I sign in?",
+      id: "staff-sign-in",
+      group: "staff",
+      question: "How do new staff get access?",
       answer: [
-        "Choose Continue with Planning Center. Department leaders need Planning Center to show them as a Group Leader.",
-        "The Church Administrator and System Administrators can also choose Continue with email, and we email a 6-digit code that works once, for 10 minutes.",
-        "If you see that your Planning Center profile isn't linked yet, ask the administrator to link it.",
+        "Staff in Planning Center sign in with it, like leaders; a System Administrator then gives them their role in Users & Roles. A System Administrator can also add them first, from Planning Center, so they can start straight away.",
+        "Someone not in Planning Center is added by email and signs in with an emailed code.",
+      ],
+    },
+    {
+      id: "away",
+      group: "staff",
+      question: "I'll be away. Who approves while I'm gone?",
+      answer: [
+        "Choose Away in your account menu. Accountant emails and approvals go to the backup approvers, and the Board Chair's go to the Vice-Chair, until the day you're back.",
+      ],
+    },
+    {
+      id: "admin-approve",
+      group: "staff",
+      question: "Can the System Administrator approve or pay?",
+      answer: [
+        "No. The System Administrator can see everything and set the app up, but approving and paying need the matching role, such as Accountant or Church Administrator. Screens they can't act on say View only.",
+      ],
+    },
+    {
+      id: "record-payment",
+      group: "staff",
+      question: "How does the Church Administrator record a payment?",
+      answer: [
+        "Expenses → Ready to process, then Start processing. Pay or buy it outside the app, then Record payment: how it was paid, the date and the amount. A cheque needs its number and two signers from the signing authorities in Settings.",
+        "The expense becomes Paid or Purchased, the requester is emailed, and the spending ledger updates by itself.",
+      ],
+    },
+    {
+      id: "mistakes",
+      group: "staff",
+      question: "Can a mistake be deleted?",
+      answer: [
+        "Nothing with financial history is deleted. A spending entry is corrected or voided with a reason, a decision can be reopened, and every change is kept in the activity log with who made it and why.",
+      ],
+    },
+    {
+      id: "exports",
+      group: "staff",
+      question: "Can I get the numbers in Excel?",
+      answer: [
+        "Yes. Reports has downloads for annual budgets, expenses and payments, and spending. A single budget can be downloaded from its page too.",
       ],
     },
   ] satisfies HelpTopic[],

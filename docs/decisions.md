@@ -1229,3 +1229,8 @@ The church asked for a list that stays clean with about 80 people.
 
 - Manitoba moves to permanent UTC−5 from 2026-11-01 (announced 2026-09-17; IANA tzdata 2026e). The app stores UTC and shows times with the IANA zone `America/Winnipeg`, so it follows the new rule wherever the runtime has current time-zone data (Netlify and CI use the latest Node 22). Nothing in the app hard-codes UTC−6.
 - Tests that check daylight-saving mechanics (deadline conversion, skipped spring-forward times, quiet hours across the clock change) now use `America/Chicago`, which keeps the old rules, so they pass on old and new time-zone data alike.
+
+## 2026-10-23: Help FAQ by topic; remaining budget stands out on Home
+
+- **Asked for by the user:** Help's common questions grew to about 40, for leaders and staff, grouped by topic (Getting started, Your annual budget, Purchases and expense claims, What's left in your budget, Emails notifications and the app, For church staff). Each question opens in place; a link to `/help#<id>` opens that answer. The stale "Spending tracking is coming later" note is gone and the sign-in answer uses the Ministry Leader field.
+- **Home's department card** keeps its look; what's left is now a coloured pill, green on track, amber nearing the limit (the Settings threshold), red over budget, with the same words as before.
