@@ -321,6 +321,13 @@ async function AtAGlance({
           switch (card.kind) {
             case "department": {
               const over = card.figures.remaining < 0;
+              // What's left stands out, coloured by how the budget is doing (2026-10-23).
+              const tone =
+                over || card.status === "over_budget"
+                  ? "bg-danger/10 text-danger"
+                  : card.status === "nearing_limit"
+                    ? "bg-warning/15 text-warning"
+                    : "bg-success/10 text-success";
               return (
                 <StatCard
                   key={`${card.kind}-${card.department}`}
@@ -330,7 +337,13 @@ async function AtAGlance({
                   tone={over ? "red" : "amber"}
                   href={card.href}
                 >
-                  <p className={cn("text-sm", over ? "text-danger" : "text-fg-muted")}>
+                  <p
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-full px-3 py-1 text-base font-semibold tabular",
+                      tone,
+                    )}
+                  >
+                    <span aria-hidden="true" className="size-2 rounded-full bg-current" />
                     {over
                       ? g.overBy(formatCAD(-card.figures.remaining))
                       : g.remaining(formatCAD(card.figures.remaining))}

@@ -25,8 +25,19 @@ test.describe("Help and privacy (FR-36, DRD 6.11c)", () => {
       await expect(yours.getByRole("heading", { name: /^Department leaders/ })).toHaveCount(0);
       await expectNoHorizontalScroll(page);
       await expectAxeClean(page);
-      await page.getByRole("link", { name: "How is sales tax calculated?" }).click();
-      await expect(page).toHaveURL(/\/help#tax$/);
+      // The questions are grouped by topic and open in place.
+      await page
+        .getByRole("navigation", { name: "Common questions" })
+        .getByRole("link", { name: "Your annual budget" })
+        .click();
+      await expect(page).toHaveURL(/\/help#faq-annual$/);
+      await page.getByText("How is sales tax calculated?").click();
+      await expect(
+        page.getByText("$1,025.00 + $123.00 tax = $1,148.00", { exact: false }),
+      ).toBeVisible();
+      // A link straight to an answer opens it.
+      await page.goto("/help#who-approves");
+      await expect(page.getByText("the lower one stands", { exact: false })).toBeVisible();
     });
   }
 
