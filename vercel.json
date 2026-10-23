@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "npm run build && node scripts/migrate.mjs --production-only",
-  "ignoreCommand": "[ \"$VERCEL_ENV\" != \"production\" ]",
+  "ignoreCommand": "echo \"VERCEL_ENV=$VERCEL_ENV branch=$VERCEL_GIT_COMMIT_REF\"; [ \"$VERCEL_GIT_COMMIT_REF\" != \"release\" ]",
   "regions": ["cle1"]
 }

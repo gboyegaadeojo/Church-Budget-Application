@@ -10,7 +10,7 @@ Other Hobby limits that matter here, all comfortably above what the church uses:
 
 ## What the code already does for Vercel
 
-- **`vercel.json`**: builds with `npm run build`, then brings the database up to date on **production** deploys only (`scripts/migrate.mjs --production-only`). A failed migration fails the deploy, so the previous version stays live. Preview deploys are skipped entirely (`ignoreCommand`), so a pull request never builds against the live database.
+- **`vercel.json`**: builds with `npm run build`, then brings the database up to date on **production** deploys only (`scripts/migrate.mjs --production-only`). A failed migration fails the deploy, so the previous version stays live. Only the `release` branch builds (`ignoreCommand`); every other branch and pull request is skipped, so nothing else builds against the live database. Keep Branch Tracking (step 2) on `release` to match.
 - **Server region `cle1` (Cleveland)**: next to the Neon database in AWS US East (Ohio). Vercel's default is Washington, which is slower to the database.
 - **Node 22** from `package.json` `engines`.
 - **Hourly jobs** (decision release, email outbox, phone alerts): `.github/workflows/hourly.yml`, switched on by a repository variable. On Netlify, `netlify/functions/send-outbox.mts` does this instead and Vercel ignores it.
