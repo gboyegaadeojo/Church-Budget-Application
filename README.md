@@ -6,7 +6,7 @@ A web app for Immanuel Fellowship Church to:
 2. **Approve spending during the year (Expenses).** Departments submit purchase requests (before buying) and expense claims (after buying) against their approved budget. The accountant and the Board Chair both approve; then the Church Administrator pays or purchases and records how.
 3. **Track what's left (Spending).** Approved, amendments, committed, spent and remaining for every department, with a ledger, Budget vs actual, alerts, a year-end lock and Excel exports.
 
-Sign-in is with Planning Center (the Church Administrator and System Administrators can also use an emailed code). Only verified Group Leaders can submit. Everything runs on free tiers, except Twilio for the optional reminder texts (about CA$5-8 a month).
+It runs at **https://budget.ifcwpg.com**. Sign-in is with Planning Center for ministry leaders and church staff (Ministry Leader = Yes), or an emailed code for anyone not in Planning Center. It installs on phones like an app, with alerts. Everything runs on free tiers, except Twilio for the optional reminder texts (about CA$5-8 a month). The services are listed under [Services and tools](#services-and-tools).
 
 ## Status
 
@@ -20,7 +20,7 @@ It is **one application** for everyone, at **https://budget.ifcwpg.com**: one we
 
 | Role | Who | Main job |
 |---|---|---|
-| Requester | Department leaders (verified Group Leaders in Planning Center) | Submit the annual budget and expenses; follow their department's spending |
+| Requester | Department leaders (Ministry Leader = Yes in Planning Center) | Submit the annual budget and expenses; follow their department's spending |
 | Accountant (+ backup approver) | Church accountant | Decide annual budgets; approve expenses; amend budgets; lock the year |
 | Board Chair | Chairman of the Board | Approve expenses (alongside the accountant) |
 | Vice-Chair | Vice-Chairman of the Board | Approves when the Chair is away or conflicted |
@@ -52,16 +52,36 @@ If the requirements and the design disagree about **behaviour**, the requirement
 | Files | Receipts on claims, optional attachments (quote, invoice, photo) on purchase requests, and the admin's logo; nothing else | Req 6B.9, FR-30; decisions 2026-10-17 |
 | Emails | Every update emails the people involved, through an outbox; nobody can turn them off | Req FR-21, FR-49 |
 | Texts | Four reminders also go by text to a Planning Center mobile number, 9:00 a.m. to 8:00 p.m., up to a monthly limit; reply STOP to stop | decisions 2026-10-18 |
-| Sign-in | Planning Center, plus an emailed code for the Church Administrator and System Administrators; requesters need the Group Leader field ("Ministry Leader" = "Yes") | Req FR-01, FR-01a |
+| Sign-in | Planning Center for leaders and staff ("Ministry Leader" = "Yes"), plus an emailed code for people not in Planning Center; staff are added from Planning Center | Req FR-01, FR-01a; decisions 2026-10-20 |
 | Year-end | The accountant locks a year's spending; open purchase requests are cancelled or carried into next year | Req FR-29, FR-46 |
 | Audit and analytics | Reports → Analytics & Audit: Overview charts, the full activity log, access checks | Req FR-52 |
-| Cost | Free tiers: Netlify, Neon, Resend, GitHub Actions, Cloudflare R2. Paid: Twilio for reminder texts (approved) | Req 20.3; decisions 2026-10-18 |
+| Notifications | Every email also lands in the bell; the installed app shows phone alerts, which only a System Administrator can turn off | decisions 2026-10-19, 2026-10-22 |
+| Cost | Free tiers: Vercel, Neon, Resend, GitHub, Cloudflare R2, Google Drive, web push. Paid: Twilio for reminder texts (approved) | Req 20.3; decisions 2026-10-18 |
+
+## Services and tools
+
+What the app runs on, and what each one is for. Accounts are the church's; secrets live only in the hosting and GitHub settings, never in this repository.
+
+| Service | What it's for | Plan |
+|---|---|---|
+| **Vercel** | Hosts the app at **https://budget.ifcwpg.com**: builds each release, runs the pages and server, and brings the database up to date on each production deploy ([docs/vercel.md](docs/vercel.md)) | Free (Hobby); see the note in docs/vercel.md |
+| **Netlify** | The first host. The setup is kept (`netlify.toml`) so the app can move back in minutes | Free |
+| **Neon** | The Postgres database: every budget, expense, payment, user and the activity log. Production and staging branches, in AWS US East (Ohio) next to the app | Free |
+| **Planning Center** | Sign-in ("Continue with Planning Center") and the People API: checks the Ministry Leader field, suggests departments, finds staff to add, reads mobile numbers for texts | The church's existing account; API free |
+| **Resend** | Sends every email (decisions, approvals, payments, reminders, sign-in codes) from budget@ifcwpg.com | The church's existing account; free |
+| **Cloudflare R2** | Stores receipt photos and purchase-request attachments, privately, with short-lived links | Free tier (card on file) |
+| **Web push** | Phone and computer alerts for the installed app, through Apple's, Google's, Mozilla's and Microsoft's own push services (`web-push` library, VAPID keys) | Free, no account |
+| **Twilio** | Optional reminder texts (deadline, approvals, payments, unclaimed purchases) | Paid, about CA$5-8 a month; the one approved paid service, set up when the church is ready |
+| **GitHub** | The code, tests on every change (GitHub Actions), the nightly jobs (Planning Center check, reminders), the hourly jobs on Vercel, and the nightly backup | Free (public repository) |
+| **Google Drive** (+ a Google Cloud project) | Holds the encrypted nightly database backups in a church folder | Free |
+| **age** | Encrypts each backup before it leaves GitHub; the private key is kept offline on two USB drives | Free, open source |
+| **Squarespace** | The church's domain settings: `budget` points at Vercel | The church's existing domain |
 
 ## For developers
 
 ### Stack
 
-Next.js (App Router, TypeScript strict) · Tailwind CSS with the DRD tokens · Radix UI · React Hook Form + Zod (shared by client and server) · Neon Postgres with Drizzle ORM and migrations · Auth.js (Planning Center OAuth and emailed codes) · Resend for email · Twilio for reminder texts · Cloudflare R2 for files · ExcelJS for exports · Vitest and Playwright (Chromium, axe-core) for tests. Hosted on Netlify.
+Next.js (App Router, TypeScript strict) · Tailwind CSS with the DRD tokens · Radix UI · React Hook Form + Zod (shared by client and server) · Neon Postgres with Drizzle ORM and migrations · Auth.js (Planning Center OAuth and emailed codes) · Resend for email · web push for phone alerts · Twilio for reminder texts · Cloudflare R2 for files · ExcelJS for exports · Vitest and Playwright (Chromium, axe-core) for tests. Hosted on Vercel (Netlify also works from the same code).
 
 ### Run it on your computer
 
@@ -103,8 +123,9 @@ src/copy/         all UI text (English, Canada)
 src/db/schema.ts  the database schema; migrations are in drizzle/
 tests/            unit, integration, e2e (tests are named after their ACs)
 scripts/          fake server, test seed, demo reset
-netlify/functions scheduled jobs (email outbox)
-.github/workflows CI on every PR, nightly jobs, demo reset
+vercel.json       Vercel build, region and production-only migrations
+netlify/functions hourly jobs when hosted on Netlify
+.github/workflows CI on every PR, nightly jobs, hourly jobs on Vercel, backup, demo reset
 ```
 
 Every action follows the same order in one transaction: permission check, validation, status-machine check, write, audit, email outbox. See [CLAUDE.md](CLAUDE.md) for the hard constraints and conventions.
@@ -115,7 +136,7 @@ CI must pass lint, typecheck, unit, integration and end-to-end tests (with axe a
 
 ### Deploying
 
-Production is a Netlify site connected to this repository. [netlify.toml](netlify.toml) builds it and, on production deploys only, brings the database up to date afterwards (`scripts/migrate.mjs`); a failed migration fails the deploy and the previous version stays live. On a new, empty database, set `FIRST_ADMIN_EMAIL` and sign in with an emailed code at that address to become the first System Administrator. The environment variables, secrets and scheduled jobs are listed in [CLAUDE.md](CLAUDE.md#environment-variables-names-only-values-live-in-netlify-and-github-secrets) and explained in the [go-live checklist](docs/go-live-checklist.md). The optional training copy is set up as in [docs/demo-site.md](docs/demo-site.md).
+Production is the Vercel project `ifc-budget`, connected to this repository ([docs/vercel.md](docs/vercel.md)). [vercel.json](vercel.json) builds it and, on production deploys only, brings the database up to date afterwards (`scripts/migrate.mjs`); a failed migration fails the deploy and the previous version stays live. The hourly jobs run from `.github/workflows/hourly.yml`. [netlify.toml](netlify.toml) does the same on Netlify, the previous host. On a new, empty database, set `FIRST_ADMIN_EMAIL` and sign in with an emailed code at that address to become the first System Administrator. The environment variables, secrets and scheduled jobs are listed in [CLAUDE.md](CLAUDE.md#environment-variables-names-only-values-live-in-netlify-and-github-secrets) and explained in the [go-live checklist](docs/go-live-checklist.md). The optional training copy is set up as in [docs/demo-site.md](docs/demo-site.md).
 
 ## What the church provides before launch
 
