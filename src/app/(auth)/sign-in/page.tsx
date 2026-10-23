@@ -20,8 +20,9 @@ const s = copy.signIn;
 export const metadata: Metadata = { title: s.title };
 
 /**
- * Sign-in (DRD 6.1, redesigned 2026-10-22): one clear Continue with Planning Center, then
- * Continue with email for people who aren't in Planning Center. Who can get in, and the
+ * Sign-in (DRD 6.1, redesigned 2026-10-22): Sign in with email first, since most leaders
+ * only have a Church Center login, then a Planning Center login for those who have one
+ * (docs/decisions.md 2026-10-23). Each says in one line who it's for. Who can get in, and the
  * privacy note, stay one tap away so the page reads at a glance. No Google (docs/decisions.md).
  */
 export default function SignInPage({ searchParams }: PageProps<"/sign-in">) {
@@ -80,12 +81,7 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/sign-in">, "sear
 
       {showPco || showEmail ? (
         <div className="space-y-3">
-          {showPco && (
-            <ProviderButton provider="planningcenter" callbackUrl={callbackUrl}>
-              <Users className="size-5" aria-hidden="true" />
-              {s.continueWithPlanningCenter}
-            </ProviderButton>
-          )}
+          {showEmail && <EmailSignIn callbackUrl={callbackUrl} />}
           {showPco && showEmail && (
             <div className="flex items-center gap-3 py-1 text-xs text-fg-muted" aria-hidden="true">
               <span className="h-px flex-1 bg-border" />
@@ -93,7 +89,21 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/sign-in">, "sear
               <span className="h-px flex-1 bg-border" />
             </div>
           )}
-          {showEmail && <EmailSignIn callbackUrl={callbackUrl} />}
+          {showPco && (
+            <div className="space-y-2">
+              <ProviderButton
+                provider="planningcenter"
+                callbackUrl={callbackUrl}
+                primary={!showEmail}
+              >
+                <Users className="size-5" aria-hidden="true" />
+                {s.continueWithPlanningCenter}
+              </ProviderButton>
+              {showEmail && (
+                <p className="text-center text-xs text-fg-muted">{s.planningCenterNote}</p>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         !fake && <p className="rounded-[12px] bg-surface-2 p-3 text-sm">{s.notConfigured}</p>
@@ -120,9 +130,12 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/sign-in">, "sear
   );
 }
 
-/** The main way in: filled, full width, in the text colour, like a platform sign-in button. */
-const primaryClass =
-  "group flex min-h-[52px] w-full items-center justify-center gap-2.5 rounded-[14px] bg-fg px-4 whitespace-nowrap sm:gap-3 sm:px-5 text-[15px] font-semibold text-bg shadow-sm transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.99] motion-reduce:transition-none";
+const buttonBase =
+  "group flex min-h-[52px] w-full items-center justify-center gap-2.5 rounded-[14px] px-4 whitespace-nowrap sm:gap-3 sm:px-5 text-[15px] font-semibold motion-reduce:transition-none";
+/** Filled, in the text colour: the main way in when email sign-in is off. */
+const primaryClass = `${buttonBase} bg-fg text-bg shadow-sm transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.99]`;
+/** Outlined: the other way in, below Sign in with email. */
+const secondaryClass = `${buttonBase} border border-border-strong bg-surface transition-colors duration-150 hover:bg-surface-hover`;
 
 const fakeClass =
   "flex min-h-10 w-full items-center gap-3 rounded-[12px] border border-border bg-surface px-4 text-left text-sm font-medium transition-colors duration-150 hover:bg-surface-hover motion-reduce:transition-none";
@@ -130,17 +143,19 @@ const fakeClass =
 function ProviderButton({
   provider,
   callbackUrl,
+  primary,
   children,
 }: {
   provider: "planningcenter";
   callbackUrl: string;
+  primary: boolean;
   children: React.ReactNode;
 }) {
   return (
     <form action={signInWithProvider}>
       <input type="hidden" name="provider" value={provider} />
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
-      <button type="submit" className={primaryClass}>
+      <button type="submit" className={primary ? primaryClass : secondaryClass}>
         {children}
         <ArrowRight
           className="hidden size-4 opacity-60 transition-transform sm:block duration-150 group-hover:translate-x-0.5 motion-reduce:transition-none"

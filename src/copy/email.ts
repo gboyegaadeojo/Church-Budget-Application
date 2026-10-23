@@ -428,7 +428,7 @@ export const emailCopy = {
       intro: (app: string, church: string) =>
         `An administrator gave you access to ${app} for ${church}. Sign in with Planning Center.`,
       emailCodeToo:
-        "You can also choose Continue with email on the sign-in page, and we'll send a 6-digit code to this address.",
+        "You can also choose Sign in with email on the sign-in page, and we'll send a 6-digit code to this address.",
     },
     signInCode: {
       subject: (app: string) => `Your ${app} sign-in code`,
