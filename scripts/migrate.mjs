@@ -3,9 +3,10 @@
  *
  *   DATABASE_URL=postgres://… node scripts/migrate.mjs
  *
- * Netlify runs it on every production deploy, after the build (netlify.toml): a failed
- * build never touches the database, and a failed migration fails the deploy, so the
- * previous version stays live. Migrations already applied are skipped, so running it
+ * Netlify (netlify.toml) and Vercel (vercel.json) run it on every production deploy,
+ * after the build: a failed build never touches the database, and a failed migration
+ * fails the deploy, so the previous version stays live. With --production-only it does
+ * nothing on a Vercel preview, so only production changes the database. Migrations already applied are skipped, so running it
  * twice is harmless. DATABASE_URL_UNPOOLED is used when set (Neon's direct connection,
  * which it recommends for schema changes), otherwise DATABASE_URL.
  */
@@ -16,6 +17,16 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+if (
+  process.argv.includes("--production-only") &&
+  process.env.VERCEL &&
+  process.env.VERCEL_ENV !== "production"
+) {
+  console.log(
+    `Not a production deploy (${process.env.VERCEL_ENV}); the database is left as it is.`,
+  );
+  process.exit(0);
+}
 const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 if (!url) {
   console.error("DATABASE_URL is not set, so the database can't be migrated.");

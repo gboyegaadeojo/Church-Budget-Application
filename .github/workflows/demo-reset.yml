@@ -36,10 +36,11 @@ jobs:
           node scripts/demo-reset.mjs
       - name: Rebuild the demo site
         env:
-          HOOK: ${{ secrets.NETLIFY_DEMO_BUILD_HOOK }}
+          # A Netlify build hook or a Vercel deploy hook: both rebuild on a POST.
+          HOOK: ${{ secrets.DEMO_BUILD_HOOK || secrets.NETLIFY_DEMO_BUILD_HOOK }}
         run: |
           if [ -z "$HOOK" ]; then
-            echo "NETLIFY_DEMO_BUILD_HOOK is not set; the demo keeps its current build."
+            echo "DEMO_BUILD_HOOK is not set; the demo keeps its current build."
             exit 0
           fi
           curl --fail-with-body --silent --show-error -X POST -d '{}' "$HOOK"

@@ -2,7 +2,7 @@
  * Fake sign-in (a test-only "provider" that lets you sign in as any Planning Center or
  * email identity) exists so end-to-end tests and local development work without real
  * credentials. Locally it needs AUTH_FAKE_PROVIDERS=1 and an AUTH_URL on this computer,
- * and Netlify builds are refused.
+ * and Netlify and Vercel builds are refused.
  *
  * The one deployed exception is the demo site (docs/demo-site.md): DEMO_MODE=1 and an
  * AUTH_URL whose host names it a demo. Even then, signing in also needs the database
@@ -12,7 +12,7 @@
 export function fakeSignInEnabled(env: Record<string, string | undefined> = process.env): boolean {
   if (demoMode(env)) return true;
   if (env.AUTH_FAKE_PROVIDERS !== "1") return false;
-  if (env.NETLIFY === "true" || env.CONTEXT) return false;
+  if (env.NETLIFY === "true" || env.CONTEXT || env.VERCEL || env.VERCEL_ENV) return false;
   try {
     const host = new URL(env.AUTH_URL ?? "").hostname;
     return host === "localhost" || host === "127.0.0.1";

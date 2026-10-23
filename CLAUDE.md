@@ -37,8 +37,8 @@ Read the relevant FRs and the DRD screen section before starting any feature. If
 | Reminder texts | Twilio pay-as-you-go (REST via `fetch`) behind an `SmsSender` interface, `src/lib/sms/`; the one approved paid exception to constraint 1 (docs/decisions.md 2026-10-18) |
 | Files (receipts, logo) | Cloudflare R2 (S3 API), private bucket, signed URLs |
 | Excel | ExcelJS, server-side |
-| Hosting | Netlify free (Next.js runtime) |
-| Scheduled jobs | Netlify Scheduled Function hourly (release-decisions, send-outbox) and GitHub Actions nightly, calling `POST /api/jobs/<name>` with `Authorization: Bearer $JOBS_SECRET` (docs/decisions.md 2026-10-20) |
+| Hosting | Netlify free (Next.js runtime), or Vercel (`vercel.json`, docs/vercel.md) |
+| Scheduled jobs | Hourly (release-decisions, send-outbox): a Netlify Scheduled Function, or `.github/workflows/hourly.yml` on Vercel; GitHub Actions nightly, calling `POST /api/jobs/<name>` with `Authorization: Bearer $JOBS_SECRET` (docs/decisions.md 2026-10-20) |
 | Backups | Nightly GitHub Action: `pg_dump` → encrypted → upload to a church Google Drive folder |
 | Tests | Vitest (unit and integration), Playwright (end-to-end) using Chromium; axe-core for accessibility |
 | Quality | ESLint, Prettier, `tsc --noEmit`, and GitHub Actions CI on every PR |
