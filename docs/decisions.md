@@ -1259,3 +1259,7 @@ The church asked for a list that stays clean with about 80 people.
 - **Why:** department leaders all sign in with an emailed code, because most only have a Church Center login. A Planning Center button on top, worded much like the email one, confused people.
 - **Now (DRD 6.1 deviation):** **Sign in with email** is the filled main button, with the note "For most people, including Church Center users". Below it, an outlined **Use a Planning Center login**, with the note "Only if you log in to Planning Center itself, not just Church Center". When email sign-in is off, the Planning Center button is the filled one again.
 - **Kept, not removed:** it's the only way in for two leaders who share one email address (no code is sent then), and it still works if email delivery is down. Both ways reach the same account through the same checks.
+
+## 2026-10-24: The phone's More menu is folded by area
+
+- **Decided by the church:** the More sheet listed every page of every area at once, a long scroll on a phone. Each area now shows only its heading, with how many pages it holds; tapping it opens its pages (a button with `aria-expanded`). The area of the page you're on starts open, so its pages are one tap away. Help and Privacy stay visible at the bottom.

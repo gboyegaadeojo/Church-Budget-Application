@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Ellipsis, X } from "lucide-react";
+import { ChevronDown, Ellipsis, X } from "lucide-react";
 import { copy } from "@/copy/en-CA";
 import { areaForPath, FOOTER_LINKS, isActiveHref, type NavArea } from "@/domain/navigation";
 import { cn } from "@/lib/cn";
@@ -78,16 +78,35 @@ export function BottomBar({ areas }: { areas: NavArea[] }) {
   );
 }
 
-/** The pages the bar doesn't reach, grouped by area, plus Help and Privacy, in a bottom sheet. */
+/**
+ * The pages the bar doesn't reach, grouped by area, plus Help and Privacy, in a bottom sheet.
+ * Each area is folded to its heading (decided by the church 2026-10-24): tap one to see its
+ * pages. The area of the page you're on starts open.
+ */
 function MoreSheet({ rest, pathname }: { rest: NavArea[]; pathname: string }) {
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const onOpenChange = (next: boolean) => {
+    if (next) {
+      const current = areaForPath(pathname);
+      setExpanded(new Set(current && rest.some((a) => a.id === current) ? [current] : []));
+    }
+    setOpen(next);
+  };
+  const toggle = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   // Any link closes the sheet, including one to the page already open.
   const closeOnLink = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("a")) setOpen(false);
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Trigger className={tabClass}>
         <span className="grid h-6 w-12 place-items-center">
           <Ellipsis className="size-5" aria-hidden="true" />
@@ -111,29 +130,49 @@ function MoreSheet({ rest, pathname }: { rest: NavArea[]; pathname: string }) {
               <X className="size-5" aria-hidden="true" />
             </Dialog.Close>
           </div>
-          <div className="space-y-4 overflow-y-auto px-3 pb-4" onClick={closeOnLink}>
-            {rest.map((area) => (
-              <section key={area.id} aria-labelledby={`more-${area.id}`}>
-                <h3
-                  id={`more-${area.id}`}
-                  className="flex items-center gap-2 px-2 pb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase"
-                >
-                  <AreaBadge area={area.id} size="sm" />
-                  {area.label}
-                </h3>
-                <ul className="space-y-0.5">
-                  {area.items.map((item) => (
-                    <li key={item.href}>
-                      <PageLink
-                        area={area.id}
-                        item={item}
-                        active={isActiveHref(pathname, item.href)}
+          <div className="space-y-1 overflow-y-auto px-3 pb-4" onClick={closeOnLink}>
+            {rest.map((area) => {
+              const isOpen = expanded.has(area.id);
+              const listId = `more-${area.id}-pages`;
+              return (
+                <section key={area.id} aria-labelledby={`more-${area.id}`}>
+                  <h3>
+                    <button
+                      type="button"
+                      id={`more-${area.id}`}
+                      aria-expanded={isOpen}
+                      aria-controls={listId}
+                      onClick={() => toggle(area.id)}
+                      className="flex min-h-12 w-full items-center gap-3 rounded-[12px] px-2 text-left text-[15px] font-semibold transition-colors duration-fast hover:bg-surface-hover"
+                    >
+                      <AreaBadge area={area.id} size="sm" />
+                      <span className="flex-1">{area.label}</span>
+                      <span className="text-xs font-normal text-fg-muted tabular">
+                        {area.items.length}
+                      </span>
+                      <ChevronDown
+                        aria-hidden="true"
+                        className={cn(
+                          "size-4 text-fg-muted transition-transform duration-fast motion-reduce:transition-none",
+                          isOpen && "rotate-180",
+                        )}
                       />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
+                    </button>
+                  </h3>
+                  <ul id={listId} hidden={!isOpen} className="space-y-0.5 pb-2 pl-2">
+                    {area.items.map((item) => (
+                      <li key={item.href}>
+                        <PageLink
+                          area={area.id}
+                          item={item}
+                          active={isActiveHref(pathname, item.href)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
             <ul className="flex gap-2 border-t border-border px-2 pt-3">
               {FOOTER_LINKS.map((link) => (
                 <li key={link.href}>

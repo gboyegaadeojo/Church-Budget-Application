@@ -68,7 +68,7 @@ export const copy = {
     areaPages: (area: string) => `${area} pages`,
     allPagesHint: "Everything you can open, grouped by area.",
     morePages: "More",
-    morePagesHint: "The pages the bar doesn't show, grouped by area.",
+    morePagesHint: "The pages the bar doesn't show, grouped by area. Tap an area to see its pages.",
     closeMenu: "Close",
   },
   account: {
