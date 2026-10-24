@@ -106,6 +106,11 @@ test.describe("Phone check (Stage 5)", () => {
     const open = bar.getByRole("button", { name: "More" });
     await open.tap();
     const sheet = page.getByRole("dialog", { name: "More" });
+    // The area of the page you're on starts open; the others are folded.
+    await expect(sheet.getByRole("button", { name: /Expenses/ })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
     await expect(sheet.getByRole("link", { name: "New expense" })).toBeVisible();
     await expect(sheet.getByRole("link", { name: "My expenses" })).toHaveCount(0);
     await sheet.getByRole("link", { name: "Help" }).tap();

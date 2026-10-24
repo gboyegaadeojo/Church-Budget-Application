@@ -124,6 +124,12 @@ test.describe("Home and app shell", () => {
     await more.click();
     const sheet = page.getByRole("dialog", { name: "More" });
     await expect(sheet).toBeVisible();
+    // Each area is folded until tapped.
+    const annual = sheet.getByRole("button", { name: /Annual Budget/ });
+    await expect(annual).toHaveAttribute("aria-expanded", "false");
+    await expect(sheet.getByRole("link", { name: "Review dashboard" })).toHaveCount(0);
+    await annual.click();
+    await expect(annual).toHaveAttribute("aria-expanded", "true");
     await expect(sheet.getByRole("link", { name: "Review dashboard" })).toBeVisible();
     await expect(sheet.getByRole("link", { name: "My department's budget" })).toHaveCount(0);
     await expect(sheet.getByRole("link", { name: "My tasks" })).toHaveCount(0);
@@ -133,6 +139,7 @@ test.describe("Home and app shell", () => {
     await expect(more).toBeFocused();
 
     await more.click();
+    await sheet.getByRole("button", { name: /Admin/ }).click();
     await sheet.getByRole("link", { name: "Users & Roles" }).click();
     await expect(sheet).toBeHidden();
     await expect(page).toHaveURL(/\/admin\/users$/);
