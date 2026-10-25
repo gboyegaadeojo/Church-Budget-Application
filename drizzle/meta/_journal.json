@@ -218,6 +218,13 @@
       "when": 1792772401187,
       "tag": "0030_leader_email_code",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792892556466,
+      "tag": "0031_verbal_approvals",
+      "breakpoints": true
     }
   ]
 }

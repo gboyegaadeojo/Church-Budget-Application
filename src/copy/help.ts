@@ -80,6 +80,7 @@ export const helpCopy = {
       who: "church_admin",
       steps: [
         "Choose Sign in with email and enter the address the church has for you: we email you a 6-digit code. If you have a Planning Center login, Use a Planning Center login works too.",
+        "If the accountant or the Board Chair tells you they approve an expense, open it and use Record a verbal approval: whose approval, when and how they told you, and tick to confirm. It shows as their verbal approval recorded by you, and they're emailed to check it.",
         "Expenses → Ready to process lists everything with both approvals, oldest first. Start processing tells the requester it's being done.",
         "Pay or buy it outside the app, then Record payment: how it was paid, the date and the amount, with the cheque number and two signers, card digits, e-transfer reference or invoice number. The requester and payee are emailed.",
         "Spending → Ledger shows what's been spent, including every approved expense. Reports → Expenses and payments downloads the payments for bank reconciliation.",
@@ -438,6 +439,16 @@ export const helpCopy = {
       answer: [
         "Expenses → Ready to process, then Start processing. Pay or buy it outside the app, then Record payment: how it was paid, the date and the amount. A cheque needs its number and two signers from the signing authorities in Settings.",
         "The expense becomes Paid or Purchased, the requester is emailed, and the spending ledger updates by itself.",
+      ],
+    },
+    {
+      id: "verbal-approval",
+      group: "staff",
+      question: "Can an approver tell the office instead of approving in the app?",
+      answer: [
+        "Yes. The accountant or the Board Chair can approve verbally, and the Church Administrator records it on the expense: whose approval, when and how it was given, and a tick to confirm. Each approver is recorded separately.",
+        "It always shows as a verbal approval recorded by the Church Administrator, in the expense, the activity log and the Excel export, never as if the approver approved in the app. The approver is emailed every time one is recorded in their name, so they can object if it's wrong.",
+        "Questions and declines can't be recorded this way; the approver does those in the app.",
       ],
     },
     {

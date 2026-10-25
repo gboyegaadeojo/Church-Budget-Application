@@ -52,6 +52,13 @@ export type ExpenseEmailEvent =
   | { kind: "approved_one"; level: "accountant" | "board" }
   /** The second approval: the expense is Approved. */
   | { kind: "final_approved"; overBy: number }
+  /** An approval given verbally, recorded by the Church Administrator (2026-10-24). */
+  | {
+      kind: "verbal_recorded";
+      level: "accountant" | "board";
+      approverId: string;
+      how: string;
+    }
   | { kind: "processing_started" }
   | { kind: "paid" };
 
@@ -224,12 +231,34 @@ export async function requesterGroup(
 
 const churchAdmins = (tx: Tx) => usersWithRole(tx, ["church_admin"]);
 
+async function nameOf(tx: Tx, userId: string): Promise<string> {
+  const [u] = await tx.select({ name: users.displayName }).from(users).where(eq(users.id, userId));
+  return u?.name ?? "";
+}
+
+/**
+ * Who gave the latest approval, as shown in "Approved by": the approver's name, or for a
+ * verbal approval, the approver, their role and who recorded it (2026-10-24).
+ */
+async function approvedByLabel(tx: Tx, expenseId: string, fallback: string): Promise<string> {
+  const d = await latestDecision(tx, expenseId);
+  if (!d) return fallback;
+  if (d.channel !== "verbal" || !d.recordedByUserId) return nameOf(tx, d.decidedByUserId);
+  return x.verbalBy(
+    await nameOf(tx, d.decidedByUserId),
+    ROLE_NAMES[d.actingRole] ?? d.actingRole,
+    await nameOf(tx, d.recordedByUserId),
+  );
+}
+
 async function latestDecision(tx: Tx, expenseId: string, level?: "accountant" | "board") {
   const [d] = await tx
     .select({
       actingRole: expenseDecisions.actingRole,
       reason: expenseDecisions.reason,
       decidedByUserId: expenseDecisions.decidedByUserId,
+      channel: expenseDecisions.channel,
+      recordedByUserId: expenseDecisions.recordedByUserId,
     })
     .from(expenseDecisions)
     .where(
@@ -465,6 +494,65 @@ export async function queueExpenseEmails(
       break;
     }
 
+    case "verbal_recorded": {
+      // The approver hears that it was recorded in their name, so they can object; the
+      // office gets a copy (decided by the church 2026-10-24).
+      const v = x.verbalRecorded;
+      const approverName = await nameOf(tx, event.approverId);
+      const d = await latestDecision(tx, e.id, event.level);
+      const role = d ? (ROLE_NAMES[d.actingRole] ?? d.actingRole) : "";
+      const state = e.status === "approved" ? v.complete : v.waiting;
+      const status =
+        e.status === "approved"
+          ? x.statuses.approved
+          : e.status === "awaiting_board"
+            ? x.statuses.awaitingBoard
+            : x.statuses.awaitingAccountant;
+      const verbalFacts = facts(ctx, [
+        { label: x.facts.requester, value: ctx.requesterName },
+        { label: v.approver, value: `${approverName} (${role})` },
+        { label: v.recordedBy, value: ctx.actorName },
+      ]);
+      const note = { label: v.how, text: event.how };
+      // The amount approved so far: the lower of the two once both have approved.
+      const own = current;
+      out.push(
+        {
+          template: `expenses.verbal_recorded.${event.level}`,
+          audience: event.level === "accountant" ? "accountant" : "board",
+          to: await person(tx, event.approverId),
+          content: {
+            subject: v.subject(ref, dept),
+            heading: v.heading,
+            status,
+            paragraphs: [v.intro(ctx.actorName, time), state, v.check],
+            facts: verbalFacts,
+            note,
+            summary: summaryOf(ctx, own, x.approvedHeading),
+            action: noAction,
+            button: view,
+          },
+        },
+        {
+          template: "expenses.verbal_recorded.church_admin",
+          audience: "church_admin",
+          to: await churchAdmins(tx),
+          content: {
+            subject: v.copySubject(ref, dept),
+            heading: v.copyHeading,
+            status,
+            paragraphs: [v.copyIntro(ctx.actorName, approverName, role, time), state],
+            facts: verbalFacts,
+            note,
+            summary: summaryOf(ctx, own, x.approvedHeading),
+            action: noAction,
+            button: view,
+          },
+        },
+      );
+      break;
+    }
+
     case "final_approved": {
       const summary = comparisonOf(ctx);
       const boardApprover = async () => {
@@ -479,12 +567,13 @@ export async function queueExpenseEmails(
           : e.payeeKind === "church_card"
             ? x.finalApproved.churchCardIntro
             : x.finalApproved.claimIntro;
-      const decidedBy = facts(ctx, [{ label: x.facts.approvedBy, value: ctx.actorName }]);
+      const approvedBy = await approvedByLabel(tx, e.id, ctx.actorName);
+      const decidedBy = facts(ctx, [{ label: x.facts.approvedBy, value: approvedBy }]);
       const copy: EmailContent = {
         subject: x.finalApproved.subject(ref, dept),
         heading: x.finalApproved.copyHeading,
         status: x.statuses.approved,
-        paragraphs: [x.finalApproved.copyIntro(ctx.actorName)],
+        paragraphs: [x.finalApproved.copyIntro(approvedBy)],
         facts: decidedBy,
         summary,
         action: noAction,

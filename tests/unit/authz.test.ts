@@ -195,6 +195,12 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     ["no", "act", "act", "no", "no", "act", "no"],
   ],
   [
+    "record a verbal approval for an approver (2026-10-24)",
+    "expense.record_verbal_approval",
+    YOUTH,
+    ["no", "no", "no", "no", "no", "act", "no"],
+  ],
+  [
     "view another department's expense",
     "expense.view",
     YOUTH,
@@ -410,6 +416,7 @@ describe("System Administrator", () => {
     "expense.first_approve",
     "expense.final_approve",
     "expense.pay",
+    "expense.record_verbal_approval",
     "expense.cancel",
     "spending.record",
     "spending.amend",
@@ -499,6 +506,21 @@ describe("payments", () => {
       authorize(single("church_admin"), "expense.pay", { ...YOUTH, payeeUserId: "u1" }),
     ).toEqual({ allowed: false, reason: "conflict_of_interest" });
     expect(can(single("church_admin"), "expense.pay", { ...YOUTH, payeeUserId: "u2" })).toBe(true);
+  });
+});
+
+describe("verbal approvals (decided 2026-10-24)", () => {
+  it("the Church Administrator records them, never on their own claim or one that pays them", () => {
+    const office = single("church_admin");
+    expect(can(office, "expense.record_verbal_approval", { ...YOUTH, requesterUserId: "u2" })).toBe(
+      true,
+    );
+    expect(
+      authorize(office, "expense.record_verbal_approval", { ...YOUTH, requesterUserId: "u1" }),
+    ).toEqual({ allowed: false, reason: "conflict_of_interest" });
+    expect(
+      authorize(office, "expense.record_verbal_approval", { ...YOUTH, payeeUserId: "u1" }),
+    ).toEqual({ allowed: false, reason: "conflict_of_interest" });
   });
 });
 

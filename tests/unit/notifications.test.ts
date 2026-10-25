@@ -19,6 +19,8 @@ function templatesIn(dir: string): string[] {
 const DYNAMIC = [
   "expenses.approved_one.accountant",
   "expenses.approved_one.board",
+  "expenses.verbal_recorded.accountant",
+  "expenses.verbal_recorded.board",
   "expenses.message.department",
   "expenses.message.accountant",
   "annual.message.department",
@@ -27,6 +29,9 @@ const DYNAMIC = [
   "cycle.closed",
   "cycle.reopened",
   "spending.alert.over_budget",
+  "spending.entry_recorded",
+  "spending.entry_corrected",
+  "spending.entry_voided",
   "spending.alert.near_limit",
 ];
 

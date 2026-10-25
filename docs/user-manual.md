@@ -285,6 +285,7 @@ Every workbook has a **Summary** sheet (one row per budget, requested and approv
 
 3. Choose **Approve**, **Approve a smaller amount** (including tax, with a reason), **Return for clarification** to the department with a question, or **Decline** with a reason.
 4. Once both of you have approved, the budget is charged, and the requester and the Church Administrator are emailed. If your amounts differ, the lower one is approved.
+   - **Approving verbally:** you can instead tell the Church Administrator you approve; they record it for you (section 7). It shows as your verbal approval, recorded by them, never as if you approved in the app, and you get an email each time one is recorded in your name. If it isn't what you agreed, contact the office straight away. This works the same for the accountant.
 5. The Chair can turn on **Away** (account menu); the Vice-Chair then gets the emails and tasks. The Vice-Chair also decides when the Chair represents the department, submitted it, or is the payee. Otherwise the Vice-Chair's screen says the Chair decides it. Decisions show who made them, and in which role.
 6. If you haven't decided an expense within 5 days, you get a reminder email every day until you do, and a text if your Planning Center profile has a mobile number. The accountant gets the same daily reminder for expenses waiting on them.
 
@@ -295,6 +296,22 @@ You can also read **Spending → Budget vs actual** (every department's approved
 ---
 
 ## 7. Church Administrator
+
+### Record a verbal approval
+
+When the accountant or the Board Chair tells you they approve an expense (in person or by phone) instead of approving it in the app, you can record it for them.
+
+1. Open the expense (from **Expenses → All expenses**, or its email). While it's waiting for an approval, **Record a verbal approval** shows under it.
+2. Choose **whose approval** it is. Only people who could approve it themselves are listed: not someone who leads the department, submitted it or is paid by it, and the Vice-Chair only while the Chair is Away or conflicted. You're never listed yourself.
+3. Choose **Approve as asked**, or **Approve a smaller amount** with the total they agreed (including tax) and their reason.
+4. Write **when and how they told you**, for example "By phone, Oct 24, about 7 p.m.", and tick **"{Name} told me they approve this expense."**
+5. Select **Record verbal approval** and confirm.
+
+Record each approver separately; once both approvals are recorded (or one is recorded and the other was given in the app), the expense is approved and goes to **Ready to process** as usual.
+
+- The expense shows it as **Verbal**: "Approved verbally by Pat Accountant (Accountant). Recorded by you, with the date and time", and your note. It never says they approved in the app. The activity log and the Excel export show it the same way.
+- The approver is emailed straight away that you recorded their verbal approval, so they can tell you if it isn't what they agreed. You get a copy.
+- You can't record a question or a decline for them; they do that in the app. You also can't record approvals on an expense you submitted or that pays you.
 
 ### Pay or buy approved expenses
 
@@ -318,6 +335,8 @@ You can also read **Spending → Budget vs actual** (every department's approved
 ### Record other spending
 
 **Spending → Record spending** for spending that did not come through an expense. You can **correct** or **void** an entry with a reason; nothing is deleted. You cannot record into a closed budget year.
+
+Every Church Administrator is emailed whenever spending is recorded, corrected or voided (by you or the accountant), with the amount, payee, who did it and when, so the office always has a record. Recording a payment on an expense emails you too.
 
 ### Reports
 

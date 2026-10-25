@@ -127,6 +127,26 @@ export const expenseEmailCopy = {
     copyHeading: "Expense approved",
     copyIntro: (name: string) => `${name} gave the second approval, so it's approved.`,
   },
+  /** An approval given verbally and recorded by the Church Administrator (2026-10-24). */
+  verbalRecorded: {
+    subject: (r: string, d: string) => `Your verbal approval was recorded: ${about(r, d)}`,
+    heading: "Your verbal approval was recorded",
+    intro: (recorder: string, when: string) =>
+      `${recorder} recorded that you approved this expense verbally, on ${when}. You didn't approve it in the app yourself; this email is so you can check it.`,
+    check: "If this isn't what you agreed, contact the Church Administrator straight away.",
+    copySubject: (r: string, d: string) => `Verbal approval recorded: ${about(r, d)}`,
+    copyHeading: "A verbal approval was recorded",
+    copyIntro: (recorder: string, approver: string, role: string, when: string) =>
+      `${recorder} recorded ${approver}'s verbal approval as ${role}, on ${when}.`,
+    how: "How it was given",
+    approver: "Approved verbally by",
+    recordedBy: "Recorded by",
+    waiting: "It's waiting for the other approval.",
+    complete: "Both approvals are given, so it's approved.",
+  },
+  /** "Approved by" when an approval was verbal: never implies they used the app. */
+  verbalBy: (approver: string, role: string, recorder: string) =>
+    `${approver} (${role}), verbally; recorded by ${recorder}`,
   readyForProcessing: {
     subject: (r: string, d: string) => `Approved, ready for processing: ${about(r, d)}`,
     heading: "Approved, ready for processing",

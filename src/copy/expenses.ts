@@ -77,6 +77,13 @@ export const expensesCopy = {
       "This expense changed since you opened it. Review the latest version, then decide.",
     viceChairNotNeeded:
       "The Board Chair is available and not conflicted, so the Board Chair gives this approval.",
+    verbalApproverRequired: "Choose whose approval you're recording.",
+    verbalApproverNotEligible:
+      "That person can't approve this expense: it's for a department they lead, they submitted it, it pays them, or they don't hold that role.",
+    verbalHowRequired: "Say when and how they gave their approval, like “By phone, Oct 24”.",
+    verbalHowTooLong: "Keep it to 500 characters or fewer.",
+    verbalConfirmRequired: "Tick the box to confirm they told you they approve it.",
+    verbalNotWaiting: "This expense isn't waiting for that approval.",
     boughtByRequester:
       "The requester buys this one and submits a claim for it, so there's nothing to process here.",
     notProcessable: "This expense isn't waiting to be processed.",
@@ -339,6 +346,9 @@ export const expensesCopy = {
       responded: "Response sent",
       withdrawn: "Expense withdrawn",
       cancelled: "Purchase request cancelled",
+      verbal_waiting: "Verbal approval recorded. It's waiting for the other approval.",
+      verbal_fully_approved:
+        "Verbal approval recorded. Both approvals are given, so it's approved.",
     },
     next: "The accountant will review this. You'll get an email.",
     history: "History",
@@ -565,6 +575,40 @@ export const expensesCopy = {
       board_chair: "Board Chair",
       vice_chair: "Vice-Chair",
     } as Record<string, string>,
+  },
+
+  /**
+   * Verbal approvals (decided by the church 2026-10-24): the Church Administrator records an
+   * approval the Accountant or Board Chair gave verbally. The words never say the approver
+   * approved in the app.
+   */
+  verbal: {
+    heading: "Record a verbal approval",
+    intro:
+      "If the accountant or the Board Chair told you they approve this expense, record it here for them. It shows as a verbal approval recorded by you; it never says they approved in the app. They're emailed so they can check it.",
+    whose: "Whose approval",
+    option: (name: string, role: string, level: string) => `${name} (${role}) · ${level} approval`,
+    levels: { accountant: "Accountant", board: "Board Chair" },
+    none: "Nobody can give the approval this expense still needs: the approvers lead this department, submitted it, or it pays them.",
+    what: "What they approved",
+    approve: "Approve as asked",
+    approveSmaller: "Approve a smaller amount",
+    reason: "Their reason for the smaller amount",
+    note: "Their note (optional)",
+    how: "When and how they told you",
+    howHint: "For example: By phone, Oct 24, about 7 p.m.",
+    confirm: (name: string) => `${name} told me they approve this expense.`,
+    submit: "Record verbal approval",
+    confirmTitle: (name: string) => `Record ${name}'s verbal approval?`,
+    confirmBody: (name: string) =>
+      `This records that ${name} approved verbally and that you recorded it. It won't say they approved in the app. ${name} is emailed a copy.`,
+    badge: "Verbal",
+    by: (name: string, role: string) => `${name} (${role}), verbally`,
+    recordedBy: (name: string, when: string) =>
+      `Recorded by ${name} (Church Administrator), ${when}`,
+    recordedByOnly: (name: string) => `Recorded by ${name} (Church Administrator)`,
+    howGiven: "How it was given",
+    tracker: (name: string) => `${name} (verbal)`,
   },
 
   /** Ready to process and Record payment (6B.5, DRD 6.9a). */

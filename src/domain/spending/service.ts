@@ -18,6 +18,7 @@ import { formatCAD } from "@/lib/money";
 import { hasRole } from "@/lib/roles";
 import { formatDate } from "@/lib/time-zone";
 import { checkSpendingAlerts } from "./alerts";
+import { queueSpendingEntryEmail } from "./entry-emails";
 import { entrySchema, reasonSchema, type Entry } from "./schema";
 
 /**
@@ -217,6 +218,7 @@ export async function recordEntry(
     cycleId: cycle.id,
     details: { after: snapshot(entry, unbudgeted) },
   });
+  await queueSpendingEntryEmail(tx, { kind: "recorded", entryId: row.id, actorId: actor.id, now });
   await checkSpendingAlerts(tx, cycle.id, department.id, { now });
 
   const result: RecordResult = { entryId: row.id };
@@ -318,6 +320,14 @@ export async function correctEntry(
     reason,
     details: { before, after },
   });
+  await queueSpendingEntryEmail(tx, {
+    kind: "corrected",
+    entryId: row.id,
+    actorId: actor.id,
+    reason,
+    beforeCents: row.amountCents,
+    now,
+  });
   await checkSpendingAlerts(tx, row.budgetCycleId, row.departmentId, { now });
 }
 
@@ -362,5 +372,12 @@ export async function voidEntry(
       after: { status: "voided" },
       amountCents: row.amountCents,
     },
+  });
+  await queueSpendingEntryEmail(tx, {
+    kind: "voided",
+    entryId: row.id,
+    actorId: actor.id,
+    reason,
+    now,
   });
 }

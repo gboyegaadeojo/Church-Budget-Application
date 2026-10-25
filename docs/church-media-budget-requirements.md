@@ -1582,6 +1582,8 @@ The administrator can optionally give the **Expense submitter** permission to a 
 
 Every expense submission (purchase request and expense claim, any amount) needs two approvals: the accountant's and the Board Chair's (or Vice-Chair's). **Both are asked at the same time, at submission, and can decide in either order** (decided by the church 2026-10-16). The first approval moves it to **Awaiting Board Chair** or **Awaiting accountant**; the second makes it **Approved**. Either approver can return it to the requester (both approvals are needed again after the requester answers) or decline it. If the two approved amounts differ, **the lower one is the approved amount**; neither approver can approve more than was asked.
 
+**Verbal approvals** (decided by the church 2026-10-24, docs/decisions.md): either approval may instead be given verbally to the Church Administrator, who records it on the approver's behalf (approve, or approve a smaller amount; never a return or a decline). The record names the approver, says it was verbal, names the Church Administrator who recorded it and how it was given, and is audited with the Church Administrator as the actor. The approver is emailed each time. Nothing may imply the approver approved in the app.
+
 **The accountant**
 
 1. Open the Expenses review queue (filters: department, type, status, amount, date, over-budget).

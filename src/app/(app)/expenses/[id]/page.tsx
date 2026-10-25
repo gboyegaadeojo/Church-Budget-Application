@@ -12,7 +12,10 @@ import { getExpenseThread } from "@/domain/expenses/messages";
 import { getExpenseView, type ExpenseView } from "@/domain/expenses/queries";
 import { paymentOf } from "@/domain/expenses/payment";
 import { listReceipts } from "@/domain/expenses/receipts";
+import { loadExpense } from "@/domain/expenses/service";
 import { PENDING_STATUSES } from "@/domain/expenses/status";
+import { levelsWaiting, verbalApprovers } from "@/domain/expenses/verbal";
+import { authorize } from "@/lib/authz";
 import { getChurchTimeZone } from "@/domain/settings";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
@@ -23,14 +26,24 @@ import { ExpenseLines } from "../expense-lines";
 import { ReceiptList } from "../receipt-list";
 import { ExpenseStatusBadge } from "../status-badge";
 import { ApprovalTracker, trackerSteps } from "../tracker";
+import { deciderText, VerbalBadge } from "../decider";
 import { ExpenseNotFound } from "./not-found-state";
 import { CancelPurchaseRequest, WithdrawExpense } from "./requester-actions";
+import { VerbalApproval, type VerbalChoice } from "./verbal-approval";
 
 const v = expensesCopy.view;
 
 export const metadata: Metadata = { title: expensesCopy.mine.title };
 
-const DONE = ["submitted", "edited", "responded", "withdrawn", "cancelled"] as const;
+const DONE = [
+  "submitted",
+  "edited",
+  "responded",
+  "withdrawn",
+  "cancelled",
+  "verbal_waiting",
+  "verbal_fully_approved",
+] as const;
 type Done = (typeof DONE)[number];
 
 /** One expense: where it is, what was asked, and what the person can do next (DRD 6.9a). */
@@ -67,6 +80,7 @@ async function ExpenseContent({
   const payment = await paymentOf(db, expense.id);
   const pending = ["draft", ...PENDING_STATUSES].includes(expense.status);
   const thread = await getExpenseThread(db, viewer, expense.id);
+  const verbal = await verbalChoices(db, viewer, expense);
 
   return (
     <>
@@ -96,7 +110,7 @@ async function ExpenseContent({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <article className={cn(cardClass, "min-w-0 space-y-6")}>
           <p className="text-sm text-fg-muted">{expensesCopy.status[expense.status].explain}</p>
-          <LatestDecision expense={expense} />
+          <LatestDecision expense={expense} zone={zone} />
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             {expense.referenceNumber && <Item label={v.reference}>{expense.referenceNumber}</Item>}
             <Item label={v.type}>{expensesCopy.types[expense.type]}</Item>
@@ -191,6 +205,19 @@ async function ExpenseContent({
         </aside>
       </div>
 
+      {verbal && (
+        <div className={cardClass}>
+          <VerbalApproval
+            id={expense.id}
+            version={expense.version}
+            type={expense.type}
+            rate={expense.rate}
+            maxCents={expense.totals.total}
+            choices={verbal}
+          />
+        </div>
+      )}
+
       <BudgetStrip
         department={expense.department.name}
         figures={expense.figures}
@@ -198,6 +225,36 @@ async function ExpenseContent({
       />
       {thread && <ExpenseMessages expenseId={expense.id} thread={thread} zone={zone} />}
     </>
+  );
+}
+
+/**
+ * The Church Administrator may record a verbal approval (2026-10-24) while the expense
+ * waits for one: who can give each approval still needed. Null when the panel doesn't show.
+ */
+async function verbalChoices(
+  db: ReturnType<typeof getDb>,
+  viewer: Awaited<ReturnType<typeof getViewer>>,
+  expense: ExpenseView,
+): Promise<VerbalChoice[] | null> {
+  const allowed = authorize(viewer, "expense.record_verbal_approval", {
+    departmentId: expense.department.id,
+    payeeUserId: expense.payee.userId ?? undefined,
+    requesterUserId: expense.requester.id,
+  });
+  if (!allowed.allowed || levelsWaiting(expense).length === 0) return null;
+  const row = await loadExpense(db, expense.id);
+  const byLevel = await verbalApprovers(db, row);
+  // Never yourself: an approver approves in the app.
+  return (["accountant", "board"] as const).flatMap((level) =>
+    (byLevel[level] ?? [])
+      .filter((a) => a.userId !== viewer.id)
+      .map((a) => ({
+        level,
+        userId: a.userId,
+        name: a.name,
+        role: expensesCopy.review.roles[a.role] ?? a.role,
+      })),
   );
 }
 
@@ -241,7 +298,7 @@ function PayeeItems({ expense }: { expense: ExpenseView }) {
 }
 
 /** The latest decision's note for the department: a question, a reason, an approved amount. */
-function LatestDecision({ expense }: { expense: ExpenseView }) {
+function LatestDecision({ expense, zone }: { expense: ExpenseView; zone: string }) {
   const latest = expense.decisions.at(-1);
   if (!latest) return null;
   const tone =
@@ -253,8 +310,19 @@ function LatestDecision({ expense }: { expense: ExpenseView }) {
   return (
     <section className={cn("space-y-1 rounded-control border p-4 text-sm", tone)}>
       <h2 className="font-semibold">
-        {v.decision[latest.decision]} · {latest.decidedBy}
+        {v.decision[latest.decision]} ·{" "}
+        {latest.channel === "verbal" ? deciderText(latest) : latest.decidedBy}
+        {latest.channel === "verbal" && <VerbalBadge />}
       </h2>
+      {latest.channel === "verbal" && latest.recordedBy && (
+        <p className="text-fg-muted">
+          {expensesCopy.verbal.recordedBy(
+            latest.recordedBy,
+            formatDateTime(latest.createdAt, zone),
+          )}
+          {latest.recordedNote && ` · ${latest.recordedNote}`}
+        </p>
+      )}
       {latest.approved && (
         <p>
           {v.approvedAmount}:{" "}

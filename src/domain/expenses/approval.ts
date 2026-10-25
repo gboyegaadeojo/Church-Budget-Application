@@ -186,9 +186,18 @@ export async function applyDecision(
     amount?: number;
     note: string | null;
     now: Date;
+    /**
+     * An approval the approver gave verbally, recorded by `actor` (the Church
+     * Administrator) on their behalf (decided by the church 2026-10-24). The decision is
+     * the approver's; the audit and the record say who recorded it.
+     */
+    onBehalfOf?: { userId: string; role: Role; how: string };
   },
 ): Promise<ApprovalResult> {
-  const { row, level, kind, note, now, actingRole } = input;
+  const { row, level, kind, note, now, actingRole, onBehalfOf } = input;
+  if (onBehalfOf && kind !== "approve" && kind !== "approve_smaller") {
+    throw new RuleError(e.notDecidable);
+  }
   const from = canTransitionExpense(row.status, "start_review", row.type)
     ? transitionExpense(row.status, "start_review", row.type)
     : row.status;
@@ -229,8 +238,11 @@ export async function applyDecision(
     approvedTotalCents: mine?.total ?? null,
     reason: note,
     remainingAfterCents: impact.after,
-    decidedByUserId: actor.id,
-    actingRole,
+    decidedByUserId: onBehalfOf?.userId ?? actor.id,
+    actingRole: onBehalfOf?.role ?? actingRole,
+    ...(onBehalfOf
+      ? { channel: "verbal" as const, recordedByUserId: actor.id, recordedNote: onBehalfOf.how }
+      : {}),
     createdAt: now,
   });
   const final = next === "approved";
@@ -276,15 +288,26 @@ export async function applyDecision(
           ? "expenses.declined"
           : final
             ? "expenses.final_approved"
-            : level === "accountant"
-              ? "expenses.accountant_approved"
-              : "expenses.board_approved",
+            : onBehalfOf
+              ? "expenses.verbal_approval_recorded"
+              : level === "accountant"
+                ? "expenses.accountant_approved"
+                : "expenses.board_approved",
     ...auditBase(row),
     reason: note ?? undefined,
     details: {
       before: { status: row.status },
       after: { status: next },
       level,
+      // The actor is who recorded it; the approval itself is this person's, given verbally.
+      ...(onBehalfOf
+        ? {
+            channel: "verbal",
+            onBehalfOfUserId: onBehalfOf.userId,
+            onBehalfOfRole: onBehalfOf.role,
+            how: onBehalfOf.how,
+          }
+        : {}),
       requestedTotalCents: requested.total,
       ...(mine ? { approvedByThisLevel: mine } : {}),
       ...(other ? { approvedByOtherLevelCents: other.total } : {}),
@@ -293,19 +316,32 @@ export async function applyDecision(
       ...(impact.overBy > 0 ? { overBudgetByCents: impact.overBy } : {}),
     },
   });
-  await queueExpenseEmails(
-    tx,
-    row.id,
-    actor.id,
-    kind === "return"
-      ? { kind: "returned", question: note ?? "", level }
-      : kind === "decline"
-        ? { kind: "declined", reason: note ?? "", level }
-        : final
-          ? { kind: "final_approved", overBy: impact.overBy }
-          : { kind: "approved_one", level },
-    { now },
-  );
+  // A verbal approval is confirmed to the approver it was recorded for (and the office),
+  // in place of the note an approver gets after approving in the app.
+  if (onBehalfOf) {
+    await queueExpenseEmails(
+      tx,
+      row.id,
+      actor.id,
+      { kind: "verbal_recorded", level, approverId: onBehalfOf.userId, how: onBehalfOf.how },
+      { now },
+    );
+  }
+  if (!onBehalfOf || final) {
+    await queueExpenseEmails(
+      tx,
+      row.id,
+      actor.id,
+      kind === "return"
+        ? { kind: "returned", question: note ?? "", level }
+        : kind === "decline"
+          ? { kind: "declined", reason: note ?? "", level }
+          : final
+            ? { kind: "final_approved", overBy: impact.overBy }
+            : { kind: "approved_one", level },
+      { now },
+    );
+  }
 
   return {
     expenseId: row.id,

@@ -48,6 +48,44 @@ export const spendingEmailCopy = {
       `${cycle} was reopened. Its spending can be recorded and changed again.`,
     action: "Record or correct what the accountant asked for.",
   },
+  /** Every spending entry recorded, corrected or voided by hand (decided 2026-10-24). */
+  entry: {
+    facts: {
+      type: "Type",
+      spentOn: "Date spent",
+      payee: "Payee",
+      description: "Description",
+      amount: "Amount (incl. tax)",
+      method: "Payment method",
+      reference: "Reference",
+      by: "By",
+      when: "When",
+      reason: "Reason",
+      before: "Before",
+    },
+    recorded: {
+      subject: (d: string, amount: string) => `Spending recorded: ${amount} for ${d}`,
+      heading: "Spending was recorded",
+      status: "Recorded",
+      intro: (who: string, d: string) => `${who} recorded spending for ${d}.`,
+    },
+    corrected: {
+      subject: (d: string, amount: string) => `Spending corrected: ${amount} for ${d}`,
+      heading: "A spending entry was corrected",
+      status: "Corrected",
+      intro: (who: string, d: string) =>
+        `${who} corrected a spending entry for ${d}. The previous values are kept in the activity log.`,
+    },
+    voided: {
+      subject: (d: string, amount: string) => `Spending voided: ${amount} for ${d}`,
+      heading: "A spending entry was voided",
+      status: "Voided",
+      intro: (who: string, d: string) =>
+        `${who} voided a spending entry for ${d}. It stays in the ledger, marked Voided, and no longer counts as spent.`,
+    },
+    action: "Nothing, unless this doesn't match the church's records.",
+    button: "Open the entry",
+  },
   amendment: {
     subject: (d: string) => `${d}'s budget was amended`,
     heading: "Your department's budget was amended",
