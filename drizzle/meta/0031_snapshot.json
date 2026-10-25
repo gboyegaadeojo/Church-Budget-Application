@@ -47,12 +47,8 @@
           "name": "app_settings_updated_by_user_id_users_id_fk",
           "tableFrom": "app_settings",
           "tableTo": "users",
-          "columnsFrom": [
-            "updated_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["updated_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -112,12 +108,8 @@
           "name": "approval_adjustments_approval_decision_id_approval_decisions_id_fk",
           "tableFrom": "approval_adjustments",
           "tableTo": "approval_decisions",
-          "columnsFrom": [
-            "approval_decision_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["approval_decision_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -125,12 +117,8 @@
           "name": "approval_adjustments_created_by_user_id_users_id_fk",
           "tableFrom": "approval_adjustments",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -140,9 +128,7 @@
         "approval_adjustments_approval_decision_id_unique": {
           "name": "approval_adjustments_approval_decision_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "approval_decision_id"
-          ]
+          "columns": ["approval_decision_id"]
         }
       },
       "policies": {},
@@ -284,12 +270,8 @@
           "name": "approval_decisions_budget_request_id_budget_requests_id_fk",
           "tableFrom": "approval_decisions",
           "tableTo": "budget_requests",
-          "columnsFrom": [
-            "budget_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -297,12 +279,8 @@
           "name": "approval_decisions_request_revision_id_request_revisions_id_fk",
           "tableFrom": "approval_decisions",
           "tableTo": "request_revisions",
-          "columnsFrom": [
-            "request_revision_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["request_revision_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -310,12 +288,8 @@
           "name": "approval_decisions_approver_user_id_users_id_fk",
           "tableFrom": "approval_decisions",
           "tableTo": "users",
-          "columnsFrom": [
-            "approver_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["approver_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -404,12 +378,8 @@
           "name": "approved_line_items_approval_decision_id_approval_decisions_id_fk",
           "tableFrom": "approved_line_items",
           "tableTo": "approval_decisions",
-          "columnsFrom": [
-            "approval_decision_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["approval_decision_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -417,12 +387,8 @@
           "name": "approved_line_items_budget_line_item_id_budget_line_items_id_fk",
           "tableFrom": "approved_line_items",
           "tableTo": "budget_line_items",
-          "columnsFrom": [
-            "budget_line_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_line_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -432,10 +398,7 @@
         "approved_line_items_decision_line_key": {
           "name": "approved_line_items_decision_line_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "approval_decision_id",
-            "budget_line_item_id"
-          ]
+          "columns": ["approval_decision_id", "budget_line_item_id"]
         }
       },
       "policies": {},
@@ -651,12 +614,8 @@
           "name": "audit_events_actor_user_id_users_id_fk",
           "tableFrom": "audit_events",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -664,12 +623,8 @@
           "name": "audit_events_budget_request_id_budget_requests_id_fk",
           "tableFrom": "audit_events",
           "tableTo": "budget_requests",
-          "columnsFrom": [
-            "budget_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -677,12 +632,8 @@
           "name": "audit_events_department_id_departments_id_fk",
           "tableFrom": "audit_events",
           "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -690,12 +641,8 @@
           "name": "audit_events_cycle_id_budget_cycles_id_fk",
           "tableFrom": "audit_events",
           "tableTo": "budget_cycles",
-          "columnsFrom": [
-            "cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -784,12 +731,8 @@
           "name": "brand_assets_uploaded_by_user_id_users_id_fk",
           "tableFrom": "brand_assets",
           "tableTo": "users",
-          "columnsFrom": [
-            "uploaded_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["uploaded_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -920,12 +863,8 @@
           "name": "budget_amendments_budget_request_id_budget_requests_id_fk",
           "tableFrom": "budget_amendments",
           "tableTo": "budget_requests",
-          "columnsFrom": [
-            "budget_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -933,12 +872,8 @@
           "name": "budget_amendments_department_id_departments_id_fk",
           "tableFrom": "budget_amendments",
           "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -946,12 +881,8 @@
           "name": "budget_amendments_budget_cycle_id_budget_cycles_id_fk",
           "tableFrom": "budget_amendments",
           "tableTo": "budget_cycles",
-          "columnsFrom": [
-            "budget_cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -959,12 +890,8 @@
           "name": "budget_amendments_created_by_user_id_users_id_fk",
           "tableFrom": "budget_amendments",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1130,12 +1057,8 @@
           "name": "budget_cycles_spending_locked_by_user_id_users_id_fk",
           "tableFrom": "budget_cycles",
           "tableTo": "users",
-          "columnsFrom": [
-            "spending_locked_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["spending_locked_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1143,12 +1066,8 @@
           "name": "budget_cycles_created_by_user_id_users_id_fk",
           "tableFrom": "budget_cycles",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1156,12 +1075,8 @@
           "name": "budget_cycles_updated_by_user_id_users_id_fk",
           "tableFrom": "budget_cycles",
           "tableTo": "users",
-          "columnsFrom": [
-            "updated_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["updated_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1171,9 +1086,7 @@
         "budget_cycles_budget_year_unique": {
           "name": "budget_cycles_budget_year_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "budget_year"
-          ]
+          "columns": ["budget_year"]
         }
       },
       "policies": {},
@@ -1316,12 +1229,8 @@
           "name": "budget_line_items_budget_request_id_budget_requests_id_fk",
           "tableFrom": "budget_line_items",
           "tableTo": "budget_requests",
-          "columnsFrom": [
-            "budget_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1548,12 +1457,8 @@
           "name": "budget_requests_budget_cycle_id_budget_cycles_id_fk",
           "tableFrom": "budget_requests",
           "tableTo": "budget_cycles",
-          "columnsFrom": [
-            "budget_cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1561,12 +1466,8 @@
           "name": "budget_requests_department_id_departments_id_fk",
           "tableFrom": "budget_requests",
           "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1574,12 +1475,8 @@
           "name": "budget_requests_requester_user_id_users_id_fk",
           "tableFrom": "budget_requests",
           "tableTo": "users",
-          "columnsFrom": [
-            "requester_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["requester_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1589,17 +1486,12 @@
         "budget_requests_reference_number_unique": {
           "name": "budget_requests_reference_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "reference_number"
-          ]
+          "columns": ["reference_number"]
         },
         "budget_requests_cycle_department_key": {
           "name": "budget_requests_cycle_department_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "budget_cycle_id",
-            "department_id"
-          ]
+          "columns": ["budget_cycle_id", "department_id"]
         }
       },
       "policies": {},
@@ -1715,12 +1607,8 @@
           "name": "deadline_extensions_cycle_id_budget_cycles_id_fk",
           "tableFrom": "deadline_extensions",
           "tableTo": "budget_cycles",
-          "columnsFrom": [
-            "cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1728,12 +1616,8 @@
           "name": "deadline_extensions_department_id_departments_id_fk",
           "tableFrom": "deadline_extensions",
           "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1741,12 +1625,8 @@
           "name": "deadline_extensions_granted_by_user_id_users_id_fk",
           "tableFrom": "deadline_extensions",
           "tableTo": "users",
-          "columnsFrom": [
-            "granted_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["granted_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1885,12 +1765,8 @@
           "name": "departments_proposed_by_user_id_users_id_fk",
           "tableFrom": "departments",
           "tableTo": "users",
-          "columnsFrom": [
-            "proposed_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["proposed_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1898,12 +1774,8 @@
           "name": "departments_merged_into_department_id_departments_id_fk",
           "tableFrom": "departments",
           "tableTo": "departments",
-          "columnsFrom": [
-            "merged_into_department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["merged_into_department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2046,12 +1918,8 @@
           "name": "email_login_codes_user_id_users_id_fk",
           "tableFrom": "email_login_codes",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2311,12 +2179,8 @@
           "name": "email_outbox_to_user_id_users_id_fk",
           "tableFrom": "email_outbox",
           "tableTo": "users",
-          "columnsFrom": [
-            "to_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["to_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2324,12 +2188,8 @@
           "name": "email_outbox_budget_request_id_budget_requests_id_fk",
           "tableFrom": "email_outbox",
           "tableTo": "budget_requests",
-          "columnsFrom": [
-            "budget_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2337,12 +2197,8 @@
           "name": "email_outbox_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "email_outbox",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2350,12 +2206,8 @@
           "name": "email_outbox_cycle_id_budget_cycles_id_fk",
           "tableFrom": "email_outbox",
           "tableTo": "budget_cycles",
-          "columnsFrom": [
-            "cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2511,12 +2363,8 @@
           "name": "expense_decisions_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "expense_decisions",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2524,12 +2372,8 @@
           "name": "expense_decisions_revision_id_expense_revisions_id_fk",
           "tableFrom": "expense_decisions",
           "tableTo": "expense_revisions",
-          "columnsFrom": [
-            "revision_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["revision_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2537,12 +2381,8 @@
           "name": "expense_decisions_decided_by_user_id_users_id_fk",
           "tableFrom": "expense_decisions",
           "tableTo": "users",
-          "columnsFrom": [
-            "decided_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["decided_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2550,12 +2390,8 @@
           "name": "expense_decisions_recorded_by_user_id_users_id_fk",
           "tableFrom": "expense_decisions",
           "tableTo": "users",
-          "columnsFrom": [
-            "recorded_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["recorded_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2678,12 +2514,8 @@
           "name": "expense_items_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "expense_items",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2691,12 +2523,8 @@
           "name": "expense_items_annual_line_item_id_budget_line_items_id_fk",
           "tableFrom": "expense_items",
           "tableTo": "budget_line_items",
-          "columnsFrom": [
-            "annual_line_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["annual_line_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2817,12 +2645,8 @@
           "name": "expense_messages_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "expense_messages",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2830,12 +2654,8 @@
           "name": "expense_messages_author_user_id_users_id_fk",
           "tableFrom": "expense_messages",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2973,12 +2793,8 @@
           "name": "expense_payments_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "expense_payments",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2986,12 +2802,8 @@
           "name": "expense_payments_cheque_signer_1_id_signing_authorities_id_fk",
           "tableFrom": "expense_payments",
           "tableTo": "signing_authorities",
-          "columnsFrom": [
-            "cheque_signer_1_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cheque_signer_1_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2999,12 +2811,8 @@
           "name": "expense_payments_cheque_signer_2_id_signing_authorities_id_fk",
           "tableFrom": "expense_payments",
           "tableTo": "signing_authorities",
-          "columnsFrom": [
-            "cheque_signer_2_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cheque_signer_2_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3012,12 +2820,8 @@
           "name": "expense_payments_recorded_by_user_id_users_id_fk",
           "tableFrom": "expense_payments",
           "tableTo": "users",
-          "columnsFrom": [
-            "recorded_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["recorded_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3027,9 +2831,7 @@
         "expense_payments_expense_submission_id_unique": {
           "name": "expense_payments_expense_submission_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "expense_submission_id"
-          ]
+          "columns": ["expense_submission_id"]
         }
       },
       "policies": {},
@@ -3144,12 +2946,8 @@
           "name": "expense_receipt_files_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "expense_receipt_files",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3157,12 +2955,8 @@
           "name": "expense_receipt_files_uploaded_by_user_id_users_id_fk",
           "tableFrom": "expense_receipt_files",
           "tableTo": "users",
-          "columnsFrom": [
-            "uploaded_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["uploaded_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3170,12 +2964,8 @@
           "name": "expense_receipt_files_removed_by_user_id_users_id_fk",
           "tableFrom": "expense_receipt_files",
           "tableTo": "users",
-          "columnsFrom": [
-            "removed_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["removed_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3185,9 +2975,7 @@
         "expense_receipt_files_storage_key_unique": {
           "name": "expense_receipt_files_storage_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "storage_key"
-          ]
+          "columns": ["storage_key"]
         }
       },
       "policies": {},
@@ -3292,12 +3080,8 @@
           "name": "expense_receipt_lines_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "expense_receipt_lines",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3393,12 +3177,8 @@
           "name": "expense_revisions_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "expense_revisions",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3406,12 +3186,8 @@
           "name": "expense_revisions_edited_by_user_id_users_id_fk",
           "tableFrom": "expense_revisions",
           "tableTo": "users",
-          "columnsFrom": [
-            "edited_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["edited_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3421,10 +3197,7 @@
         "expense_revisions_submission_number_key": {
           "name": "expense_revisions_submission_number_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "expense_submission_id",
-            "revision_number"
-          ]
+          "columns": ["expense_submission_id", "revision_number"]
         }
       },
       "policies": {},
@@ -3724,12 +3497,8 @@
           "name": "expense_submissions_budget_cycle_id_budget_cycles_id_fk",
           "tableFrom": "expense_submissions",
           "tableTo": "budget_cycles",
-          "columnsFrom": [
-            "budget_cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3737,12 +3506,8 @@
           "name": "expense_submissions_department_id_departments_id_fk",
           "tableFrom": "expense_submissions",
           "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3750,12 +3515,8 @@
           "name": "expense_submissions_requester_user_id_users_id_fk",
           "tableFrom": "expense_submissions",
           "tableTo": "users",
-          "columnsFrom": [
-            "requester_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["requester_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3763,12 +3524,8 @@
           "name": "expense_submissions_linked_purchase_request_id_expense_submissions_id_fk",
           "tableFrom": "expense_submissions",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "linked_purchase_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["linked_purchase_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3776,12 +3533,8 @@
           "name": "expense_submissions_payee_user_id_users_id_fk",
           "tableFrom": "expense_submissions",
           "tableTo": "users",
-          "columnsFrom": [
-            "payee_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["payee_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3789,12 +3542,8 @@
           "name": "expense_submissions_carried_over_from_cycle_id_budget_cycles_id_fk",
           "tableFrom": "expense_submissions",
           "tableTo": "budget_cycles",
-          "columnsFrom": [
-            "carried_over_from_cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["carried_over_from_cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3804,9 +3553,7 @@
         "expense_submissions_reference_number_unique": {
           "name": "expense_submissions_reference_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "reference_number"
-          ]
+          "columns": ["reference_number"]
         }
       },
       "policies": {},
@@ -3931,12 +3678,8 @@
           "name": "expense_submitters_user_id_users_id_fk",
           "tableFrom": "expense_submitters",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3944,12 +3687,8 @@
           "name": "expense_submitters_department_id_departments_id_fk",
           "tableFrom": "expense_submitters",
           "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3957,12 +3696,8 @@
           "name": "expense_submitters_assigned_by_user_id_users_id_fk",
           "tableFrom": "expense_submitters",
           "tableTo": "users",
-          "columnsFrom": [
-            "assigned_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3970,12 +3705,8 @@
           "name": "expense_submitters_removed_by_user_id_users_id_fk",
           "tableFrom": "expense_submitters",
           "tableTo": "users",
-          "columnsFrom": [
-            "removed_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["removed_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4050,12 +3781,8 @@
           "name": "idempotency_keys_user_id_users_id_fk",
           "tableFrom": "idempotency_keys",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4220,12 +3947,8 @@
           "name": "notifications_user_id_users_id_fk",
           "tableFrom": "notifications",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4233,12 +3956,8 @@
           "name": "notifications_budget_request_id_budget_requests_id_fk",
           "tableFrom": "notifications",
           "tableTo": "budget_requests",
-          "columnsFrom": [
-            "budget_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4246,12 +3965,8 @@
           "name": "notifications_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "notifications",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4259,12 +3974,8 @@
           "name": "notifications_cycle_id_budget_cycles_id_fk",
           "tableFrom": "notifications",
           "tableTo": "budget_cycles",
-          "columnsFrom": [
-            "cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4350,12 +4061,8 @@
           "name": "pco_leader_suggestions_department_id_departments_id_fk",
           "tableFrom": "pco_leader_suggestions",
           "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4363,12 +4070,8 @@
           "name": "pco_leader_suggestions_user_id_users_id_fk",
           "tableFrom": "pco_leader_suggestions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4376,12 +4079,8 @@
           "name": "pco_leader_suggestions_decided_by_user_id_users_id_fk",
           "tableFrom": "pco_leader_suggestions",
           "tableTo": "users",
-          "columnsFrom": [
-            "decided_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["decided_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4391,10 +4090,7 @@
         "pco_leader_suggestions_department_user_key": {
           "name": "pco_leader_suggestions_department_user_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "department_id",
-            "user_id"
-          ]
+          "columns": ["department_id", "user_id"]
         }
       },
       "policies": {},
@@ -4483,12 +4179,8 @@
           "name": "push_subscriptions_user_id_users_id_fk",
           "tableFrom": "push_subscriptions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4498,9 +4190,7 @@
         "push_subscriptions_endpoint_unique": {
           "name": "push_subscriptions_endpoint_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "endpoint"
-          ]
+          "columns": ["endpoint"]
         }
       },
       "policies": {},
@@ -4536,10 +4226,7 @@
       "compositePrimaryKeys": {
         "reference_sequences_kind_year_pk": {
           "name": "reference_sequences_kind_year_pk",
-          "columns": [
-            "kind",
-            "year"
-          ]
+          "columns": ["kind", "year"]
         }
       },
       "uniqueConstraints": {},
@@ -4576,12 +4263,8 @@
           "name": "request_message_reads_user_id_users_id_fk",
           "tableFrom": "request_message_reads",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4589,12 +4272,8 @@
           "name": "request_message_reads_budget_request_id_budget_requests_id_fk",
           "tableFrom": "request_message_reads",
           "tableTo": "budget_requests",
-          "columnsFrom": [
-            "budget_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4602,10 +4281,7 @@
       "compositePrimaryKeys": {
         "request_message_reads_user_id_budget_request_id_pk": {
           "name": "request_message_reads_user_id_budget_request_id_pk",
-          "columns": [
-            "user_id",
-            "budget_request_id"
-          ]
+          "columns": ["user_id", "budget_request_id"]
         }
       },
       "uniqueConstraints": {},
@@ -4706,12 +4382,8 @@
           "name": "request_messages_budget_request_id_budget_requests_id_fk",
           "tableFrom": "request_messages",
           "tableTo": "budget_requests",
-          "columnsFrom": [
-            "budget_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4719,12 +4391,8 @@
           "name": "request_messages_author_user_id_users_id_fk",
           "tableFrom": "request_messages",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4826,12 +4494,8 @@
           "name": "request_revisions_budget_request_id_budget_requests_id_fk",
           "tableFrom": "request_revisions",
           "tableTo": "budget_requests",
-          "columnsFrom": [
-            "budget_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4839,12 +4503,8 @@
           "name": "request_revisions_edited_by_user_id_users_id_fk",
           "tableFrom": "request_revisions",
           "tableTo": "users",
-          "columnsFrom": [
-            "edited_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["edited_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4854,10 +4514,7 @@
         "request_revisions_request_number_key": {
           "name": "request_revisions_request_number_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "budget_request_id",
-            "revision_number"
-          ]
+          "columns": ["budget_request_id", "revision_number"]
         }
       },
       "policies": {},
@@ -4944,12 +4601,8 @@
           "name": "signing_authorities_created_by_user_id_users_id_fk",
           "tableFrom": "signing_authorities",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5154,12 +4807,8 @@
           "name": "sms_outbox_to_user_id_users_id_fk",
           "tableFrom": "sms_outbox",
           "tableTo": "users",
-          "columnsFrom": [
-            "to_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["to_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5167,12 +4816,8 @@
           "name": "sms_outbox_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "sms_outbox",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5180,12 +4825,8 @@
           "name": "sms_outbox_cycle_id_budget_cycles_id_fk",
           "tableFrom": "sms_outbox",
           "tableTo": "budget_cycles",
-          "columnsFrom": [
-            "cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5400,12 +5041,8 @@
           "name": "spending_entries_budget_cycle_id_budget_cycles_id_fk",
           "tableFrom": "spending_entries",
           "tableTo": "budget_cycles",
-          "columnsFrom": [
-            "budget_cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5413,12 +5050,8 @@
           "name": "spending_entries_department_id_departments_id_fk",
           "tableFrom": "spending_entries",
           "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5426,12 +5059,8 @@
           "name": "spending_entries_budget_request_id_budget_requests_id_fk",
           "tableFrom": "spending_entries",
           "tableTo": "budget_requests",
-          "columnsFrom": [
-            "budget_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5439,12 +5068,8 @@
           "name": "spending_entries_expense_submission_id_expense_submissions_id_fk",
           "tableFrom": "spending_entries",
           "tableTo": "expense_submissions",
-          "columnsFrom": [
-            "expense_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5452,12 +5077,8 @@
           "name": "spending_entries_budget_line_item_id_budget_line_items_id_fk",
           "tableFrom": "spending_entries",
           "tableTo": "budget_line_items",
-          "columnsFrom": [
-            "budget_line_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_line_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5465,12 +5086,8 @@
           "name": "spending_entries_created_by_user_id_users_id_fk",
           "tableFrom": "spending_entries",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5478,12 +5095,8 @@
           "name": "spending_entries_updated_by_user_id_users_id_fk",
           "tableFrom": "spending_entries",
           "tableTo": "users",
-          "columnsFrom": [
-            "updated_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["updated_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5654,12 +5267,8 @@
           "name": "user_departments_user_id_users_id_fk",
           "tableFrom": "user_departments",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5667,12 +5276,8 @@
           "name": "user_departments_department_id_departments_id_fk",
           "tableFrom": "user_departments",
           "tableTo": "departments",
-          "columnsFrom": [
-            "department_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["department_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5680,12 +5285,8 @@
           "name": "user_departments_assigned_by_user_id_users_id_fk",
           "tableFrom": "user_departments",
           "tableTo": "users",
-          "columnsFrom": [
-            "assigned_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5695,10 +5296,7 @@
         "user_departments_user_department_key": {
           "name": "user_departments_user_department_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "department_id"
-          ]
+          "columns": ["user_id", "department_id"]
         }
       },
       "policies": {},
@@ -5757,12 +5355,8 @@
           "name": "user_preferences_user_id_users_id_fk",
           "tableFrom": "user_preferences",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5815,12 +5409,8 @@
           "name": "user_roles_user_id_users_id_fk",
           "tableFrom": "user_roles",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5828,12 +5418,8 @@
           "name": "user_roles_assigned_by_user_id_users_id_fk",
           "tableFrom": "user_roles",
           "tableTo": "users",
-          "columnsFrom": [
-            "assigned_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5841,10 +5427,7 @@
       "compositePrimaryKeys": {
         "user_roles_user_id_role_pk": {
           "name": "user_roles_user_id_role_pk",
-          "columns": [
-            "user_id",
-            "role"
-          ]
+          "columns": ["user_id", "role"]
         }
       },
       "uniqueConstraints": {},
@@ -5997,16 +5580,12 @@
         "users_google_subject_id_unique": {
           "name": "users_google_subject_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "google_subject_id"
-          ]
+          "columns": ["google_subject_id"]
         },
         "users_pco_person_id_unique": {
           "name": "users_pco_person_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "pco_person_id"
-          ]
+          "columns": ["pco_person_id"]
         }
       },
       "policies": {},
@@ -6018,21 +5597,12 @@
     "public.access_status": {
       "name": "access_status",
       "schema": "public",
-      "values": [
-        "active",
-        "suspended_not_leader",
-        "pending_department",
-        "inactive"
-      ]
+      "values": ["active", "suspended_not_leader", "pending_department", "inactive"]
     },
     "public.actor_kind": {
       "name": "actor_kind",
       "schema": "public",
-      "values": [
-        "user",
-        "system",
-        "job"
-      ]
+      "values": ["user", "system", "job"]
     },
     "public.annual_status": {
       "name": "annual_status",
@@ -6052,39 +5622,22 @@
     "public.approval_method": {
       "name": "approval_method",
       "schema": "public",
-      "values": [
-        "as_requested",
-        "different_amount",
-        "line_changes"
-      ]
+      "values": ["as_requested", "different_amount", "line_changes"]
     },
     "public.audit_area": {
       "name": "audit_area",
       "schema": "public",
-      "values": [
-        "annual",
-        "expenses",
-        "spending",
-        "admin",
-        "access"
-      ]
+      "values": ["annual", "expenses", "spending", "admin", "access"]
     },
     "public.cycle_status": {
       "name": "cycle_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "open",
-        "closed"
-      ]
+      "values": ["draft", "open", "closed"]
     },
     "public.decision_email_mode": {
       "name": "decision_email_mode",
       "schema": "public",
-      "values": [
-        "immediate",
-        "scheduled"
-      ]
+      "values": ["immediate", "scheduled"]
     },
     "public.decision": {
       "name": "decision",
@@ -6101,77 +5654,42 @@
     "public.decision_stage": {
       "name": "decision_stage",
       "schema": "public",
-      "values": [
-        "first",
-        "second"
-      ]
+      "values": ["first", "second"]
     },
     "public.department_status": {
       "name": "department_status",
       "schema": "public",
-      "values": [
-        "active",
-        "inactive",
-        "proposed",
-        "rejected"
-      ]
+      "values": ["active", "inactive", "proposed", "rejected"]
     },
     "public.email_audience": {
       "name": "email_audience",
       "schema": "public",
-      "values": [
-        "requester",
-        "accountant",
-        "church_admin",
-        "administrator",
-        "person",
-        "board"
-      ]
+      "values": ["requester", "accountant", "church_admin", "administrator", "person", "board"]
     },
     "public.email_status": {
       "name": "email_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "sending",
-        "sent",
-        "failed"
-      ]
+      "values": ["pending", "sending", "sent", "failed"]
     },
     "public.expense_decision_channel": {
       "name": "expense_decision_channel",
       "schema": "public",
-      "values": [
-        "in_app",
-        "verbal"
-      ]
+      "values": ["in_app", "verbal"]
     },
     "public.expense_decision": {
       "name": "expense_decision",
       "schema": "public",
-      "values": [
-        "approved",
-        "approved_different_amount",
-        "returned",
-        "declined"
-      ]
+      "values": ["approved", "approved_different_amount", "returned", "declined"]
     },
     "public.expense_decision_level": {
       "name": "expense_decision_level",
       "schema": "public",
-      "values": [
-        "accountant",
-        "board"
-      ]
+      "values": ["accountant", "board"]
     },
     "public.expense_revision_kind": {
       "name": "expense_revision_kind",
       "schema": "public",
-      "values": [
-        "submission",
-        "edit",
-        "clarification_response"
-      ]
+      "values": ["submission", "edit", "clarification_response"]
     },
     "public.expense_status": {
       "name": "expense_status",
@@ -6196,115 +5714,62 @@
     "public.expense_type": {
       "name": "expense_type",
       "schema": "public",
-      "values": [
-        "purchase_request",
-        "expense_claim"
-      ]
+      "values": ["purchase_request", "expense_claim"]
     },
     "public.expense_how_bought": {
       "name": "expense_how_bought",
       "schema": "public",
-      "values": [
-        "church_account",
-        "requester_claims",
-        "supplier_invoice"
-      ]
+      "values": ["church_account", "requester_claims", "supplier_invoice"]
     },
     "public.notification_area": {
       "name": "notification_area",
       "schema": "public",
-      "values": [
-        "annual",
-        "expenses",
-        "spending",
-        "cycles",
-        "people"
-      ]
+      "values": ["annual", "expenses", "spending", "cycles", "people"]
     },
     "public.expense_payee_kind": {
       "name": "expense_payee_kind",
       "schema": "public",
-      "values": [
-        "self",
-        "other",
-        "church_card"
-      ]
+      "values": ["self", "other", "church_card"]
     },
     "public.expense_payment_method": {
       "name": "expense_payment_method",
       "schema": "public",
-      "values": [
-        "cheque",
-        "church_card",
-        "cash",
-        "e_transfer",
-        "supplier_eft",
-        "other"
-      ]
+      "values": ["cheque", "church_card", "cash", "e_transfer", "supplier_eft", "other"]
     },
     "public.expense_payment_preference": {
       "name": "expense_payment_preference",
       "schema": "public",
-      "values": [
-        "cheque",
-        "e_transfer",
-        "none"
-      ]
+      "values": ["cheque", "e_transfer", "none"]
     },
     "public.pco_mapping_mode": {
       "name": "pco_mapping_mode",
       "schema": "public",
-      "values": [
-        "suggest",
-        "automatic"
-      ]
+      "values": ["suggest", "automatic"]
     },
     "public.pco_match_status": {
       "name": "pco_match_status",
       "schema": "public",
-      "values": [
-        "suggested",
-        "confirmed",
-        "no_longer_leader",
-        "ignored"
-      ]
+      "values": ["suggested", "confirmed", "no_longer_leader", "ignored"]
     },
     "public.pco_source_type": {
       "name": "pco_source_type",
       "schema": "public",
-      "values": [
-        "services_team",
-        "groups_group",
-        "groups_tag",
-        "people_field_value"
-      ]
+      "values": ["services_team", "groups_group", "groups_tag", "people_field_value"]
     },
     "public.representative_source": {
       "name": "representative_source",
       "schema": "public",
-      "values": [
-        "manual",
-        "form_pick",
-        "pco_mapping"
-      ]
+      "values": ["manual", "form_pick", "pco_mapping"]
     },
     "public.representative_type": {
       "name": "representative_type",
       "schema": "public",
-      "values": [
-        "primary",
-        "backup",
-        "representative"
-      ]
+      "values": ["primary", "backup", "representative"]
     },
     "public.revision_kind": {
       "name": "revision_kind",
       "schema": "public",
-      "values": [
-        "submission",
-        "revision",
-        "clarification_response"
-      ]
+      "values": ["submission", "revision", "clarification_response"]
     },
     "public.role": {
       "name": "role",
@@ -6322,18 +5787,12 @@
     "public.spending_entry_status": {
       "name": "spending_entry_status",
       "schema": "public",
-      "values": [
-        "recorded",
-        "voided"
-      ]
+      "values": ["recorded", "voided"]
     },
     "public.spending_entry_type": {
       "name": "spending_entry_type",
       "schema": "public",
-      "values": [
-        "expense",
-        "refund"
-      ]
+      "values": ["expense", "refund"]
     }
   },
   "schemas": {},
