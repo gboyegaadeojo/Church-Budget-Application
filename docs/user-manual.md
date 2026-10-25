@@ -301,7 +301,7 @@ You can also read **Spending → Budget vs actual** (every department's approved
 
 When the accountant or the Board Chair tells you they approve an expense (in person or by phone) instead of approving it in the app, you can record it for them.
 
-1. Open the expense (from **Expenses → All expenses**, or its email). While it's waiting for an approval, **Record a verbal approval** shows under it.
+1. Every new purchase request and expense claim appears in your **My tasks** on Home as **Waiting for approval**, saying which approvals it still needs, until both are in. Open it from there (or from **Expenses → All expenses**). While it's waiting for an approval, **Record a verbal approval** shows under it.
 2. Choose **whose approval** it is. Only people who could approve it themselves are listed: not someone who leads the department, submitted it or is paid by it, and the Vice-Chair only while the Chair is Away or conflicted. You're never listed yourself.
 3. Choose **Approve as asked**, or **Approve a smaller amount** with the total they agreed (including tax) and their reason.
 4. Write **when and how they told you**, for example "By phone, Oct 24, about 7 p.m.", and tick **"{Name} told me they approve this expense."**

@@ -5,6 +5,7 @@ import type { Tx } from "@/db/types";
 import { boardPermission } from "@/domain/expenses/board";
 import { isProcessable } from "@/domain/expenses/payment";
 import { authzContextOf } from "@/domain/expenses/service";
+import { levelsWaiting } from "@/domain/expenses/verbal";
 import { ACCOUNTANT_WAITING, BOARD_WAITING } from "@/domain/expenses/status";
 import { authorize } from "@/lib/authz";
 import { hasRole, type Viewer } from "@/lib/roles";
@@ -12,12 +13,17 @@ import type { Task } from "./types";
 
 const t = expensesCopy.tasks;
 
+/** Waiting for either approval, or both. */
+const AWAITING_APPROVAL = [...new Set([...ACCOUNTANT_WAITING, ...BOARD_WAITING])];
+
 /**
  * Expense tasks (FR-37, 6B): what's waiting for this person at each step.
  * - Department: drafts to finish, questions to answer, approved purchases to buy and claim.
  * - Accountant: expenses to review (not their own department, claim or payee).
  * - Board Chair, or the Vice-Chair covering: approvals, asked alongside the accountant.
  * - Church Administrator and accountant: payments to record.
+ * - Church Administrator: every expense still waiting for an approval, so they can follow
+ *   it and record a verbal approval (decided by the church 2026-10-24).
  */
 export function canHaveExpenseTasks(viewer: Viewer): boolean {
   return (
@@ -46,6 +52,7 @@ export async function expenseTasks(
   const accountant = hasRole(viewer, "accountant", "backup_approver");
   const boardMember = hasRole(viewer, "board_chair", "vice_chair");
   const payer = hasRole(viewer, "accountant", "backup_approver", "church_admin");
+  const office = hasRole(viewer, "church_admin");
   const conditions = [
     mine.length > 0
       ? and(
@@ -63,6 +70,7 @@ export async function expenseTasks(
     accountant ? inArray(expenseSubmissions.status, [...ACCOUNTANT_WAITING]) : undefined,
     boardMember ? inArray(expenseSubmissions.status, [...BOARD_WAITING]) : undefined,
     payer ? inArray(expenseSubmissions.status, ["approved", "processing"]) : undefined,
+    office ? inArray(expenseSubmissions.status, [...AWAITING_APPROVAL]) : undefined,
   ].filter((c) => c !== undefined);
   if (conditions.length === 0) return [];
   const rows = await tx
@@ -143,6 +151,28 @@ export async function expenseTasks(
         waitingSince: r.submittedAt ?? r.updatedAt,
         href: `/expenses/awaiting-approval/${r.id}`,
         buttonLabel: t.decide,
+      });
+    }
+    // The office follows every expense still waiting for an approval; someone who is also
+    // an approver for it already has that task, so it isn't shown twice.
+    const approverTask = tasks.some(
+      (x) => x.id === `expense:${r.id}:review` || x.id === `expense:${r.id}:final-approval`,
+    );
+    const waiting = levelsWaiting(r);
+    if (
+      office &&
+      waiting.length > 0 &&
+      !approverTask &&
+      authorize(viewer, "expense.record_verbal_approval", ctx).allowed
+    ) {
+      tasks.push({
+        ...base,
+        id: `expense:${r.id}:approvals`,
+        action: t.waitingApproval,
+        note: t.stillNeeds(waiting.map((level) => expensesCopy.verbal.levels[level])),
+        waitingSince: r.submittedAt ?? r.updatedAt,
+        href: `/expenses/${r.id}`,
+        buttonLabel: t.open,
       });
     }
     if (
