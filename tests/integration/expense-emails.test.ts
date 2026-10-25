@@ -349,4 +349,52 @@ describe("My tasks (FR-37, AC-109)", () => {
     expect(await has(world.office, "pay")).toBe(true);
     expect(await has(world.requester, "pay")).toBe(false);
   });
+
+  it("the Church Administrator follows each expense until both approvals are in (2026-10-24)", async () => {
+    const world = await expenseWorld(db);
+    const { expenseId: id } = await submitted(db, world, "purchase_request");
+    const task = async () =>
+      (await expenseTasks(db, viewerOf(world.office))).find(
+        (t) => t.id === `expense:${id}:approvals`,
+      );
+
+    expect(await task()).toMatchObject({
+      action: "Waiting for approval",
+      note: "Still needs: Accountant and Board Chair",
+      href: `/expenses/${id}`,
+    });
+    await act(id, (tx, input) =>
+      accountantDecide(tx, world.accountant, { ...input, decision: { kind: "approve" } }),
+    );
+    expect((await task())?.note).toBe("Still needs: Board Chair");
+    await act(id, (tx, input) =>
+      boardDecide(tx, world.chair, { ...input, decision: { kind: "approve" } }),
+    );
+    expect(await task()).toBeUndefined();
+    expect(
+      (await expenseTasks(db, viewerOf(world.office))).some((t) => t.id === `expense:${id}:pay`),
+    ).toBe(true);
+  });
+
+  it("not for an expense that pays the Church Administrator, and never twice", async () => {
+    const world = await expenseWorld(db);
+    const { expenseId: id } = await submitted(db, world, "purchase_request");
+    await db
+      .update(expenseSubmissions)
+      .set({ payeeUserId: world.office.id })
+      .where(eq(expenseSubmissions.id, id));
+    expect(
+      (await expenseTasks(db, viewerOf(world.office))).some(
+        (t) => t.id === `expense:${id}:approvals`,
+      ),
+    ).toBe(false);
+
+    // Someone who is both accountant and Church Administrator sees the review task only.
+    const both = await person(db, ["accountant", "church_admin"]);
+    const { expenseId: other } = await submitted(db, world, "purchase_request");
+    const ids = (await expenseTasks(db, viewerOf(both)))
+      .map((t) => t.id)
+      .filter((x) => x.startsWith(`expense:${other}:`));
+    expect(ids).toEqual([`expense:${other}:review`]);
+  });
 });

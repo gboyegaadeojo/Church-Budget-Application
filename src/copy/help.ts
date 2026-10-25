@@ -80,7 +80,7 @@ export const helpCopy = {
       who: "church_admin",
       steps: [
         "Choose Sign in with email and enter the address the church has for you: we email you a 6-digit code. If you have a Planning Center login, Use a Planning Center login works too.",
-        "If the accountant or the Board Chair tells you they approve an expense, open it and use Record a verbal approval: whose approval, when and how they told you, and tick to confirm. It shows as their verbal approval recorded by you, and they're emailed to check it.",
+        "New expenses show in My tasks as Waiting for approval until both approvals are in. If the accountant or the Board Chair tells you they approve one, open it and use Record a verbal approval: whose approval, when and how they told you, and tick to confirm. It shows as their verbal approval recorded by you, and they're emailed to check it.",
         "Expenses → Ready to process lists everything with both approvals, oldest first. Start processing tells the requester it's being done.",
         "Pay or buy it outside the app, then Record payment: how it was paid, the date and the amount, with the cheque number and two signers, card digits, e-transfer reference or invoice number. The requester and payee are emailed.",
         "Spending → Ledger shows what's been spent, including every approved expense. Reports → Expenses and payments downloads the payments for bank reconciliation.",

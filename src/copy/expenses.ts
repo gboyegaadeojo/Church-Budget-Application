@@ -738,6 +738,9 @@ export const expensesCopy = {
     review: "Expense to review",
     finalApproval: "Expense to approve",
     recordPayment: "Record payment",
+    /** The Church Administrator follows each expense until both approvals are in (2026-10-24). */
+    waitingApproval: "Waiting for approval",
+    stillNeeds: (levels: string[]) => `Still needs: ${levels.join(" and ")}`,
     open: "Open",
     review_: "Review",
     decide: "Decide",
