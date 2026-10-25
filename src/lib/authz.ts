@@ -56,6 +56,12 @@ export type Action =
   /** The Ready to process queue (6B.5). */
   | "expense.process_queue"
   | "expense.pay"
+  /**
+   * Record an approval the Accountant or Board Chair gave verbally, on their behalf
+   * (decided by the church 2026-10-24). The service also checks that the named approver
+   * could approve it themselves.
+   */
+  | "expense.record_verbal_approval"
   /** Cancel an approved purchase request that won't go ahead (FR-44). */
   | "expense.cancel"
   | "expense.export"
@@ -257,6 +263,8 @@ const RULES: Record<Action, readonly Rule[]> = {
   ],
   // Nobody records a payment to themselves or for an expense they submitted (FR-47).
   "expense.pay": [{ roles: [...ACCOUNTANTS, "church_admin"], check: notPayeeOrSubmitter }],
+  // Never on an expense they submitted or that pays them (FR-47).
+  "expense.record_verbal_approval": [{ roles: ["church_admin"], check: notPayeeOrSubmitter }],
   "expense.cancel": [{ roles: ["requester"], check: ownDepartment }, { roles: ACCOUNTANTS }],
   "expense.export": [{ roles: [...ACCOUNTANTS, "church_admin", "system_admin"] }],
   "expense.message_send": [

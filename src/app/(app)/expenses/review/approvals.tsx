@@ -24,14 +24,19 @@ export function OtherApproval({ expense, level }: { expense: ExpenseView; level:
   const d = otherApprovalOf(expense, level);
   if (!d?.approved) return null;
   const amount = formatCAD(d.approved.total);
+  const who = d.channel === "verbal" ? expensesCopy.verbal.tracker(d.decidedBy) : d.decidedBy;
   return (
     <section className={cn(cardClass, "space-y-2 border-success")}>
       <p className="flex items-start gap-2 text-sm font-medium">
         <BadgeCheck className="mt-0.5 size-5 shrink-0 text-success" aria-hidden="true" />
-        {level === "accountant"
-          ? r.boardApproved(amount, d.decidedBy)
-          : r.accountantApproved(amount, d.decidedBy)}
+        {level === "accountant" ? r.boardApproved(amount, who) : r.accountantApproved(amount, who)}
       </p>
+      {d.channel === "verbal" && d.recordedBy && (
+        <p className="text-sm text-fg-muted">
+          {expensesCopy.verbal.recordedByOnly(d.recordedBy)}
+          {d.recordedNote && ` · ${d.recordedNote}`}
+        </p>
+      )}
       {d.reason && (
         <p className="text-sm whitespace-pre-line">
           <span className="text-fg-muted">{r.otherNote}: </span>

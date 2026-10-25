@@ -16,6 +16,7 @@ import { ExpenseLines } from "../expense-lines";
 import { ReceiptList } from "../receipt-list";
 import { ExpenseStatusBadge } from "../status-badge";
 import { ApprovalTracker, trackerSteps } from "../tracker";
+import { deciderText, VerbalBadge } from "../decider";
 import { ExpenseMessages } from "@/components/expense-messages";
 import type { ExpenseThread } from "@/domain/expenses/messages";
 
@@ -280,9 +281,19 @@ function DecisionHistory({ expense, zone }: { expense: ExpenseView; zone: string
         {expense.decisions.map((d) => (
           <li key={d.id} className="rounded-control border border-border p-3 text-sm">
             <p className="font-medium">
-              {v.decision[d.decision]} · {r.by(d.decidedBy, r.roles[d.actingRole] ?? d.actingRole)}
+              {v.decision[d.decision]} · {deciderText(d)}
+              {d.channel === "verbal" && <VerbalBadge />}
             </p>
-            <p className="text-xs text-fg-muted">{formatDateTime(d.createdAt, zone)}</p>
+            <p className="text-xs text-fg-muted">
+              {d.channel === "verbal" && d.recordedBy
+                ? expensesCopy.verbal.recordedBy(d.recordedBy, formatDateTime(d.createdAt, zone))
+                : formatDateTime(d.createdAt, zone)}
+            </p>
+            {d.recordedNote && (
+              <p className="text-xs">
+                {expensesCopy.verbal.howGiven}: {d.recordedNote}
+              </p>
+            )}
             {d.approved && (
               <p className="tabular">
                 {v.approvedAmount}: {formatCAD(d.approved.total)}

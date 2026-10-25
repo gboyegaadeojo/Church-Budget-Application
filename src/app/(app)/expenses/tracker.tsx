@@ -44,7 +44,12 @@ export function trackerSteps(input: {
   };
   const decidedBy = (level: "accountant" | "board") => {
     const d = last(level);
-    return d && d.decision !== "returned" ? d : undefined;
+    if (!d || d.decision === "returned") return undefined;
+    // A verbal approval says so, never implying they approved in the app (2026-10-24).
+    return {
+      ...d,
+      decidedBy: d.channel === "verbal" ? expensesCopy.verbal.tracker(d.decidedBy) : d.decidedBy,
+    };
   };
   const accountant = decidedBy("accountant");
   const board = decidedBy("board");

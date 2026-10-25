@@ -1105,6 +1105,11 @@ export const expenseDecisionEnum = pgEnum("expense_decision", [
   "returned",
   "declined",
 ]);
+/**
+ * How an expense decision was made (decided by the church 2026-10-24): by the approver in
+ * the app, or given verbally and recorded by the Church Administrator on their behalf.
+ */
+export const expenseDecisionChannelEnum = pgEnum("expense_decision_channel", ["in_app", "verbal"]);
 /** 6B.5 "How it was paid". */
 export const paymentMethodEnum = pgEnum("expense_payment_method", [
   "cheque",
@@ -1378,10 +1383,16 @@ export const expenseDecisions = pgTable(
     reason: text("reason"),
     /** FR-43: the department's Remaining after this decision, worked out when it was made. */
     remainingAfterCents: cents("remaining_after_cents"),
+    /** The approver whose decision this is, even when someone else recorded it. */
     decidedByUserId: uuid("decided_by_user_id")
       .notNull()
       .references(() => users.id),
+    /** The approver's role (Accountant, Board Chair, Vice-Chair covering…). */
     actingRole: roleEnum("acting_role").notNull(),
+    channel: expenseDecisionChannelEnum("channel").notNull().default("in_app"),
+    /** For a verbal approval: the Church Administrator who recorded it, and how it was given. */
+    recordedByUserId: uuid("recorded_by_user_id").references(() => users.id),
+    recordedNote: text("recorded_note"),
     createdAt: createdAt(),
   },
   (t) => [
@@ -1395,6 +1406,18 @@ export const expenseDecisions = pgTable(
     check(
       "expense_decisions_approval_has_amount",
       sql`${t.decision} not in ('approved', 'approved_different_amount') or ${t.approvedTotalCents} is not null`,
+    ),
+    // A verbal approval names who recorded it (someone other than the approver) and how it
+    // was given; only approvals can be recorded this way (decided by the church 2026-10-24).
+    check(
+      "expense_decisions_verbal_recorded",
+      sql`(${t.channel} = 'verbal') = (${t.recordedByUserId} is not null)`,
+    ),
+    check(
+      "expense_decisions_verbal_shape",
+      sql`${t.channel} <> 'verbal' or (${t.recordedByUserId} <> ${t.decidedByUserId}
+        and ${t.decision} in ('approved', 'approved_different_amount')
+        and btrim(coalesce(${t.recordedNote}, '')) <> '')`,
     ),
   ],
 );

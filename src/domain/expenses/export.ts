@@ -1,4 +1,5 @@
 import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 import { exportsCopy } from "@/copy/exports";
 import {
@@ -151,11 +152,15 @@ export async function buildExpenseExport(
   const ids = submissions.map((s) => s.e.id);
   const references = new Map(submissions.map((s) => [s.e.id, s.e.referenceNumber ?? ""]));
 
+  // A verbal approval names who recorded it, so the sheet never reads as though the
+  // approver approved in the app (decided by the church 2026-10-24).
+  const recorder = alias(users, "recorder");
   const decisions = ids.length
     ? await tx
-        .select({ d: expenseDecisions, name: users.displayName })
+        .select({ d: expenseDecisions, name: users.displayName, recorder: recorder.displayName })
         .from(expenseDecisions)
         .innerJoin(users, eq(users.id, expenseDecisions.decidedByUserId))
+        .leftJoin(recorder, eq(recorder.id, expenseDecisions.recordedByUserId))
         .where(inArray(expenseDecisions.expenseSubmissionId, ids))
         .orderBy(asc(expenseDecisions.createdAt))
     : [];
@@ -167,6 +172,12 @@ export async function buildExpenseExport(
         .where(inArray(expensePayments.expenseSubmissionId, ids))
     : [];
   const paymentOf = new Map(payments.map((p) => [p.p.expenseSubmissionId, p]));
+  const deciderName = (d: (typeof decisions)[number] | undefined) =>
+    !d
+      ? null
+      : d.d.channel === "verbal"
+        ? exportsCopy.expenses.verbal(d.name, d.recorder ?? "")
+        : d.name;
   const approving = (d: (typeof decisions)[number]) =>
     d.d.decision === "approved" || d.d.decision === "approved_different_amount";
 
@@ -201,9 +212,9 @@ export async function buildExpenseExport(
               total: e.approvedTotalCents,
             }
           : null,
-      accountant: accountant?.name ?? null,
+      accountant: deciderName(accountant),
       accountantAt: accountant?.d.createdAt ?? null,
-      approver: board?.name ?? null,
+      approver: deciderName(board),
       approverRole: board?.d.actingRole ?? null,
       approvedAt: board ? (e.approvedAt ?? board.d.createdAt) : null,
       paidOn: pay?.p.paidOn ?? null,

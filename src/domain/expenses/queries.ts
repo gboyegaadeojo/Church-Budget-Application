@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, isNull, ne, notInArray, or } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 import {
   budgetCycles,
@@ -114,18 +115,25 @@ export type ExpenseDecisionView = {
   decidedBy: string;
   decidedByUserId: string;
   actingRole: string;
+  /** "verbal": given verbally and recorded by the Church Administrator (2026-10-24). */
+  channel: "in_app" | "verbal";
+  /** Who recorded a verbal approval, and how it was given. */
+  recordedBy: string | null;
+  recordedNote: string | null;
   createdAt: Date;
 };
 
 /** Every decision on the expense, oldest first (6B.4). */
 export async function decisionsOf(tx: Tx, expenseId: string): Promise<ExpenseDecisionView[]> {
+  const recorder = alias(users, "recorder");
   const rows = await tx
-    .select({ d: expenseDecisions, name: users.displayName })
+    .select({ d: expenseDecisions, name: users.displayName, recordedBy: recorder.displayName })
     .from(expenseDecisions)
     .innerJoin(users, eq(users.id, expenseDecisions.decidedByUserId))
+    .leftJoin(recorder, eq(recorder.id, expenseDecisions.recordedByUserId))
     .where(eq(expenseDecisions.expenseSubmissionId, expenseId))
     .orderBy(asc(expenseDecisions.createdAt));
-  return rows.map(({ d, name }) => ({
+  return rows.map(({ d, name, recordedBy }) => ({
     id: d.id,
     level: d.level,
     decision: d.decision,
@@ -142,6 +150,9 @@ export async function decisionsOf(tx: Tx, expenseId: string): Promise<ExpenseDec
     decidedBy: name,
     decidedByUserId: d.decidedByUserId,
     actingRole: d.actingRole,
+    channel: d.channel,
+    recordedBy,
+    recordedNote: d.recordedNote,
     createdAt: d.createdAt,
   }));
 }

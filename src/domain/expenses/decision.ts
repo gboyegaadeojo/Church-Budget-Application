@@ -64,6 +64,38 @@ export const boardDecisionSchema = z.discriminatedUnion("kind", [
 export type BoardDecisionInput = z.input<typeof boardDecisionSchema>;
 export type BoardDecision = z.output<typeof boardDecisionSchema>;
 
+export const VERBAL_LIMITS = { how: 500 } as const;
+
+const verbalBase = {
+  level: z.enum(["accountant", "board"]),
+  approverUserId: z.uuid({ error: e.verbalApproverRequired }),
+  /** When and how the approver gave it, e.g. "By phone, Oct 24". */
+  how: z
+    .string({ error: e.verbalHowRequired })
+    .trim()
+    .min(1, e.verbalHowRequired)
+    .max(VERBAL_LIMITS.how, e.verbalHowTooLong),
+  /** The Church Administrator confirms the approver told them they approve it. */
+  confirmed: z.literal(true, { error: e.verbalConfirmRequired }),
+};
+
+/**
+ * An approval given verbally, recorded by the Church Administrator on the approver's
+ * behalf (decided by the church 2026-10-24). Approvals only: a question or a decline is
+ * the approver's own to make in the app.
+ */
+export const verbalApprovalSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("approve"), note: optionalNote, ...verbalBase }),
+  z.object({
+    kind: z.literal("approve_smaller"),
+    amount,
+    note: note(e.differentAmountNoteRequired),
+    ...verbalBase,
+  }),
+]);
+export type VerbalApprovalInput = z.input<typeof verbalApprovalSchema>;
+export type VerbalApproval = z.output<typeof verbalApprovalSchema>;
+
 /**
  * An approved total including tax as stored (FR-41): a purchase request works out the
  * tax inside it (FR-16, AC-69: $500.00 → $446.43 + $53.57); a claim adds no tax.

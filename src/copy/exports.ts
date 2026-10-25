@@ -120,6 +120,8 @@ export const exportsCopy = {
     optional: "(optional)",
     paidBetween: (from: string, to: string) => `Paid ${from} to ${to}`,
     churchCard: "Church card",
+    /** A verbal approval recorded by the Church Administrator (2026-10-24). */
+    verbal: (approver: string, recorder: string) => `${approver} (verbal; recorded by ${recorder})`,
     churchAccount: "Church account",
     workbookTitle: (cycle: string) => `Expenses, ${cycle}`,
     sheetNames: {
