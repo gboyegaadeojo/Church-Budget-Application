@@ -53,6 +53,13 @@ beforeAll(async () => {
   Object.assign(process.env, TWILIO);
   t = await createTestDb();
   db = t.db;
+  // Manitoba keeps UTC−5 all year from Nov 2026 (tzdata 2026e); these tests check winter
+  // times (UTC−6), so the church runs on America/Chicago here, which keeps the old rules
+  // on any time-zone data (docs/decisions.md 2026-10-22).
+  await db
+    .insert(appSettings)
+    .values({ key: "church_timezone", value: "America/Chicago" })
+    .onConflictDoUpdate({ target: appSettings.key, set: { value: "America/Chicago" } });
 });
 
 afterAll(async () => {

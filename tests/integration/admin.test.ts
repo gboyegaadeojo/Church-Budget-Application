@@ -112,6 +112,13 @@ beforeAll(async () => {
   t = await createTestDb();
   db = t.db;
   admin = await person(["system_admin"]);
+  // Manitoba keeps UTC−5 all year from Nov 2026 (tzdata 2026e); these tests check winter
+  // times (UTC−6), so the church runs on America/Chicago here, which keeps the old rules
+  // on any time-zone data (docs/decisions.md 2026-10-22).
+  await db
+    .insert(appSettings)
+    .values({ key: "church_timezone", value: "America/Chicago" })
+    .onConflictDoUpdate({ target: appSettings.key, set: { value: "America/Chicago" } });
 });
 
 afterAll(async () => {
@@ -1004,7 +1011,7 @@ describe("budget cycles (Requirements 4)", () => {
       status: "draft",
       defaultTaxRate: "0.1200",
       boardTotalCents: 25_000_000,
-      submissionDeadline: new Date("2026-11-30T23:00:00Z"), // 5:00 p.m. CST in Winnipeg
+      submissionDeadline: new Date("2026-11-30T23:00:00Z"), // 5:00 p.m. CST
     });
     expect(await audits("admin.cycle_created", fy.id)).toHaveLength(1);
   });
