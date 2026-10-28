@@ -52,7 +52,7 @@ If the requirements and the design disagree about **behaviour**, the requirement
 | Files | Receipts on claims, optional attachments (quote, invoice, photo) on purchase requests, and the admin's logo; nothing else | Req 6B.9, FR-30; decisions 2026-10-17 |
 | Emails | Every update emails the people involved, through an outbox; nobody can turn them off | Req FR-21, FR-49 |
 | Texts | Four reminders also go by text to a Planning Center mobile number, 9:00 a.m. to 8:00 p.m., up to a monthly limit; reply STOP to stop | decisions 2026-10-18 |
-| Sign-in | **Sign in with email** first: a 6-digit code to the email on a leader's Planning Center profile ("Ministry Leader" = "Yes"), or to the address the church has for someone not in Planning Center. **Use a Planning Center login** for people who have one. Staff are added from Planning Center | Req FR-01, FR-01a, FR-01b; decisions 2026-10-20, 2026-10-23 |
+| Sign-in | **Sign in with Church Center Email** first: a 6-digit code to the email on a leader's Planning Center profile ("Ministry Leader" = "Yes"), or to the address the church has for someone not in Planning Center. **Staff: sign in with Planning Center** for people who have one. Staff are added from Planning Center | Req FR-01, FR-01a, FR-01b; decisions 2026-10-20, 2026-10-23 |
 | Year-end | The accountant locks a year's spending; open purchase requests are cancelled or carried into next year | Req FR-29, FR-46 |
 | Audit and analytics | Reports → Analytics & Audit: Overview charts, the full activity log, access checks | Req FR-52 |
 | Notifications | Every email also lands in the bell; the installed app shows phone alerts, which only a System Administrator can turn off | decisions 2026-10-19, 2026-10-22 |
@@ -67,7 +67,7 @@ What the app runs on, and what each one is for. Accounts are the church's; secre
 | **Vercel** | Hosts the app at **https://budget.ifcwpg.com**: builds each release, runs the pages and server, and brings the database up to date on each production deploy ([docs/vercel.md](docs/vercel.md)) | Free (Hobby); see the note in docs/vercel.md |
 | **Netlify** | The first host, replaced by Vercel on 2026-10-23. The setup is kept (`netlify.toml`) so the app can move back in minutes | Free |
 | **Neon** | The Postgres database: every budget, expense, payment, user and the activity log. Production and staging branches, in AWS US East (Ohio) next to the app | Free |
-| **Planning Center** | The People API: checks the Ministry Leader field (also for emailed-code sign-in), suggests departments, finds staff to add, reads mobile numbers for texts. Also "Use a Planning Center login" sign-in | The church's existing account; API free |
+| **Planning Center** | The People API: checks the Ministry Leader field (also for emailed-code sign-in), suggests departments, finds staff to add, reads mobile numbers for texts. Also the "Staff: sign in with Planning Center" button | The church's existing account; API free |
 | **Resend** | Sends every email (decisions, approvals, payments, reminders, sign-in codes) from budget@ifcwpg.com | The church's existing account; free |
 | **Cloudflare R2** | Stores receipt photos and purchase-request attachments, privately, with short-lived links | Free tier (card on file) |
 | **Web push** | Phone and computer alerts for the installed app, through Apple's, Google's, Mozilla's and Microsoft's own push services (`web-push` library, VAPID keys) | Free, no account |

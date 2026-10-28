@@ -79,7 +79,7 @@ export const helpCopy = {
       title: "Church Administrator",
       who: "church_admin",
       steps: [
-        "Choose Sign in with email and enter the address the church has for you: we email you a 6-digit code. If you have a Planning Center login, Use a Planning Center login works too.",
+        "Choose Sign in with Church Center Email and enter the address the church has for you: we email you a 6-digit code. If you have a Planning Center login, Staff: sign in with Planning Center works too, but email works for everyone.",
         "New expenses show in My tasks as Waiting for approval until both approvals are in. If the accountant or the Board Chair tells you they approve one, open it and use Record a verbal approval: whose approval, when and how they told you, and tick to confirm. It shows as their verbal approval recorded by you, and they're emailed to check it.",
         "Expenses → Ready to process lists everything with both approvals, oldest first. Start processing tells the requester it's being done.",
         "Pay or buy it outside the app, then Record payment: how it was paid, the date and the amount, with the cheque number and two signers, card digits, e-transfer reference or invoice number. The requester and payee are emailed.",
@@ -128,8 +128,8 @@ export const helpCopy = {
       group: "start",
       question: "How do I sign in?",
       answer: [
-        "Go to budget.ifcwpg.com, choose Sign in with email and type the email on your Planning Center profile, the one Church Center uses. We email you a 6-digit code that works once, for 10 minutes. Ministry leaders and church staff need the Ministry Leader field in Planning Center set to Yes.",
-        "If you log in to Planning Center itself (not just Church Center), you can choose Use a Planning Center login instead. The Church Administrator and anyone else not in Planning Center sign in with email, using the address the church has for them.",
+        "Go to budget.ifcwpg.com, choose Sign in with Church Center Email and type the email on your Planning Center profile, the one Church Center uses. We email you a 6-digit code that works once, for 10 minutes. Ministry leaders and church staff need the Ministry Leader field in Planning Center set to Yes.",
+        "If you log in to Planning Center itself (not just Church Center), you can choose Staff: sign in with Planning Center instead. The Church Administrator and anyone else not in Planning Center sign in with email, using the address the church has for them.",
       ],
     },
     {
@@ -137,7 +137,7 @@ export const helpCopy = {
       group: "start",
       question: "It says I can't get in. What do I do?",
       answer: [
-        "Planning Center says there's no account with your email? You probably only have a Church Center login. Use Sign in with email instead.",
+        "Planning Center says there's no account with your email? You probably only have a Church Center login. Use Sign in with Church Center Email instead.",
         "If it says your leader status couldn't be confirmed, or no code arrives, ask your ministry's Planning Center administrator to set Ministry Leader to Yes on your profile and check its email address, then try again. A code isn't sent when two leaders share one email address.",
         "If it says your profile isn't linked yet, there's already an account with your email: ask a System Administrator to link it. For your security, accounts are never linked by email alone.",
         "The screen shows who to contact if you're stuck.",

@@ -19,7 +19,7 @@ const primaryClass =
 const fieldClass = "min-h-12 rounded-[12px] text-base";
 
 /**
- * "Sign in with email" (FR-01b, DRD 6.1): the main way in since most leaders only have a
+ * "Sign in with Church Center Email" (FR-01b, DRD 6.1): the main way in since most leaders only have a
  * Church Center login (docs/decisions.md 2026-10-23). The button opens an email field, then one 6-digit code field (autocomplete="one-time-code", paste-friendly).
  * The server decides every step; this only shows where it says the person is.
  */
