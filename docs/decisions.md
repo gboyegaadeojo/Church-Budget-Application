@@ -1273,3 +1273,7 @@ The church asked for a list that stays clean with about 80 people.
 - **Separation of duties:** one person can now record both approvals and the payment. Mitigations: a required confirmation tick and note, the approver is emailed each time one is recorded in their name (with a copy to the Church Administrators), the audit shows the real actor, and the export carries it. This is the church's decision; review it if an auditor objects.
 - **My tasks:** every expense still waiting for an approval is on the Church Administrator's My tasks as **Waiting for approval** (with which approvals it still needs) until both are in; then **Record payment** takes over. Not for one they submitted or that pays them, and not twice for someone who is also its approver.
 - **Emails for every spending record:** besides payments (already emailed), every spending entry recorded, corrected or voided by hand now emails every Church Administrator (`spending.entry_recorded`, `_corrected`, `_voided`), with the amount, payee, who did it and when.
+
+## 2026-10-28: Sign-in buttons renamed
+
+- **Decided by the church:** **Sign in with Church Center Email** (the main button) and **Staff: sign in with Planning Center** (the outlined one). The church first asked for "Sign in as Admin" for the second; it was named for staff instead because the Church Administrator isn't in Planning Center and signs in by email, so "Admin" would have sent them to the button that doesn't work for them. The note under the email button now says it's for ministry leaders and office staff.

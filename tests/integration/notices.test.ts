@@ -309,8 +309,9 @@ describe("cycle emails (FR-21, 4.3)", () => {
 
 describe("daily reminders job", () => {
   it("counts calendar days in the church's time zone", () => {
-    const zone = "America/Winnipeg";
-    // 11 p.m. in Winnipeg on Nov 22 is already Nov 23 in UTC.
+    // America/Chicago keeps UTC−6 in winter on any time-zone data (decisions 2026-10-22).
+    const zone = "America/Chicago";
+    // 11 p.m. on Nov 22 there is already Nov 23 in UTC.
     expect(
       daysUntil(new Date("2026-11-23T05:00:00Z"), new Date("2026-11-30T23:00:00Z"), zone),
     ).toBe(8);

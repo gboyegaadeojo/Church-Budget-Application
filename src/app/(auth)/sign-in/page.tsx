@@ -20,7 +20,7 @@ const s = copy.signIn;
 export const metadata: Metadata = { title: s.title };
 
 /**
- * Sign-in (DRD 6.1, redesigned 2026-10-22): Sign in with email first, since most leaders
+ * Sign-in (DRD 6.1, redesigned 2026-10-22): Sign in with Church Center Email first, since most leaders
  * only have a Church Center login, then a Planning Center login for those who have one
  * (docs/decisions.md 2026-10-23). Each says in one line who it's for. Who can get in, and the
  * privacy note, stay one tap away so the page reads at a glance. No Google (docs/decisions.md).
@@ -134,7 +134,7 @@ const buttonBase =
   "group flex min-h-[52px] w-full items-center justify-center gap-2.5 rounded-[14px] px-4 whitespace-nowrap sm:gap-3 sm:px-5 text-[15px] font-semibold motion-reduce:transition-none";
 /** Filled, in the text colour: the main way in when email sign-in is off. */
 const primaryClass = `${buttonBase} bg-fg text-bg shadow-sm transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.99]`;
-/** Outlined: the other way in, below Sign in with email. */
+/** Outlined: the other way in, below Sign in with Church Center Email. */
 const secondaryClass = `${buttonBase} border border-border-strong bg-surface transition-colors duration-150 hover:bg-surface-hover`;
 
 const fakeClass =

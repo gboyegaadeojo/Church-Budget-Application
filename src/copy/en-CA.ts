@@ -157,12 +157,12 @@ export const copy = {
     heading: "Sign in to Church Budget",
     description:
       "Plan your department's annual budget, submit expenses and follow spending, all in one place.",
-    continueWithPlanningCenter: "Use a Planning Center login",
+    continueWithPlanningCenter: "Staff: sign in with Planning Center",
     planningCenterNote: "Only if you log in to Planning Center itself, not just Church Center.",
     or: "or",
     email: {
-      open: "Sign in with email",
-      openNote: "For most people, including Church Center users. We'll email you a code.",
+      open: "Sign in with Church Center Email",
+      openNote: "For ministry leaders and office staff. We'll email you a code.",
       formLabel: "Sign in with an emailed code",
       emailLabel: "Email address",
       emailHint:
@@ -184,11 +184,11 @@ export const copy = {
         `Too many wrong codes. Try again in ${minutes === 1 ? "1 minute" : `${minutes} minutes`}.`,
       tooMany: (minutes: number) =>
         `Too many codes asked for. Try again in ${minutes === 1 ? "1 minute" : `${minutes} minutes`}.`,
-      disabled: "Email sign-in is turned off. Use a Planning Center login instead.",
+      disabled: "Email sign-in is turned off. Use Staff: sign in with Planning Center instead.",
       unavailable: "Email sign-in isn't available right now. Please try again shortly.",
     },
     leaderNote:
-      "Ministry leaders and church staff need Ministry Leader = Yes in Planning Center; it's checked each time. Choose Sign in with email and type the email on your Planning Center profile, the one Church Center uses.",
+      "Ministry leaders and church staff need Ministry Leader = Yes in Planning Center; it's checked each time. Choose Sign in with Church Center Email and type the email on your Planning Center profile, the one Church Center uses.",
     accessHeading: "Need access?",
     accessLeaders:
       "If you're told you can't get in, ask your Planning Center administrator to mark you as a Ministry Leader.",
