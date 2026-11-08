@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { AuthError } from "next-auth";
 import { EmailCodeError, signIn, signOut } from "@/auth";
 import { copy } from "@/copy/en-CA";
@@ -12,6 +13,7 @@ import { sendOutboxAfterResponse } from "@/lib/email";
 import { trackQueuedEmails } from "@/lib/email/outbox";
 import { getPlanningCenterDirectory } from "@/lib/pco-directory";
 import { requestIpHash } from "@/lib/request-ip";
+import { placeFromHeaders } from "@/lib/request-origin";
 
 const e = copy.signIn.email;
 
@@ -75,10 +77,15 @@ export async function requestEmailCodeAction(
   const secret = process.env.AUTH_SECRET;
   if (!secret) return fail(e.unavailable);
 
+  const h = await headers();
   const deps = {
     now: new Date(),
     secret,
     requestIpHash: await requestIpHash(),
+    requestOrigin: {
+      userAgent: h.get("user-agent") ?? "",
+      place: placeFromHeaders((name) => h.get(name)),
+    },
     firstAdminEmail: process.env.FIRST_ADMIN_EMAIL,
     firstAdminName: process.env.FIRST_ADMIN_NAME,
     directory: getPlanningCenterDirectory(),

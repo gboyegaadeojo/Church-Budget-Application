@@ -51,6 +51,17 @@ export type EmailSummary =
 /** A step in "where this stands": done, the one it's on now, or still to come. */
 export type EmailStep = { label: string; detail?: string; state: "done" | "current" | "next" };
 
+export type EmailTone = "good" | "waiting" | "neutral";
+
+/**
+ * A budget bar: what's used, this request, and what's left, as shares of the whole. Each
+ * part is named with its amount in the legend, so the bar never relies on colour alone.
+ */
+export type EmailMeter = {
+  heading: string;
+  parts: { label: string; value: string; cents: number; kind: "used" | "this" | "left" }[];
+};
+
 export type EmailContent = {
   subject: string;
   /** The line mail apps show after the subject. Defaults to the first paragraph. */
@@ -64,9 +75,14 @@ export type EmailContent = {
    * The status chip's colour: good (approved, paid), waiting (someone must act) or neutral.
    * Defaults to waiting when there's something to do, otherwise neutral.
    */
-  tone?: "good" | "waiting" | "neutral";
+  tone?: EmailTone;
   /** The one number the email is about, shown large, e.g. an approved total. */
   hero?: { value: string; caption?: string };
+  meter?: EmailMeter;
+  /** People and where each stands, e.g. who still has to approve. */
+  people?: { heading: string; items: { name: string; status: string; tone?: EmailTone }[] };
+  /** A quieter second button, beside the main one. */
+  secondaryButton?: { label: string; href: string };
   /** A one-time code, shown large in a single box so it copies cleanly. */
   code?: string;
   paragraphs?: string[];
@@ -152,6 +168,16 @@ function renderText(content: EmailContent, brand: EmailBrand): string {
     out.push("");
   }
   for (const p of content.paragraphs ?? []) out.push(p, "");
+  if (content.meter) {
+    out.push(`${content.meter.heading}:`);
+    for (const p of content.meter.parts) out.push(`- ${p.label}: ${p.value}`);
+    out.push("");
+  }
+  if (content.people?.items.length) {
+    out.push(`${content.people.heading}:`);
+    for (const p of content.people.items) out.push(`- ${p.name}: ${p.status}`);
+    out.push("");
+  }
   if (content.note) {
     const by = content.note.author ? ` (${content.note.author})` : "";
     out.push(`${content.note.label}${by}:`, content.note.text, "");
@@ -187,8 +213,11 @@ function renderText(content: EmailContent, brand: EmailBrand): string {
     out.push("");
   }
   out.push(`${c.whatToDo}: ${content.action}`, "");
-  out.push(`${content.button.label}: ${content.button.href}`, "");
-  out.push("--", c.footer(brand.appName, brand.churchName), c.signInNote);
+  out.push(`${content.button.label}: ${content.button.href}`);
+  if (content.secondaryButton) {
+    out.push(`${content.secondaryButton.label}: ${content.secondaryButton.href}`);
+  }
+  out.push("", "--", c.footer(brand.appName, brand.churchName), c.signInNote);
   return out.join("\n");
 }
 
@@ -315,6 +344,47 @@ function htmlCode(code: string): string {
   return `<div style="display:inline-block;background:${SOFT};border:1px solid ${LINE};border-radius:14px;padding:14px 18px 14px 26px;font-size:34px;line-height:1;font-weight:700;letter-spacing:0.3em;color:${INK};${NUMS}">${escapeHtml(code)}</div>`;
 }
 
+/** Each part's share of the bar, in whole percent adding to 100; tiny parts stay visible. */
+export function meterShares(cents: number[]): number[] {
+  const parts = cents.map((n) => Math.max(0, n));
+  const total = parts.reduce((a, b) => a + b, 0);
+  if (total === 0) return parts.map(() => 0);
+  const shares = parts.map((n) => (n === 0 ? 0 : Math.max(2, Math.round((n / total) * 100))));
+  // Give any rounding difference to the largest part.
+  const largest = shares.indexOf(Math.max(...shares));
+  shares[largest] += 100 - shares.reduce((a, b) => a + b, 0);
+  return shares;
+}
+
+function htmlMeter(meter: EmailMeter, accent: string): string {
+  const colour = { used: INK, this: accent, left: LINE } as const;
+  const shares = meterShares(meter.parts.map((p) => p.cents));
+  const cells = meter.parts
+    .map((p, i) =>
+      shares[i] > 0
+        ? `<td width="${shares[i]}%" style="height:10px;line-height:10px;font-size:0;background:${colour[p.kind]};">&nbsp;</td>`
+        : "",
+    )
+    .join("");
+  const legend = meter.parts
+    .map(
+      (p) =>
+        `<tr><td style="padding:3px 0;font-size:13px;color:${MUTED};"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${colour[p.kind]};${p.kind === "left" ? `border:1px solid #c9ccd2;` : ""}margin-right:6px;"></span>${escapeHtml(p.label)}</td><td style="padding:3px 0;font-size:13px;text-align:right;font-weight:600;color:${INK};${NUMS}">${escapeHtml(p.value)}</td></tr>`,
+    )
+    .join("");
+  return `${label(meter.heading)}<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid ${LINE};border-radius:6px;overflow:hidden;"><tr>${cells}</tr></table><table role="presentation" width="100%" style="border-collapse:collapse;margin-top:8px;">${legend}</table>`;
+}
+
+function htmlPeople(people: NonNullable<EmailContent["people"]>): string {
+  const rows = people.items
+    .map((p) => {
+      const t = TONES[p.tone ?? "waiting"];
+      return `<tr><td style="${CELL}color:${INK};">${escapeHtml(p.name)}</td><td style="${CELL}text-align:right;"><span style="display:inline-block;white-space:nowrap;background:${t.bg};color:${t.fg};font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;">${escapeHtml(p.status)}</span></td></tr>`;
+    })
+    .join("");
+  return `${label(people.heading)}<table role="presentation" width="100%" style="border-collapse:collapse;border-top:1px solid ${LINE};">${rows}</table>`;
+}
+
 /** The logo beside the names, sized by height so wide and square logos both fit. */
 function brandHtml(brand: EmailBrand): string {
   const names = `<p style="margin:0;font-size:14px;line-height:1.25;font-weight:700;color:${INK};">${escapeHtml(brand.appName)}</p><p style="margin:0;font-size:12px;line-height:1.3;color:${MUTED};">${escapeHtml(brand.churchName)}</p>`;
@@ -355,6 +425,8 @@ function renderHtml(content: EmailContent, brand: EmailBrand, subject: string): 
       ),
     );
   }
+  if (content.meter) parts.push(section(htmlMeter(content.meter, accent)));
+  if (content.people?.items.length) parts.push(section(htmlPeople(content.people)));
   if (content.note) parts.push(section(htmlNote(content.note)));
   if (content.steps?.length) parts.push(section(htmlSteps(content.steps, accent)));
   if (content.facts?.length) parts.push(section(htmlFacts(content.facts)));
@@ -377,8 +449,11 @@ function renderHtml(content: EmailContent, brand: EmailBrand, subject: string): 
     );
   }
   const href = escapeHtml(content.button.href);
+  const second = content.secondaryButton
+    ? ` <a href="${escapeHtml(content.secondaryButton.href)}" style="display:inline-block;margin-left:6px;background:#ffffff;color:${INK};text-decoration:none;font-weight:600;font-size:14px;line-height:1.2;padding:9px 15px;border-radius:10px;border:1px solid ${LINE};">${escapeHtml(content.secondaryButton.label)}</a>`
+    : "";
   parts.push(
-    `<tr><td style="padding:0 28px 26px;"><a href="${href}" style="display:inline-block;background:${accent};color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;line-height:1.2;padding:10px 16px;border-radius:10px;">${escapeHtml(content.button.label)}</a><p style="margin:12px 0 0;font-size:12px;color:${MUTED};word-break:break-all;">${escapeHtml(c.orOpen)} <a href="${href}" style="color:${accent};">${href}</a></p></td></tr>`,
+    `<tr><td style="padding:0 28px 26px;"><a href="${href}" style="display:inline-block;background:${accent};color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;line-height:1.2;padding:10px 16px;border-radius:10px;">${escapeHtml(content.button.label)}</a>${second}<p style="margin:12px 0 0;font-size:12px;color:${MUTED};word-break:break-all;">${escapeHtml(c.orOpen)} <a href="${href}" style="color:${accent};">${href}</a></p></td></tr>`,
   );
   parts.push(
     `<tr><td style="padding:18px 28px 22px;border-top:1px solid ${LINE};font-size:12px;line-height:1.6;color:${MUTED};">${escapeHtml(c.footer(brand.appName, brand.churchName))}<br>${escapeHtml(c.signInNote)}</td></tr>`,

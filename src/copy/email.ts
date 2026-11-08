@@ -464,6 +464,7 @@ export const emailCopy = {
         `Your code is ${code}. It works once, until ${until}.`,
       codeLabel: "Code",
       expiresLabel: "Works until",
+      fromLabel: "Requested from",
       action:
         "Enter the code on the sign-in page. It works once, for 15 minutes. If you didn't ask for it, ignore this email: nobody can sign in without the code.",
     },

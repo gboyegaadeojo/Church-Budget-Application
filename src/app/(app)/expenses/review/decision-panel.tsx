@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { Loader2 } from "lucide-react";
 import { FormMessage } from "@/components/ui/action-form";
@@ -14,6 +14,9 @@ import { cn } from "@/lib/cn";
 import { formatCAD, parseCAD } from "@/lib/money";
 
 const r = expensesCopy.review;
+
+/** The approvers' emails link to the decision with this anchor (expenses/emails.ts). */
+const DECIDE_ANCHOR = "decide";
 
 export type DecisionOption = {
   kind: string;
@@ -69,6 +72,15 @@ export function DecisionPanel({
     option.amount && cents !== null && cents > 0 ? approvedFiguresFor(type, cents, rate) : null;
   const errors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
 
+  // The approver's email links here with "#decide": bring the decision into view with the
+  // first choice (Approve) focused, ready to confirm. Nothing is decided without the dialog.
+  const firstChoice = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (window.location.hash !== `#${DECIDE_ANCHOR}`) return;
+    firstChoice.current?.scrollIntoView({ block: "center" });
+    firstChoice.current?.focus({ preventScroll: true });
+  }, []);
+
   const send = () =>
     startTransition(async () => {
       const result = await action({
@@ -86,7 +98,11 @@ export function DecisionPanel({
     });
 
   return (
-    <section aria-labelledby={`${ids}-heading`} className="space-y-4">
+    <section
+      id={DECIDE_ANCHOR}
+      aria-labelledby={`${ids}-heading`}
+      className="scroll-mt-24 space-y-4"
+    >
       <h2 id={`${ids}-heading`} className="text-base font-semibold">
         {r.decisionHeading}
       </h2>
@@ -101,6 +117,7 @@ export function DecisionPanel({
               type="radio"
               name={`${ids}-kind`}
               value={o.kind}
+              ref={o.kind === options[0].kind ? firstChoice : undefined}
               checked={kind === o.kind}
               onChange={() => {
                 setKind(o.kind);
