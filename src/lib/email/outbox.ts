@@ -155,7 +155,7 @@ export async function deliverOutbox(
   const now = options.now ?? new Date();
   const summary: DeliverySummary = { sent: 0, retrying: 0, failed: 0 };
 
-  // Emails that ran out before they could go (a sign-in code after 10 minutes) are failed.
+  // Emails that ran out before they could go (a sign-in code after 15 minutes) are failed.
   const expired = await db
     .update(emailOutbox)
     .set({

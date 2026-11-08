@@ -1,0 +1,1 @@
+ALTER TABLE "expense_submissions" ADD COLUMN "adds_sales_tax" boolean DEFAULT true NOT NULL;

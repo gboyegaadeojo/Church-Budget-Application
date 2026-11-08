@@ -31,7 +31,7 @@ import { formatDateTime } from "@/lib/time-zone";
  * what the account may do, exactly as for Planning Center.
  */
 
-export const CODE_LIFETIME_MS = 10 * 60_000;
+export const CODE_LIFETIME_MS = 15 * 60_000;
 export const MAX_REQUESTS_PER_HOUR = 5;
 /** Codes asked for from one network in an hour, whatever the addresses. */
 export const MAX_REQUESTS_PER_IP_PER_HOUR = 20;

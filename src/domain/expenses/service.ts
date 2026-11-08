@@ -28,6 +28,7 @@ import { queueExpenseEmails } from "./emails";
 import {
   expenseContentSchema,
   expenseTotals,
+  rateFor,
   submissionErrors,
   type ExpenseContent,
   type ExpenseContentInput,
@@ -153,6 +154,7 @@ export async function contentOf(tx: Tx, row: ExpenseRow): Promise<ExpenseContent
       link: i.productUrl,
       annualLineItemId: i.annualLineItemId,
     })),
+    addsSalesTax: row.addsSalesTax,
     howBought: row.howBought,
     lines: lines.map((l) => ({
       date: l.purchaseDate,
@@ -215,15 +217,20 @@ function columnsOf(type: ExpenseType, content: ExpenseContent) {
   return {
     title: content.title,
     justification: content.justification,
+    addsSalesTax: claim ? true : content.addsSalesTax,
     howBought: claim ? null : content.howBought,
     linkedPurchaseRequestId: claim ? content.linkedPurchaseRequestId : null,
     payeeKind: claim ? content.payeeKind : null,
     payeeName: claim && content.payeeKind === "other" ? content.payeeName : null,
-    payeeEmail: claim && content.payeeKind !== "church_card" ? content.payeeEmail : null,
+    // Only to match someone else to their account (FR-47); nobody is paid by e-transfer.
+    payeeEmail: claim && content.payeeKind === "other" ? content.payeeEmail : null,
+    // The church pays claims by cheque (decided 2026-11-07).
     paymentPreference: claim
       ? content.payeeKind === "church_card"
         ? ("none" as const)
-        : content.paymentPreference
+        : content.payeeKind
+          ? ("cheque" as const)
+          : null
       : null,
     noReceiptReason: claim ? content.noReceiptReason : null,
     overBudgetExplanation: content.overBudgetExplanation,
@@ -542,7 +549,8 @@ export async function submitExpense(
     .where(eq(budgetCycles.id, row.budgetCycleId));
 
   const content = await contentOf(tx, row);
-  const rate = await currentRate(tx);
+  // "No sales tax" snapshots 0%, so approvals and spending need no special case.
+  const rate = rateFor(row.type, content.addsSalesTax, await currentRate(tx));
   const { totals, impact } = await checkForSubmission(tx, row, content, rate, now);
   const payee = await resolvePayee(tx, row, content);
   const referenceNumber = await nextReference(tx, "expense", year);
@@ -631,7 +639,10 @@ export async function editExpense(
   );
   if (!changes && !responding) throw new RuleError(e.nothingChanged);
 
-  const rate = row.taxRate!;
+  // The rate snapshotted at submission stays, unless the tax choice changes: turning tax
+  // off snapshots 0%; turning it back on takes the church's current rate.
+  const churchRate = row.addsSalesTax && row.taxRate !== null ? row.taxRate : await currentRate(tx);
+  const rate = rateFor(row.type, content.addsSalesTax, churchRate);
   // Validate against the new content before writing it.
   await updateExpense(tx, row, version, columnsOf(row.type, content));
   await replaceRows(tx, row, content);
@@ -642,6 +653,7 @@ export async function editExpense(
     .update(expenseSubmissions)
     .set({
       status: next,
+      taxRate: rate,
       subtotalCents: totals.subtotal,
       taxCents: totals.tax,
       totalCents: totals.total,

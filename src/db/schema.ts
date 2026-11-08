@@ -1145,6 +1145,12 @@ export const expenseSubmissions = pgTable(
     title: text("title").notNull().default(""),
     justification: text("justification").notNull().default(""),
     status: expenseStatusEnum("status").notNull().default("draft"),
+    /**
+     * A purchase request adds sales tax unless the requester turns it off for the whole
+     * request, as for an honorarium or money sent to a person (decided 2026-11-07). Off
+     * snapshots a 0% rate. Claims are always true: their amounts already include tax.
+     */
+    addsSalesTax: boolean("adds_sales_tax").notNull().default(true),
     taxRate: taxRate("tax_rate"),
     subtotalCents: cents("subtotal_cents"),
     taxCents: cents("tax_cents"),

@@ -257,12 +257,13 @@ const RULES: Record<Action, readonly Rule[]> = {
   "expense.board_queue": [{ roles: BOARD }, { roles: ["system_admin"], readOnly: true }],
   // The service also lets the Vice-Chair act only while the Chair is Away or conflicted.
   "expense.final_approve": [{ roles: BOARD, check: notOwnDepartmentOrPayee }],
+  // Only the Church Administrator pays (decided 2026-11-07); the accountant can watch.
   "expense.process_queue": [
-    { roles: [...ACCOUNTANTS, "church_admin"] },
-    { roles: ["system_admin"], readOnly: true },
+    { roles: ["church_admin"] },
+    { roles: [...ACCOUNTANTS, "system_admin"], readOnly: true },
   ],
   // Nobody records a payment to themselves or for an expense they submitted (FR-47).
-  "expense.pay": [{ roles: [...ACCOUNTANTS, "church_admin"], check: notPayeeOrSubmitter }],
+  "expense.pay": [{ roles: ["church_admin"], check: notPayeeOrSubmitter }],
   // Never on an expense they submitted or that pays them (FR-47).
   "expense.record_verbal_approval": [{ roles: ["church_admin"], check: notPayeeOrSubmitter }],
   "expense.cancel": [{ roles: ["requester"], check: ownDepartment }, { roles: ACCOUNTANTS }],

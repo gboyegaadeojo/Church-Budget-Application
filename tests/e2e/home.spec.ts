@@ -68,11 +68,14 @@ test.describe("Home and app shell", () => {
     await expect(page.getByRole("heading", { level: 2, name: "My tasks" })).toHaveCount(1);
     await expect(page.getByRole("heading", { level: 2, name: "At a glance" })).toBeVisible();
     // FR-37: each role's part of Home, e.g. the accountant's, the board's and the office's.
-    await expect(page.getByRole("heading", { level: 2, name: "Needs you today" })).toBeVisible();
+    // The accountant's inbox and the office's payment board (decided 2026-11-07).
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Needs your decision" }),
+    ).toBeVisible();
     await expect(
       page.getByRole("heading", { level: 2, name: "Waiting for your approval" }),
     ).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2, name: "Ready to pay" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Payments" })).toBeVisible();
     await expect(page.getByRole("heading", { level: 2, name: "Recent activity" })).toBeVisible();
 
     // Roles are chips in the account menu, not a role switcher.

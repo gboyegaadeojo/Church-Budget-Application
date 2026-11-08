@@ -10,7 +10,13 @@ import {
   Section,
   StatCard,
 } from "@/components/ui/display";
-import { buttonClass, cardClass, linkClass, standaloneLinkClass } from "@/components/ui/styles";
+import {
+  buttonClass,
+  cardClass,
+  compactButtonClass,
+  linkClass,
+  standaloneLinkClass,
+} from "@/components/ui/styles";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
 import { readyQueue, type ReadyRow } from "@/domain/expenses/payment-queries";
@@ -182,7 +188,7 @@ async function ReadyContent({
                     </td>
                     <td className="py-2.5 align-top">
                       {row.canPay && !queue.readOnly ? (
-                        <div className="flex flex-col gap-2">
+                        <div className="flex w-max flex-col items-stretch gap-1">
                           {row.status === "approved" && (
                             <StartProcessing
                               id={row.id}
@@ -192,7 +198,7 @@ async function ReadyContent({
                           )}
                           <Link
                             href={`/expenses/ready/${row.id}`}
-                            className={buttonClass("primary")}
+                            className={buttonClass("primary", compactButtonClass)}
                             aria-label={`${p.record}: ${row.referenceNumber}`}
                           >
                             {p.record}

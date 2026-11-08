@@ -4,7 +4,7 @@ Email is how people learn that a budget needs a decision, an expense was approve
 
 **Who:** someone who can sign in to the church's Resend account, and someone who can change the church domain's DNS (often the same person, or whoever looks after the church website). The System Administrator sends the test emails.
 **When:** on the staging site before the pilot, then once more on the live site before the cycle opens (go-live checklist, launch step 3). About 45 minutes.
-**What the app already does for you:** every email has a plain-text version beside the HTML, one shared layout, no emoji in subjects, no tracking pixels, and links with nothing in the query string. Sign-in codes expire after 10 minutes and their bodies are cleared once sent.
+**What the app already does for you:** every email has a plain-text version beside the HTML, one shared layout, no emoji in subjects, no tracking pixels, and links with nothing in the query string. Sign-in codes expire after 15 minutes and their bodies are cleared once sent.
 
 ## 1. Check the domain in Resend (10 minutes)
 

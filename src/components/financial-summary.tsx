@@ -4,11 +4,17 @@ import {
   differenceText,
   formatCAD,
   formatTaxRate,
+  isZeroTaxRate,
   type TaxBreakdown,
   type TaxRate,
 } from "@/lib/money";
 
 export { differenceText };
+
+/** "Sales tax (12%)", or "Sales tax (none)" for a request marked as having no tax. */
+export function salesTaxLabel(rate: TaxRate): string {
+  return isZeroTaxRate(rate) ? copy.money.noSalesTax : copy.money.salesTax(formatTaxRate(rate));
+}
 
 /**
  * Subtotal / Sales tax (rate) / Total (incl. tax), the same everywhere amounts appear
@@ -39,7 +45,7 @@ export function FinancialSummary({
           <dd className="tabular">{formatCAD(totals.subtotal)}</dd>
         </div>
         <div className="flex items-baseline justify-between gap-4">
-          <dt className="text-fg-muted">{copy.money.salesTax(formatTaxRate(rate))}</dt>
+          <dt className="text-fg-muted">{salesTaxLabel(rate)}</dt>
           <dd className="tabular">{formatCAD(totals.tax)}</dd>
         </div>
         <div className="flex items-baseline justify-between gap-4 border-t border-border pt-2">
@@ -77,7 +83,7 @@ export function ComparisonSummary({
 }) {
   const rows = [
     { label: copy.money.subtotal, key: "subtotal" as const },
-    { label: copy.money.salesTax(formatTaxRate(rate)), key: "tax" as const },
+    { label: salesTaxLabel(rate), key: "tax" as const },
     { label: copy.money.total, key: "total" as const },
   ];
   return (

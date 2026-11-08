@@ -51,7 +51,8 @@ export async function expenseTasks(
   const mine = viewer.roles.includes("requester") ? viewer.departments.map((d) => d.id) : [];
   const accountant = hasRole(viewer, "accountant", "backup_approver");
   const boardMember = hasRole(viewer, "board_chair", "vice_chair");
-  const payer = hasRole(viewer, "accountant", "backup_approver", "church_admin");
+  // Only the Church Administrator pays (decided 2026-11-07).
+  const payer = hasRole(viewer, "church_admin");
   const office = hasRole(viewer, "church_admin");
   const conditions = [
     mine.length > 0

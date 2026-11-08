@@ -7,9 +7,9 @@ import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import {
   AlertCircle,
   AlertTriangle,
-  Calculator,
   CheckCircle2,
-  FileText,
+  ChevronDown,
+  ChevronLeft,
   Loader2,
   Paperclip,
   PenLine,
@@ -21,13 +21,13 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import { FinancialSummary } from "@/components/financial-summary";
+import { salesTaxLabel } from "@/components/financial-summary";
 import { FormMessage } from "@/components/ui/action-form";
-import { IconChip } from "@/components/ui/display";
 import { TONE, type Tone } from "@/components/ui/tone";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { buttonClass, cardClass, inputClass, textareaClass } from "@/components/ui/styles";
+import { buttonClass } from "@/components/ui/styles";
 import { adminCopy } from "@/copy/admin";
+import { copy } from "@/copy/en-CA";
 import { expensesCopy } from "@/copy/expenses";
 import type { BudgetFigures } from "@/domain/expenses/budget";
 import {
@@ -37,27 +37,28 @@ import {
   itemTotalOf,
   liveTotals,
   LIMITS,
+  rateFor,
   submissionErrors,
   HOW_BOUGHT,
   PAYEE_KINDS,
-  PAYMENT_PREFERENCES,
 } from "@/domain/expenses/schema";
 import type { ExpenseType } from "@/domain/expenses/status";
 import type { LinkableRequest, AnnualLineOption } from "@/domain/expenses/queries";
 import type { ActionState } from "@/lib/action-state";
 import { cn } from "@/lib/cn";
-import { formatCAD, parseCAD, sumCents, taxRateToPercent } from "@/lib/money";
+import { formatCAD, parseCAD, sumCents, taxRateToPercent, type TaxBreakdown } from "@/lib/money";
 import {
   deleteExpenseDraftAction,
   editExpenseAction,
   saveExpenseDraftAction,
   submitExpenseAction,
 } from "../../actions";
-import { BudgetStrip, OverBudgetWarning } from "../../budget-strip";
+import { OverBudgetWarning } from "../../budget-strip";
 
 const f = expensesCopy.form;
 const p = expensesCopy.preview;
 const sections = expensesCopy.sections;
+const b = expensesCopy.budget;
 
 export type ExpenseEditorMode = "draft" | "edit" | "respond";
 
@@ -90,6 +91,8 @@ export type ExpenseFormValues = {
   noReceiptReason: string;
   overBudgetExplanation: string;
   lateExplanation: string;
+  /** Purchase requests: add sales tax (default) or none for the whole request. */
+  addsSalesTax: boolean;
 };
 
 export type ExpenseEditorInfo = {
@@ -99,6 +102,7 @@ export type ExpenseEditorInfo = {
   department: string;
   cycleName: string;
   requesterName: string;
+  /** The rate added when sales tax is on (the snapshot, or the church's current rate). */
   rate: string;
   figures: BudgetFigures;
   linkable: LinkableRequest[];
@@ -125,10 +129,92 @@ const BLANK_LINE: LineValues = {
   receiptNumber: "",
 };
 
+// ---------------------------------------------------------------- the look (design H)
+
+/** A soft filled field, large enough to type in comfortably on a phone. */
+const FIELD =
+  "block min-h-[52px] w-full rounded-[10px] border border-border bg-surface-2 px-4 text-base text-fg placeholder:text-fg-muted aria-[invalid=true]:border-danger";
+const FIELD_AREA = cn(FIELD, "min-h-28 py-3");
+const LABEL = "block text-sm font-semibold";
+const TEXT_LINK =
+  "inline-flex min-h-11 items-center gap-1.5 rounded-control px-1 text-[15px] font-semibold text-accent hover:underline";
+
+type StepId = "details" | "items" | "howBought" | "attachments" | "lines" | "payee" | "files";
+
+/** The questions, one per screen (design H, 2026-11-07), then the review. */
+const STEPS: Record<ExpenseType, StepId[]> = {
+  purchase_request: ["details", "items", "howBought", "attachments"],
+  expense_claim: ["details", "lines", "payee", "files"],
+};
+
+/** Which form fields each step owns, so an error opens the step that can fix it. */
+const STEP_FIELDS: Record<StepId, string[]> = {
+  details: ["title", "justification"],
+  items: ["items", "addsSalesTax", "overBudgetExplanation"],
+  howBought: ["howBought"],
+  attachments: [],
+  lines: ["lines", "linkedPurchaseRequestId", "lateExplanation", "overBudgetExplanation"],
+  payee: ["payeeKind", "payeeName", "payeeEmail", "paymentPreference"],
+  files: ["receipts", "noReceipt", "noReceiptReason"],
+};
+
+const STEP_LOOK: Record<StepId, { icon: LucideIcon; tone: Tone; title: string; question: string }> =
+  {
+    details: {
+      icon: PenLine,
+      tone: "violet",
+      title: sections.details.title,
+      question: f.questions.detailsPurchase,
+    },
+    items: {
+      icon: ShoppingCart,
+      tone: "teal",
+      title: sections.items.title,
+      question: f.questions.items,
+    },
+    lines: {
+      icon: Receipt,
+      tone: "teal",
+      title: sections.lines.title,
+      question: f.questions.lines,
+    },
+    howBought: {
+      icon: Store,
+      tone: "amber",
+      title: sections.howBought.title,
+      question: f.questions.howBought,
+    },
+    payee: {
+      icon: Wallet,
+      tone: "amber",
+      title: sections.payee.title,
+      question: f.questions.payee,
+    },
+    attachments: {
+      icon: Paperclip,
+      tone: "pink",
+      title: sections.attachments.title,
+      question: f.questions.attachments,
+    },
+    files: {
+      icon: Paperclip,
+      tone: "pink",
+      title: sections.files.title,
+      question: f.questions.files,
+    },
+  };
+
+const REVIEW_TONE: Tone = "blue";
+
+function belongsTo(key: string, step: StepId): boolean {
+  return STEP_FIELDS[step].some((field) => key === field || key.startsWith(`${field}.`));
+}
+
 /**
- * The purchase request and expense claim form (DRD 6.9a, 6B.3): the budget strip, the
- * details, items or receipt lines, how it's bought or who's paid, then a preview and a
- * confirmation. The server recalculates every total and checks every rule again.
+ * The purchase request and expense claim form (6B.3), one question per screen in one
+ * narrow column (design H, 2026-11-07): what and why, the items or receipts, how it's
+ * bought or who's paid, the files, then Check and send. The server recalculates every
+ * total and checks every rule again.
  */
 export function ExpenseEditor({
   mode,
@@ -139,10 +225,11 @@ export function ExpenseEditor({
   mode: ExpenseEditorMode;
   info: ExpenseEditorInfo;
   initial: ExpenseFormValues;
-  /** The receipts section (claims), rendered by the page. */
+  /** The receipts or attachments uploader, rendered by the page. */
   receipts?: React.ReactNode;
 }) {
   const claim = info.type === "expense_claim";
+  const steps = STEPS[info.type];
   const form = useForm<ExpenseFormValues>({
     defaultValues: {
       ...initial,
@@ -152,7 +239,7 @@ export function ExpenseEditor({
   });
   const { control, getValues, setError, clearErrors } = form;
   const values = useWatch({ control }) as ExpenseFormValues;
-  const [step, setStep] = useState<"form" | "preview">("form");
+  const [step, setStep] = useState<number | "preview">(0);
   const [version, setVersion] = useState(info.version);
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
   const [problem, setProblem] = useState<string | null>(null);
@@ -161,9 +248,16 @@ export function ExpenseEditor({
   const firstRender = useRef(true);
 
   const totals = useMemo(
-    () => liveTotals(info.type, { items: values.items, lines: values.lines }, info.rate),
+    () =>
+      liveTotals(
+        info.type,
+        { items: values.items, lines: values.lines, addsSalesTax: values.addsSalesTax },
+        info.rate,
+      ),
     [values, info.type, info.rate],
   );
+  // The rate the totals show: 0% ("Sales tax (none)") once tax is turned off.
+  const rate = rateFor(info.type, values.addsSalesTax !== false, info.rate);
   const linked = info.linkable.find((l) => l.id === values.linkedPurchaseRequestId);
   const releases = claim && linked ? linked.committedCents : 0;
   const after = sumCents([info.figures.remaining, releases, -totals.total]);
@@ -179,12 +273,18 @@ export function ExpenseEditor({
     window.scrollTo({ top: 0 });
   }, [step]);
 
+  const stepIndexOf = (key: string) => {
+    const i = steps.findIndex((s) => belongsTo(key, s));
+    return i === -1 ? 0 : i;
+  };
+
+  /** Shows the errors and opens the first step that has one. */
   const applyErrors = (errors: Record<string, string>) => {
     for (const [key, message] of Object.entries(errors)) {
       setError(key as never, { type: "server", message });
     }
     setProblem(f.fixErrors);
-    setStep("form");
+    setStep(Math.min(...Object.keys(errors).map(stepIndexOf)));
   };
 
   /** Rows with nothing typed are dropped, as the server does, so error numbers line up. */
@@ -192,9 +292,26 @@ export function ExpenseEditor({
     const current = getValues();
     const items = current.items.filter((i) => Object.values(i).some((v) => v.trim() !== ""));
     const lines = current.lines.filter((l) => Object.values(l).some((v) => v.trim() !== ""));
-    if (items.length !== current.items.length) form.setValue("items", items);
-    if (lines.length !== current.lines.length) form.setValue("lines", lines);
+    if (items.length !== current.items.length) {
+      form.setValue("items", items.length > 0 || claim ? items : [BLANK_ITEM]);
+    }
+    if (lines.length !== current.lines.length) {
+      form.setValue("lines", lines.length > 0 || !claim ? lines : [BLANK_LINE]);
+    }
   };
+
+  /** Every problem with the form, as the server would find it. */
+  function allErrors(): Record<string, string> {
+    const input = getValues();
+    const errors = formatErrors(input);
+    if (Object.keys(errors).length > 0) return errors;
+    return submissionErrors(info.type, expenseContentSchema.parse(input), {
+      today: info.today,
+      claimDeadlineDays: info.claimDeadlineDays,
+      receiptCount: info.receiptCount,
+      overBy,
+    });
+  }
 
   async function saveDraft(): Promise<boolean> {
     setSaving("saving");
@@ -212,43 +329,90 @@ export function ExpenseEditor({
     return false;
   }
 
-  async function goToPreview() {
+  /** Next: check this step only, keep the draft safe, then move on (or to the review). */
+  async function next() {
+    if (step === "preview") return;
     setProblem(null);
     setState({ status: "idle" });
     clearErrors();
     dropBlankRows();
-    const input = getValues();
-    let errors = formatErrors(input);
-    if (Object.keys(errors).length === 0) {
-      const content = expenseContentSchema.parse(input);
-      errors = submissionErrors(info.type, content, {
-        today: info.today,
-        claimDeadlineDays: info.claimDeadlineDays,
-        receiptCount: info.receiptCount,
-        overBy,
-      });
-    }
-    if (Object.keys(errors).length > 0) {
-      applyErrors(errors);
+    const last = step === steps.length - 1;
+    const errors = allErrors();
+    const mine = Object.fromEntries(
+      Object.entries(errors).filter(([key]) => last || belongsTo(key, steps[step])),
+    );
+    if (Object.keys(mine).length > 0) {
+      applyErrors(mine);
       return;
     }
     if (mode === "draft" && !(await saveDraft())) return;
-    setStep("preview");
+    setStep(last ? "preview" : step + 1);
+  }
+
+  function back() {
+    setProblem(null);
+    if (step === "preview") setStep(steps.length - 1);
+    else if (step > 0) setStep(step - 1);
   }
 
   const typeName = expensesCopy.types[info.type];
   const title = mode === "draft" ? f.titleNew(typeName) : f.titleEdit(typeName);
+  const total = steps.length + 1;
+  const position = step === "preview" ? total : step + 1;
+  const current = step === "preview" ? null : steps[step];
+  const look = current ? STEP_LOOK[current] : null;
+  const tone = look?.tone ?? REVIEW_TONE;
+  const question =
+    current === "details" && claim
+      ? f.questions.detailsClaim
+      : (look?.question ?? f.questions.review);
+
+  const explanations = (late || overBy > 0) && (
+    <div className="space-y-5 rounded-[12px] border border-warning p-4">
+      {late && (
+        <Explanation
+          form={form}
+          name="lateExplanation"
+          label={f.lateExplanation}
+          warning={f.lateWarning(info.claimDeadlineDays)}
+        />
+      )}
+      {overBy > 0 && (
+        <div className="space-y-3">
+          <OverBudgetWarning department={info.department} overBy={overBy} />
+          <Explanation form={form} name="overBudgetExplanation" label={f.overBudgetExplanation} />
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center gap-4">
-        <IconChip icon={claim ? Receipt : FileText} tone={claim ? "amber" : "teal"} />
-        <div className="min-w-0 space-y-1">
-          <h1 className="text-[32px] leading-tight font-bold tracking-tight">{title}</h1>
-          <p className="text-sm text-fg-muted">
-            {info.department} · {info.cycleName}
-          </p>
-        </div>
+    <div className="mx-auto w-full max-w-[32rem] space-y-5 rounded-card bg-surface p-5 shadow-card sm:p-7">
+      <div className="flex items-center justify-between gap-3">
+        {step !== 0 ? (
+          <button
+            type="button"
+            onClick={back}
+            className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-surface-2 text-accent hover:bg-surface-hover"
+          >
+            <ChevronLeft className="size-5" aria-hidden="true" />
+            <span className="sr-only">{f.back}</span>
+          </button>
+        ) : (
+          <span className="size-11 shrink-0" aria-hidden="true" />
+        )}
+        <BudgetPill
+          department={info.department}
+          figures={info.figures}
+          after={totals.total > 0 ? after : null}
+        />
+      </div>
+
+      <header className="space-y-0.5">
+        <h1 className="text-sm font-semibold">{title}</h1>
+        <p className="text-xs text-fg-muted">
+          {info.department} · {info.cycleName}
+        </p>
       </header>
 
       {mode === "respond" && info.question && (
@@ -261,252 +425,238 @@ export function ExpenseEditor({
         </div>
       )}
 
-      <BudgetStrip
-        department={info.department}
-        figures={info.figures}
-        after={totals.total > 0 ? after : undefined}
-      />
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-        <div className={cn("min-w-0 space-y-6", step === "preview" && cardClass)}>
-          <h2
-            ref={headingRef}
-            tabIndex={-1}
-            className={cn("text-xl font-semibold outline-none", step === "form" && "sr-only")}
-          >
-            {step === "form" ? f.details : p.heading}
-          </h2>
-          {problem && step === "form" && (
-            <div
-              role="alert"
-              className="flex items-start gap-2 rounded-control border border-danger p-3 text-sm text-danger"
-            >
-              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              {problem}
-            </div>
-          )}
-
-          {step === "form" ? (
-            <form noValidate onSubmit={(e) => e.preventDefault()} className="space-y-6">
-              <FormSection
-                step={1}
-                icon={PenLine}
-                tone="violet"
-                title={sections.details.title}
-                intro={sections.details.intro}
-              >
-                <DetailsFields form={form} values={values} />
-              </FormSection>
-              {claim ? (
-                <>
-                  <FormSection
-                    step={2}
-                    icon={Receipt}
-                    tone="teal"
-                    title={sections.lines.title}
-                    intro={f.linesIntro}
-                  >
-                    <LinesFields form={form} />
-                    <LinkedField form={form} linkable={info.linkable} />
-                  </FormSection>
-                  <FormSection step={3} icon={Wallet} tone="amber" title={sections.payee.title}>
-                    <PayeeFields form={form} values={values} />
-                  </FormSection>
-                  <FormSection step={4} icon={Paperclip} tone="pink" title={sections.files.title}>
-                    {receipts}
-                    <NoReceiptFields form={form} values={values} />
-                  </FormSection>
-                </>
-              ) : (
-                <>
-                  <FormSection
-                    step={2}
-                    icon={ShoppingCart}
-                    tone="teal"
-                    title={sections.items.title}
-                    intro={f.itemsIntro(`${taxRateToPercent(info.rate)}%`)}
-                  >
-                    <ItemsFields form={form} values={values} info={info} />
-                  </FormSection>
-                  <FormSection
-                    step={3}
-                    icon={Store}
-                    tone="amber"
-                    title={sections.howBought.title}
-                    intro={sections.howBought.intro}
-                  >
-                    <HowBoughtField form={form} />
-                  </FormSection>
-                  <FormSection
-                    step={4}
-                    icon={Paperclip}
-                    tone="pink"
-                    title={sections.attachments.title}
-                  >
-                    {receipts}
-                  </FormSection>
-                </>
+      <div>
+        <p className="sr-only" aria-live="polite">
+          {f.progress(position, total)}
+        </p>
+        <div className="flex gap-1.5" aria-hidden="true">
+          {Array.from({ length: total }, (_, i) => (
+            <span
+              key={i}
+              className={cn(
+                "h-1 flex-1 rounded-full transition-colors duration-fast",
+                i < position ? "bg-accent" : "bg-border",
               )}
-              {(late || overBy > 0) && (
-                <div className={cn(cardClass, "space-y-5 border-warning")}>
-                  {late && (
-                    <Explanation
-                      form={form}
-                      name="lateExplanation"
-                      label={f.lateExplanation}
-                      warning={f.lateWarning(info.claimDeadlineDays)}
-                    />
-                  )}
-                  {overBy > 0 && (
-                    <div className="space-y-3">
-                      <OverBudgetWarning department={info.department} overBy={overBy} />
-                      <Explanation
-                        form={form}
-                        name="overBudgetExplanation"
-                        label={f.overBudgetExplanation}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div
-                className={cn(
-                  cardClass,
-                  "flex flex-col-reverse gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-4",
-                )}
-              >
-                {mode === "draft" ? (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => void saveDraft()}
-                      disabled={saving === "saving"}
-                      aria-busy={saving === "saving" || undefined}
-                      className={buttonClass("secondary")}
-                    >
-                      {saving === "saving" && (
-                        <Loader2
-                          className="size-4 animate-spin motion-reduce:animate-none"
-                          aria-hidden="true"
-                        />
-                      )}
-                      {f.saveDraft}
-                    </button>
-                    <p role="status" className="flex items-center gap-1.5 text-sm text-fg-muted">
-                      {saving === "saved" && (
-                        <>
-                          <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
-                          {f.saved}
-                        </>
-                      )}
-                    </p>
-                  </div>
-                ) : (
-                  <Link href={`/expenses/${info.id}`} className={buttonClass("ghost")}>
-                    {f.cancelEdit}
-                  </Link>
-                )}
-                <button
-                  type="button"
-                  onClick={() => void goToPreview()}
-                  className={buttonClass("primary")}
-                >
-                  {f.toPreview}
-                </button>
-              </div>
-              <FormMessage state={state} />
-            </form>
-          ) : (
-            <Preview
-              mode={mode}
-              info={info}
-              values={values}
-              totals={totals}
-              version={version}
-              overBy={overBy}
-              linked={linked ?? null}
-              onEdit={() => setStep("form")}
-              onErrors={applyErrors}
             />
-          )}
+          ))}
         </div>
-
-        <aside
-          aria-label={f.summary}
-          className={cn(cardClass, "space-y-4 border-t-4 border-t-accent lg:sticky lg:top-20")}
-        >
-          <div className="flex items-center gap-3">
-            <IconChip icon={Calculator} tone="violet" size="sm" />
-            <p className="text-[17px] font-semibold tracking-tight">{f.summary}</p>
-          </div>
-          {claim ? (
-            <dl className="text-sm">
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="font-semibold">{f.totalPaid}</dt>
-                <dd className="tabular text-2xl font-bold">{formatCAD(totals.total)}</dd>
-              </div>
-            </dl>
-          ) : (
-            <FinancialSummary totals={totals} rate={info.rate} />
-          )}
-        </aside>
       </div>
 
-      {mode === "draft" && step === "form" && <DeleteDraft id={info.id} version={version} />}
+      <div className="space-y-3">
+        <p
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold tracking-wide uppercase",
+            TONE[tone].chip,
+          )}
+        >
+          {look && <look.icon className="size-3.5" aria-hidden="true" />}
+          {sections.step(position)} · {look?.title ?? f.reviewStep}
+        </p>
+        <h2
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-[28px] leading-tight font-extrabold tracking-tight outline-none sm:text-[30px]"
+        >
+          {question}
+        </h2>
+      </div>
+
+      {problem && step !== "preview" && (
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-control border border-danger p-3 text-sm text-danger"
+        >
+          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          {problem}
+        </div>
+      )}
+
+      {step === "preview" ? (
+        <Review
+          mode={mode}
+          info={{ ...info, rate }}
+          values={values}
+          totals={totals}
+          after={after}
+          version={version}
+          overBy={overBy}
+          linked={linked ?? null}
+          onEdit={back}
+          onErrors={applyErrors}
+        />
+      ) : (
+        <>
+          <form
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              void next();
+            }}
+            className="space-y-5"
+          >
+            {current === "details" && <DetailsFields form={form} values={values} />}
+            {current === "items" && (
+              <>
+                <p className="text-[15px] text-fg-muted">
+                  {values.addsSalesTax === false
+                    ? f.itemsIntroNoTax
+                    : f.itemsIntro(`${taxRateToPercent(info.rate)}%`)}
+                </p>
+                <ItemsFields form={form} values={values} info={info} />
+                <SalesTaxSwitch form={form} on={values.addsSalesTax !== false} rate={info.rate} />
+                <dl className="space-y-1.5 text-[15px] text-fg-muted">
+                  <div className="flex justify-between gap-4">
+                    <dt>{copy.money.subtotal}</dt>
+                    <dd className="tabular">{formatCAD(totals.subtotal)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>{salesTaxLabel(rate)}</dt>
+                    <dd className="tabular">{formatCAD(totals.tax)}</dd>
+                  </div>
+                </dl>
+                {explanations}
+              </>
+            )}
+            {current === "lines" && (
+              <>
+                <p className="text-[15px] text-fg-muted">{f.linesIntro}</p>
+                <LinesFields form={form} />
+                <LinkedField form={form} linkable={info.linkable} />
+                {explanations}
+              </>
+            )}
+            {current === "howBought" && (
+              <ChoiceList
+                form={form}
+                name="howBought"
+                legend={f.howBought}
+                options={HOW_BOUGHT.map((v) => ({
+                  value: v,
+                  label: expensesCopy.howBought[v],
+                  hint: f.howBoughtHints[v],
+                }))}
+              />
+            )}
+            {current === "payee" && <PayeeFields form={form} values={values} />}
+            {current === "attachments" && receipts}
+            {current === "files" && (
+              <>
+                {receipts}
+                <NoReceiptFields form={form} values={values} />
+              </>
+            )}
+          </form>
+
+          <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 -mx-5 space-y-2 border-t border-border bg-surface/95 px-5 pt-3 pb-1 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+            {step > 0 && (
+              <p className="flex items-baseline justify-between gap-4">
+                <span className="text-[15px] text-fg-muted">{claim ? f.totalPaid : f.total}</span>
+                <span className="tabular text-2xl font-extrabold">{formatCAD(totals.total)}</span>
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => void next()}
+              disabled={saving === "saving"}
+              aria-busy={saving === "saving" || undefined}
+              className={buttonClass(
+                "primary",
+                "min-h-12 w-full rounded-[10px] text-[15px] lg:min-h-12",
+              )}
+            >
+              {saving === "saving" && (
+                <Loader2
+                  className="size-4 animate-spin motion-reduce:animate-none"
+                  aria-hidden="true"
+                />
+              )}
+              {step === steps.length - 1 ? f.toPreview : f.next}
+            </button>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {mode === "draft" ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void saveDraft()}
+                    disabled={saving === "saving"}
+                    className={cn(TEXT_LINK, "text-fg")}
+                  >
+                    {f.saveDraft}
+                  </button>
+                  <p role="status" className="flex items-center gap-1 text-sm text-fg-muted">
+                    {saving === "saved" && (
+                      <>
+                        <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
+                        {f.saved}
+                      </>
+                    )}
+                  </p>
+                </div>
+              ) : (
+                <Link href={`/expenses/${info.id}`} className={cn(TEXT_LINK, "text-fg")}>
+                  {f.cancelEdit}
+                </Link>
+              )}
+              {mode === "draft" && <DeleteDraft id={info.id} version={version} />}
+            </div>
+            <FormMessage state={state} />
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-// ---------------------------------------------------------------- layout
+// ---------------------------------------------------------------- budget
 
-/** One item or receipt line: a tinted card with its number. */
-const ROW = "rounded-[14px] border border-border bg-surface-2/60 p-4";
-
-function RowNumber({ n, label }: { n: number; label: string }) {
-  return (
-    <p className="flex items-center gap-2 text-sm font-semibold" aria-hidden="true">
-      <span className="inline-flex size-6 items-center justify-center rounded-full bg-area-expenses-soft text-xs text-area-expenses">
-        {n}
-      </span>
-      {label}
-    </p>
-  );
-}
-
-/** A numbered card for one part of the form, its colour and icon telling it apart. */
-function FormSection({
-  step,
-  icon,
-  tone,
-  title,
-  intro,
-  children,
+/** The budget as one pill, "Media Team · $29,392.66 left"; it opens to the figures. */
+function BudgetPill({
+  department,
+  figures,
+  after,
 }: {
-  step: number;
-  icon: LucideIcon;
-  tone: Tone;
-  title: string;
-  intro?: string;
-  children: React.ReactNode;
+  department: string;
+  figures: BudgetFigures;
+  after: number | null;
 }) {
-  const id = useId();
+  const over = after !== null && after < 0;
+  const rows: [string, number][] = [
+    [b.available, figures.available],
+    [b.committed, figures.committed],
+    [b.pending, figures.pending],
+    [b.spent, figures.spent],
+    [b.remaining, figures.remaining],
+  ];
   return (
-    <section aria-labelledby={id} className={cn(cardClass, "space-y-5")}>
-      <div className="flex items-start gap-3">
-        <IconChip icon={icon} tone={tone} />
-        <div className="min-w-0 space-y-0.5">
-          <p className={cn("text-xs font-semibold tracking-wide uppercase", TONE[tone].text)}>
-            {sections.step(step)}
-          </p>
-          <h3 id={id} className="text-[17px] leading-tight font-semibold tracking-tight">
-            {title}
-          </h3>
-          {intro && <p className="text-sm text-fg-muted">{intro}</p>}
-        </div>
-      </div>
-      {children}
-    </section>
+    <details className="group min-w-0 flex-1 text-right">
+      <summary className="ml-auto inline-flex min-h-11 max-w-full cursor-pointer list-none items-center gap-1.5 rounded-full bg-surface-2 px-4 text-[13px] font-semibold [&::-webkit-details-marker]:hidden">
+        <span className="truncate">
+          {over
+            ? f.budgetOver(department, formatCAD(-after))
+            : f.budgetLeft(department, formatCAD(after ?? figures.remaining))}
+        </span>
+        <ChevronDown
+          className="size-4 shrink-0 transition-transform duration-fast group-open:rotate-180 motion-reduce:transition-none"
+          aria-hidden="true"
+        />
+      </summary>
+      <dl className="mt-3 rounded-[12px] bg-surface-2 px-4 py-1 text-left text-sm">
+        {rows.map(([label, cents]) => (
+          <div key={label} className="flex justify-between gap-4 border-b border-border py-2.5">
+            <dt className="text-fg-muted">{label}</dt>
+            <dd className="tabular font-bold">{formatCAD(cents)}</dd>
+          </div>
+        ))}
+        {after !== null && (
+          <div className="flex justify-between gap-4 py-2.5">
+            <dt className="text-fg-muted">{b.remainingAfter}</dt>
+            <dd className={cn("tabular font-bold", over && "text-danger")}>
+              {over ? b.overBy(formatCAD(-after)) : formatCAD(after)}
+            </dd>
+          </div>
+        )}
+      </dl>
+    </details>
   );
 }
 
@@ -526,13 +676,53 @@ function describedBy(...ids: (string | false | undefined)[]) {
   return ids.filter(Boolean).join(" ") || undefined;
 }
 
+/**
+ * Sales tax for the whole purchase request: on by default; off for an honorarium, money
+ * sent to a person, or anything sold without tax (decided 2026-11-07). Not per item.
+ */
+function SalesTaxSwitch({ form, on, rate }: FormProps & { on: boolean; rate: string }) {
+  const id = useId();
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-[12px] bg-surface-2 p-4">
+      <div className="min-w-0 space-y-0.5">
+        <p id={`${id}-label`} className="text-base font-bold">
+          {f.salesTax(`${taxRateToPercent(rate)}%`)}
+        </p>
+        <p id={`${id}-hint`} className="text-[13px] text-fg-muted">
+          {on ? f.salesTaxOnHint : f.salesTaxOffHint}
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-labelledby={`${id}-label`}
+        aria-describedby={`${id}-hint`}
+        onClick={() => form.setValue("addsSalesTax", !on, { shouldDirty: true })}
+        className={cn(
+          "relative h-8 w-[52px] shrink-0 cursor-pointer rounded-full transition-colors duration-fast motion-reduce:transition-none",
+          on ? "bg-accent" : "bg-border-strong",
+        )}
+      >
+        <span
+          aria-hidden="true"
+          className={cn(
+            "absolute top-[3px] left-[3px] size-[26px] rounded-full bg-white transition-transform duration-fast motion-reduce:transition-none",
+            on && "translate-x-5",
+          )}
+        />
+      </button>
+    </div>
+  );
+}
+
 function DetailsFields({ form, values }: FormProps & { values: ExpenseFormValues }) {
   const ids = useId();
   const errors = form.formState.errors;
   return (
     <div className="space-y-5">
-      <div className="space-y-1.5">
-        <label htmlFor={`${ids}-title`} className="block text-sm font-medium">
+      <div className="space-y-2">
+        <label htmlFor={`${ids}-title`} className={LABEL}>
           {f.title}
         </label>
         <input
@@ -541,15 +731,15 @@ function DetailsFields({ form, values }: FormProps & { values: ExpenseFormValues
           maxLength={LIMITS.title}
           aria-invalid={errors.title ? true : undefined}
           aria-describedby={describedBy(`${ids}-title-hint`, errors.title && `${ids}-title-error`)}
-          className={inputClass}
+          className={FIELD}
         />
-        <p id={`${ids}-title-hint`} className="text-xs text-fg-muted">
+        <p id={`${ids}-title-hint`} className="text-[13px] text-fg-muted">
           {f.titleHint}
         </p>
         <FieldError id={`${ids}-title-error`} message={errors.title?.message} />
       </div>
-      <div className="space-y-1.5">
-        <label htmlFor={`${ids}-just`} className="block text-sm font-medium">
+      <div className="space-y-2">
+        <label htmlFor={`${ids}-just`} className={LABEL}>
           {f.justification}
         </label>
         <textarea
@@ -562,9 +752,9 @@ function DetailsFields({ form, values }: FormProps & { values: ExpenseFormValues
             `${ids}-just-hint`,
             errors.justification && `${ids}-just-error`,
           )}
-          className={textareaClass}
+          className={FIELD_AREA}
         />
-        <div className="flex flex-wrap justify-between gap-2 text-xs text-fg-muted">
+        <div className="flex flex-wrap justify-between gap-2 text-[13px] text-fg-muted">
           <p id={`${ids}-just-hint`}>{f.justificationHint}</p>
           <p className="tabular">
             {f.characters(values.justification?.length ?? 0, LIMITS.justification)}
@@ -576,24 +766,24 @@ function DetailsFields({ form, values }: FormProps & { values: ExpenseFormValues
   );
 }
 
-/** One labelled input inside a row; errors come from the form state. */
+/** A compact, labelled-by-name input inside an item or receipt row. */
 function RowInput({
   form,
   name,
   label,
   type = "text",
   inputMode,
-  prefix,
+  placeholder,
   className,
-  optional,
+  strong,
 }: FormProps & {
   name: `items.${number}.${keyof ItemValues}` | `lines.${number}.${keyof LineValues}`;
   label: string;
   type?: string;
   inputMode?: "decimal" | "numeric" | "url";
-  prefix?: string;
+  placeholder?: string;
   className?: string;
-  optional?: boolean;
+  strong?: boolean;
 }) {
   const id = useId();
   const [group, index, field] = name.split(".");
@@ -602,36 +792,59 @@ function RowInput({
   const error = rowErrors?.[index]?.[field]?.message;
   return (
     <div className={cn("min-w-0 space-y-1", className)}>
-      <label htmlFor={id} className="block text-xs font-medium text-fg-muted">
-        {label}
-        {optional && ` ${f.optional}`}
-      </label>
-      <div className="relative">
-        {prefix && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-fg-muted"
-          >
-            {prefix}
-          </span>
-        )}
-        <input
-          id={id}
-          type={type}
-          inputMode={inputMode}
-          autoComplete="off"
-          {...form.register(name)}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? `${id}-error` : undefined}
-          className={cn(
-            inputClass,
-            prefix && "pl-6",
-            inputMode === "decimal" && "tabular text-right",
-          )}
-        />
-      </div>
+      <input
+        id={id}
+        type={type}
+        inputMode={inputMode}
+        autoComplete="off"
+        aria-label={label}
+        placeholder={placeholder ?? label}
+        {...form.register(name)}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className={cn(FIELD, strong && "font-semibold", inputMode === "decimal" && "tabular")}
+      />
       <FieldError id={`${id}-error`} message={error} />
     </div>
+  );
+}
+
+function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-fg-muted hover:bg-surface-2 hover:text-danger"
+    >
+      <Trash2 className="size-[18px]" aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+    </button>
+  );
+}
+
+function MoreToggle({
+  open,
+  onToggle,
+  more,
+  less,
+  controls,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  more: string;
+  less: string;
+  controls: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-controls={controls}
+      onClick={onToggle}
+      className="min-h-9 cursor-pointer self-start text-sm font-semibold text-accent underline underline-offset-2"
+    >
+      {open ? less : more}
+    </button>
   );
 }
 
@@ -641,68 +854,77 @@ function ItemsFields({
   info,
 }: FormProps & { values: ExpenseFormValues; info: ExpenseEditorInfo }) {
   const items = useFieldArray({ control: form.control, name: "items" });
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const ids = useId();
   const listError =
     form.formState.errors.items?.message ?? form.formState.errors.items?.root?.message;
   return (
-    <div className="space-y-3">
+    <div>
       {listError && (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="pb-2 text-sm text-danger">
           {listError}
         </p>
       )}
-      <ol className="space-y-3">
+      <ol className="border-t border-border">
         {items.fields.map((field, i) => {
           const v = values.items?.[i] ?? BLANK_ITEM;
           const total = itemTotalOf(v.quantity ?? "", v.unitPrice ?? "");
+          // Details already typed stay open.
+          const isOpen = open[field.id] ?? Boolean(v.link || v.annualLineItemId);
+          const panel = `${ids}-more-${i}`;
           return (
-            <li key={field.id} className={ROW}>
-              <fieldset className="min-w-0 space-y-3">
+            <li key={field.id} className="border-b border-border py-3.5">
+              <fieldset className="flex min-w-0 flex-col gap-2.5">
                 <legend className="sr-only">{f.item(i + 1)}</legend>
-                <RowNumber n={i + 1} label={f.item(i + 1)} />
-                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_5rem_9rem]">
-                  <RowInput form={form} name={`items.${i}.name`} label={f.itemName} />
+                <div className="flex items-start gap-2">
+                  <RowInput
+                    form={form}
+                    name={`items.${i}.name`}
+                    label={f.itemName}
+                    className="flex-1"
+                    strong
+                  />
+                  <RemoveButton label={f.removeItem(i + 1)} onClick={() => items.remove(i)} />
+                </div>
+                <div className="flex items-start gap-2.5">
                   <RowInput
                     form={form}
                     name={`items.${i}.quantity`}
                     label={f.quantity}
                     inputMode="numeric"
+                    placeholder="1"
+                    className="w-[4.5rem] shrink-0"
                   />
+                  <span className="pt-3.5 text-fg-muted" aria-hidden="true">
+                    ×
+                  </span>
                   <RowInput
                     form={form}
                     name={`items.${i}.unitPrice`}
                     label={f.unitPrice}
                     inputMode="decimal"
-                    prefix="$"
+                    placeholder={f.pricePlaceholder}
+                    className="flex-1"
                   />
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <RowInput
-                    form={form}
-                    name={`items.${i}.link`}
-                    label={f.link}
-                    type="url"
-                    inputMode="url"
-                    optional
-                  />
-                  {info.annualLines.length > 0 && (
-                    <AnnualLineSelect form={form} index={i} options={info.annualLines} />
-                  )}
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm">
-                    <span className="text-fg-muted">{f.lineTotal}: </span>
-                    <span className="tabular font-semibold">
-                      {total === null ? "—" : formatCAD(total)}
-                    </span>
+                  <p className="tabular min-w-[5.5rem] pt-3.5 text-right text-base font-bold">
+                    <span className="sr-only">{f.lineTotal}: </span>
+                    {total === null ? "—" : formatCAD(total)}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => items.remove(i)}
-                    className={buttonClass("ghost", "px-2 text-danger")}
-                  >
-                    <Trash2 className="size-4" aria-hidden="true" />
-                    <span className="sr-only">{f.removeItem(i + 1)}</span>
-                  </button>
+                </div>
+                <MoreToggle
+                  open={isOpen}
+                  onToggle={() => setOpen({ ...open, [field.id]: !isOpen })}
+                  more={f.moreItem}
+                  less={f.lessItem}
+                  controls={panel}
+                />
+                <div id={panel} hidden={!isOpen} className="space-y-2.5">
+                  <ItemDetail
+                    form={form}
+                    index={i}
+                    options={info.annualLines}
+                    linkLabel={`${f.link} ${f.optional}`}
+                  />
                 </div>
               </fieldset>
             </li>
@@ -717,150 +939,180 @@ function ItemsFields({
             focusName: `items.${items.fields.length}.name`,
           })
         }
-        className={buttonClass("secondary")}
+        className={cn(TEXT_LINK, "mt-2 text-fg")}
       >
         <Plus className="size-4" aria-hidden="true" />
-        {f.addItem}
+        {f.addAnotherItem}
       </button>
     </div>
   );
 }
 
-function AnnualLineSelect({
+function ItemDetail({
   form,
   index,
   options,
-}: FormProps & { index: number; options: AnnualLineOption[] }) {
+  linkLabel,
+}: FormProps & { index: number; options: AnnualLineOption[]; linkLabel: string }) {
   const id = useId();
+  const error = (
+    form.formState.errors.items as Record<string, Record<string, { message?: string }>> | undefined
+  )?.[index]?.link?.message;
   return (
-    <div className="min-w-0 space-y-1">
-      <label htmlFor={id} className="block text-xs font-medium text-fg-muted">
-        {f.annualLine} {f.optional}
-      </label>
-      <select id={id} {...form.register(`items.${index}.annualLineItemId`)} className={inputClass}>
-        <option value="">{f.annualLineNone}</option>
-        {options.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.name}
-          </option>
-        ))}
-      </select>
-    </div>
+    <>
+      <div className="space-y-1.5">
+        <label htmlFor={`${id}-link`} className="block text-[13px] font-semibold">
+          {linkLabel}
+        </label>
+        <input
+          id={`${id}-link`}
+          type="url"
+          inputMode="url"
+          autoComplete="off"
+          {...form.register(`items.${index}.link`)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-link-error` : undefined}
+          className={FIELD}
+        />
+        <FieldError id={`${id}-link-error`} message={error} />
+      </div>
+      {options.length > 0 && (
+        <div className="space-y-1.5">
+          <label htmlFor={`${id}-annual`} className="block text-[13px] font-semibold">
+            {f.annualLine} {f.optional}
+          </label>
+          <select
+            id={`${id}-annual`}
+            {...form.register(`items.${index}.annualLineItemId`)}
+            className={FIELD}
+          >
+            <option value="">{f.annualLineNone}</option>
+            {options.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+    </>
   );
 }
 
-function RadioCards({
+/** Big tappable choices, one per line, each with a short hint (design H). */
+function ChoiceList({
   form,
   name,
   legend,
   options,
-  hideLegend = false,
 }: FormProps & {
-  name: "howBought" | "payeeKind" | "paymentPreference";
+  name: "howBought" | "payeeKind";
   legend: string;
-  options: readonly { value: string; label: string }[];
-  /** The section card already says it, so the legend is for screen readers only. */
-  hideLegend?: boolean;
+  options: readonly { value: string; label: string; hint: string }[];
 }) {
   const ids = useId();
   const error = form.formState.errors[name]?.message;
   return (
-    <fieldset className="space-y-2" aria-describedby={error ? `${ids}-error` : undefined}>
-      <legend className={hideLegend ? "sr-only" : "text-sm font-medium"}>{legend}</legend>
-      <div className="grid gap-2 sm:grid-cols-3">
-        {options.map((o) => (
-          <label
-            key={o.value}
-            className="flex min-h-12 cursor-pointer items-center gap-3 rounded-[12px] border border-border-strong bg-surface px-3 py-2.5 text-sm transition-colors duration-fast hover:border-accent hover:bg-surface-hover has-checked:border-accent has-checked:bg-accent/5 has-checked:font-medium has-checked:ring-1 has-checked:ring-accent"
-          >
-            <input
-              type="radio"
-              value={o.value}
-              {...form.register(name)}
-              className="size-6 shrink-0 accent-accent"
-            />
-            {o.label}
-          </label>
-        ))}
-      </div>
+    <fieldset className="space-y-2.5" aria-describedby={error ? `${ids}-error` : undefined}>
+      {/* The screen's heading asks the question; the legend is for screen readers. */}
+      <legend className="sr-only">{legend}</legend>
+      {options.map((o) => (
+        <label
+          key={o.value}
+          className="flex min-h-16 cursor-pointer items-center justify-between gap-3 rounded-[12px] border border-border-strong bg-surface px-4 py-3 transition-colors duration-fast hover:border-accent has-checked:border-2 has-checked:border-accent has-checked:bg-accent/5"
+        >
+          <span className="min-w-0">
+            <span className="block text-base font-bold">{o.label}</span>
+            <span className="block text-[13px] text-fg-muted">{o.hint}</span>
+          </span>
+          <input
+            type="radio"
+            value={o.value}
+            {...form.register(name)}
+            className="size-6 shrink-0 accent-accent"
+          />
+        </label>
+      ))}
       <FieldError id={`${ids}-error`} message={error} />
     </fieldset>
   );
 }
 
-function HowBoughtField({ form }: FormProps) {
-  return (
-    <RadioCards
-      form={form}
-      name="howBought"
-      legend={f.howBought}
-      hideLegend
-      options={HOW_BOUGHT.map((v) => ({ value: v, label: expensesCopy.howBought[v] }))}
-    />
-  );
-}
-
 function LinesFields({ form }: FormProps) {
   const lines = useFieldArray({ control: form.control, name: "lines" });
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const ids = useId();
+  const values = useWatch({ control: form.control, name: "lines" });
   const listError =
     form.formState.errors.lines?.message ?? form.formState.errors.lines?.root?.message;
   return (
-    <div className="space-y-3">
+    <div>
       {listError && (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="pb-2 text-sm text-danger">
           {listError}
         </p>
       )}
-      <ol className="space-y-3">
-        {lines.fields.map((field, i) => (
-          <li key={field.id} className={ROW}>
-            <fieldset className="min-w-0 space-y-3">
-              <legend className="sr-only">{f.line(i + 1)}</legend>
-              <RowNumber n={i + 1} label={f.line(i + 1)} />
-              <div className="grid gap-3 sm:grid-cols-[10rem_minmax(0,1fr)_9rem]">
-                <RowInput form={form} name={`lines.${i}.date`} label={f.date} type="date" />
-                <RowInput form={form} name={`lines.${i}.vendor`} label={f.vendor} />
-                <RowInput
-                  form={form}
-                  name={`lines.${i}.amount`}
-                  label={f.amount}
-                  inputMode="decimal"
-                  prefix="$"
-                />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:items-end">
+      <ol className="border-t border-border">
+        {lines.fields.map((field, i) => {
+          const isOpen = open[field.id] ?? Boolean(values?.[i]?.receiptNumber);
+          const panel = `${ids}-more-${i}`;
+          return (
+            <li key={field.id} className="border-b border-border py-3.5">
+              <fieldset className="flex min-w-0 flex-col gap-2.5">
+                <legend className="sr-only">{f.line(i + 1)}</legend>
+                <div className="flex items-start gap-2">
+                  <RowInput
+                    form={form}
+                    name={`lines.${i}.vendor`}
+                    label={f.vendor}
+                    className="flex-1"
+                    strong
+                  />
+                  <RemoveButton label={f.removeLine(i + 1)} onClick={() => lines.remove(i)} />
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <RowInput form={form} name={`lines.${i}.date`} label={f.date} type="date" />
+                  <RowInput
+                    form={form}
+                    name={`lines.${i}.amount`}
+                    label={f.amount}
+                    inputMode="decimal"
+                    placeholder={f.amountPlaceholder}
+                    strong
+                  />
+                </div>
                 <RowInput form={form} name={`lines.${i}.description`} label={f.description} />
-                <RowInput
-                  form={form}
-                  name={`lines.${i}.receiptNumber`}
-                  label={f.receiptNumber}
-                  optional
+                <MoreToggle
+                  open={isOpen}
+                  onToggle={() => setOpen({ ...open, [field.id]: !isOpen })}
+                  more={f.moreLine}
+                  less={f.lessLine}
+                  controls={panel}
                 />
-                <button
-                  type="button"
-                  onClick={() => lines.remove(i)}
-                  className={buttonClass("ghost", "px-2 text-danger")}
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                  <span className="sr-only">{f.removeLine(i + 1)}</span>
-                </button>
-              </div>
-            </fieldset>
-          </li>
-        ))}
+                <div id={panel} hidden={!isOpen}>
+                  <RowInput
+                    form={form}
+                    name={`lines.${i}.receiptNumber`}
+                    label={`${f.receiptNumber} ${f.optional}`}
+                  />
+                </div>
+              </fieldset>
+            </li>
+          );
+        })}
       </ol>
       <button
         type="button"
         onClick={() =>
           lines.append(BLANK_LINE, {
             shouldFocus: true,
-            focusName: `lines.${lines.fields.length}.date`,
+            focusName: `lines.${lines.fields.length}.vendor`,
           })
         }
-        className={buttonClass("secondary")}
+        className={cn(TEXT_LINK, "mt-2 text-fg")}
       >
         <Plus className="size-4" aria-hidden="true" />
-        {f.addLine}
+        {f.addAnotherLine}
       </button>
     </div>
   );
@@ -871,8 +1123,8 @@ function LinkedField({ form, linkable }: FormProps & { linkable: LinkableRequest
   const error = form.formState.errors.linkedPurchaseRequestId?.message;
   if (linkable.length === 0) return null;
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium">
+    <div className="space-y-2">
+      <label htmlFor={id} className={LABEL}>
         {f.linked} {f.optional}
       </label>
       <select
@@ -880,7 +1132,7 @@ function LinkedField({ form, linkable }: FormProps & { linkable: LinkableRequest
         {...form.register("linkedPurchaseRequestId")}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(`${id}-hint`, error && `${id}-error`)}
-        className={inputClass}
+        className={FIELD}
       >
         <option value="">{f.linkedNone}</option>
         {linkable.map((l) => (
@@ -889,7 +1141,7 @@ function LinkedField({ form, linkable }: FormProps & { linkable: LinkableRequest
           </option>
         ))}
       </select>
-      <p id={`${id}-hint`} className="text-xs text-fg-muted">
+      <p id={`${id}-hint`} className="text-[13px] text-fg-muted">
         {f.linkedHint}
       </p>
       <FieldError id={`${id}-error`} message={error} />
@@ -912,8 +1164,8 @@ function TextInput({
   const id = useId();
   const error = form.formState.errors[name]?.message;
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium">
+    <div className="space-y-2">
+      <label htmlFor={id} className={LABEL}>
         {label}
       </label>
       <input
@@ -922,10 +1174,10 @@ function TextInput({
         {...form.register(name)}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(hint && `${id}-hint`, error && `${id}-error`)}
-        className={inputClass}
+        className={FIELD}
       />
       {hint && (
-        <p id={`${id}-hint`} className="text-xs text-fg-muted">
+        <p id={`${id}-hint`} className="text-[13px] text-fg-muted">
           {hint}
         </p>
       )}
@@ -937,15 +1189,19 @@ function TextInput({
 function PayeeFields({ form, values }: FormProps & { values: ExpenseFormValues }) {
   const owed = values.payeeKind === "self" || values.payeeKind === "other";
   return (
-    <section className="space-y-4">
-      <RadioCards
+    <div className="space-y-4">
+      <ChoiceList
         form={form}
         name="payeeKind"
         legend={f.payee}
-        options={PAYEE_KINDS.map((v) => ({ value: v, label: expensesCopy.payee[v] }))}
+        options={PAYEE_KINDS.map((v) => ({
+          value: v,
+          label: expensesCopy.payee[v],
+          hint: f.payeeHints[v],
+        }))}
       />
       {values.payeeKind === "other" && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-4">
           <TextInput form={form} name="payeeName" label={f.payeeName} />
           <TextInput
             form={form}
@@ -958,22 +1214,15 @@ function PayeeFields({ form, values }: FormProps & { values: ExpenseFormValues }
       )}
       {owed && (
         <>
-          <RadioCards
-            form={form}
-            name="paymentPreference"
-            legend={f.paymentPreference}
-            options={PAYMENT_PREFERENCES.map((v) => ({
-              value: v,
-              label: expensesCopy.paymentPreference[v],
-            }))}
-          />
-          {values.payeeKind === "self" && values.paymentPreference === "e_transfer" && (
-            <TextInput form={form} name="payeeEmail" label={f.eTransferEmail} type="email" />
-          )}
-          <p className="text-xs text-fg-muted">{f.noBankDetails}</p>
+          {/* The church pays claims by cheque (decided 2026-11-07): nothing to choose. */}
+          <p className="flex items-center gap-3 rounded-[12px] bg-surface-2 p-4 text-[15px]">
+            <Wallet className="size-5 shrink-0 text-accent" aria-hidden="true" />
+            {f.paidByCheque}
+          </p>
+          <p className="text-[13px] text-fg-muted">{f.noBankDetails}</p>
         </>
       )}
-    </section>
+    </div>
   );
 }
 
@@ -988,14 +1237,14 @@ function NoReceiptFields({ form, values }: FormProps & { values: ExpenseFormValu
           {receiptsError}
         </p>
       )}
-      <div className="flex items-start gap-3">
+      <div className="flex min-h-11 items-center gap-3">
         <input
           id={id}
           type="checkbox"
           {...form.register("noReceipt")}
           className="size-6 shrink-0 accent-accent"
         />
-        <label htmlFor={id} className="text-sm">
+        <label htmlFor={id} className="text-base">
           {expensesCopy.receipts.noReceipt}
         </label>
       </div>
@@ -1023,14 +1272,14 @@ function Explanation({
   const id = useId();
   const error = form.formState.errors[name]?.message;
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {warning && (
         <p className="flex items-start gap-2 text-sm">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
           {warning}
         </p>
       )}
-      <label htmlFor={id} className="block text-sm font-medium">
+      <label htmlFor={id} className={LABEL}>
         {label}
       </label>
       <textarea
@@ -1040,7 +1289,7 @@ function Explanation({
         {...form.register(name)}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={textareaClass}
+        className={FIELD_AREA}
       />
       <FieldError id={`${id}-error`} message={error} />
     </div>
@@ -1059,14 +1308,13 @@ function DeleteDraft({ id, version }: { id: string; version: number }) {
         const data = new FormData(e.currentTarget);
         startTransition(async () => setState(await deleteExpenseDraftAction(state, data)));
       }}
-      className="space-y-3"
     >
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="version" value={version} />
       <ConfirmDialog
         formId={formId}
         trigger={f.deleteDraft}
-        triggerTone="danger"
+        triggerClassName={cn(TEXT_LINK, "cursor-pointer text-danger")}
         title={f.deleteTitle}
         body={f.deleteBody}
         confirmLabel={f.deleteConfirm}
@@ -1077,13 +1325,14 @@ function DeleteDraft({ id, version }: { id: string; version: number }) {
   );
 }
 
-// ---------------------------------------------------------------- preview
+// ---------------------------------------------------------------- check and send
 
-function Preview({
+function Review({
   mode,
   info,
   values,
   totals,
+  after,
   version,
   overBy,
   linked,
@@ -1093,19 +1342,21 @@ function Preview({
   mode: ExpenseEditorMode;
   info: ExpenseEditorInfo;
   values: ExpenseFormValues;
-  totals: { subtotal: number; tax: number; total: number };
+  totals: TaxBreakdown;
+  after: number;
   version: number;
   overBy: number;
   linked: LinkableRequest | null;
   onEdit: () => void;
   onErrors: (errors: Record<string, string>) => void;
 }) {
-  // One key per preview: a double click or a retry sends the same key (FR-10).
+  // One key per review: a double click or a retry sends the same key (FR-10).
   const [key] = useState(() => crypto.randomUUID());
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<ActionState>({ status: "idle" });
   const claim = info.type === "expense_claim";
   const v = expensesCopy.view;
+  const r = f.reviewRows;
 
   const send = () =>
     startTransition(async () => {
@@ -1137,70 +1388,103 @@ function Preview({
       : values.payeeKind === "other"
         ? values.payeeName
         : expensesCopy.payee.church_card;
+  const noTax = !claim && values.addsSalesTax === false;
+
+  const rows: { label: string; value: React.ReactNode; muted?: boolean }[] = [
+    { label: claim ? r.claim : r.request, value: values.title, muted: true },
+    ...(claim
+      ? (values.lines ?? []).map((line) => {
+          const cents = parseCAD(line.amount);
+          return {
+            label: [line.vendor, line.date, line.description].filter(Boolean).join(" · "),
+            value: cents === null ? "—" : formatCAD(cents),
+          };
+        })
+      : (values.items ?? []).map((item) => {
+          const cents = itemTotalOf(item.quantity, item.unitPrice);
+          return {
+            label: `${item.quantity.trim() || "1"} × ${item.name}`,
+            value: cents === null ? "—" : formatCAD(cents),
+          };
+        })),
+    ...(claim
+      ? []
+      : [{ label: salesTaxLabel(info.rate), value: formatCAD(totals.tax), muted: true }]),
+    ...(claim
+      ? [
+          {
+            label: r.paidTo,
+            value: values.payeeKind === "church_card" ? payee : r.byCheque(payee),
+            muted: true,
+          },
+          ...(linked ? [{ label: v.linked, value: linked.reference, muted: true }] : []),
+        ]
+      : values.howBought
+        ? [
+            {
+              label: r.boughtBy,
+              value:
+                expensesCopy.howBought[values.howBought as keyof typeof expensesCopy.howBought],
+              muted: true,
+            },
+          ]
+        : []),
+    { label: r.department, value: `${info.department} · ${info.cycleName}`, muted: true },
+  ];
 
   return (
-    <div className="space-y-6">
-      <p className="text-sm text-fg-muted">{p.intro}</p>
-      <article className="space-y-5 rounded-control border border-border p-5">
-        <h3 className="text-2xl font-semibold">{values.title}</h3>
-        <dl className="grid gap-3 text-sm sm:grid-cols-3">
-          <PreviewItem label={v.type}>{expensesCopy.types[info.type]}</PreviewItem>
-          <PreviewItem label={v.department}>{info.department}</PreviewItem>
-          <PreviewItem label={v.cycle}>{info.cycleName}</PreviewItem>
-          <PreviewItem label={p.requester}>{info.requesterName}</PreviewItem>
-          {claim ? (
-            <>
-              <PreviewItem label={v.payee}>{payee}</PreviewItem>
-              {values.payeeKind !== "church_card" && values.paymentPreference && (
-                <PreviewItem label={v.paymentPreference}>
-                  {
-                    expensesCopy.paymentPreference[
-                      values.paymentPreference as "cheque" | "e_transfer"
-                    ]
-                  }
-                  {values.payeeEmail && ` (${values.payeeEmail})`}
-                </PreviewItem>
-              )}
-              {linked && <PreviewItem label={v.linked}>{linked.reference}</PreviewItem>}
-            </>
-          ) : (
-            values.howBought && (
-              <PreviewItem label={v.howBought}>
-                {expensesCopy.howBought[values.howBought as keyof typeof expensesCopy.howBought]}
-              </PreviewItem>
-            )
+    <div className="space-y-5">
+      <div className="space-y-1">
+        <p className="text-sm text-fg-muted">{claim ? f.totalPaid : f.total}</p>
+        <p className="tabular text-[44px] leading-none font-extrabold tracking-tight">
+          {formatCAD(totals.total)}
+        </p>
+        <p className="text-[15px] text-fg-muted">
+          {b.remainingAfter}:{" "}
+          <span className={cn("font-bold text-fg", after < 0 && "text-danger")}>
+            {after < 0 ? b.overBy(formatCAD(-after)) : formatCAD(after)}
+          </span>
+        </p>
+      </div>
+      {!claim && (
+        <p
+          className={cn(
+            "inline-flex rounded-full px-3 py-1 text-[13px] font-bold",
+            noTax ? "bg-accent/10 text-accent" : TONE.blue.chip,
           )}
-        </dl>
-        <section className="space-y-1">
-          <h4 className="text-sm font-semibold">{f.justification}</h4>
-          <p className="text-sm whitespace-pre-line">{values.justification}</p>
-        </section>
-        <PreviewRows type={info.type} values={values} />
-        {claim ? (
-          <p className="flex justify-between text-sm sm:ml-auto sm:max-w-sm">
-            <span className="font-semibold">{f.totalPaid}</span>
-            <span className="tabular text-xl font-semibold">{formatCAD(totals.total)}</span>
-          </p>
-        ) : (
-          <FinancialSummary totals={totals} rate={info.rate} className="sm:ml-auto sm:max-w-sm" />
-        )}
-        {overBy > 0 && (
-          <OverBudgetWarning
-            department={info.department}
-            overBy={overBy}
-            explanation={values.overBudgetExplanation}
-            explanationLabel={v.overBudget}
-          />
-        )}
-      </article>
+        >
+          {noTax ? f.noSalesTaxTag : `${salesTaxLabel(info.rate)} · ${formatCAD(totals.tax)}`}
+        </p>
+      )}
+      <dl className="border-t border-border">
+        {rows.map((row, i) => (
+          <div key={i} className="flex justify-between gap-4 border-b border-border py-3.5">
+            <dt className={cn("min-w-0", row.muted && "text-fg-muted")}>{row.label}</dt>
+            <dd className="tabular text-right font-semibold">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <section className="space-y-1">
+        <h3 className="text-sm font-semibold">{f.justification}</h3>
+        <p className="text-[15px] whitespace-pre-line text-fg-muted">{values.justification}</p>
+      </section>
+      {overBy > 0 && (
+        <OverBudgetWarning
+          department={info.department}
+          overBy={overBy}
+          explanation={values.overBudgetExplanation}
+          explanationLabel={v.overBudget}
+        />
+      )}
+      <p className="text-[13px] text-fg-muted">{claim ? f.approversNoteClaim : f.approversNote}</p>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button type="button" onClick={onEdit} className={buttonClass("secondary")}>
-          {p.edit}
-        </button>
+      <div className="space-y-2">
         <AlertDialog.Root>
           <AlertDialog.Trigger
-            className={buttonClass("primary")}
+            className={buttonClass(
+              "primary",
+              "min-h-12 w-full rounded-[10px] text-[15px] lg:min-h-12",
+            )}
             disabled={pending}
             aria-busy={pending || undefined}
           >
@@ -1236,120 +1520,11 @@ function Preview({
             </AlertDialog.Content>
           </AlertDialog.Portal>
         </AlertDialog.Root>
+        <button type="button" onClick={onEdit} className={cn(TEXT_LINK, "w-full justify-center")}>
+          {p.edit}
+        </button>
       </div>
       <FormMessage state={state} />
-    </div>
-  );
-}
-
-function PreviewItem({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <dt className="text-fg-muted">{label}</dt>
-      <dd className="font-medium">{children}</dd>
-    </div>
-  );
-}
-
-/** The items or receipt lines as a document table (DRD 6.5 pattern). */
-function PreviewRows({ type, values }: { type: ExpenseType; values: ExpenseFormValues }) {
-  const c = expensesCopy.table;
-  if (type === "purchase_request") {
-    return (
-      <div
-        className="relative -mx-1 overflow-x-auto px-1"
-        tabIndex={0}
-        role="region"
-        aria-label={f.items}
-      >
-        <table className="w-full min-w-[30rem] text-left text-sm">
-          <caption className="sr-only">{f.items}</caption>
-          <thead className="border-b border-border text-xs text-fg-muted">
-            <tr>
-              <th scope="col" className="py-2 pr-4 font-medium">
-                {c.item}
-              </th>
-              <th scope="col" className="py-2 pr-4 text-right font-medium">
-                {c.qty}
-              </th>
-              <th scope="col" className="py-2 pr-4 text-right font-medium">
-                {c.price}
-              </th>
-              <th scope="col" className="py-2 text-right font-medium">
-                {c.total}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {(values.items ?? []).map((item, i) => {
-              const total = itemTotalOf(item.quantity, item.unitPrice);
-              const price = itemTotalOf("1", item.unitPrice);
-              return (
-                <tr key={i}>
-                  <td className="py-2 pr-4 font-medium">{item.name}</td>
-                  <td className="tabular py-2 pr-4 text-right">{item.quantity.trim() || "1"}</td>
-                  <td className="tabular py-2 pr-4 text-right">
-                    {price === null ? "—" : formatCAD(price)}
-                  </td>
-                  <td className="tabular py-2 text-right">
-                    {total === null ? "—" : formatCAD(total)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-  return (
-    <div
-      className="relative -mx-1 overflow-x-auto px-1"
-      tabIndex={0}
-      role="region"
-      aria-label={f.lines}
-    >
-      <table className="w-full min-w-[30rem] text-left text-sm">
-        <caption className="sr-only">{f.lines}</caption>
-        <thead className="border-b border-border text-xs text-fg-muted">
-          <tr>
-            <th scope="col" className="py-2 pr-4 font-medium">
-              {c.date}
-            </th>
-            <th scope="col" className="py-2 pr-4 font-medium">
-              {c.vendor}
-            </th>
-            <th scope="col" className="py-2 pr-4 font-medium">
-              {c.description}
-            </th>
-            <th scope="col" className="py-2 text-right font-medium">
-              {c.amount}
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {(values.lines ?? []).map((line, i) => {
-            const cents = parseCAD(line.amount);
-            return (
-              <tr key={i}>
-                <td className="tabular py-2 pr-4">{line.date}</td>
-                <td className="py-2 pr-4">{line.vendor}</td>
-                <td className="py-2 pr-4">
-                  {line.description}
-                  {line.receiptNumber && (
-                    <span className="block text-xs text-fg-muted">
-                      {c.receiptNumber}: {line.receiptNumber}
-                    </span>
-                  )}
-                </td>
-                <td className="tabular py-2 text-right">
-                  {cents === null ? "—" : formatCAD(cents)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
     </div>
   );
 }

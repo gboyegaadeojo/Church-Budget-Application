@@ -14,6 +14,13 @@
 export type TaxRate = string;
 
 export const DEFAULT_TAX_RATE: TaxRate = "0.1200";
+/** The rate snapshotted when a purchase request is marked "no sales tax" (2026-11-07). */
+export const NO_TAX_RATE: TaxRate = "0.0000";
+
+/** True for a 0% rate: summaries then say "Sales tax (none)" rather than "(0%)". */
+export function isZeroTaxRate(rate: TaxRate): boolean {
+  return parseTaxRate(rate) === 0n;
+}
 
 /** Largest quantity and unit price a line accepts (Requirements 11, rule 26). */
 export const MAX_QUANTITY = 10_000;

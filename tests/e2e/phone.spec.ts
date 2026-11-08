@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { startExpense } from "./expense-helpers";
+import { fillDetails, next, startExpense } from "./expense-helpers";
 import { expectNoHorizontalScroll, PEOPLE, signInAs } from "./helpers";
 
 /*
@@ -121,6 +121,16 @@ test.describe("Phone check (Stage 5)", () => {
   test("a receipt can come straight from the camera", async ({ page }) => {
     await signInAs(page, PEOPLE.sam);
     await startExpense(page, "Expense claim");
+    // Receipts are step 4 of the one-question-per-screen form (design H, 2026-11-07).
+    await fillDetails(page, "Batteries");
+    await next(page);
+    const line = page.getByRole("group", { name: "Receipt line 1" });
+    await line.getByLabel("Date").fill("2026-10-05");
+    await line.getByLabel("Vendor").fill("Costco");
+    await line.getByLabel("Description").fill("AA batteries");
+    await line.getByLabel("Amount paid (incl. tax)").fill("22.40");
+    await next(page);
+    await next(page);
     const camera = page.locator('input[type=file][capture="environment"]');
     await expect(camera).toHaveAttribute("accept", "image/*");
     await expect(page.getByText("Take photo").first()).toBeVisible();

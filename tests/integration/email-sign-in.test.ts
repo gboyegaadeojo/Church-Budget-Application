@@ -75,7 +75,7 @@ describe("Sign-in with an emailed code (FR-01b)", () => {
 
     const [email] = await codeEmails(admin.email);
     expect(email).toMatchObject({ sensitive: true, audience: "person", toUserId: admin.id });
-    expect(email.expiresAt).toEqual(at(10));
+    expect(email.expiresAt).toEqual(at(15));
     expect(email.subject).not.toContain("123456");
     expect(email.textBody).toContain("123456");
     // Only a keyed hash is stored with the code.
@@ -199,17 +199,19 @@ describe("Sign-in with an emailed code (FR-01b)", () => {
     });
   });
 
-  it("a code runs out after 10 minutes, and a new code replaces the old", async () => {
+  it("a code runs out after 15 minutes, and a new code replaces the old", async () => {
+    // 15 minutes since 2026-11-07, so a slow mail provider still delivers in time.
+    expect(CODE_LIFETIME_MS).toBe(15 * 60_000);
     const admin = await account(["church_admin"]);
     await request(admin.email);
     expect(await check(admin.email, "123456", new Date(NOW.getTime() + CODE_LIFETIME_MS))).toEqual({
       ok: false,
       reason: "expired",
     });
-    await request(admin.email, at(11), { generateCode: () => "111111" });
-    await request(admin.email, at(12), { generateCode: () => "222222" });
-    expect(await check(admin.email, "111111", at(13))).toMatchObject({ reason: "wrong" });
-    expect(await check(admin.email, "222222", at(13))).toMatchObject({ ok: true });
+    await request(admin.email, at(16), { generateCode: () => "111111" });
+    await request(admin.email, at(17), { generateCode: () => "222222" });
+    expect(await check(admin.email, "111111", at(18))).toMatchObject({ reason: "wrong" });
+    expect(await check(admin.email, "222222", at(18))).toMatchObject({ ok: true });
   });
 
   it("does nothing when email sign-in is turned off", async () => {
@@ -245,7 +247,7 @@ describe("Sign-in with an emailed code (FR-01b)", () => {
     await request(admin.email);
     const [queued] = await codeEmails(admin.email);
     const sender = new FakeEmailSender();
-    await deliverOutbox(db, sender, { now: at(11), ids: [queued.id] });
+    await deliverOutbox(db, sender, { now: at(16), ids: [queued.id] });
     expect(sender.sent).toHaveLength(0);
     const [row] = await codeEmails(admin.email);
     expect(row).toMatchObject({ status: "failed", textBody: CLEARED_BODY, htmlBody: CLEARED_BODY });

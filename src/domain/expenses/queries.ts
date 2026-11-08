@@ -24,7 +24,7 @@ import {
   type BudgetImpact,
 } from "./budget";
 import { listFilterConditions, type ExpenseListFilters } from "./list-filters";
-import { expenseTotals, type ExpenseContent } from "./schema";
+import { expenseTotals, rateFor, type ExpenseContent } from "./schema";
 import { authzContextOf, contentOf, currentRate, loadExpense, type ExpenseRow } from "./service";
 import {
   COMMITTED_STATUSES,
@@ -172,7 +172,10 @@ export type ExpenseView = {
   approvedAt: Date | null;
   closedAt: Date | null;
   updatedAt: Date;
+  /** The rate the totals use: 0% for a purchase request marked "no sales tax". */
   rate: string;
+  /** For the editor: the rate to add if the requester turns sales tax on. */
+  taxedRate: string;
   totals: TaxBreakdown;
   approved: TaxBreakdown | null;
   approvalNote: string | null;
@@ -234,7 +237,8 @@ export async function getExpenseView(
     .from(users)
     .where(eq(users.id, row.requesterUserId));
   const content = await contentOf(tx, row);
-  const rate = row.taxRate ?? (await currentRate(tx));
+  const taxedRate = row.addsSalesTax && row.taxRate !== null ? row.taxRate : await currentRate(tx);
+  const rate = row.taxRate ?? rateFor(row.type, row.addsSalesTax, taxedRate);
   const totals =
     row.totalCents !== null
       ? { subtotal: row.subtotalCents!, tax: row.taxCents!, total: row.totalCents }
@@ -277,6 +281,7 @@ export async function getExpenseView(
     closedAt: row.closedAt,
     updatedAt: row.updatedAt,
     rate,
+    taxedRate,
     totals,
     approved:
       row.approvedTotalCents !== null

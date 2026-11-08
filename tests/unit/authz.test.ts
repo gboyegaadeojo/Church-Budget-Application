@@ -188,12 +188,7 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     YOUTH,
     ["no", "no", "no", "act", "act", "no", "no"],
   ],
-  [
-    "record an expense payment",
-    "expense.pay",
-    YOUTH,
-    ["no", "act", "act", "no", "no", "act", "no"],
-  ],
+  ["record an expense payment", "expense.pay", YOUTH, ["no", "no", "no", "no", "no", "act", "no"]],
   [
     "record a verbal approval for an approver (2026-10-24)",
     "expense.record_verbal_approval",
@@ -234,7 +229,7 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     "open the Ready to process queue",
     "expense.process_queue",
     {},
-    ["no", "act", "act", "no", "no", "act", "read"],
+    ["no", "read", "read", "no", "no", "act", "read"],
   ],
   [
     "cancel another department's approved purchase request",

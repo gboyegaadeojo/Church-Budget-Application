@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
+import { compactButtonClass } from "@/components/ui/styles";
 import { expensesCopy } from "@/copy/expenses";
 import { startProcessingAction } from "./actions";
 
@@ -19,12 +20,15 @@ export function StartProcessing({
   return (
     <ActionForm
       action={startProcessingAction}
+      className="space-y-1"
       aria-label={`${expensesCopy.payment.start}: ${reference}`}
     >
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="version" value={version} />
       <input type="hidden" name="idempotencyKey" value={key} />
-      <SubmitButton tone="secondary">{expensesCopy.payment.start}</SubmitButton>
+      <SubmitButton tone="secondary" className={`${compactButtonClass} w-full`}>
+        {expensesCopy.payment.start}
+      </SubmitButton>
     </ActionForm>
   );
 }
