@@ -262,7 +262,8 @@ function PersonRow({ person: p }: { person: UserListItem }) {
           <span className="block truncate text-xs text-fg-muted">{p.email}</span>
         </span>
       </div>
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5 pl-12 text-xs sm:w-56 sm:pl-0">
+      {/* Fixed-width columns, so roles, departments and status line up on every row. */}
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5 pl-12 text-xs sm:w-56 sm:shrink-0 sm:pl-0">
         {firstRole ? (
           <>
             <Badge>{copy.roles[firstRole]}</Badge>
@@ -279,7 +280,7 @@ function PersonRow({ person: p }: { person: UserListItem }) {
           <span className="text-fg-muted">{adminCopy.common.none}</span>
         )}
       </div>
-      <div className="min-w-0 pl-12 text-sm sm:w-52 sm:pl-0">
+      <div className="min-w-0 pl-12 text-sm sm:w-52 sm:shrink-0 sm:pl-0">
         {firstDept ? (
           <span className="block truncate">
             {firstDept.name}
@@ -292,7 +293,7 @@ function PersonRow({ person: p }: { person: UserListItem }) {
           <span className="text-fg-muted">{adminCopy.common.none}</span>
         )}
       </div>
-      <div className="flex items-center gap-2 pl-12 sm:pl-0">
+      <div className="flex items-center gap-2 pl-12 sm:w-52 sm:shrink-0 sm:justify-between sm:pl-0">
         <UserStatusBadge active={p.active} accessStatus={p.accessStatus} />
         <RowChevron className="hidden size-4 text-fg-muted sm:block" aria-hidden="true" />
       </div>
