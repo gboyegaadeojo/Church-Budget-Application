@@ -56,7 +56,18 @@ export const expenseEmailCopy = {
   },
   newSubmission: {
     subject: (r: string, d: string) => `New expense to review: ${about(r, d)}`,
+    /**
+     * The question the inbox asks. No amount: the subject and heading are also the phone
+     * alert, and amounts stay off the lock screen (decisions.md, web push).
+     */
+    subjectAsk: (name: string, d: string, r: string) =>
+      `Approve ${name}'s expense for ${d}? (${r})`,
     heading: "An expense needs your approval",
+    eyebrow: (d: string, c: string, r: string) => [d, c, r].filter(Boolean).join(" · "),
+    heroCaption: (title: string, name: string) => `${title} · submitted by ${name}`,
+    preheader: (amount: string, title: string, name: string) =>
+      `${amount} · ${title}, submitted by ${name}.`,
+    status: "Needs your approval",
     intro: (department: string, name: string) => `${name} submitted an expense for ${department}.`,
     together:
       "The accountant and the Board Chair are asked at the same time and can approve in either order. It's approved once you both approve; if your amounts differ, the lower one is approved.",

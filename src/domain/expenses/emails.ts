@@ -301,6 +301,18 @@ export async function queueExpenseEmails(
   switch (event.kind) {
     case "submitted": {
       const lines = await itemLines(tx, ctx);
+      // The approvers' emails ask the question in the subject and lead with how much. The
+      // amount stays in the body: the subject and heading also go to the lock screen.
+      const amount = formatCAD(requested(e).total);
+      const ask = {
+        subject: x.newSubmission.subjectAsk(ctx.requesterName, dept, ref),
+        preheader: x.newSubmission.preheader(amount, e.title, ctx.requesterName),
+        eyebrow: x.newSubmission.eyebrow(dept, ctx.cycleName, ref),
+        heading: x.newSubmission.heading,
+        hero: { value: amount, caption: x.newSubmission.heroCaption(e.title, ctx.requesterName) },
+        status: x.newSubmission.status,
+        tone: "waiting" as const,
+      };
       out.push(
         {
           template: "expenses.submitted.receipt",
@@ -323,9 +335,7 @@ export async function queueExpenseEmails(
           audience: "accountant",
           to: await accountants(),
           content: {
-            subject: x.newSubmission.subject(ref, dept),
-            heading: x.newSubmission.heading,
-            status: x.statuses.submitted,
+            ...ask,
             paragraphs: [x.newSubmission.intro(dept, ctx.actorName), x.newSubmission.together],
             facts: facts(ctx, [
               { label: x.facts.requester, value: ctx.requesterName },
@@ -345,9 +355,7 @@ export async function queueExpenseEmails(
           audience: "board",
           to: cover.recipients,
           content: {
-            subject: x.boardNeeded.subject(ref, dept),
-            heading: x.boardNeeded.heading,
-            status: x.statuses.submitted,
+            ...ask,
             paragraphs: [
               x.newSubmission.intro(dept, ctx.actorName),
               x.newSubmission.together,

@@ -318,19 +318,22 @@ export async function requestEmailCode(
   if (sendTo) {
     const brand = await emailBrand(tx);
     const m = emailCopy.access.signInCode;
+    const until = formatDateTime(expiresAt, await getChurchTimeZone(tx));
     await queueNotice(tx, {
       template: "access.sign_in_code",
       audience: "person",
       to: [sendTo],
       content: {
+        // The code is in the body only (preview line and box), never the subject: subjects
+        // stay in the email log after a sensitive body is cleared (AC-132).
         subject: m.subject(brand.appName),
+        preheader: m.preheader(code, until),
+        eyebrow: m.eyebrow,
         heading: m.heading,
         status: emailCopy.statuses.actionNeeded,
-        paragraphs: [m.intro(brand.appName)],
-        facts: [
-          { label: m.codeLabel, value: code },
-          { label: m.expiresLabel, value: formatDateTime(expiresAt, await getChurchTimeZone(tx)) },
-        ],
+        tone: "waiting",
+        code,
+        facts: [{ label: m.expiresLabel, value: until }],
         action: m.action,
         button: { label: emailCopy.buttons.signIn, href: appUrl("/sign-in") },
       },

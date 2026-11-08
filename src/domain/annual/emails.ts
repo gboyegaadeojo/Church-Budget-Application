@@ -18,12 +18,18 @@ import {
   usersWithRole,
 } from "@/domain/notifications/recipients";
 import { getChurchTimeZone } from "@/domain/settings";
-import { appUrl, type EmailContent, type EmailLine } from "@/lib/email/layout";
+import {
+  appUrl,
+  firstName,
+  type EmailContent,
+  type EmailLine,
+  type EmailStep,
+} from "@/lib/email/layout";
 import { enqueueEmail, type EmailAudience, type Recipient } from "@/lib/email/outbox";
 import { emailBrand } from "@/domain/notifications/notice";
 import { annualCopy } from "@/copy/annual";
 import { differenceText, formatCAD, type TaxBreakdown } from "@/lib/money";
-import { formatDateTime } from "@/lib/time-zone";
+import { formatDateTime, formatShortDate } from "@/lib/time-zone";
 import { describeChange, revisionChanges, type Snapshot } from "./revision-diff";
 import { editsRemaining, lineRowsOf } from "./service";
 
@@ -88,6 +94,26 @@ function facts(ctx: Context, extra: { label: string; value: string }[] = []) {
     ...(r.title ? [{ label: a.facts.title, value: r.title }] : []),
     ...extra,
   ];
+}
+
+/** "Where it stands": Submitted (with its date) → In review → `rest`. */
+function annualSteps(ctx: Context, rest: EmailStep[]): EmailStep[] {
+  const submittedAt = ctx.request.submittedAt;
+  return [
+    {
+      label: a.steps.submitted,
+      detail: submittedAt ? formatShortDate(submittedAt, ctx.zone) : undefined,
+      state: "done",
+    },
+    { label: a.steps.inReview, state: "done" },
+    ...rest,
+  ];
+}
+
+async function nameOf(tx: Tx, userId: string | null): Promise<string> {
+  if (!userId) return "";
+  const [u] = await tx.select({ name: users.displayName }).from(users).where(eq(users.id, userId));
+  return u?.name ?? "";
 }
 
 async function workingLines(tx: Tx, requestId: string): Promise<EmailLine[]> {
@@ -306,21 +332,34 @@ export async function queueAnnualEmails(
 
     case "returned": {
       const note = { label: a.returned.question, text: event.question };
+      // The department hears from the person who asked, by name, like a message.
+      const asker = ctx.actorName;
       out.push(
         {
           template: "annual.returned",
           audience: "requester",
           to: reps,
           content: {
-            subject: a.returned.subject(...subjectArgs),
-            heading: a.returned.heading,
+            subject: asker
+              ? a.returned.subjectFrom(asker, ...subjectArgs)
+              : a.returned.subject(...subjectArgs),
+            preheader: event.question,
+            eyebrow: a.eyebrow(...subjectArgs),
+            heading: asker ? a.returned.headingFrom(asker) : a.returned.heading,
             status: a.statuses.returned,
-            paragraphs: [a.returned.intro],
+            tone: "waiting",
+            note: asker ? { label: a.returned.asked, text: event.question, author: asker } : note,
+            steps: annualSteps(ctx, [
+              { label: a.steps.question, state: "current" },
+              { label: a.steps.decision, state: "next" },
+            ]),
             facts: facts(ctx),
-            note,
             summary,
             action: a.returned.action,
-            button: { label: a.returned.button, href: appUrl(`/annual/${r.id}/edit`) },
+            button: {
+              label: asker ? a.returned.buttonTo(firstName(asker)) : a.returned.button,
+              href: appUrl(`/annual/${r.id}/edit`),
+            },
           },
         },
         {
@@ -365,6 +404,8 @@ export async function queueAnnualEmails(
       const note = decision.decisionReason
         ? { label: a.approved.note, text: decision.decisionReason }
         : undefined;
+      const approver = await nameOf(tx, decision.approverUserId);
+      const approvedTotal = formatCAD(approved.total);
       out.push(
         {
           template: "annual.approved",
@@ -372,13 +413,31 @@ export async function queueAnnualEmails(
           to: reps,
           content: {
             subject: a.approved.subject(...subjectArgs),
+            preheader: a.approved.preheader(
+              approvedTotal,
+              comparison.difference,
+              note && approver ? firstName(approver) : null,
+            ),
+            eyebrow: a.eyebrow(...subjectArgs),
             heading: a.approved.heading,
             status: a.statuses.approved,
+            tone: "good",
+            hero: {
+              value: approvedTotal,
+              caption: a.approved.heroCaption(formatCAD(requested(r).total), comparison.difference),
+            },
             paragraphs: [a.approved.authorized, ...shared],
+            steps: annualSteps(ctx, [
+              {
+                label: a.steps.approved,
+                detail: formatShortDate(decision.createdAt, ctx.zone),
+                state: "done",
+              },
+            ]),
             facts: decidedFacts,
             summary: comparison,
             lines: { heading: a.approvedItems, items: lines },
-            note,
+            note: note && approver ? { ...note, author: approver } : note,
             action: emailCopy.noAction,
             button: requesterLink,
           },
