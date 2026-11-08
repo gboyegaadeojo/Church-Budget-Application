@@ -33,19 +33,19 @@ for (const [label, viewport] of [
     await expect(
       page.getByRole("heading", { level: 1, name: /^Good (morning|afternoon|evening), Pat$/ }),
     ).toBeVisible();
-    const today = page.getByRole("region", { name: "Needs you today" });
-    for (const tile of [
-      "Expenses to approve",
-      "Annual budgets to review",
-      "Messages from departments",
-      "Decisions to release",
-    ]) {
-      await expect(today.getByText(tile)).toBeVisible();
+    // Idea 6 (decided by the church 2026-11-07): four tiles, the decision inbox and the
+    // year's spending as one card per department.
+    for (const tile of [/^Expenses to approve$/, /^Budgets to decide$/, /^Not started yet$/]) {
+      await expect(page.getByText(tile)).toBeVisible();
     }
+    const inbox = page.getByRole("region", { name: "Needs your decision" });
+    await expect(inbox.getByRole("tab", { name: /^Expenses \(\d+\)$/ })).toBeVisible();
+    await expect(inbox.getByRole("tab", { name: /^Budgets \(\d+\)$/ })).toBeVisible();
+    await expect(inbox.getByRole("tab", { name: /^Messages \(\d+\)$/ })).toBeVisible();
     await expect(page.getByRole("region", { name: /budget season$/ })).toBeVisible();
     await expect(page.getByRole("region", { name: /^Expenses in / })).toBeVisible();
-    await expect(page.getByRole("region", { name: /spending$/ })).toBeVisible();
-    await expect(page.getByRole("region", { name: "Departments to watch" })).toBeVisible();
+    await expect(page.getByRole("region", { name: /spending$/ }).first()).toBeVisible();
+    await expect(page.getByRole("list", { name: /spending$/ })).toBeVisible();
     // The accountant has no board approvals to give.
     await expect(page.getByRole("region", { name: "Waiting for your approval" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Open review queue" })).toBeVisible();
