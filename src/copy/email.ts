@@ -17,6 +17,7 @@ export const emailCopy = {
     whatToDo: "What you need to do",
     subtotal: "Subtotal",
     salesTax: (rate: string) => `Sales tax (${rate})`,
+    noSalesTax: "Sales tax (none)",
     total: "Total (incl. tax)",
     requested: "Requested",
     approved: "Approved",
@@ -437,7 +438,7 @@ export const emailCopy = {
       codeLabel: "Code",
       expiresLabel: "Works until",
       action:
-        "Enter the code on the sign-in page. It works once, for 10 minutes. If you didn't ask for it, ignore this email: nobody can sign in without the code.",
+        "Enter the code on the sign-in page. It works once, for 15 minutes. If you didn't ask for it, ignore this email: nobody can sign in without the code.",
     },
     rolesChanged: {
       subject: "Your roles changed",

@@ -5,6 +5,7 @@ import {
   lineTotal,
   MAX_QUANTITY,
   MAX_UNIT_PRICE_CENTS,
+  NO_TAX_RATE,
   parseCAD,
   sumCents,
   totalForward,
@@ -183,6 +184,8 @@ export const expenseContentSchema = z
     title: text(LIMITS.title, e.titleTooLong),
     justification: keepBreaks(LIMITS.justification, e.justificationTooLong),
     items: z.array(itemSchema).max(LIMITS.lines, e.tooManyLines).default([]),
+    /** Purchase requests: add sales tax (the default), or none for the whole request. */
+    addsSalesTax: z.boolean().default(true),
     howBought: choice(HOW_BOUGHT, e.howBoughtRequired),
     lines: z.array(lineSchema).max(LIMITS.lines, e.tooManyLines).default([]),
     linkedPurchaseRequestId: z
@@ -208,6 +211,7 @@ export const expenseContentSchema = z
     title: c.title,
     justification: c.justification,
     items: c.items.filter((i) => !i.blank).map(withoutBlank),
+    addsSalesTax: c.addsSalesTax,
     howBought: c.howBought === "" ? null : c.howBought,
     lines: c.lines.filter((l) => !l.blank).map(withoutBlank),
     linkedPurchaseRequestId: c.linkedPurchaseRequestId === "" ? null : c.linkedPurchaseRequestId,
@@ -226,16 +230,24 @@ export type ExpenseContent = z.output<typeof expenseContentSchema>;
 export type ItemContent = ExpenseContent["items"][number];
 export type ReceiptLineContent = ExpenseContent["lines"][number];
 
+/**
+ * The rate an expense uses: the church's rate, or 0% for a purchase request marked "no
+ * sales tax" (decided 2026-11-07). A claim's amounts already include tax, so it adds none.
+ */
+export function rateFor(type: ExpenseType, addsSalesTax: boolean, churchRate: string): string {
+  return type === "purchase_request" && !addsSalesTax ? NO_TAX_RATE : churchRate;
+}
+
 /** Purchase request: tax once on the subtotal (FR-41). Claim: the amounts paid, no tax added. */
 export function expenseTotals(
   type: ExpenseType,
-  content: Pick<ExpenseContent, "items" | "lines">,
+  content: Pick<ExpenseContent, "items" | "lines"> & { addsSalesTax?: boolean },
   rate: string,
 ): TaxBreakdown {
   if (type === "purchase_request") {
     return totalForward(
       sumCents(content.items.map((i) => lineTotal(i.quantity, i.unitPriceCents))),
-      rate,
+      rateFor(type, content.addsSalesTax ?? true, rate),
     );
   }
   const total = sumCents(content.lines.map((l) => l.amountCents));
@@ -289,12 +301,7 @@ export function submissionErrors(
     });
     if (!content.payeeKind) errors.payeeKind = e.payeeRequired;
     if (content.payeeKind === "other" && !content.payeeName) errors.payeeName = e.payeeNameRequired;
-    if (content.payeeKind && content.payeeKind !== "church_card") {
-      if (!content.paymentPreference) errors.paymentPreference = e.paymentPreferenceRequired;
-      if (content.paymentPreference === "e_transfer" && !content.payeeEmail) {
-        errors.payeeEmail = e.eTransferEmailRequired;
-      }
-    }
+    // The church pays claims by cheque (decided 2026-11-07), so there is no preference to ask.
     if (content.noReceipt) {
       if (!content.noReceiptReason) errors.noReceiptReason = e.noReceiptReasonRequired;
     } else if (ctx.receiptCount === 0) {
@@ -322,7 +329,7 @@ export function formatErrors(input: ExpenseContentInput): Record<string, string>
 /** Live totals while typing; unfinished rows count as $0.00. */
 export function liveTotals(
   type: ExpenseType,
-  input: Pick<ExpenseContentInput, "items" | "lines">,
+  input: Pick<ExpenseContentInput, "items" | "lines" | "addsSalesTax">,
   rate: string,
 ): TaxBreakdown {
   if (type === "purchase_request") {
@@ -331,7 +338,7 @@ export function liveTotals(
       const p = parsePrice(String(i.unitPrice ?? ""));
       return q === null || p === null ? 0 : lineTotal(q, p);
     });
-    return totalForward(sumCents(totals), rate);
+    return totalForward(sumCents(totals), rateFor(type, input.addsSalesTax ?? true, rate));
   }
   const total = sumCents(
     (input.lines ?? []).map((l) => {

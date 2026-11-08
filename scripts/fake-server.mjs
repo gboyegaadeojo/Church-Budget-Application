@@ -6,6 +6,7 @@
  *   node scripts/fake-server.mjs          # next start (after `npm run build`), port 3100
  *   node scripts/fake-server.mjs --dev    # next dev, port 3000
  *   node scripts/fake-server.mjs --dev --demo   # as the hosted demo: http://demo.localhost:3000
+ *   node scripts/fake-server.mjs --dev --showcase   # with sample data (scripts/showcase-data.ts)
  *
  * Data lives in memory and is gone when the server stops.
  */
@@ -45,6 +46,20 @@ if (demo) {
 }
 await client.end();
 console.log(`Fake database ready on port ${dbPort} (migrated and seeded).`);
+
+// --showcase adds sample budgets, expenses and payments for looking around (never in tests).
+if (process.argv.includes("--showcase")) {
+  await new Promise((resolve, reject) => {
+    const child = spawn("npx", ["tsx", "scripts/showcase-data.ts", databaseUrl], {
+      cwd: root,
+      stdio: "inherit",
+      shell: process.platform === "win32",
+    });
+    child.on("exit", (code) =>
+      code === 0 ? resolve(undefined) : reject(new Error(`Sample data failed (${code})`)),
+    );
+  });
+}
 
 // With --dev, a migration added while the server runs (a new step's table) is applied
 // as soon as it lands, so pages that use it work without a restart.

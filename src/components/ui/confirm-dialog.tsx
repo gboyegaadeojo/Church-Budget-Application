@@ -17,6 +17,7 @@ export function ConfirmDialog({
   body,
   confirmLabel,
   confirmTone = "primary",
+  triggerClassName,
 }: {
   formId: string;
   trigger: string;
@@ -25,10 +26,14 @@ export function ConfirmDialog({
   body: string;
   confirmLabel: string;
   confirmTone?: ButtonTone;
+  /** Replaces the trigger's button look, e.g. a quiet text link. */
+  triggerClassName?: string;
 }) {
   return (
     <AlertDialog.Root>
-      <AlertDialog.Trigger className={buttonClass(triggerTone)}>{trigger}</AlertDialog.Trigger>
+      <AlertDialog.Trigger className={triggerClassName ?? buttonClass(triggerTone)}>
+        {trigger}
+      </AlertDialog.Trigger>
       <AlertDialog.Portal>
         <AlertDialog.Overlay className="fixed inset-0 z-(--z-overlay) bg-black/40" />
         <AlertDialog.Content className="fixed top-1/2 left-1/2 z-(--z-overlay) w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 space-y-4 rounded-card border border-border bg-surface p-6 text-fg shadow-overlay">

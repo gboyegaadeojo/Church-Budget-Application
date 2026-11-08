@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { approveBoth, submitClaim } from "./expense-helpers";
 import { DESKTOP, expectAxeClean, MOBILE, PEOPLE, signInAs } from "./helpers";
 
-/* Processing and payment (Stage 3; 6B.5, DRD 6.9a). Pat, the accountant, may process too. */
+/* Processing and payment (Stage 3; 6B.5, DRD 6.9a). Only the Church Administrator pays (2026-11-07); Gina holds that role. */
 
 test.describe("Ready to process and Record payment (Stage 3)", () => {
   // Each test signs in as several people in turn; under the full parallel run that takes time.
@@ -16,7 +16,7 @@ test.describe("Ready to process and Record payment (Stage 3)", () => {
     await approveBoth(browser, id);
 
     await page.setViewportSize(DESKTOP);
-    await signInAs(page, PEOPLE.pat);
+    await signInAs(page, PEOPLE.gina);
     await page.goto("/expenses/ready");
     const row = page.getByRole("row", { name: new RegExp(reference) });
     await expect(row).toBeVisible();
@@ -25,7 +25,9 @@ test.describe("Ready to process and Record payment (Stage 3)", () => {
     await expect(row.getByText("Processing", { exact: true })).toBeVisible();
 
     await page.getByRole("link", { name: `Record payment: ${reference}` }).click();
-    await expect(page.getByLabel("E-transfer", { exact: true })).toBeChecked();
+    // Claims are paid by cheque (2026-11-07), but the office can still record another method.
+    await expect(page.getByLabel("Cheque", { exact: true })).toBeChecked();
+    await page.getByLabel("E-transfer", { exact: true }).check();
     await page.getByLabel("E-transfer reference").fill("CA9xQ2");
     await expectAxeClean(page);
     await page.getByRole("button", { name: "Record $168.00 paid by e-transfer" }).click();
@@ -42,7 +44,7 @@ test.describe("Ready to process and Record payment (Stage 3)", () => {
     const { id } = await submitClaim(browser, "Batteries for mics");
     await approveBoth(browser, id);
     await page.setViewportSize(MOBILE);
-    await signInAs(page, PEOPLE.pat);
+    await signInAs(page, PEOPLE.gina);
     await page.goto(`/expenses/ready/${id}`);
     await page.getByLabel("Cheque", { exact: true }).check();
     await page.getByRole("button", { name: "Record $168.00 paid by cheque" }).click();

@@ -1,5 +1,11 @@
 import { emailCopy } from "@/copy/email";
-import { formatCAD, formatTaxRate, type TaxBreakdown, type TaxRate } from "@/lib/money";
+import {
+  formatCAD,
+  formatTaxRate,
+  isZeroTaxRate,
+  type TaxBreakdown,
+  type TaxRate,
+} from "@/lib/money";
 
 /**
  * The one email layout (DRD 7.5): a heading, a plain-language status line, the facts
@@ -87,7 +93,7 @@ export function renderEmail(content: EmailContent, brand: EmailBrand): RenderedE
 
 function summaryRows(summary: EmailSummary): [string, string, string?][] {
   if (summary.kind === "paid") return [[summary.label, formatCAD(summary.totalCents)]];
-  const tax = c.salesTax(formatTaxRate(summary.rate));
+  const tax = isZeroTaxRate(summary.rate) ? c.noSalesTax : c.salesTax(formatTaxRate(summary.rate));
   if (summary.kind === "single") {
     return [
       [c.subtotal, formatCAD(summary.totals.subtotal)],

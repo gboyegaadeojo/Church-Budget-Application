@@ -128,7 +128,7 @@ export const helpCopy = {
       group: "start",
       question: "How do I sign in?",
       answer: [
-        "Go to budget.ifcwpg.com, choose Sign in with Church Center Email and type the email on your Planning Center profile, the one Church Center uses. We email you a 6-digit code that works once, for 10 minutes. Ministry leaders and church staff need the Ministry Leader field in Planning Center set to Yes.",
+        "Go to budget.ifcwpg.com, choose Sign in with Church Center Email and type the email on your Planning Center profile, the one Church Center uses. We email you a 6-digit code that works once, for 15 minutes. Ministry leaders and church staff need the Ministry Leader field in Planning Center set to Yes.",
         "If you log in to Planning Center itself (not just Church Center), you can choose Staff: sign in with Planning Center instead. The Church Administrator and anyone else not in Planning Center sign in with email, using the address the church has for them.",
       ],
     },
@@ -511,7 +511,7 @@ export const privacyCopy = {
         "If you sign in with Planning Center: your Planning Center person number, whether Planning Center shows you as a Group Leader, the value of that field and when it was last checked. We also copy your mobile number from Planning Center, if it has one, to text you reminders. We don't copy anything else from Planning Center.",
         "What you do in the app: budget requests, their items and versions, decisions, and the emails the app sends you.",
         "An activity log of sign-ins and changes, with a scrambled (hashed) form of your internet address. We never store the address itself, and we never store passwords.",
-        "If you sign in with an emailed code, only a scrambled form of the code, which stops working after 10 minutes.",
+        "If you sign in with an emailed code, only a scrambled form of the code, which stops working after 15 minutes.",
       ],
     },
     {

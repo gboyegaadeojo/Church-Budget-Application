@@ -24,14 +24,16 @@ test.describe("Expenses across the app (Stage 3)", () => {
       .toContain(`Received: ${reference} (Media Team)`);
   });
 
-  test("AC-109 the accountant's My tasks lists an expense to review", async ({ page, browser }) => {
+  test("AC-109 the accountant's Home lists an expense to review", async ({ page, browser }) => {
     const { reference } = await submitPurchase(browser, "Task list check");
     await page.setViewportSize(DESKTOP);
     await signInAs(page, PEOPLE.pat);
     await page.goto("/");
-    const task = page.getByRole("listitem").filter({ hasText: reference });
-    await expect(task.getByText("Expense to review")).toBeVisible();
-    await task.getByRole("link", { name: "Review" }).click();
+    // On the accountant's decision inbox since 2026-11-07, rather than in My tasks.
+    const inbox = page.getByRole("region", { name: "Needs your decision" });
+    const row = inbox.getByRole("listitem").filter({ hasText: reference });
+    await expect(row).toBeVisible();
+    await row.getByRole("link", { name: "Review" }).click();
     await page.waitForURL(/\/expenses\/review\//);
   });
 

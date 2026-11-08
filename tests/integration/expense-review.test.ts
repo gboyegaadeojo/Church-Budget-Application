@@ -123,6 +123,24 @@ describe("approving (AC-73)", () => {
     });
   });
 
+  it("adds no tax to a different amount on a request marked no sales tax", async () => {
+    const world = await expenseWorld(db);
+    const { expenseId } = await submitted(db, world, "purchase_request", {
+      ...PURCHASE,
+      addsSalesTax: false,
+    });
+    await decide(world.accountant, expenseId, {
+      kind: "approve_different_amount",
+      amount: "500.00",
+      note: "Honorarium agreed at $500.",
+    });
+    expect(await loadExpense(db, expenseId)).toMatchObject({
+      approvedSubtotalCents: 50_000,
+      approvedTaxCents: 0,
+      approvedTotalCents: 50_000,
+    });
+  });
+
   it("adds no tax to a claim's different amount", async () => {
     const world = await expenseWorld(db);
     const { expenseId } = await submitted(db, world, "expense_claim");

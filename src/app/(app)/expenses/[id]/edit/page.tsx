@@ -50,7 +50,7 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
         department: expense.department.name,
         cycleName: expense.cycle.name,
         requesterName: expense.requester.name,
-        rate: expense.rate,
+        rate: expense.taxedRate,
         figures: expense.figures,
         linkable: expense.linkable,
         annualLines: expense.annualLines,
@@ -82,6 +82,7 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
           link: i.link ?? "",
           annualLineItemId: i.annualLineItemId ?? "",
         })),
+        addsSalesTax: c.addsSalesTax,
         howBought: c.howBought ?? "",
         lines: c.lines.map((l) => ({
           date: l.date,

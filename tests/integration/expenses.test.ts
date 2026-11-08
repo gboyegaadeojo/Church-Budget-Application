@@ -146,6 +146,42 @@ describe("purchase requests", () => {
     expect(result.totals.total).toBe(100_800);
   });
 
+  it("adds no sales tax when the requester turns it off (decided 2026-11-07)", async () => {
+    const world = await expenseWorld(db);
+    const result = await submitted(db, world, "purchase_request", {
+      ...PURCHASE,
+      addsSalesTax: false,
+    });
+    expect(result.totals).toEqual({ subtotal: 90_000, tax: 0, total: 90_000 });
+    expect(await row(result.expenseId)).toMatchObject({
+      addsSalesTax: false,
+      taxRate: "0.0000",
+      taxCents: 0,
+      totalCents: 90_000,
+    });
+  });
+
+  it("can turn sales tax off and back on while editing", async () => {
+    const world = await expenseWorld(db);
+    const { expenseId } = await submitted(db, world, "purchase_request");
+    const edit = async (addsSalesTax: boolean) => {
+      const r = await row(expenseId);
+      return run((tx) =>
+        editExpense(tx, world.requester, {
+          id: expenseId,
+          version: r.version,
+          idempotencyKey: randomUUID(),
+          ...PURCHASE,
+          addsSalesTax,
+        }),
+      );
+    };
+    expect((await edit(false)).totals).toEqual({ subtotal: 90_000, tax: 0, total: 90_000 });
+    expect(await row(expenseId)).toMatchObject({ addsSalesTax: false, taxRate: "0.0000" });
+    expect((await edit(true)).totals).toEqual({ subtotal: 90_000, tax: 10_800, total: 100_800 });
+    expect(await row(expenseId)).toMatchObject({ addsSalesTax: true, taxRate: "0.1200" });
+  });
+
   it("is Pending on the budget, not deducted (FR-42)", async () => {
     const world = await expenseWorld(db);
     await submitted(db, world, "purchase_request");
@@ -178,16 +214,23 @@ describe("expense claims", () => {
     ).rejects.toMatchObject({ fieldErrors: { receipts: expect.any(String) } });
   });
 
-  it("needs an e-transfer email for an e-transfer", async () => {
+  it("is always paid by cheque, whatever preference is sent (decided 2026-11-07)", async () => {
     const world = await expenseWorld(db);
-    await expect(
-      submitted(db, world, "expense_claim", {
-        ...CLAIM,
-        payeeKind: "other",
-        payeeName: "Ada Volunteer",
-        paymentPreference: "e_transfer",
-      }),
-    ).rejects.toMatchObject({ fieldErrors: { payeeEmail: expect.any(String) } });
+    const other = await submitted(db, world, "expense_claim", {
+      ...CLAIM,
+      payeeKind: "other",
+      payeeName: "Ada Volunteer",
+      paymentPreference: "e_transfer",
+    });
+    expect(await row(other.expenseId)).toMatchObject({
+      paymentPreference: "cheque",
+      payeeEmail: null,
+    });
+    const card = await submitted(db, world, "expense_claim", {
+      ...CLAIM,
+      payeeKind: "church_card",
+    });
+    expect((await row(card.expenseId)).paymentPreference).toBe("none");
   });
 
   it("matches a named payee with an account, so they can't approve it (FR-47)", async () => {

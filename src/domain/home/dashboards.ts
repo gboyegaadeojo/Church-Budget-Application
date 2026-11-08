@@ -1,5 +1,13 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { budgetCycles } from "@/db/schema";
+import { budgetCycles, expenseSubmissions } from "@/db/schema";
+import { authzContextOf } from "@/domain/expenses/service";
+import type { ApprovalLevel } from "@/domain/expenses/approval";
+import { levelsWaiting } from "@/domain/expenses/verbal";
+import { ACCOUNTANT_WAITING } from "@/domain/expenses/status";
+import { authorize } from "@/lib/authz";
+import { daysBetween } from "@/domain/expenses/schema";
+import { getChurchTimeZone } from "@/domain/settings";
+import { zonedDate } from "@/lib/time-zone";
 import type { Tx } from "@/db/types";
 import { heldDecisions, cycleRelease } from "@/domain/annual/release";
 import { getReviewDashboard, type Progress } from "@/domain/annual/review-queries";
@@ -48,6 +56,30 @@ export type AccountantToday = {
   release: { held: number; releaseAt: Date | null };
 };
 
+/** The accountant's decision inbox on Home (Idea 6, decided by the church 2026-11-07). */
+export type AccountantInbox = {
+  expenses: {
+    id: string;
+    referenceNumber: string;
+    title: string;
+    department: string;
+    type: string;
+    amountCents: number;
+    daysWaiting: number;
+    overBy: number;
+  }[];
+  budgets: {
+    id: string;
+    referenceNumber: string;
+    department: string;
+    requester: string;
+    title: string;
+    status: string;
+    requestedTotalCents: number;
+  }[];
+  messages: { id: string; referenceNumber: string; department: string; unread: number }[];
+};
+
 export type Pipeline = {
   stages: Record<"approving" | "returned" | "toPay" | "paid", { count: number; cents: number }>;
   accountantDays: number | null;
@@ -65,6 +97,16 @@ export type YearSpending = {
   elapsedTenths: number;
   boardTotalCents: number | null;
   watch: { departmentId: string; department: string; overBy: number; usedTenths: number | null }[];
+  /** Every department with a budget, most used first (the spending cards on Home). */
+  departments: {
+    departmentId: string;
+    department: string;
+    /** Spent plus committed: what the used percentage counts. */
+    used: number;
+    available: number;
+    usedTenths: number | null;
+    watch: boolean;
+  }[];
 };
 
 export type BoardApprovals = {
@@ -128,7 +170,7 @@ export async function accountantDashboard(
   tx: Tx,
   viewer: Viewer,
   now: Date,
-): Promise<{ today: AccountantToday; season: Season | null } | null> {
+): Promise<{ today: AccountantToday; season: Season | null; inbox: AccountantInbox } | null> {
   if (!hasRole(viewer, "accountant", "backup_approver")) return null;
   const [queue, review] = await Promise.all([
     accountantQueue(tx, viewer, {}, now),
@@ -189,6 +231,37 @@ export async function accountantDashboard(
       },
     },
     season,
+    inbox: {
+      expenses: [...mine]
+        .sort((a, b) => b.daysWaiting - a.daysWaiting)
+        .map((r) => ({
+          id: r.id,
+          referenceNumber: r.referenceNumber ?? "",
+          title: r.title,
+          department: r.department,
+          type: r.type,
+          amountCents: r.amountCents ?? 0,
+          daysWaiting: r.daysWaiting,
+          overBy: r.overBy,
+        })),
+      budgets: awaiting.map((r) => ({
+        id: r.requestId,
+        referenceNumber: r.referenceNumber,
+        department: r.departmentName,
+        requester: r.requesterName,
+        title: r.title,
+        status: r.status,
+        requestedTotalCents: r.requestedTotalCents,
+      })),
+      messages: (review?.queue ?? [])
+        .filter((r) => r.unreadMessages > 0)
+        .map((r) => ({
+          id: r.requestId,
+          referenceNumber: r.referenceNumber,
+          department: r.departmentName,
+          unread: r.unreadMessages,
+        })),
+    },
   };
 }
 
@@ -238,6 +311,17 @@ export async function spendingSummary(
       elapsedTenths: Math.min(1000, Math.max(0, elapsed)),
       boardTotalCents: row?.boardTotal ?? null,
       watch,
+      departments: dashboard.rows
+        .filter((r) => r.figures.available > 0)
+        .sort((a, b) => (b.usedTenths ?? 0) - (a.usedTenths ?? 0))
+        .map((r) => ({
+          departmentId: r.departmentId,
+          department: r.department,
+          used: sumCents([r.figures.spent, r.figures.committed]),
+          available: r.figures.available,
+          usedTenths: r.usedTenths,
+          watch: r.status === "over_budget" || r.status === "nearing_limit",
+        })),
     },
     pipeline: {
       stages: {
@@ -337,6 +421,114 @@ export async function paymentsToday(
     paidRecently: {
       count: queue.recent.length,
       cents: sumCents(queue.recent.map((r) => r.amountCents)),
+    },
+  };
+}
+
+/** One card on the Church Administrator's payment board. */
+export type BoardCard = {
+  id: string;
+  referenceNumber: string;
+  title: string;
+  department: string;
+  amountCents: number;
+  daysWaiting: number;
+  /** Ready and Processing: the ready-queue row (who is paid, how it's bought, may pay). */
+  ready?: ReadyRow;
+  /** Waiting: the approvals still to come, and whether a verbal one may be recorded. */
+  needs?: ApprovalLevel[];
+  canRecordVerbal?: boolean;
+  /** Paid: how and when. */
+  method?: string;
+  paidOn?: string;
+};
+
+export type PaymentBoard = {
+  toPay: { count: number; cents: number };
+  owed: { cents: number; cheques: number };
+  waitingCount: number;
+  paid30: { count: number; cents: number };
+  columns: {
+    waiting: BoardCard[];
+    ready: BoardCard[];
+    processing: BoardCard[];
+    paidWeek: BoardCard[];
+  };
+};
+
+const AWAITING_APPROVAL = [...new Set([...ACCOUNTANT_WAITING, ...BOARD_WAITING])];
+
+/**
+ * The Church Administrator's payment board (decided by the church 2026-11-07): every
+ * expense from waiting on its approvals to paid this week, with four tiles above. It
+ * replaces Ready to pay and the payment and waiting tasks on Home, so nothing shows twice.
+ */
+export async function paymentBoard(
+  tx: Tx,
+  viewer: Viewer,
+  now: Date,
+): Promise<PaymentBoard | null> {
+  if (!hasRole(viewer, "church_admin")) return null;
+  const queue = await readyQueue(tx, viewer, {}, now);
+  if (!queue) return null;
+  const zone = await getChurchTimeZone(tx);
+  const today = zonedDate(now, zone);
+  const waitingRows = await tx
+    .select()
+    .from(expenseSubmissions)
+    .where(inArray(expenseSubmissions.status, AWAITING_APPROVAL))
+    .orderBy(asc(expenseSubmissions.submittedAt))
+    .limit(50);
+  const toCard = (r: ReadyRow): BoardCard => ({
+    id: r.id,
+    referenceNumber: r.referenceNumber,
+    title: r.title,
+    department: r.department,
+    amountCents: r.approvedCents,
+    daysWaiting: r.daysWaiting,
+    ready: r,
+  });
+  const byAge = [...queue.rows].sort((a, b) => b.daysWaiting - a.daysWaiting);
+  const owedRows = queue.rows.filter(
+    (r) => r.type === "expense_claim" && r.payeeKind !== "church_card",
+  );
+  const weekAgo = new Date(now.getTime() - 7 * 86_400_000).toISOString().slice(0, 10);
+  return {
+    toPay: { count: queue.rows.length, cents: queue.waitingCents },
+    owed: { cents: queue.owedCents, cheques: owedRows.length },
+    waitingCount: waitingRows.length,
+    paid30: {
+      count: queue.recent.length,
+      cents: sumCents(queue.recent.map((r) => r.amountCents)),
+    },
+    columns: {
+      waiting: waitingRows.map((r) => ({
+        id: r.id,
+        referenceNumber: r.referenceNumber ?? "",
+        title: r.title,
+        department: r.departmentNameSnapshot,
+        amountCents: r.totalCents ?? 0,
+        daysWaiting: r.submittedAt
+          ? Math.max(0, daysBetween(zonedDate(r.submittedAt, zone), today))
+          : 0,
+        needs: levelsWaiting(r),
+        canRecordVerbal: authorize(viewer, "expense.record_verbal_approval", authzContextOf(r))
+          .allowed,
+      })),
+      ready: byAge.filter((r) => r.status === "approved").map(toCard),
+      processing: byAge.filter((r) => r.status === "processing").map(toCard),
+      paidWeek: queue.recent
+        .filter((r) => r.paidOn >= weekAgo)
+        .map((r) => ({
+          id: r.id,
+          referenceNumber: r.referenceNumber,
+          title: r.title,
+          department: r.department,
+          amountCents: r.amountCents,
+          daysWaiting: 0,
+          method: r.method,
+          paidOn: r.paidOn,
+        })),
     },
   };
 }

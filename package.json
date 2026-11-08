@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:fake": "node scripts/fake-server.mjs --dev",
+    "dev:showcase": "node scripts/fake-server.mjs --dev --showcase",
     "dev:demo": "node scripts/fake-server.mjs --dev --demo",
     "build": "next build",
     "start": "next start",

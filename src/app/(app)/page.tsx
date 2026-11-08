@@ -12,15 +12,16 @@ import {
   PiggyBank,
 } from "lucide-react";
 import { StatCard } from "@/components/ui/display";
+import { PaymentBoard } from "@/components/home/payment-board";
+import { AccountantTiles, SpendingRail } from "@/components/home/accountant-home";
+import { DecisionInbox } from "@/components/home/decision-inbox";
 import { buttonClass } from "@/components/ui/styles";
 import {
   ApprovalsCard,
   HomeCard,
-  PaymentsCard,
   PipelineCard,
   SeasonCard,
   SpendingCard,
-  TodayTiles,
   WatchCard,
   YearsCard,
 } from "@/components/home/sections";
@@ -30,7 +31,7 @@ import {
   availability,
   boardApprovals,
   budgetYears,
-  paymentsToday,
+  paymentBoard,
   spendingSummary,
   type Availability,
 } from "@/domain/home/dashboards";
@@ -81,22 +82,31 @@ async function HomeContent() {
   const db = getDb();
   const now = new Date();
   const seesSpending = authorize(viewer, "spending.view").allowed;
-  const [tasks, zone, presence, accountant, approvals, payments, spending, years] =
+  const [allTasks, zone, presence, accountant, approvals, payments, spending, years] =
     await Promise.all([
       getMyTasks(viewer),
       getChurchTimeZone(db),
       availability(db, viewer, now),
       accountantDashboard(db, viewer, now),
       boardApprovals(db, viewer, now),
-      paymentsToday(db, viewer, now),
+      paymentBoard(db, viewer, now),
       seesSpending ? spendingSummary(db, viewer, now) : Promise.resolve(null),
       hasRole(viewer, "board_chair", "vice_chair") ? budgetYears(db) : Promise.resolve([]),
     ]);
+  // The payment board shows every payment and every expense waiting on its approvals, so
+  // those tasks leave My tasks for the Church Administrator (decided 2026-11-07).
+  // Likewise the accountant's inbox shows every expense and budget to review (Idea 6).
+  const tasks = allTasks.filter(
+    (t) =>
+      !(payments && /:(pay|approvals)$/.test(t.id)) &&
+      !(accountant && /^(expense|annual):.*:review$/.test(t.id)),
+  );
   const firstName = viewer.name.split(" ")[0] ?? viewer.name;
   // Recent activity is for the System Administrator; others have the full log in Reports.
   const admin = hasRole(viewer, "system_admin");
+  // The greeting counts everything waiting, including what the inbox and board show.
   const oldest =
-    tasks.length > 0 ? Math.max(...tasks.map((t) => daysWaiting(t.waitingSince, now))) : null;
+    allTasks.length > 0 ? Math.max(...allTasks.map((t) => daysWaiting(t.waitingSince, now))) : null;
   const board = approvals !== null;
   // Cards the dashboards above already cover leave At a glance.
   const covered = new Set<GlanceCard["kind"]>([
@@ -121,7 +131,7 @@ async function HomeContent() {
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">
             {hc.greeting(partOfDay(now, zone), firstName)}
           </h1>
-          <p className="mt-1.5 text-fg-muted">{hc.summary(tasks.length, oldest)}</p>
+          <p className="mt-1.5 text-fg-muted">{hc.summary(allTasks.length, oldest)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {presence && <Presence presence={presence} zone={zone} />}
@@ -148,7 +158,17 @@ async function HomeContent() {
         </div>
       </header>
 
-      {accountant && <TodayTiles today={accountant.today} zone={zone} />}
+      {accountant && (
+        <AccountantTiles
+          today={accountant.today}
+          inbox={accountant.inbox}
+          season={accountant.season}
+          year={spending?.year ?? null}
+          zone={zone}
+          now={now}
+        />
+      )}
+      {payments && <PaymentBoard board={payments} />}
       {approvals && <ApprovalsCard approvals={approvals} />}
 
       <div
@@ -158,8 +178,8 @@ async function HomeContent() {
         )}
       >
         <div className="min-w-0 space-y-6">
-          {accountant?.season && <SeasonCard season={accountant.season} zone={zone} now={now} />}
-          {payments && <PaymentsCard payments={payments} />}
+          {accountant && <DecisionInbox inbox={accountant.inbox} />}
+          {accountant && spending && <SpendingRail year={spending.year} />}
           {accountant && spending && (
             <PipelineCard pipeline={spending.pipeline} cycleName={spending.year.cycleName} />
           )}
@@ -167,11 +187,12 @@ async function HomeContent() {
           {board && <RecentDecisions viewer={viewer} zone={zone} />}
         </div>
         <div className="min-w-0 space-y-6">
+          {accountant?.season && <SeasonCard season={accountant.season} zone={zone} now={now} />}
           {spending && (
             <SpendingCard year={spending.year} variant={board && !accountant ? "board" : "staff"} />
           )}
           {board && <YearsCard years={years} zone={zone} now={now} />}
-          {spending && (accountant || board) && <WatchCard year={spending.year} />}
+          {spending && board && !accountant && <WatchCard year={spending.year} />}
           <AtAGlance viewer={viewer} hide={covered} hideWhenEmpty={dashboards} />
           {admin && <RecentActivity viewer={viewer} />}
         </div>

@@ -170,7 +170,7 @@ export const copy = {
       sendCode: "Email me a code",
       // The same words whether or not the address has an account (AC-133).
       sent: (email: string) =>
-        `If ${email} can sign in here, we've emailed it a 6-digit code. It works once, for 10 minutes. Check your junk folder if it doesn't arrive in a minute.`,
+        `If ${email} can sign in here, we've emailed it a 6-digit code. It works once, for 15 minutes. Check your junk folder if it doesn't arrive in a minute.`,
       codeLabel: "6-digit code",
       signIn: "Sign in",
       sendNewCode: "Send a new code",
@@ -252,6 +252,7 @@ export const copy = {
   money: {
     subtotal: "Subtotal (before tax)",
     salesTax: (rate: string) => `Sales tax (${rate})`,
+    noSalesTax: "Sales tax (none)",
     total: "Total (incl. tax)",
   },
 } as const;

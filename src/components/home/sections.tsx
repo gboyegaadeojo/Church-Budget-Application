@@ -227,7 +227,7 @@ export function SeasonCard({ season, zone, now }: { season: Season; zone: string
             />
           ))}
       </div>
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3 xl:grid-cols-6">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
         {shown.map((b) => (
           <div key={b.key}>
             <dt className="flex items-center gap-1.5 whitespace-nowrap text-fg-muted">

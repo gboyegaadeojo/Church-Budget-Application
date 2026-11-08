@@ -24,9 +24,16 @@ export async function fillDetails(page: Page, title: string) {
   await page.getByLabel("Why it's needed").fill("Two microphones have failed.");
 }
 
+/** Next: the form asks one question per screen (design H, 2026-11-07). */
+export async function next(page: Page) {
+  const heading = await page.getByRole("heading", { level: 2 }).first().textContent();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 2 }).first()).not.toHaveText(heading ?? "");
+}
+
 export async function preview(page: Page) {
   await page.getByRole("button", { name: "Preview" }).click();
-  await expect(page.getByRole("heading", { name: "Preview" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Check and send" })).toBeVisible();
 }
 
 export async function confirm(page: Page) {
@@ -50,13 +57,16 @@ export async function submitPurchase(
   await signInAs(page, PEOPLE.sam);
   await startExpense(page, "Purchase request");
   await fillDetails(page, title);
+  await next(page);
   const item = page.getByRole("group", { name: "Item 1" });
   await item.getByLabel("Item", { exact: true }).fill("Microphone");
   await item.getByLabel("Unit price (before tax)").fill(price);
-  await page.getByLabel("The Church Administrator buys it on the church account").check();
   if (await page.getByLabel("Over-budget explanation").isVisible()) {
     await page.getByLabel("Over-budget explanation").fill("Needed regardless.");
   }
+  await next(page);
+  await page.getByLabel("The Church Administrator buys it on the church account").check();
+  await next(page);
   await preview(page);
   await confirm(page);
   const id = new URL(page.url()).pathname.split("/").pop()!;
@@ -65,20 +75,22 @@ export async function submitPurchase(
   return { id, reference };
 }
 
-/** Sam submits a $168.00 claim to be paid by e-transfer; returns its id and reference. */
+/** Sam submits a $168.00 claim, paid by cheque; returns its id and reference. */
 export async function submitClaim(browser: Browser, title: string) {
   const context = await browser.newContext({ viewport: DESKTOP });
   const page = await context.newPage();
   await signInAs(page, PEOPLE.sam);
   await startExpense(page, "Expense claim");
   await fillDetails(page, title);
+  await next(page);
   const line = page.getByRole("group", { name: "Receipt line 1" });
   await line.getByLabel("Date").fill("2026-10-01");
   await line.getByLabel("Vendor").fill("Long & McQuade");
   await line.getByLabel("Description").fill("XLR cables");
   await line.getByLabel("Amount paid (incl. tax)").fill("168.00");
-  await page.getByLabel("E-transfer", { exact: true }).check();
-  await page.getByLabel("E-transfer email").fill("sam.lee@example.org");
+  await next(page);
+  await expect(page.getByText("The church pays by cheque.")).toBeVisible();
+  await next(page);
   await page.getByLabel("No receipt available").check();
   await page.getByLabel("Why there's no receipt").fill("Paper receipt, given to the office.");
   await preview(page);

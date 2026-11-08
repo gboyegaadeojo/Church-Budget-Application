@@ -113,7 +113,7 @@ export function EmailSignIn({ callbackUrl }: { callbackUrl: string }) {
             value="request"
             disabled={pending}
             aria-busy={pending || undefined}
-            className={buttonClass("primary", "min-h-12 w-full rounded-[12px] text-[15px]")}
+            className={buttonClass("primary", "min-h-10 w-full rounded-[12px] text-sm lg:min-h-10")}
           >
             {spinner}
             {e.sendCode}
@@ -157,7 +157,7 @@ export function EmailSignIn({ callbackUrl }: { callbackUrl: string }) {
             value="verify"
             disabled={pending}
             aria-busy={pending || undefined}
-            className={buttonClass("primary", "min-h-12 w-full rounded-[12px] text-[15px]")}
+            className={buttonClass("primary", "min-h-10 w-full rounded-[12px] text-sm lg:min-h-10")}
           >
             {spinner}
             {e.signIn}
