@@ -103,6 +103,77 @@ describe("email layout (DRD 7.5)", () => {
   });
 });
 
+describe("Ledger email layout (decisions.md 2026-11-08)", () => {
+  it("puts a hidden preview line first, defaulting to the first paragraph", () => {
+    const { html } = renderEmail({ ...content, preheader: "Your code is 123456." }, brand);
+    expect(html).toMatch(/<div style="display:none;[^"]*">Your code is 123456\./);
+    expect(renderEmail(content, brand).html).toMatch(
+      /<div style="display:none;[^"]*">Your FY2027 budget request was submitted\./,
+    );
+  });
+
+  it("shows the status as a chip in words, coloured by tone", () => {
+    expect(renderEmail({ ...content, tone: "good" }, brand).html).toMatch(
+      /background:#e7f4ec;color:#16794a;[^>]*>Submitted</,
+    );
+    // Something to do and no tone given: the waiting colour.
+    expect(renderEmail({ ...content, action: "Answer it." }, brand).html).toMatch(
+      /background:#fff2dc;color:#8a4b00;[^>]*>Submitted</,
+    );
+  });
+
+  it("leaves 'Nothing, this is for your records' to the text version", () => {
+    const { text, html } = renderEmail(content, brand);
+    expect(text).toContain("What you need to do: Nothing, this is for your records.");
+    expect(html).not.toContain("Nothing, this is for your records.");
+    expect(renderEmail({ ...content, action: "Answer it." }, brand).html).toContain(
+      "What you need to do:</strong> Answer it.",
+    );
+  });
+
+  it("shows a code in one box, so it copies as one number", () => {
+    const { text, html } = renderEmail({ ...content, code: "169964" }, brand);
+    expect(text).toContain("Code: 169964");
+    expect(html).toMatch(/letter-spacing:0\.3em;[^>]*>169964</);
+  });
+
+  it("shows the big number, the steps and who wrote the note", () => {
+    const { text, html } = renderEmail(
+      {
+        ...content,
+        eyebrow: "Media Team · FY2027 · IFC-2027-0007",
+        hero: { value: "$4,820.00", caption: "you asked for $5,200.00" },
+        steps: [
+          { label: "Submitted", detail: "Oct 28", state: "done" },
+          { label: "Question", state: "current" },
+          { label: "Decision", state: "next" },
+        ],
+        note: { label: "Question", text: "Can you split it?", author: "Grace Mensah" },
+      },
+      { ...brand, accent: "#6b46d9" },
+    );
+    expect(text).toContain("Media Team · FY2027 · IFC-2027-0007");
+    expect(text).toContain("$4,820.00\nyou asked for $5,200.00");
+    expect(text).toContain("Where it stands: Submitted Oct 28 → Question (Now) → Decision");
+    expect(text).toContain("Question (Grace Mensah):\nCan you split it?");
+    expect(html).toContain(">GM<");
+    expect(html).toContain("Grace Mensah · Question");
+    // The current step is drawn in the church's accent.
+    expect(html).toMatch(/background:#6b46d9;">&nbsp;<\/div><p[^>]*>Question</);
+  });
+
+  it("shows the logo beside the names, and the button in the accent", () => {
+    const { html } = renderEmail(content, {
+      ...brand,
+      logoUrl: "https://budget.example.org/brand/logo.png",
+      accent: "#2860c0",
+    });
+    expect(html).toContain('src="https://budget.example.org/brand/logo.png"');
+    expect(html).toContain('alt="Immanuel Fellowship Church"');
+    expect(html).toContain("background:#2860c0;color:#ffffff");
+  });
+});
+
 describe("retry backoff", () => {
   it("waits longer after each try and honours Retry-After", () => {
     expect(retryDelayMs(1)).toBe(60_000);

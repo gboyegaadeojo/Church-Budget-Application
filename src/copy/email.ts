@@ -22,7 +22,10 @@ export const emailCopy = {
     requested: "Requested",
     approved: "Approved",
     difference: "Difference",
-    orOpen: "Or open this link:",
+    orOpen: "Button not working? Open this link:",
+    code: "Code",
+    progress: "Where it stands",
+    now: "Now",
     footer: (app: string, church: string) => `Sent by ${app}, ${church}.`,
     signInNote: "The link asks you to sign in. We never put budget details in links.",
   },
@@ -55,6 +58,15 @@ export const emailCopy = {
       returned: "Returned for Clarification",
       approved: "Approved",
       declined: "Declined",
+    },
+    /** "Media Team · FY2027 · IFC-2027-0007", above the heading. */
+    eyebrow: (d: string, c: string, r: string) => [d, c, r].filter(Boolean).join(" · "),
+    steps: {
+      submitted: "Submitted",
+      inReview: "In review",
+      question: "Question",
+      decision: "Decision",
+      approved: "Approved",
     },
     difference: {
       less: (amount: string) => `${amount} less than requested`,
@@ -119,6 +131,12 @@ export const emailCopy = {
       question: "The accountant's question",
       action: "Answer the question and resubmit. This doesn't use one of your changes.",
       button: "Answer the question",
+      /** With the accountant's name: it reads as a message from a person. */
+      subjectFrom: (person: string, d: string, c: string, r: string) =>
+        `${person} has a question about ${about(d, c, r)}`,
+      headingFrom: (person: string) => `${person} has a question about your budget`,
+      asked: "Question",
+      buttonTo: (first: string) => `Answer ${first}`,
     },
     clarifyReminder: {
       subject: (d: string, c: string, r: string) =>
@@ -137,10 +155,15 @@ export const emailCopy = {
     },
     approved: {
       subject: (d: string, c: string, r: string) => `Budget approved: ${about(d, c, r)}`,
-      heading: "Your budget request was approved",
+      heading: "Your budget is approved",
       authorized:
         "The approved total, including tax, is the amount authorized for your department. It may differ from the amount you requested.",
       note: "The accountant's notes",
+      heroCaption: (requested: string, difference: string) =>
+        `Approved total, incl. tax · you asked for ${requested} (${difference.toLowerCase()})`,
+      /** The amount goes here, not in the subject: the subject is also the lock-screen alert. */
+      preheader: (total: string, difference: string, noteBy: string | null) =>
+        `${total} approved, ${difference.toLowerCase()}.${noteBy ? ` ${noteBy} left a note.` : ""}`,
     },
     approvedCopy: {
       subject: (d: string, c: string, r: string) => `Copy: approved ${about(d, c, r)}`,
@@ -433,8 +456,12 @@ export const emailCopy = {
     },
     signInCode: {
       subject: (app: string) => `Your ${app} sign-in code`,
-      heading: "Your sign-in code",
+      heading: "Enter this code to sign in",
       intro: (app: string) => `Use this code to sign in to ${app}:`,
+      eyebrow: "Sign-in code",
+      /** Shown in the inbox under the subject; the subject never holds the code (AC-132). */
+      preheader: (code: string, until: string) =>
+        `Your code is ${code}. It works once, until ${until}.`,
       codeLabel: "Code",
       expiresLabel: "Works until",
       action:

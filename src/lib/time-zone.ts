@@ -97,6 +97,15 @@ export function formatDateTime(date: Date, zone: string): string {
     .concat(` ${zoneAbbreviation(date, zone)}`);
 }
 
+/** "Nov 30": a short day in the church time zone, for progress steps in emails. */
+export function formatShortDate(date: Date, zone: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: zone,
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
 function zoneAbbreviation(date: Date, zone: string): string {
   return (
     new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "short" })
