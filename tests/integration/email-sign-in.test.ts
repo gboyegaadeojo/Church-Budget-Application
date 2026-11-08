@@ -265,3 +265,34 @@ describe("Sign-in with an emailed code (FR-01b)", () => {
     expect(normalizeCode("12345a")).toBeNull();
   });
 });
+
+describe("the code email says where it was asked for (decisions.md 2026-11-08)", () => {
+  it("names the browser and rough place in the body, never the subject, and keeps it nowhere else", async () => {
+    const admin = await account(["church_admin"]);
+    await request(admin.email, NOW, {
+      requestOrigin: {
+        userAgent:
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36",
+        place: "Winnipeg, MB",
+      },
+    });
+    const [email] = await codeEmails(admin.email);
+    expect(email.textBody).toContain(
+      "Requested from: Chrome on a Windows computer, near Winnipeg, MB",
+    );
+    expect(email.subject).not.toContain("Winnipeg");
+    // The sensitive body is the only place it lives.
+    const [code] = await db
+      .select()
+      .from(emailLoginCodes)
+      .where(eq(emailLoginCodes.email, admin.email));
+    expect(JSON.stringify(code)).not.toContain("Winnipeg");
+  });
+
+  it("leaves the line out when it doesn't know", async () => {
+    const admin = await account(["church_admin"]);
+    await request(admin.email);
+    const [email] = await codeEmails(admin.email);
+    expect(email.textBody).not.toContain("Requested from");
+  });
+});

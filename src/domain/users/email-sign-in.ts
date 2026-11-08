@@ -11,6 +11,7 @@ import { appUrl } from "@/lib/email/layout";
 import type { PlanningCenterDirectory } from "@/lib/pco";
 import { EMAIL_SIGN_IN_ROLES } from "@/lib/roles";
 import { checkLeaderOrTeamLeader } from "@/domain/departments/pco-mapping";
+import { originText, type RequestOrigin } from "@/lib/request-origin";
 import { formatDateTime } from "@/lib/time-zone";
 
 /**
@@ -44,6 +45,8 @@ export type EmailCodeDeps = {
   /** AUTH_SECRET: keys the code hash, so a database copy can't be used to find codes. */
   secret: string;
   requestIpHash?: string;
+  /** The browser and rough place, shown in the code email only; never stored. */
+  requestOrigin?: RequestOrigin;
   /** Tests pass a fixed code; otherwise six random digits. */
   generateCode?: () => string;
   /** FIRST_ADMIN_EMAIL: who becomes the first System Administrator of an empty app. */
@@ -319,6 +322,8 @@ export async function requestEmailCode(
     const brand = await emailBrand(tx);
     const m = emailCopy.access.signInCode;
     const until = formatDateTime(expiresAt, await getChurchTimeZone(tx));
+    // "Was this me?" at a glance: the browser and rough place, in this sensitive body only.
+    const from = deps.requestOrigin ? originText(deps.requestOrigin) : null;
     await queueNotice(tx, {
       template: "access.sign_in_code",
       audience: "person",
@@ -333,7 +338,10 @@ export async function requestEmailCode(
         status: emailCopy.statuses.actionNeeded,
         tone: "waiting",
         code,
-        facts: [{ label: m.expiresLabel, value: until }],
+        facts: [
+          { label: m.expiresLabel, value: until },
+          ...(from ? [{ label: m.fromLabel, value: from }] : []),
+        ],
         action: m.action,
         button: { label: emailCopy.buttons.signIn, href: appUrl("/sign-in") },
       },

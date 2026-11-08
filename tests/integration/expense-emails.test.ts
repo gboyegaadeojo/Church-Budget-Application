@@ -398,3 +398,46 @@ describe("My tasks (FR-37, AC-109)", () => {
     expect(ids).toEqual([`expense:${other}:review`]);
   });
 });
+
+describe("the approvers' email (Ledger, decisions.md 2026-11-08)", () => {
+  async function bodyOf(expenseId: string, template: string) {
+    const [row] = await db
+      .select({
+        text: emailOutbox.textBody,
+        html: emailOutbox.htmlBody,
+        subject: emailOutbox.subject,
+      })
+      .from(emailOutbox)
+      .where(
+        and(eq(emailOutbox.expenseSubmissionId, expenseId), eq(emailOutbox.template, template)),
+      );
+    return row;
+  }
+
+  it("shows the budget bar, who still has to approve, and a button to the decision", async () => {
+    const world = await expenseWorld(db);
+    const { expenseId: id } = await submitted(db, world, "expense_claim", CLAIM);
+
+    const accountant = await bodyOf(id, "expenses.submitted.accountant");
+    // The budget bar names each part with its amount (FR-42), never colour alone.
+    expect(accountant.text).toMatch(/budget · \$[\d,]+\.\d\d:\n- Spent and committed: \$/);
+    expect(accountant.text).toContain("- This expense: $168.00");
+    expect(accountant.text).toMatch(/- Left after this: \$[\d,]+\.\d\d/);
+    // Both are asked at once, so both are waiting.
+    expect(accountant.text).toMatch(
+      /Approvals:\n- .*Accountant.*: Waiting\n- .*Board Chair.*: Waiting/,
+    );
+    // Approve lands on the decision; the anchor never reaches the server.
+    expect(accountant.text).toMatch(
+      /Approve \$168\.00: https?:\/\/\S+\/expenses\/review\/[\w-]+#decide/,
+    );
+    expect(accountant.text).toMatch(/Other choices: https?:\/\/\S+\/expenses\/review\/[\w-]+\n/);
+    // Amounts stay off the subject: it's also the lock-screen alert.
+    expect(accountant.subject).not.toContain("$");
+
+    const board = await bodyOf(id, "expenses.board_needed");
+    expect(board.text).toMatch(
+      /Approve \$168\.00: https?:\/\/\S+\/expenses\/awaiting-approval\/[\w-]+#decide/,
+    );
+  });
+});

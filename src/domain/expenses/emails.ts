@@ -20,7 +20,8 @@ import {
   usersWithRole,
 } from "@/domain/notifications/recipients";
 import { getChurchTimeZone } from "@/domain/settings";
-import { appUrl, type EmailContent, type EmailSummary } from "@/lib/email/layout";
+import { appUrl, type EmailContent, type EmailMeter, type EmailSummary } from "@/lib/email/layout";
+import { budgetFigures, impactOf, linkedCommitment } from "./budget";
 import { enqueueEmail, type EmailAudience, type Recipient } from "@/lib/email/outbox";
 import { formatCAD, type TaxBreakdown } from "@/lib/money";
 import { formatDate, formatDateTime } from "@/lib/time-zone";
@@ -200,6 +201,38 @@ async function itemLines(tx: Tx, ctx: Context) {
 }
 
 /**
+ * The department's budget bar for an approver (FR-42): spent and committed, this expense,
+ * and what's left once it's charged (a claim closing a purchase request releases that
+ * commitment). The same figures the review screen uses. None without an approved budget.
+ */
+async function budgetMeter(
+  tx: Tx,
+  ctx: Context,
+  amountCents: number,
+): Promise<EmailMeter | undefined> {
+  const e = ctx.e;
+  const figures = await budgetFigures(tx, e.budgetCycleId, e.departmentId);
+  if (figures.annualRequestId === null) return undefined;
+  const impact = impactOf(
+    figures,
+    amountCents,
+    await linkedCommitment(tx, e.linkedPurchaseRequestId),
+  );
+  const used = figures.committed + figures.spent;
+  const m = x.newSubmission.meter;
+  return {
+    heading: m.heading(e.departmentNameSnapshot, ctx.cycleName, formatCAD(figures.available)),
+    parts: [
+      { label: m.used, value: formatCAD(used), cents: used, kind: "used" },
+      { label: m.this, value: formatCAD(amountCents), cents: amountCents, kind: "this" },
+      impact.after >= 0
+        ? { label: m.left, value: formatCAD(impact.after), cents: impact.after, kind: "left" }
+        : { label: m.over, value: formatCAD(impact.overBy), cents: 0, kind: "left" },
+    ],
+  };
+}
+
+/**
  * FR-49 "Requester (+ payee)": the submitter, the payee when that's someone else, and
  * every leader of the department. Each address once.
  */
@@ -312,7 +345,39 @@ export async function queueExpenseEmails(
         hero: { value: amount, caption: x.newSubmission.heroCaption(e.title, ctx.requesterName) },
         status: x.newSubmission.status,
         tone: "waiting" as const,
+        meter: await budgetMeter(tx, ctx, requested(e).total),
       };
+      const cover = await board();
+      const accountantCover = await accountants();
+      // Both are asked at once (FR-42), so at submission both are waiting. A name when
+      // one person holds the role, the role alone when several share it.
+      const named = (people: { name: string }[], role: string) =>
+        people.length === 1 && people[0].name ? `${people[0].name} (${role})` : role;
+      const people = {
+        heading: x.newSubmission.approvals,
+        items: [
+          {
+            name: named(accountantCover, ROLE_NAMES.accountant),
+            status: x.newSubmission.waiting,
+          },
+          {
+            name: named(
+              cover.recipients,
+              ROLE_NAMES[cover.viceCovering ? "vice_chair" : "board_chair"],
+            ),
+            status: x.newSubmission.waiting,
+          },
+        ],
+      };
+      // "#decide" lands on the decision with Approve chosen; it never reaches the server.
+      const approveAt = (link: { href: string }) => ({
+        label: x.newSubmission.approveButton(amount),
+        href: `${link.href}#decide`,
+      });
+      const others = (link: { href: string }) => ({
+        label: x.newSubmission.otherChoices,
+        href: link.href,
+      });
       out.push(
         {
           template: "expenses.submitted.receipt",
@@ -333,9 +398,10 @@ export async function queueExpenseEmails(
         {
           template: "expenses.submitted.accountant",
           audience: "accountant",
-          to: await accountants(),
+          to: accountantCover,
           content: {
             ...ask,
+            people,
             paragraphs: [x.newSubmission.intro(dept, ctx.actorName), x.newSubmission.together],
             facts: facts(ctx, [
               { label: x.facts.requester, value: ctx.requesterName },
@@ -344,18 +410,17 @@ export async function queueExpenseEmails(
             summary: asked,
             lines,
             action: x.newSubmission.action,
-            button: review,
+            button: approveAt(review),
+            secondaryButton: others(review),
           },
         },
-      );
-      {
-        const cover = await board();
-        out.push({
+        {
           template: "expenses.board_needed",
           audience: "board",
           to: cover.recipients,
           content: {
             ...ask,
+            people,
             paragraphs: [
               x.newSubmission.intro(dept, ctx.actorName),
               x.newSubmission.together,
@@ -368,10 +433,11 @@ export async function queueExpenseEmails(
             summary: asked,
             lines,
             action: x.boardNeeded.action,
-            button: decide,
+            button: approveAt(decide),
+            secondaryButton: others(decide),
           },
-        });
-      }
+        },
+      );
       break;
     }
 

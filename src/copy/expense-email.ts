@@ -72,6 +72,19 @@ export const expenseEmailCopy = {
     together:
       "The accountant and the Board Chair are asked at the same time and can approve in either order. It's approved once you both approve; if your amounts differ, the lower one is approved.",
     action: "Review it and decide: approve, approve a smaller amount, return it, or decline it.",
+    /** The department's budget bar (FR-42): what's used, this expense, what's left after. */
+    meter: {
+      heading: (d: string, c: string, available: string) => `${d} ${c} budget · ${available}`,
+      used: "Spent and committed",
+      this: "This expense",
+      left: "Left after this",
+      over: "Over budget after this",
+    },
+    approvals: "Approvals",
+    waiting: "Waiting",
+    /** Opens the decision with Approve chosen; the app still asks to confirm. */
+    approveButton: (amount: string) => `Approve ${amount}`,
+    otherChoices: "Other choices",
   },
   updated: {
     subject: (r: string, d: string) => `Updated: ${about(r, d)}`,

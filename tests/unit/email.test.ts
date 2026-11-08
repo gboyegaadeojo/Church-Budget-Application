@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { appUrl, escapeHtml, renderEmail, type EmailContent } from "@/lib/email/layout";
+import {
+  appUrl,
+  escapeHtml,
+  meterShares,
+  renderEmail,
+  type EmailContent,
+} from "@/lib/email/layout";
 import { MAX_ATTEMPTS, retryDelayMs } from "@/lib/email/outbox";
 import { ResendEmailSender } from "@/lib/email/resend";
 
@@ -242,5 +248,53 @@ describe("Resend sender", () => {
       json(422, { name: "validation_error", message: "Invalid `to`" }),
     ).sender.send(message);
     expect(result).toEqual({ kind: "failed", error: "Resend 422 validation_error: Invalid `to`" });
+  });
+});
+
+describe("budget bar, people and a second button", () => {
+  it("splits the bar into whole percents adding to 100, keeping small parts visible", () => {
+    expect(meterShares([390_410, 41_237, 218_353])).toEqual([60, 6, 34]);
+    expect(meterShares([100_000, 1, 99_999]).reduce((a, b) => a + b, 0)).toBe(100);
+    expect(meterShares([100_000, 1, 99_999])[1]).toBe(2);
+    expect(meterShares([500, 100, -50])).toEqual([83, 17, 0]);
+    expect(meterShares([0, 0, 0])).toEqual([0, 0, 0]);
+  });
+
+  it("names every part of the bar and every person in words, in both versions", () => {
+    const { text, html } = renderEmail(
+      {
+        ...content,
+        meter: {
+          heading: "Youth Ministry FY2027 budget · $6,500.00",
+          parts: [
+            { label: "Spent and committed", value: "$3,904.10", cents: 390_410, kind: "used" },
+            { label: "This expense", value: "$412.37", cents: 41_237, kind: "this" },
+            { label: "Left after this", value: "$2,183.53", cents: 218_353, kind: "left" },
+          ],
+        },
+        people: {
+          heading: "Approvals",
+          items: [
+            { name: "Grace Mensah (Accountant)", status: "Waiting" },
+            { name: "David Chen (Board Chair)", status: "Approved", tone: "good" },
+          ],
+        },
+        secondaryButton: { label: "Other choices", href: "https://budget.example.org/x" },
+      },
+      { ...brand, accent: "#6b46d9" },
+    );
+    expect(text).toContain(
+      "Youth Ministry FY2027 budget · $6,500.00:\n- Spent and committed: $3,904.10\n- This expense: $412.37\n- Left after this: $2,183.53",
+    );
+    expect(text).toContain(
+      "Approvals:\n- Grace Mensah (Accountant): Waiting\n- David Chen (Board Chair): Approved",
+    );
+    expect(text).toContain("Other choices: https://budget.example.org/x");
+    expect(html).toContain(
+      '<td width="6%" style="height:10px;line-height:10px;font-size:0;background:#6b46d9;">',
+    );
+    expect(html).toContain("Left after this");
+    expect(html).toMatch(/background:#e7f4ec;color:#16794a;[^>]*>Approved</);
+    expect(html).toMatch(/href="https:\/\/budget\.example\.org\/x"[^>]*>Other choices</);
   });
 });
