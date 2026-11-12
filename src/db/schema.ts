@@ -23,6 +23,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { ANNUAL_STATUSES } from "@/domain/annual/status";
 import { EXPENSE_STATUSES, EXPENSE_TYPES } from "@/domain/expenses/status";
+import { TOUR_IDS, TOUR_OUTCOMES } from "@/domain/tours/tours";
 import { REPRESENTATIVE_TYPES, ROLES } from "@/lib/roles";
 
 /*
@@ -167,6 +168,28 @@ export const userPreferences = pgTable(
       sql`(${t.awayFrom} is not null or ${t.awayUntil} is null)
         and (${t.awayUntil} is null or ${t.awayUntil} > ${t.awayFrom})`,
     ),
+  ],
+);
+
+/**
+ * Which guided tours a person has finished or put aside (decided 2026-11-12), so the
+ * first-time offer shows once, on any device. Not financial history: a later choice
+ * replaces the earlier one, and it isn't in the activity log.
+ */
+export const userTours = pgTable(
+  "user_tours",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    tour: text("tour", { enum: TOUR_IDS }).notNull(),
+    outcome: text("outcome", { enum: TOUR_OUTCOMES }).notNull(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.tour] }),
+    check("user_tours_tour", sql`${t.tour} in ('annual', 'expense')`),
+    check("user_tours_outcome", sql`${t.outcome} in ('finished', 'dismissed')`),
   ],
 );
 

@@ -159,7 +159,7 @@ export const copy = {
       "Plan your department's annual budget, submit expenses and follow spending, all in one place.",
     continueWithPlanningCenter: "Staff: sign in with Planning Center",
     planningCenterNote: "Only if you log in to Planning Center itself, not just Church Center.",
-    or: "or",
+    otherWays: "Other ways to sign in",
     email: {
       open: "Sign in with Church Center Email",
       openNote: "For ministry leaders and office staff. We'll email you a code.",

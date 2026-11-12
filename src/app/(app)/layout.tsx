@@ -17,6 +17,7 @@ import {
   ViewerSidebar,
 } from "@/components/app-shell/viewer-shell";
 import { ViewerAlertsPrompt, ViewerServiceWorker } from "@/components/pwa/viewer-alerts";
+import { TourHost } from "@/components/tour/tour-host";
 import { copy } from "@/copy/en-CA";
 
 /**
@@ -86,6 +87,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       </Suspense>
       <Suspense fallback={null}>
         <ViewerServiceWorker />
+      </Suspense>
+      <Suspense fallback={null}>
+        <TourHost />
       </Suspense>
     </>
   );

@@ -286,6 +286,18 @@ const MATRIX: [string, Action, AuthzContext, Outcome[]][] = [
     { ...YOUTH, annualStatus: "awaiting_second_approval" },
     ["no", "act", "act", "no", "no", "no", "no"],
   ],
+  [
+    "take the annual budget guided tour",
+    "tour.annual",
+    {},
+    ["act", "no", "no", "no", "no", "no", "no"],
+  ],
+  [
+    "take the new expense guided tour",
+    "tour.expense",
+    {},
+    ["act", "no", "no", "no", "no", "no", "no"],
+  ],
   ["see My tasks", "home.view", {}, ["act", "act", "act", "act", "act", "act", "act"]],
   [
     // Staff only (docs/decisions.md, 2026-10-16).
@@ -543,6 +555,15 @@ describe("Expense submitter (6B.2)", () => {
     ...who(["requester"], [], "vol"),
     expenseDepartments: [{ id: "media", name: "Media" }],
   };
+
+  it("is offered the new expense tour whatever their role, but not the annual one", () => {
+    const office: Subject = {
+      ...who(["church_admin"], [], "office"),
+      expenseDepartments: [{ id: "media", name: "Media" }],
+    };
+    expect(authorize(office, "tour.expense").allowed).toBe(true);
+    expect(authorize(office, "tour.annual").allowed).toBe(false);
+  });
 
   it("submits only for the departments given", () => {
     expect(authorize(volunteer, "expense.submit", OWN).allowed).toBe(true);

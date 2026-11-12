@@ -15,6 +15,7 @@ import { StatCard } from "@/components/ui/display";
 import { PaymentBoard } from "@/components/home/payment-board";
 import { AccountantTiles, SpendingRail } from "@/components/home/accountant-home";
 import { DecisionInbox } from "@/components/home/decision-inbox";
+import { HomeTourOffer } from "@/components/tour/tour-offers";
 import { buttonClass } from "@/components/ui/styles";
 import {
   ApprovalsCard,
@@ -157,6 +158,8 @@ async function HomeContent() {
           )}
         </div>
       </header>
+
+      <HomeTourOffer viewer={viewer} />
 
       {accountant && (
         <AccountantTiles

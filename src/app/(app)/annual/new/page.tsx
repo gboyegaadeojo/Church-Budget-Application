@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { AdminSkeleton, PageHeader, PermissionDenied } from "@/components/ui/display";
+import { formTour } from "@/components/tour/tour-offers";
 import { cardClass } from "@/components/ui/styles";
 import { annualCopy } from "@/copy/annual";
 import { getDb } from "@/db";
@@ -44,7 +45,10 @@ async function StartContent() {
       </>
     );
   }
-  const picker = await departmentPicker(db, viewer, cycle.id);
+  const [picker, tour] = await Promise.all([
+    departmentPicker(db, viewer, cycle.id),
+    formTour(viewer, "annual"),
+  ]);
   const waiting = viewer.departments.length === 0;
 
   return (
@@ -53,7 +57,10 @@ async function StartContent() {
         title={s.title}
         intro={waiting ? s.waitingNote : s.intro}
         back={waiting ? undefined : { href: "/annual", label: annualCopy.dashboard.title }}
-      />
+      >
+        {tour.showMeHow}
+      </PageHeader>
+      {tour.offer}
       <StartForm cycle={{ id: cycle.id, name: cycle.name }} {...picker} />
     </>
   );

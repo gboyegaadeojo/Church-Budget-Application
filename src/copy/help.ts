@@ -79,7 +79,7 @@ export const helpCopy = {
       title: "Church Administrator",
       who: "church_admin",
       steps: [
-        "Choose Sign in with Church Center Email and enter the address the church has for you: we email you a 6-digit code. If you have a Planning Center login, Staff: sign in with Planning Center works too, but email works for everyone.",
+        "Choose Sign in with Church Center Email and enter the address the church has for you: we email you a 6-digit code. If you have a Planning Center login, open Other ways to sign in and choose Staff: sign in with Planning Center, but email works for everyone.",
         "New expenses show in My tasks as Waiting for approval until both approvals are in. If the accountant or the Board Chair tells you they approve one, open it and use Record a verbal approval: whose approval, when and how they told you, and tick to confirm. It shows as their verbal approval recorded by you, and they're emailed to check it.",
         "Expenses → Ready to process lists everything with both approvals, oldest first. Start processing tells the requester it's being done.",
         "Pay or buy it outside the app, then Record payment: how it was paid, the date and the amount, with the cheque number and two signers, card digits, e-transfer reference or invoice number. The requester and payee are emailed.",
@@ -129,7 +129,7 @@ export const helpCopy = {
       question: "How do I sign in?",
       answer: [
         "Go to budget.ifcwpg.com, choose Sign in with Church Center Email and type the email on your Planning Center profile, the one Church Center uses. We email you a 6-digit code that works once, for 15 minutes. Ministry leaders and church staff need the Ministry Leader field in Planning Center set to Yes.",
-        "If you log in to Planning Center itself (not just Church Center), you can choose Staff: sign in with Planning Center instead. The Church Administrator and anyone else not in Planning Center sign in with email, using the address the church has for them.",
+        "If you log in to Planning Center itself (not just Church Center), you can open Other ways to sign in, at the bottom of the sign-in page, and choose Staff: sign in with Planning Center instead. The Church Administrator and anyone else not in Planning Center sign in with email, using the address the church has for them.",
       ],
     },
     {
