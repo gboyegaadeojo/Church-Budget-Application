@@ -25,9 +25,9 @@ This manual explains how to use the app, by role. It was checked against the bui
 ### Signing in
 
 1. Open **https://budget.ifcwpg.com** on a computer or phone. To keep it on your phone like an app, see [Get the app](#get-the-app-install-it-and-get-alerts).
-2. Choose **Sign in with Church Center Email** and type the email on your Planning Center profile, the one Church Center uses. If it has Ministry Leader = Yes, we email you a 6-digit code; type it in and you're signed in as that Planning Center profile. A code works once, for 15 minutes. After 5 wrong codes, wait 15 minutes. (A code isn't sent when two leaders share one address: use Staff: sign in with Planning Center instead.) If your **Ministry Department** field in Planning Center names your department, you are added to it when you sign in.
+2. Choose **Sign in with Church Center Email** and type the email on your Planning Center profile, the one Church Center uses. If it has Ministry Leader = Yes, we email you a 6-digit code; type it in and you're signed in as that Planning Center profile. A code works once, for 15 minutes. After 5 wrong codes, wait 15 minutes. (A code isn't sent when two leaders share one address: open **Other ways to sign in** and use Staff: sign in with Planning Center instead.) If your **Ministry Department** field in Planning Center names your department, you are added to it when you sign in.
    - **Church staff** sign in the same way (Ministry Leader = Yes in Planning Center). A System Administrator then gives you your role; if they added you from Planning Center first, you go straight in. If you ever see "Your Planning Center profile isn't linked yet", ask them to link it, then sign in again.
-   - **Log in to Planning Center itself?** You can choose **Staff: sign in with Planning Center** instead. Most leaders only have a Church Center login, which doesn't work there; use **Sign in with Church Center Email**.
+   - **Log in to Planning Center itself?** Open **Other ways to sign in** at the bottom of the sign-in page and choose **Staff: sign in with Planning Center** instead. Most leaders only have a Church Center login, which doesn't work there; use **Sign in with Church Center Email**.
    - **Not in the church's Planning Center?** Anyone the administrator added by email, such as the Church Administrator, chooses **Sign in with Church Center Email** with the address the church has for them.
 3. Department leaders must be marked as a **Group Leader** in Planning Center: **Ministry Leader** set to **Yes** on their Planning Center profile. If you see "Your Group Leader status in Planning Center could not be confirmed", ask your ministry's Planning Center administrator.
 4. If you see "Waiting for department assignment", the System Administrator has been told and will add you.
@@ -47,6 +47,14 @@ Everyone lands on **Home**:
 - **Recent activity** (System Administrator) shows the latest changes, with a link to the full log.
 
 You never need to switch accounts. If you are both an accountant and a requester, you see both in one menu.
+
+### Guided tours
+
+Two short tours walk you through the real forms, one step at a time: **Your first annual budget** and **A new expense**. Each step lights up one part of the page and shows a card beside it (on a phone, a card at the top or bottom of the screen). You fill in the form yourself as you go; the tour saves nothing of its own.
+
+- **When they appear:** the first time you can use a form, a **New here?** card on Home (and on the **Start a budget request** or **New expense** page) offers the tour. The expense tour waits until one of your departments has an approved budget to spend. Choose **Show me how** to start, or **Not now** to hide the card for good.
+- **During a tour:** **Next** and **Back** move between steps, and pressing the lit-up button moves on too. When a step is on another page, **Take me there** opens it. **End tour** (or Esc) stops it.
+- **Any time later:** **Help → Guided tours**, or **Show me how** at the top of the Start a budget request and New expense pages.
 
 ![Home for the accountant: My tasks lists two budgets to review, a payment to record and an expense to review, each with one button; the accountant's dashboard cards are around it.](images/manual/home-accountant.png)
 

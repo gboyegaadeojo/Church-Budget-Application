@@ -97,6 +97,10 @@ export type Action =
   /** Set one's own Away, so accountant emails go to the backup approvers (FR-33). */
   | "account.away" /** Set the department's Primary as Away, so the Backups cover (FR-38). */
   | "department.away"
+  /** Take the annual budget guided tour, and have it remembered (decided 2026-11-12). */
+  | "tour.annual"
+  /** Take the new expense guided tour: whoever can start an expense. */
+  | "tour.expense"
   // Everyone
   | "home.view"
   | "analytics.view"
@@ -170,6 +174,10 @@ const submitsFor: Check = (s, ctx) => {
   const theirs = ctx.requesterUserId === undefined || ctx.requesterUserId === s.id;
   return given && theirs ? null : "not_department_representative";
 };
+
+/** An Expense submitter for at least one department (6B.2), whatever their role. */
+const submitsForSomeone: Check = (s) =>
+  (s.expenseDepartments?.length ?? 0) > 0 ? null : "not_department_representative";
 
 const primaryOfDepartment: Check = (s, ctx) =>
   s.departments.some((d) => d.id === ctx.departmentId && d.representativeType === "primary")
@@ -307,6 +315,11 @@ const RULES: Record<Action, readonly Rule[]> = {
     { roles: ["requester"], check: primaryOfDepartment },
     { roles: ["system_admin"] },
   ],
+
+  // Tours follow who can use each form: anyone who starts an annual budget, and anyone who
+  // can start an expense, including an Expense submitter of any role (6B.2).
+  "tour.annual": [{ roles: ["requester"] }],
+  "tour.expense": [{ roles: ["requester"] }, { roles: EVERY_ROLE, check: submitsForSomeone }],
 
   "home.view": [{ roles: EVERY_ROLE }],
   // Staff only, by the church's decision (docs/decisions.md, 2026-10-16): a requester sees

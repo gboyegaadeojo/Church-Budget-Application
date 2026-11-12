@@ -32,6 +32,7 @@ export function StartExpenseForm({ departments }: { departments: StartDepartment
   return (
     <form action={formAction} noValidate className={cn(cardClass, "space-y-6")}>
       <fieldset
+        data-tour="expense-type"
         className="space-y-3"
         aria-describedby={errors.type ? `${ids}-type-error` : undefined}
       >
@@ -68,7 +69,7 @@ export function StartExpenseForm({ departments }: { departments: StartDepartment
         )}
       </fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div data-tour="expense-department" className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor={`${ids}-department`} className="block text-sm font-medium">
             {s.department}
@@ -116,7 +117,9 @@ export function StartExpenseForm({ departments }: { departments: StartDepartment
       </div>
 
       <div className="flex justify-end">
-        <SubmitButton>{s.continue}</SubmitButton>
+        <div data-tour="expense-continue">
+          <SubmitButton>{s.continue}</SubmitButton>
+        </div>
       </div>
       <FormMessage state={state} />
     </form>

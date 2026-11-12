@@ -399,12 +399,18 @@ export function RequestEditor({
                 )}
               </div>
               {step === 0 ? (
-                <button type="button" onClick={() => setStep(1)} className={buttonClass("primary")}>
+                <button
+                  type="button"
+                  data-tour="annual-next"
+                  onClick={() => setStep(1)}
+                  className={buttonClass("primary")}
+                >
                   {f.next}
                 </button>
               ) : (
                 <button
                   type="button"
+                  data-tour="annual-preview"
                   onClick={() => void goToPreview()}
                   className={buttonClass("primary")}
                 >
@@ -456,7 +462,7 @@ function DetailsStep({ form, values }: { form: UseFormReturn<FormValues>; values
   const justError = formState.errors.justification?.message;
   const used = values.justification?.length ?? 0;
   return (
-    <div className="space-y-5">
+    <div data-tour="annual-details" className="space-y-5">
       <div className="space-y-1.5">
         <label htmlFor={`${ids}-title`} className="block text-sm font-medium">
           {f.title}
@@ -554,7 +560,7 @@ function ItemsStep({
           {listError}
         </p>
       )}
-      <div className="rounded-control border border-border">
+      <div data-tour="annual-items" className="rounded-control border border-border">
         {/* Column headings on wider screens; every field keeps its own label for screen readers. */}
         <div
           aria-hidden="true"
@@ -875,13 +881,17 @@ function SummaryPanel({
       {/* Desktop: a side panel that stays in view. */}
       <aside
         aria-label={f.summary}
+        data-tour="annual-summary"
         className={cn(cardClass, "sticky top-20 hidden space-y-4 lg:block")}
       >
         <FinancialSummary totals={totals} rate={rate} heading={f.summary} />
         {save && <SaveStatus save={save} onRetry={onRetry} />}
       </aside>
       {/* Mobile: a bar above the navigation showing the total; it expands for the breakdown. */}
-      <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-(--z-sticky) border-t border-border bg-surface px-4 py-3 md:bottom-0 shadow-overlay lg:hidden">
+      <div
+        data-tour="annual-summary"
+        className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-(--z-sticky) border-t border-border bg-surface px-4 py-3 md:bottom-0 shadow-overlay lg:hidden"
+      >
         {open && <FinancialSummary totals={totals} rate={rate} className="pb-3" />}
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
@@ -1114,6 +1124,7 @@ function PreviewStep({
         </button>
         <AlertDialog.Root>
           <AlertDialog.Trigger
+            data-tour="annual-submit"
             className={buttonClass("primary")}
             disabled={pending}
             aria-busy={pending || undefined}

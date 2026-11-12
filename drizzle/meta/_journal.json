@@ -232,6 +232,13 @@
       "when": 1794078441870,
       "tag": "0032_expense_sales_tax_choice",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794515530005,
+      "tag": "0033_user_tours",
+      "breakpoints": true
     }
   ]
 }

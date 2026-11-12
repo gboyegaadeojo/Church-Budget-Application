@@ -65,6 +65,7 @@ export function StartForm({
       </p>
 
       <fieldset
+        data-tour="annual-department"
         className="min-w-0 space-y-3"
         aria-describedby={errors.departmentId ? `${ids}-dept-error` : undefined}
       >
@@ -227,9 +228,11 @@ export function StartForm({
       )}
 
       <div className="flex justify-end">
-        <SubmitButton className="w-full sm:w-auto">
-          {chosen?.existing ? existingAction(chosen.existing) : s.continue}
-        </SubmitButton>
+        <div data-tour="annual-continue" className="w-full sm:w-auto">
+          <SubmitButton className="w-full sm:w-auto">
+            {chosen?.existing ? existingAction(chosen.existing) : s.continue}
+          </SubmitButton>
+        </div>
       </div>
       <FormMessage state={state} />
     </form>

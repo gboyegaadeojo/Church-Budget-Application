@@ -1,9 +1,13 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AdminSkeleton, PageHeader, Section } from "@/components/ui/display";
+import { TourStartButton } from "@/components/tour/tour-start";
+import { AdminSkeleton, Badge, PageHeader, Section } from "@/components/ui/display";
 import { cardClass } from "@/components/ui/styles";
 import { helpCopy, type HelpGuide } from "@/copy/help";
+import { toursCopy } from "@/copy/tours";
+import { getDb } from "@/db";
+import { myTours } from "@/domain/tours/service";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/roles";
 import { getViewer } from "@/lib/viewer";
@@ -43,6 +47,7 @@ async function HelpContent() {
   const mine = (g: HelpGuide) => GUIDE_ROLES[g.who].some((r) => viewer.roles.includes(r));
   const yours = h.guides.filter(mine);
   const others = h.guides.filter((g) => !mine(g));
+  const tours = await myTours(getDb(), viewer);
 
   return (
     <>
@@ -63,6 +68,34 @@ async function HelpContent() {
           ))}
         </ul>
       </nav>
+
+      {tours.length > 0 && (
+        <Section
+          title={toursCopy.help.heading}
+          description={toursCopy.help.intro}
+          id="guided-tours"
+        >
+          <ul className="divide-y divide-border overflow-hidden rounded-[14px] border border-border">
+            {tours.map(({ tour, outcome }) => (
+              <li
+                key={tour}
+                className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0 space-y-0.5">
+                  <p className="flex flex-wrap items-center gap-2 font-medium">
+                    {toursCopy.names[tour]}
+                    {outcome === "finished" && (
+                      <Badge tone="success">{toursCopy.help.finished}</Badge>
+                    )}
+                  </p>
+                  <p className="text-sm text-fg-muted">{toursCopy.descriptions[tour]}</p>
+                </div>
+                <TourStartButton tour={tour} again={outcome === "finished"} />
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       {yours.length > 0 && (
         <Section title={h.yourGuides} id="your-guides">

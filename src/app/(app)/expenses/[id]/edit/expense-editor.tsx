@@ -387,7 +387,10 @@ export function ExpenseEditor({
   );
 
   return (
-    <div className="mx-auto w-full max-w-[32rem] space-y-5 rounded-card bg-surface p-5 shadow-card sm:p-7">
+    <div
+      data-tour-type={info.type}
+      className="mx-auto w-full max-w-[32rem] space-y-5 rounded-card bg-surface p-5 shadow-card sm:p-7"
+    >
       <div className="flex items-center justify-between gap-3">
         {step !== 0 ? (
           <button
@@ -401,11 +404,13 @@ export function ExpenseEditor({
         ) : (
           <span className="size-11 shrink-0" aria-hidden="true" />
         )}
-        <BudgetPill
-          department={info.department}
-          figures={info.figures}
-          after={totals.total > 0 ? after : null}
-        />
+        <div data-tour="expense-budget" className="min-w-0">
+          <BudgetPill
+            department={info.department}
+            figures={info.figures}
+            after={totals.total > 0 ? after : null}
+          />
+        </div>
       </div>
 
       <header className="space-y-0.5">
@@ -442,7 +447,7 @@ export function ExpenseEditor({
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div data-tour="expense-question" className="space-y-3">
         <p
           className={cn(
             "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold tracking-wide uppercase",
@@ -556,6 +561,7 @@ export function ExpenseEditor({
             )}
             <button
               type="button"
+              data-tour="expense-next"
               onClick={() => void next()}
               disabled={saving === "saving"}
               aria-busy={saving === "saving" || undefined}
@@ -683,7 +689,10 @@ function describedBy(...ids: (string | false | undefined)[]) {
 function SalesTaxSwitch({ form, on, rate }: FormProps & { on: boolean; rate: string }) {
   const id = useId();
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[12px] bg-surface-2 p-4">
+    <div
+      data-tour="expense-tax"
+      className="flex items-center justify-between gap-4 rounded-[12px] bg-surface-2 p-4"
+    >
       <div className="min-w-0 space-y-0.5">
         <p id={`${id}-label`} className="text-base font-bold">
           {f.salesTax(`${taxRateToPercent(rate)}%`)}
@@ -1481,6 +1490,7 @@ function Review({
       <div className="space-y-2">
         <AlertDialog.Root>
           <AlertDialog.Trigger
+            data-tour="expense-send"
             className={buttonClass(
               "primary",
               "min-h-12 w-full rounded-[10px] text-[15px] lg:min-h-12",

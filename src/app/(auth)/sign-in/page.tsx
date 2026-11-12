@@ -82,28 +82,8 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/sign-in">, "sear
       {showPco || showEmail ? (
         <div className="space-y-3">
           {showEmail && <EmailSignIn callbackUrl={callbackUrl} />}
-          {showPco && showEmail && (
-            <div className="flex items-center gap-3 py-1 text-xs text-fg-muted" aria-hidden="true">
-              <span className="h-px flex-1 bg-border" />
-              {s.or}
-              <span className="h-px flex-1 bg-border" />
-            </div>
-          )}
-          {showPco && (
-            <div className="space-y-2">
-              <ProviderButton
-                provider="planningcenter"
-                callbackUrl={callbackUrl}
-                primary={!showEmail}
-              >
-                <Users className="size-5" aria-hidden="true" />
-                {s.continueWithPlanningCenter}
-              </ProviderButton>
-              {showEmail && (
-                <p className="text-center text-xs text-fg-muted">{s.planningCenterNote}</p>
-              )}
-            </div>
-          )}
+          {/* Planning Center alone is the main way in; beside email it waits folded below. */}
+          {showPco && !showEmail && <PlanningCenterButton callbackUrl={callbackUrl} primary />}
         </div>
       ) : (
         !fake && <p className="rounded-[12px] bg-surface-2 p-3 text-sm">{s.notConfigured}</p>
@@ -125,6 +105,26 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/sign-in">, "sear
         </div>
       </details>
 
+      {/*
+       * Only staff who log in to Planning Center itself use it, so it stays out of the way of
+       * ministry leaders (design B, decided 2026-11-12).
+       */}
+      {showPco && showEmail && (
+        <details className="group border-t border-border pt-3 text-sm">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center gap-1.5 font-medium text-fg-muted transition-colors duration-150 hover:text-fg motion-reduce:transition-none [&::-webkit-details-marker]:hidden">
+            {s.otherWays}
+            <ChevronRight
+              className="size-4 transition-transform duration-150 group-open:rotate-90 motion-reduce:transition-none"
+              aria-hidden="true"
+            />
+          </summary>
+          <div className="space-y-2 pt-2">
+            <PlanningCenterButton callbackUrl={callbackUrl} primary={false} />
+            <p className="text-center text-xs text-fg-muted">{s.planningCenterNote}</p>
+          </div>
+        </details>
+      )}
+
       {!demo && fake && <FakeSignIn callbackUrl={callbackUrl} />}
     </div>
   );
@@ -139,6 +139,15 @@ const secondaryClass = `${buttonBase} border border-border-strong bg-surface tra
 
 const fakeClass =
   "flex min-h-10 w-full items-center gap-3 rounded-[12px] border border-border bg-surface px-4 text-left text-sm font-medium transition-colors duration-150 hover:bg-surface-hover motion-reduce:transition-none";
+
+function PlanningCenterButton({ callbackUrl, primary }: { callbackUrl: string; primary: boolean }) {
+  return (
+    <ProviderButton provider="planningcenter" callbackUrl={callbackUrl} primary={primary}>
+      <Users className="size-5" aria-hidden="true" />
+      {s.continueWithPlanningCenter}
+    </ProviderButton>
+  );
+}
 
 function ProviderButton({
   provider,

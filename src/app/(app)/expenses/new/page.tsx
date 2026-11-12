@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { formTour } from "@/components/tour/tour-offers";
 import { AdminSkeleton, EmptyState, PageHeader, PermissionDenied } from "@/components/ui/display";
 import { expensesCopy } from "@/copy/expenses";
 import { getDb } from "@/db";
@@ -27,18 +28,26 @@ async function NewExpenseContent() {
   const viewer = await getViewer();
   const submitter = (viewer.expenseDepartments?.length ?? 0) > 0;
   if (!hasRole(viewer, "requester") && !submitter) return <PermissionDenied />;
-  const options = await expenseStartOptions(getDb(), viewer);
+  const [options, tour] = await Promise.all([
+    expenseStartOptions(getDb(), viewer),
+    formTour(viewer, "expense"),
+  ]);
   const withBudget = options.filter((d) => d.cycles.length > 0);
+  // The tour needs a budget to spend from, so it waits until there is one.
+  const ready = withBudget.length > 0;
   return (
     <>
       <PageHeader
         title={s.title}
         intro={s.intro}
         back={{ href: "/expenses/mine", label: expensesCopy.mine.title }}
-      />
+      >
+        {ready && tour.showMeHow}
+      </PageHeader>
+      {ready && tour.offer}
       {options.length === 0 ? (
         <EmptyState>{s.noDepartments}</EmptyState>
-      ) : withBudget.length === 0 ? (
+      ) : !ready ? (
         <EmptyState>{s.noBudgets}</EmptyState>
       ) : (
         <StartExpenseForm departments={withBudget} />

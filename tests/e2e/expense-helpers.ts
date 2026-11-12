@@ -12,7 +12,11 @@ export const EXP = /EXP-2026-\d{4}/;
 
 export async function startExpense(page: Page, type: "Purchase request" | "Expense claim") {
   await page.goto("/expenses/new");
-  await page.getByRole("radio", { name: new RegExp(`^${type}`) }).check({ force: true });
+  // Click the visible card: the radio itself is visually hidden, and on a phone its spot
+  // can sit under the bottom bar.
+  const radio = page.getByRole("radio", { name: new RegExp(`^${type}`) });
+  await page.locator("label").filter({ has: radio }).click();
+  await expect(radio).toBeChecked();
   await page.getByLabel("Department", { exact: true }).selectOption({ label: "Media Team" });
   await page.getByLabel("Budget year").selectOption({ label: "FY2026" });
   await page.getByRole("button", { name: "Continue" }).click();
