@@ -33,25 +33,43 @@ async function fillItem(
   n: number,
   item: { name: string; quantity: string; price: string; link?: string; notes?: string },
 ) {
+  await openItem(page, n);
   const row = page.getByRole("group", { name: `Item ${n}` });
   await row.getByLabel("Item name").fill(item.name);
-  await row.getByLabel("Quantity").fill(item.quantity);
-  await row.getByLabel("Unit price (before tax)").fill(item.price);
-  if (item.link || item.notes) await openLinkAndNotes(page, n);
+  await row.getByLabel("How many").fill(item.quantity);
+  await row.getByLabel("Price each, before tax").fill(item.price);
+  if (item.notes) await openNotes(page, n);
   if (item.link) await row.getByLabel("Product link").fill(item.link);
   if (item.notes) await row.getByLabel("Notes").fill(item.notes);
 }
 
-/** Link and notes sit behind a toggle under each item. */
-async function openLinkAndNotes(page: Page, n: number) {
-  const toggle = page.getByRole("button", { name: `Link and notes for item ${n}` });
-  if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+/** One item is open at a time; the others are one line each that opens them. */
+async function openItem(page: Page, n: number) {
+  const line = page.getByRole("button", { name: new RegExp(`^Change item ${n}:`) });
+  if (await line.isVisible()) {
+    await line.click();
+    await expect(
+      page.getByRole("group", { name: `Item ${n}` }).getByLabel("Item name"),
+    ).toBeFocused();
+  }
 }
 
-/** Move up, Move down and Remove are in each item's actions menu. */
-async function itemAction(page: Page, n: number, action: string) {
-  await page.getByRole("button", { name: `Item ${n} actions` }).click();
-  await page.getByRole("menuitem", { name: action }).click();
+/** Notes always shows on a wide screen; on a narrow one it opens from a button. */
+async function openNotes(page: Page, n: number) {
+  const row = page.getByRole("group", { name: `Item ${n}` });
+  if (!(await row.getByLabel("Notes").isVisible())) {
+    await row.getByRole("button", { name: `Notes item ${n}`, exact: true }).click();
+    await expect(row.getByLabel("Notes")).toBeFocused();
+  }
+}
+
+/** Move up, Move down and Remove are buttons on an open item ("Move up item 2"). */
+async function itemAction(page: Page, n: number, action: "Move up" | "Move down" | "Remove") {
+  await openItem(page, n);
+  await page
+    .getByRole("group", { name: `Item ${n}` })
+    .getByRole("button", { name: `${action} item ${n}`, exact: true })
+    .click();
 }
 
 /** A whole draft → items → preview → submit; returns the request's page URL. */
@@ -78,7 +96,8 @@ async function reviseQuantity(page: Page, quantity: string) {
   await expect(page.getByRole("group", { name: "Item 1" }).getByLabel("Item name")).toHaveValue(
     "Microphone",
   );
-  await page.getByRole("group", { name: "Item 1" }).getByLabel("Quantity").fill(quantity);
+  await openItem(page, 1);
+  await page.getByRole("group", { name: "Item 1" }).getByLabel("How many").fill(quantity);
   await page.getByRole("button", { name: "Preview" }).click();
   await page.getByRole("button", { name: "Save changes" }).click();
   await page.getByRole("button", { name: "Use 1 edit and save" }).click();
@@ -127,12 +146,17 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await expect(summary.getByText("$1,025.00")).toBeVisible();
     await expect(summary.getByText("$123.00")).toBeVisible();
     await expect(summary.getByText("$1,148.00")).toBeVisible();
-    await page.getByRole("group", { name: "Item 1" }).getByLabel("Quantity").fill("1");
+    // Adding item 2 closed item 1 to one line, with its numbers.
+    await expect(
+      page.getByRole("button", { name: /^Change item 1: Stage lights .*\$1,000\.00/ }),
+    ).toBeVisible();
+    await openItem(page, 1);
+    await page.getByRole("group", { name: "Item 1" }).getByLabel("How many").fill("1");
     await expect(summary.getByText("$525.00")).toBeVisible();
-    await page.getByRole("group", { name: "Item 1" }).getByLabel("Quantity").fill("2");
+    await page.getByRole("group", { name: "Item 1" }).getByLabel("How many").fill("2");
 
     // Move up / Move down reorder without a mouse drag.
-    await itemAction(page, 2, "Move item 2 up");
+    await itemAction(page, 2, "Move up");
     await expect(page.getByRole("group", { name: "Item 1" }).getByLabel("Item name")).toHaveValue(
       "Gaffer tape",
     );
@@ -193,9 +217,8 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await page.getByRole("button", { name: "Next" }).click();
     const row = page.getByRole("group", { name: "Item 1" });
     await row.getByLabel("Item name").fill("Bus rental");
-    await row.getByLabel("Quantity").fill("1.5");
-    await row.getByLabel("Unit price (before tax)").fill("-20");
-    await openLinkAndNotes(page, 1);
+    await row.getByLabel("How many").fill("1.5");
+    await row.getByLabel("Price each, before tax").fill("-20");
     await row.getByLabel("Product link").fill("ftp://example.com/bus");
     await page.getByRole("button", { name: "Preview" }).click();
 
@@ -207,11 +230,11 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await expect(
       row.getByText("Enter a web address starting with http:// or https://."),
     ).toBeVisible();
-    await expect(row.getByLabel("Quantity")).toHaveAttribute("aria-invalid", "true");
+    await expect(row.getByLabel("How many")).toHaveAttribute("aria-invalid", "true");
 
     // Fixed formats, but no title, justification or note on a $0.00 item (AC-23, rule 8).
-    await row.getByLabel("Quantity").fill("1");
-    await row.getByLabel("Unit price (before tax)").fill("0");
+    await row.getByLabel("How many").fill("1");
+    await row.getByLabel("Price each, before tax").fill("0");
     await row.getByLabel("Product link").fill("");
     await page.getByRole("button", { name: "Preview" }).click();
     await expect(page.getByRole("heading", { name: "Request information" })).toBeFocused();
@@ -222,7 +245,7 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
 
     // A message goes as soon as its field is edited, so an autosave that caught a
     // half-typed price doesn't leave its message behind once the price is put right.
-    const price = row.getByLabel("Unit price (before tax)");
+    const price = row.getByLabel("Price each, before tax");
     await price.fill("1590.485");
     await expect(row.getByText(/Enter a price before tax/)).toBeVisible();
     await price.fill("1590.48");
@@ -288,11 +311,11 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await page.getByRole("button", { name: "Next" }).click();
     await fillItem(page, 1, { name: "Name badges", quantity: "20", price: "3.50" });
 
-    await itemAction(page, 1, "Remove item 1");
+    await itemAction(page, 1, "Remove");
     const dialog = page.getByRole("alertdialog", { name: "Remove Name badges?" });
     await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(page.getByRole("group", { name: "Item 1" })).toBeVisible();
-    await itemAction(page, 1, "Remove item 1");
+    await itemAction(page, 1, "Remove");
     await dialog.getByRole("button", { name: "Remove item" }).click();
     await expect(page.getByRole("group", { name: "Item 1" })).toHaveCount(0);
 
@@ -343,11 +366,66 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await startBudget(page, "Men's Fellowship");
     const editUrl = page.url();
     await fillDetails(page, "Men's Fellowship 2027");
+    await page.getByRole("button", { name: "Next" }).click();
+    const items = [
+      {
+        name: "Sigma 70-200mm lens",
+        quantity: "3",
+        price: "2200.00",
+        link: "https://shop.example.com/sigma",
+        notes: "Replaces the broken one",
+      },
+      { name: "SIRUI SVT75 Tripod", quantity: "2", price: "1590.48" },
+    ];
+    await fillItem(page, 1, items[0]!);
+    await page.getByRole("button", { name: "Add item" }).click();
+    await fillItem(page, 2, items[1]!);
     await page.getByRole("button", { name: "Save and exit" }).click();
     await page.waitForURL(/\/annual\?saved=draft$/);
     await expect(page.getByText("Draft saved. Continue it any time from here.")).toBeVisible();
+
+    // The saved draft opens with every item as it was typed: nothing is lost.
     await page.goto(editUrl);
     await expect(page.getByLabel("Request title")).toHaveValue("Men's Fellowship 2027");
+    await page.getByRole("button", { name: "Next" }).click();
+    for (const [i, item] of items.entries()) {
+      const row = page.getByRole("group", { name: `Item ${i + 1}` });
+      await expect(row.getByLabel("Item name")).toHaveValue(item.name);
+      await expect(row.getByLabel("How many")).toHaveValue(item.quantity);
+      await expect(row.getByLabel("Price each, before tax")).toHaveValue(item.price);
+      await expect(row.getByLabel("Product link")).toHaveValue(item.link ?? "");
+      await expect(row.getByLabel("Notes")).toHaveValue(item.notes ?? "");
+    }
+    // Each saved item opens as one line with its numbers, link and notes.
+    await expect(
+      page.getByRole("button", {
+        name: /^Change item 1: Sigma 70-200mm lens .*shop\.example\.com · Notes added .*\$6,600\.00/,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /^Change item 2: SIRUI SVT75 Tripod .*\$3,180\.96/ }),
+    ).toBeVisible();
+    // 12% on $9,780.96.
+    const summary = page.getByRole("complementary", { name: "Financial summary" });
+    await expect(summary.getByText("$10,954.68")).toBeVisible();
+    await expectAxeClean(page);
+
+    // On a phone: one line each, "3 × $2,200.00"; opening one shows its link and notes.
+    await page.setViewportSize(MOBILE);
+    await expect(
+      page.getByRole("button", { name: /^Change item 1: Sigma 70-200mm lens 3 × \$2,200\.00/ }),
+    ).toBeVisible();
+    await openItem(page, 1);
+    const first = page.getByRole("group", { name: "Item 1" });
+    await expect(first.getByLabel("Product link")).toHaveValue("https://shop.example.com/sigma");
+    await expect(first.getByLabel("Notes")).toBeVisible();
+    await expect(first.getByText("$6,600.00")).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectAxeClean(page);
+
+    // Done closes it again.
+    await first.getByRole("button", { name: "Done item 1", exact: true }).click();
+    await expect(page.getByRole("button", { name: /^Change item 1:/ })).toBeFocused();
   });
 
   test("AC-14 Other suggests a close match before creating a proposed department", async ({
@@ -383,9 +461,9 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     // Enter in the last row adds a row and moves focus to its item name.
     const first = page.getByRole("group", { name: "Item 1" });
     await first.getByLabel("Item name").fill("Gift bags");
-    await first.getByLabel("Quantity").fill("10");
-    await first.getByLabel("Unit price (before tax)").fill("4.00");
-    await first.getByLabel("Unit price (before tax)").press("Enter");
+    await first.getByLabel("How many").fill("10");
+    await first.getByLabel("Price each, before tax").fill("4.00");
+    await first.getByLabel("Price each, before tax").press("Enter");
     await expect(page.getByRole("group", { name: "Item 2" }).getByLabel("Item name")).toBeFocused();
 
     await page.getByRole("button", { name: "Preview" }).focus();
