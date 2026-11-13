@@ -25,6 +25,7 @@ import { lineTotal, normalizeTaxRate, type TaxBreakdown } from "@/lib/money";
 import type { Role } from "@/lib/roles";
 import { formatDateTime } from "@/lib/time-zone";
 import {
+  draftTaxRate,
   requestContentSchema,
   submissionErrors,
   totalsOf,
@@ -155,7 +156,7 @@ async function replaceLines(tx: Tx, requestId: string, lines: readonly LineConte
   );
 }
 
-/** The sales tax rate for drafts and new submissions (FR-07a). */
+/** The sales tax rate in Settings, for drafts and new submissions (FR-07a). */
 export async function currentTaxRate(tx: Tx): Promise<string> {
   const { sales_tax_rate } = await readSettings(tx, ["sales_tax_rate"]);
   return normalizeTaxRate(sales_tax_rate);
@@ -548,9 +549,10 @@ export async function saveDraft(
   const newVersion = await updateRequest(tx, row, version, {
     title: content.title,
     justification: content.justification,
+    addsSalesTax: content.addsSalesTax,
   });
   await replaceLines(tx, row.id, content.lines);
-  const rate = await currentTaxRate(tx);
+  const rate = draftTaxRate(await currentTaxRate(tx), content.addsSalesTax);
   const totals = totalsOf(content.lines, rate);
   await writeAudit(tx, {
     actor: actorOf(actor, actingRole),
@@ -561,7 +563,13 @@ export async function saveDraft(
     cycleId: row.budgetCycleId,
     details: {
       summary: `${content.lines.length} items`,
-      after: { subtotalCents: totals.subtotal },
+      ...(content.addsSalesTax !== row.addsSalesTax && {
+        before: { addsSalesTax: row.addsSalesTax },
+      }),
+      after: {
+        subtotalCents: totals.subtotal,
+        ...(content.addsSalesTax !== row.addsSalesTax && { addsSalesTax: content.addsSalesTax }),
+      },
     },
   });
   return { version: newVersion, rate, totals };
@@ -643,11 +651,17 @@ export async function submitRequest(
   }
 
   const lines = await linesOf(tx, row.id);
-  const content: RequestContent = { title: row.title, justification: row.justification, lines };
+  const content: RequestContent = {
+    title: row.title,
+    justification: row.justification,
+    addsSalesTax: row.addsSalesTax,
+    lines,
+  };
   const errors = submissionErrors(content);
   if (Object.keys(errors).length > 0) throw new ValidationError(errors);
 
-  const rate = await currentTaxRate(tx);
+  // The Settings rate, or none if the requester turned sales tax off; snapshotted here.
+  const rate = draftTaxRate(await currentTaxRate(tx), row.addsSalesTax);
   const totals = totalsOf(lines, rate);
   const referenceNumber = await nextReference(tx, "annual", cycle.budgetYear);
   await updateRequest(tx, row, version, {
@@ -681,7 +695,13 @@ export async function submitRequest(
     cycleId: row.budgetCycleId,
     details: {
       before: { status: row.status },
-      after: { status: next, referenceNumber, taxRate: rate, totalCents: totals.total },
+      after: {
+        status: next,
+        referenceNumber,
+        taxRate: rate,
+        addsSalesTax: row.addsSalesTax,
+        totalCents: totals.total,
+      },
     },
   });
   await queueAnnualEmails(tx, row.id, actor.id, { kind: "submitted" }, { now });

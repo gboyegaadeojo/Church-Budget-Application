@@ -239,6 +239,13 @@
       "when": 1794515530005,
       "tag": "0033_user_tours",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794586431843,
+      "tag": "0034_annual_sales_tax_choice",
+      "breakpoints": true
     }
   ]
 }

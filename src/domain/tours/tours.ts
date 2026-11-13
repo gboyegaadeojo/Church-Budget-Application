@@ -52,6 +52,7 @@ export const TOURS: Record<TourId, readonly TourStep[]> = {
     { id: "details", page: "annual-edit", target: "annual-details" },
     { id: "next", page: "annual-edit", target: "annual-next", advanceOnClick: true },
     { id: "items", page: "annual-edit", target: "annual-items" },
+    { id: "tax", page: "annual-edit", target: "annual-tax-switch" },
     { id: "summary", page: "annual-edit", target: "annual-summary" },
     { id: "preview", page: "annual-edit", target: "annual-preview", advanceOnClick: true },
     { id: "submit", page: "annual-edit", target: "annual-submit" },

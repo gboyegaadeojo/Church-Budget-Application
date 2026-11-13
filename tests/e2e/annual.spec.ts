@@ -428,6 +428,40 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await expect(page.getByRole("button", { name: /^Change item 1:/ })).toBeFocused();
   });
 
+  test("sales tax switch: the cycle's 12% on by default, off adds none, axe clean", async ({
+    page,
+  }) => {
+    await page.setViewportSize(DESKTOP);
+    await signInAs(page, PEOPLE.gina);
+    await startBudget(page, "Choir Team");
+    await fillDetails(page, "Choir Team 2027");
+    await page.getByRole("button", { name: "Next" }).click();
+    await fillItem(page, 1, { name: "Robes", quantity: "1", price: "500.00" });
+
+    const tax = page.getByRole("switch", { name: "Add 12% sales tax" });
+    await expect(tax).toHaveAttribute("aria-checked", "true");
+    const summary = page.getByRole("complementary", { name: "Financial summary" });
+    await expect(summary.getByText("Sales tax (12%)")).toBeVisible();
+    await expect(summary.getByText("$560.00")).toBeVisible();
+    await expectAxeClean(page);
+
+    await tax.click();
+    await expect(tax).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByText("No sales tax is added to this budget.")).toBeVisible();
+    await expect(summary.getByText("Sales tax (none)")).toBeVisible();
+    await expect(summary.getByText("$560.00")).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Preview" }).click();
+    await expect(page.getByRole("article").getByText("Sales tax (none)")).toBeVisible();
+    await page.getByRole("button", { name: "Confirm submission" }).click();
+    await page
+      .getByRole("alertdialog", { name: "Submit $500.00?" })
+      .getByRole("button", { name: "Submit request" })
+      .click();
+    await page.waitForURL(/\/annual\/[0-9a-f-]+\?done=submitted$/);
+    await expect(page.getByText("Sales tax (none)").first()).toBeVisible();
+  });
+
   test("AC-14 Other suggests a close match before creating a proposed department", async ({
     page,
   }) => {

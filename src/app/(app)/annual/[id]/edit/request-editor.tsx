@@ -37,11 +37,12 @@ import {
 import { useClearErrorOnEdit } from "@/components/ui/use-clear-error-on-edit";
 import { adminCopy } from "@/copy/admin";
 import { annualCopy } from "@/copy/annual";
-import { formErrors, isHttpUrl, LIMITS, lineTotalOf } from "@/domain/annual/schema";
+import { draftTaxRate, formErrors, isHttpUrl, LIMITS, lineTotalOf } from "@/domain/annual/schema";
 import type { ActionState } from "@/lib/action-state";
 import { cn } from "@/lib/cn";
 import {
   formatCAD,
+  isZeroTaxRate,
   sumCents,
   taxRateToPercent,
   totalForward,
@@ -63,7 +64,13 @@ type LineValues = {
   link: string;
   notes: string;
 };
-type FormValues = { title: string; justification: string; lines: LineValues[] };
+type FormValues = {
+  title: string;
+  justification: string;
+  lines: LineValues[];
+  /** Sales tax on the whole budget; only a draft can change it (2026-11-13). */
+  addsSalesTax: boolean;
+};
 
 type RequestInfo = {
   id: string;
@@ -74,7 +81,10 @@ type RequestInfo = {
   requesterName: string;
   alsoEditing: string[];
   editsRemaining: number;
+  /** The rate in use: the snapshot once submitted, otherwise the draft's rate. */
   rate: string;
+  /** The Settings sales tax rate, which the draft's sales tax switch adds. */
+  salesTaxRate: string;
   totals: TaxBreakdown;
   /** The accountant's question, while responding to a return for clarification (FR-17). */
   question: string | null;
@@ -133,10 +143,12 @@ export function RequestEditor({
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
 
-  const totals = useMemo(
-    () => liveTotals(values.lines ?? [], request.rate),
-    [values, request.rate],
-  );
+  // A draft's rate follows its sales tax switch; a submitted request keeps its snapshot.
+  const rate =
+    mode === "draft"
+      ? draftTaxRate(request.salesTaxRate, values.addsSalesTax !== false)
+      : request.rate;
+  const totals = useMemo(() => liveTotals(values.lines ?? [], rate), [values, rate]);
 
   // Restore values kept on this device if they belong to the version we loaded.
   useEffect(() => {
@@ -348,12 +360,22 @@ export function RequestEditor({
 
           {step === 0 && <DetailsStep form={form} values={values} />}
           {step === 1 && (
-            <ItemsStep form={form} lines={lines} values={values} rate={request.rate} />
+            <ItemsStep
+              form={form}
+              lines={lines}
+              values={values}
+              rate={rate}
+              taxSwitch={
+                mode === "draft"
+                  ? { on: values.addsSalesTax !== false, rate: request.salesTaxRate }
+                  : null
+              }
+            />
           )}
           {step === 2 && (
             <PreviewStep
               mode={mode}
-              request={request}
+              request={{ ...request, rate }}
               values={values}
               totals={mode === "draft" ? serverTotals : totals}
               version={version}
@@ -424,7 +446,7 @@ export function RequestEditor({
         {step < 2 && (
           <SummaryPanel
             totals={totals}
-            rate={request.rate}
+            rate={rate}
             save={mode === "draft" ? save : null}
             onRetry={() => void saveNow()}
             onPreview={step === 1 ? () => void goToPreview() : undefined}
@@ -524,6 +546,57 @@ function DetailsStep({ form, values }: { form: UseFormReturn<FormValues>; values
 
 // ---------------------------------------------------------------- step 2: items
 
+/**
+ * Sales tax for the whole budget, like a purchase request's (2026-11-07): on by default at
+ * the Settings rate; off adds none. Drafts only; submission snapshots the choice.
+ */
+function SalesTaxSwitch({
+  form,
+  on,
+  rate,
+}: {
+  form: UseFormReturn<FormValues>;
+  on: boolean;
+  rate: string;
+}) {
+  const id = useId();
+  return (
+    <div
+      data-tour="annual-tax-switch"
+      className="flex items-center justify-between gap-4 rounded-control bg-surface-2 p-4"
+    >
+      <div className="min-w-0 space-y-0.5">
+        <p id={`${id}-label`} className="text-base font-semibold">
+          {f.salesTax(taxRateToPercent(rate))}
+        </p>
+        <p id={`${id}-hint`} className="text-sm text-fg-muted">
+          {on ? f.salesTaxOnHint : f.salesTaxOffHint}
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-labelledby={`${id}-label`}
+        aria-describedby={`${id}-hint`}
+        onClick={() => form.setValue("addsSalesTax", !on, { shouldDirty: true })}
+        className={cn(
+          "relative h-8 w-[52px] shrink-0 cursor-pointer rounded-full transition-colors duration-fast motion-reduce:transition-none",
+          on ? "bg-accent" : "bg-border-strong",
+        )}
+      >
+        <span
+          aria-hidden="true"
+          className={cn(
+            "absolute top-[3px] left-[3px] size-[26px] rounded-full bg-white transition-transform duration-fast motion-reduce:transition-none",
+            on && "translate-x-5",
+          )}
+        />
+      </button>
+    </div>
+  );
+}
+
 type Lines = ReturnType<typeof useFieldArray<FormValues, "lines">>;
 
 /** A filled field in the item cards (design approved 2026-11-13). */
@@ -538,11 +611,14 @@ function ItemsStep({
   lines,
   values,
   rate,
+  taxSwitch,
 }: {
   form: UseFormReturn<FormValues>;
   lines: Lines;
   values: FormValues;
   rate: string;
+  /** The draft's sales tax switch; null once submitted, when the rate is fixed. */
+  taxSwitch: { on: boolean; rate: string } | null;
 }) {
   const [removing, setRemoving] = useState<number | null>(null);
   const listError =
@@ -577,7 +653,9 @@ function ItemsStep({
     <div className="@container space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-wrap items-center gap-x-3">
-          <p className="text-sm text-fg-muted">{f.itemsIntro(taxRateToPercent(rate))}</p>
+          <p className="text-sm text-fg-muted">
+            {isZeroTaxRate(rate) ? f.itemsIntroNoTax : f.itemsIntro(taxRateToPercent(rate))}
+          </p>
           <HelpPanel topic="tax" />
         </div>
         {count > 0 && (
@@ -586,6 +664,7 @@ function ItemsStep({
           </span>
         )}
       </div>
+      {taxSwitch && <SalesTaxSwitch form={form} on={taxSwitch.on} rate={taxSwitch.rate} />}
       {listError && (
         <p role="alert" className="text-sm text-danger">
           {listError}

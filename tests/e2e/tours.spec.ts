@@ -50,7 +50,7 @@ test.describe("Guided tours", () => {
 
     await page.waitForURL(/\/annual\/new$/);
     await expectStep(page, "Pick your department");
-    await expect(card(page).getByText("Step 1 of 8")).toBeVisible();
+    await expect(card(page).getByText("Step 1 of 9")).toBeVisible();
     await expect(card(page).getByRole("heading")).toBeFocused();
     await expectAxeClean(page);
 
@@ -63,7 +63,7 @@ test.describe("Guided tours", () => {
     await page.locator('[data-tour="annual-continue"] button').click();
     await page.waitForURL(/\/annual\/[0-9a-f-]+\/edit$/);
     await expectStep(page, "Give it a title and say why");
-    await expect(card(page).getByText("Step 3 of 8")).toBeVisible();
+    await expect(card(page).getByText("Step 3 of 9")).toBeVisible();
     await expectAxeClean(page);
 
     await page.getByLabel("Request title").fill("Tour budget");
@@ -71,6 +71,13 @@ test.describe("Guided tours", () => {
     await expectStep(page, "Press Next");
     await page.locator('[data-tour="annual-next"]').click();
     await expectStep(page, "One line per item");
+
+    // The sales tax switch: what it is, and when to turn it off.
+    await card(page).getByRole("button", { name: "Next" }).click();
+    await expectStep(page, "Sales tax: on or off");
+    await expect(card(page).getByText(/Turn it off only if nothing in your budget/)).toBeVisible();
+    await expect(page.locator('[data-tour="annual-tax-switch"]')).toBeVisible();
+    await expectAxeClean(page);
 
     await card(page).getByRole("button", { name: "End tour" }).click();
     await expect(card(page)).toHaveCount(0);

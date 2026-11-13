@@ -5,7 +5,7 @@ import { Badge, EmptyState, Section } from "@/components/ui/display";
 import { linkClass } from "@/components/ui/styles";
 import { adminCopy } from "@/copy/admin";
 import type { listCycles } from "@/domain/cycles/queries";
-import { formatCAD, taxRateToPercent } from "@/lib/money";
+import { formatCAD } from "@/lib/money";
 import { formatDateTime } from "@/lib/time-zone";
 import { createCycleAction } from "./actions";
 import { CYCLE_TONE } from "./tones";
@@ -90,15 +90,11 @@ export function CycleList({
   );
 }
 
-export function CreateCycleForm({
-  nextYear,
-  zone,
-  taxRate,
-}: {
-  nextYear: number;
-  zone: string;
-  taxRate: string;
-}) {
+/**
+ * A new budget year. There's no tax rate here: annual budgets and expenses both use the
+ * one rate in Admin → Settings (docs/decisions.md 2026-11-13).
+ */
+export function CreateCycleForm({ nextYear, zone }: { nextYear: number; zone: string }) {
   return (
     <Section title={c.createHeading} id="create-cycle" icon={CalendarPlus} tone="violet">
       <ActionForm action={createCycleAction} resetOnSuccess aria-label={c.createHeading}>
@@ -130,14 +126,6 @@ export function CreateCycleForm({
             type="datetime-local"
             label={c.deadline}
             hint={c.deadlineHint(zone)}
-            required
-          />
-          <TextField
-            name="taxRatePercent"
-            inputMode="decimal"
-            label={c.taxRate}
-            hint={c.taxRateHint}
-            defaultValue={taxRateToPercent(taxRate)}
             required
           />
           <TextField name="boardTotal" inputMode="decimal" label={c.boardTotal} />

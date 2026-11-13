@@ -18,7 +18,7 @@ import { getCycleDetail } from "@/domain/cycles/queries";
 import { deadlineEditable } from "@/domain/cycles/status";
 import { getChurchTimeZone } from "@/domain/settings";
 import { authorize } from "@/lib/authz";
-import { formatCAD, formatTaxRate, taxRateToPercent } from "@/lib/money";
+import { formatCAD } from "@/lib/money";
 import { getViewer } from "@/lib/viewer";
 import { formatDate, formatDateTime, utcToZonedLocal } from "@/lib/time-zone";
 import {
@@ -68,7 +68,6 @@ export async function CycleDetail({
         <SettingsRow label={c.spendingPeriodEnd}>
           {formatDate(cycle.spendingPeriodEnd ?? `${cycle.budgetYear}-12-31`)}
         </SettingsRow>
-        <SettingsRow label={c.taxRate}>{formatTaxRate(cycle.defaultTaxRate)}</SettingsRow>
         <SettingsRow label={c.boardTotal}>
           <span className="tabular">
             {cycle.boardTotalCents === null
@@ -96,14 +95,6 @@ export async function CycleDetail({
                 type="date"
                 label={c.startDate}
                 defaultValue={cycle.startDate}
-                required
-              />
-              <TextField
-                name="taxRatePercent"
-                inputMode="decimal"
-                label={c.taxRate}
-                hint={c.taxRateEditHint}
-                defaultValue={taxRateToPercent(cycle.defaultTaxRate)}
                 required
               />
               <TextField

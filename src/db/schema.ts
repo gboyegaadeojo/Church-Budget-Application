@@ -563,6 +563,8 @@ export const budgetRequests = pgTable(
     title: text("title").notNull(),
     justification: text("justification").notNull().default(""),
     status: annualStatusEnum("status").notNull().default("draft"),
+    /** The requester's sales tax choice for the whole request; off snapshots 0% (2026-11-13). */
+    addsSalesTax: boolean("adds_sales_tax").notNull().default(true),
     taxRate: taxRate("tax_rate"),
     requestedSubtotalCents: cents("requested_subtotal_cents"),
     requestedTaxCents: cents("requested_tax_cents"),

@@ -77,6 +77,11 @@ export const toursCopy = {
         body: "Type the item, how many, and the price before tax. Its total works itself out. Done folds it to one line; tap a line to change it. Add item gives you another.",
         waiting: "Go to Budget items to carry on.",
       },
+      tax: {
+        title: "Sales tax: on or off",
+        body: "Sales tax is the tax a store adds when you buy something. Leave this on for most budgets, so the app adds it to your total. Turn it off only if nothing in your budget is charged sales tax, like honorariums or gifts to people. You can change it until you submit.",
+        waiting: "Go to Budget items to carry on.",
+      },
       summary: {
         title: "Tax and total are done for you",
         body: "The sales tax and the total update as you type. Your draft saves itself, so you can leave and come back from Home.",
@@ -119,7 +124,7 @@ export const toursCopy = {
       },
       tax: {
         title: "Sales tax: on or off",
-        body: "Enter prices before tax. Leave sales tax on for most purchases. Turn it off for an honorarium, money sent to a person, or anything sold without tax.",
+        body: "Sales tax is the tax a store adds when you buy something. Enter prices before tax and leave this on for most purchases, so the app adds it. Turn it off for an honorarium, money sent to a person, or anything sold without tax.",
         waiting: "Go to What are you buying? to carry on.",
       },
       send: {

@@ -433,8 +433,6 @@ export const adminCopy = {
     startDate: "Start date",
     deadline: "Submission deadline",
     deadlineHint: (zone: string) => `Church time (${zone}).`,
-    taxRate: "Sales tax rate (%)",
-    taxRateHint: "Requests snapshot the rate when they're submitted.",
     boardTotal: "Board-approved church total, incl. tax",
     boardReference: "Board approval reference",
     create: "Create cycle",
@@ -446,8 +444,6 @@ export const adminCopy = {
     spendingPeriodEnd: "Spending period ends",
     spendingPeriodEndHint:
       "When spending for this year should end. Optional; blank means Dec 31 of the budget year. The accountant is reminded to close the year after it.",
-    taxRateEditHint:
-      "A new rate applies to requests submitted from now on; submitted ones keep theirs.",
     save: "Save details",
     saved: "Details saved.",
     unchanged: "Nothing changed.",
@@ -541,7 +537,8 @@ export const adminCopy = {
     },
     taxHeading: "Sales tax",
     taxRate: "Sales tax rate (%)",
-    taxWarning: "Changes apply to new submissions only. Submitted requests keep their rate.",
+    taxWarning:
+      "Used for annual budgets and purchase requests. Changes apply to new submissions only. Submitted requests keep their rate.",
     taxSave: "Change tax rate",
     taxConfirmTitle: (rate: string) => `Change the sales tax rate to ${rate}?`,
     taxConfirmBody:
