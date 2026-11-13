@@ -1,7 +1,18 @@
 import { and, eq, sql, type SQL } from "drizzle-orm";
 import { expenseSubmissions } from "@/db/schema";
 import { parseCAD } from "@/lib/money";
+import { intlZone, MANITOBA_FIXED_FROM } from "@/lib/time-zone";
 import { EXPENSE_STATUSES, EXPENSE_TYPES, type ExpenseStatus, type ExpenseType } from "./status";
+
+/**
+ * The SQL time zone for a timestamp, with the app's Manitoba rule (lib/time-zone.ts), so
+ * a date filter matches the dates the app shows whatever the database's time-zone data.
+ */
+function sqlZone(column: SQL | typeof expenseSubmissions.submittedAt, zone: string): SQL {
+  const fixed = intlZone(MANITOBA_FIXED_FROM, zone);
+  if (fixed === zone) return sql`${zone}`;
+  return sql`(case when ${column} >= ${MANITOBA_FIXED_FROM.toISOString()}::timestamptz then ${fixed} else ${zone} end)`;
+}
 
 /**
  * Search and filters shared by every expense list (FR-48): department, type, status, payee
@@ -112,7 +123,7 @@ export function listFilterConditions(
     );
   }
 
-  const day = sql`(${s.submittedAt} at time zone ${zone})::date`;
+  const day = sql`(${s.submittedAt} at time zone ${sqlZone(s.submittedAt, zone)})::date`;
   const from = validDate(filters.from);
   if (from) conditions.push(sql`${day} >= ${from}::date`);
   const to = validDate(filters.to);

@@ -9,6 +9,7 @@ import type {
 } from "@/domain/home/dashboards";
 import { cn } from "@/lib/cn";
 import { formatCAD } from "@/lib/money";
+import { formatShortDate } from "@/lib/time-zone";
 
 const a = homeCopy.accountantHome;
 
@@ -36,11 +37,7 @@ export function AccountantTiles({
   const daysLeft = season
     ? Math.max(0, Math.ceil((season.deadline.getTime() - now.getTime()) / 86_400_000))
     : null;
-  const deadline = season
-    ? new Intl.DateTimeFormat("en-CA", { timeZone: zone, month: "short", day: "numeric" }).format(
-        season.deadline,
-      )
-    : null;
+  const deadline = season ? formatShortDate(season.deadline, zone) : null;
   const watch = year?.watch[0];
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
