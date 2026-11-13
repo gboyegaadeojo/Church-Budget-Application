@@ -4,6 +4,34 @@
  */
 export const CHURCH_TIME_ZONE_DEFAULT = "America/Winnipeg";
 
+/**
+ * Manitoba stopped changing clocks on 2026-11-01: it stays on UTC−5 all year (announced
+ * 2026-09-17). The moment it would have fallen back was 2:00 a.m. CDT, 07:00 UTC.
+ * Runtimes disagree about this (older time-zone data still falls back to UTC−6, newer
+ * data calls it permanent "CDT"), so the app applies the rule itself
+ * (docs/decisions.md 2026-11-13).
+ */
+const WINNIPEG = "America/Winnipeg";
+export const MANITOBA_FIXED_FROM = new Date(Date.UTC(2026, 10, 1, 7));
+/** IANA's fixed UTC−5 zone (its sign is reversed by convention). */
+const FIXED_UTC_MINUS_5 = "Etc/GMT+5";
+/** Manitoba's label from Nov 1, 2026: Central time, without a seasonal letter. */
+const MANITOBA_LABEL = "CT";
+
+function isManitobaFixed(at: Date | number, zone: string): boolean {
+  const ms = typeof at === "number" ? at : at.getTime();
+  return zone === WINNIPEG && ms >= MANITOBA_FIXED_FROM.getTime();
+}
+
+/**
+ * The zone to give `Intl` when showing `at` in the church `zone`. It's the zone itself,
+ * except Winnipeg from Nov 1, 2026, which is a fixed UTC−5 whatever the runtime's data.
+ * Every date shown in the church zone goes through this.
+ */
+export function intlZone(at: Date | number, zone: string): string {
+  return isManitobaFixed(at, zone) ? FIXED_UTC_MINUS_5 : zone;
+}
+
 /** Whether `zone` is an IANA time zone this runtime knows, e.g. "America/Winnipeg". */
 export function isValidTimeZone(zone: string): boolean {
   if (!zone.includes("/") && zone !== "UTC") return false;
@@ -29,7 +57,7 @@ const LOCAL_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 /** The wall-clock reading of `at` in `zone`, as if it were UTC (milliseconds). */
 function wallClockMs(at: number, zone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: zone,
+    timeZone: intlZone(at, zone),
     hourCycle: "h23",
     year: "numeric",
     month: "2-digit",
@@ -86,10 +114,10 @@ export function formatDate(isoDate: string): string {
   );
 }
 
-/** "Nov 30, 2026, 5:00 p.m. CST": a date and time in the church time zone (en-CA). */
+/** "Nov 30, 2026, 5:00 p.m. CT": a date and time in the church time zone (en-CA). */
 export function formatDateTime(date: Date, zone: string): string {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: zone,
+    timeZone: intlZone(date, zone),
     dateStyle: "medium",
     timeStyle: "short",
   })
@@ -100,13 +128,14 @@ export function formatDateTime(date: Date, zone: string): string {
 /** "Nov 30": a short day in the church time zone, for progress steps in emails. */
 export function formatShortDate(date: Date, zone: string): string {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: zone,
+    timeZone: intlZone(date, zone),
     month: "short",
     day: "numeric",
   }).format(date);
 }
 
 function zoneAbbreviation(date: Date, zone: string): string {
+  if (isManitobaFixed(date, zone)) return MANITOBA_LABEL;
   return (
     new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "short" })
       .formatToParts(date)

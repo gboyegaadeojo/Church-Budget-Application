@@ -50,7 +50,7 @@ import { getChurchTimeZone } from "@/domain/settings";
 import { authorize } from "@/lib/authz";
 import { cn } from "@/lib/cn";
 import type { Viewer } from "@/lib/roles";
-import { formatDateTime } from "@/lib/time-zone";
+import { formatDateTime, intlZone } from "@/lib/time-zone";
 import { getViewer } from "@/lib/viewer";
 
 const h = copy.home;
@@ -71,9 +71,11 @@ export default function HomePage() {
 /** "morning" before noon, "afternoon" before 6 p.m., else "evening", in the church's zone. */
 function partOfDay(now: Date, zone: string): "morning" | "afternoon" | "evening" {
   const hour = Number(
-    new Intl.DateTimeFormat("en-CA", { timeZone: zone, hour: "numeric", hourCycle: "h23" }).format(
-      now,
-    ),
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: intlZone(now, zone),
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(now),
   );
   return hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
 }
@@ -123,7 +125,7 @@ async function HomeContent() {
         <div className="min-w-0">
           <p className="text-sm text-fg-muted">
             {new Intl.DateTimeFormat("en-CA", {
-              timeZone: zone,
+              timeZone: intlZone(now, zone),
               weekday: "long",
               month: "long",
               day: "numeric",
