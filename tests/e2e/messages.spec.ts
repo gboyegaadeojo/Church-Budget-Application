@@ -29,8 +29,8 @@ test("AC-59 a leader and the accountant exchange messages on a request", async (
   await sam.getByRole("button", { name: "Next" }).click();
   const row = sam.getByRole("group", { name: "Item 1" });
   await row.getByLabel("Item name").fill("Cabin rental");
-  await row.getByLabel("Quantity").fill("1");
-  await row.getByLabel("Unit price (before tax)").fill("800.00");
+  await row.getByLabel("How many").fill("1");
+  await row.getByLabel("Price each, before tax").fill("800.00");
   await sam.getByRole("button", { name: "Preview" }).click();
   await sam.getByRole("button", { name: "Confirm submission" }).click();
   await sam.getByRole("button", { name: "Submit request" }).click();

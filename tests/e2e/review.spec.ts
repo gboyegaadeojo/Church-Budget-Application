@@ -30,8 +30,8 @@ async function submitAsSam(browser: Browser, department: string): Promise<string
   await page.getByRole("button", { name: "Next" }).click();
   const row = page.getByRole("group", { name: "Item 1" });
   await row.getByLabel("Item name").fill("Microphone");
-  await row.getByLabel("Quantity").fill("1");
-  await row.getByLabel("Unit price (before tax)").fill("1025.00");
+  await row.getByLabel("How many").fill("1");
+  await row.getByLabel("Price each, before tax").fill("1025.00");
   await page.getByRole("button", { name: "Preview" }).click();
   await page.getByRole("button", { name: "Confirm submission" }).click();
   await page.getByRole("button", { name: "Submit request" }).click();
@@ -210,7 +210,7 @@ test.describe("Accountant review (Stage 1 step 6)", () => {
     await page.getByRole("button", { name: "Next" }).click();
     const row = page.getByRole("group", { name: "Item 1" });
     await row.getByLabel("Item name").fill("Venue");
-    await row.getByLabel("Unit price (before tax)").fill("500");
+    await row.getByLabel("Price each, before tax").fill("500");
     await page.getByRole("button", { name: "Preview" }).click();
     await page.getByRole("button", { name: "Confirm submission" }).click();
     await page.getByRole("button", { name: "Submit request" }).click();

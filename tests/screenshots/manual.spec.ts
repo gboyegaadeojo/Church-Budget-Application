@@ -37,8 +37,8 @@ async function item(page: Page, n: number, name: string, quantity: string, price
   if (n > 1) await page.getByRole("button", { name: "Add item" }).click();
   const row = page.getByRole("group", { name: `Item ${n}` });
   await row.getByLabel("Item name").fill(name);
-  await row.getByLabel("Quantity").fill(quantity);
-  await row.getByLabel("Unit price (before tax)").fill(price);
+  await row.getByLabel("How many").fill(quantity);
+  await row.getByLabel("Price each, before tax").fill(price);
 }
 
 /** A budget through details and items to submitted; returns its id. */

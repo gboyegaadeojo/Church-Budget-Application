@@ -74,7 +74,7 @@ export const toursCopy = {
       },
       items: {
         title: "One line per item",
-        body: "Type the item, how many, and the price before tax. The line total works itself out. Add item gives you another line.",
+        body: "Type the item, how many, and the price before tax. Its total works itself out. Done folds it to one line; tap a line to change it. Add item gives you another.",
         waiting: "Go to Budget items to carry on.",
       },
       summary: {
