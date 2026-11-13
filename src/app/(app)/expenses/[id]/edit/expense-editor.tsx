@@ -26,6 +26,7 @@ import { FormMessage } from "@/components/ui/action-form";
 import { TONE, type Tone } from "@/components/ui/tone";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { buttonClass } from "@/components/ui/styles";
+import { useClearErrorOnEdit } from "@/components/ui/use-clear-error-on-edit";
 import { adminCopy } from "@/copy/admin";
 import { copy } from "@/copy/en-CA";
 import { expensesCopy } from "@/copy/expenses";
@@ -239,6 +240,7 @@ export function ExpenseEditor({
   });
   const { control, getValues, setError, clearErrors } = form;
   const values = useWatch({ control }) as ExpenseFormValues;
+  useClearErrorOnEdit(form);
   const [step, setStep] = useState<number | "preview">(0);
   const [version, setVersion] = useState(info.version);
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");

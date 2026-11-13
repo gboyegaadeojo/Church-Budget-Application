@@ -219,6 +219,20 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     await expect(page.getByText("Explain what the budget is for.")).toBeVisible();
     await page.getByRole("button", { name: "Next" }).click();
     await expect(row.getByText("Explain a $0.00 item in its notes.")).toBeVisible();
+
+    // A message goes as soon as its field is edited, so an autosave that caught a
+    // half-typed price doesn't leave its message behind once the price is put right.
+    const price = row.getByLabel("Unit price (before tax)");
+    await price.fill("1590.485");
+    await expect(row.getByText(/Enter a price before tax/)).toBeVisible();
+    await price.fill("1590.48");
+    await expect(row.getByText(/Enter a price before tax/)).toHaveCount(0);
+    await expect(price).not.toHaveAttribute("aria-invalid");
+    await expect(row.getByText("$1,590.48")).toBeVisible();
+    await expect(
+      page.getByRole("complementary", { name: "Financial summary" }).getByText("Saved just now"),
+    ).toBeVisible();
+    await expect(row.getByText(/Enter a price before tax/)).toHaveCount(0);
   });
 
   test("AC-41 AC-42 AC-45 AC-60 two leaders share two edits", async ({ page, browser }) => {
@@ -307,8 +321,11 @@ test.describe("Annual budget form (Stage 1 step 5)", () => {
     // Gina is Media Team's seeded Primary, with Sam Lee as Backup 1. The nomination
     // itself is covered by the integration tests, so seeded leaders stay as they are.
     const panel = page.getByRole("region", { name: "Media Team: leaders" });
-    // Gina leads several departments, so each one's leaders open from its row.
-    await panel.getByRole("heading", { name: "Media Team: leaders" }).click();
+    // With several departments each one's leaders open from its row; with one (this file
+    // run on its own, before other tests make Gina a Primary) the panel starts open.
+    if ((await panel.locator("details").first().getAttribute("open")) === null) {
+      await panel.getByRole("heading", { name: "Media Team: leaders" }).click();
+    }
     const gina = panel.getByRole("listitem").filter({ hasText: "Gina Admin" });
     await expect(gina.getByText("Primary", { exact: true })).toBeVisible();
     const sam = panel.getByRole("listitem").filter({ hasText: "Sam Lee" });
