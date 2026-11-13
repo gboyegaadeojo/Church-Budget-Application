@@ -31,6 +31,7 @@ import {
   linkClass,
   textareaClass,
 } from "@/components/ui/styles";
+import { useClearErrorOnEdit } from "@/components/ui/use-clear-error-on-edit";
 import { adminCopy } from "@/copy/admin";
 import { annualCopy } from "@/copy/annual";
 import { formErrors, LIMITS, lineTotalOf } from "@/domain/annual/schema";
@@ -113,6 +114,7 @@ export function RequestEditor({
   });
   const { control, getValues, setError, clearErrors, reset } = form;
   const values = useWatch({ control }) as FormValues;
+  useClearErrorOnEdit(form);
 
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [save, setSave] = useState<SaveState>({ kind: "idle" });
