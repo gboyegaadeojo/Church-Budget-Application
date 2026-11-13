@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   appSettings,
   auditEvents,
+  budgetCycles,
   budgetRequests,
   deadlineExtensions,
   departments,
@@ -527,6 +528,112 @@ describe("submitting (FR-10, FR-11)", () => {
         .set({ value: "0.1200" })
         .where(eq(appSettings.key, "sales_tax_rate"));
     }
+  });
+});
+
+/** The Settings rate and the requester's switch (docs/decisions.md 2026-11-13). */
+describe("sales tax on annual budgets", () => {
+  const setSettingsRate = (rate: string) =>
+    db
+      .insert(appSettings)
+      .values({ key: "sales_tax_rate", value: rate })
+      .onConflictDoUpdate({ target: appSettings.key, set: { value: rate } });
+
+  it("a draft and its submission use the Settings rate, never the cycle's", async () => {
+    await db
+      .update(budgetCycles)
+      .set({ defaultTaxRate: "0.0500" })
+      .where(eq(budgetCycles.id, cycleId));
+    try {
+      const { me, requestId, version } = await readyDraft();
+      expect(await getRequestView(db, me, requestId)).toMatchObject({
+        rate: "0.1200",
+        salesTaxRate: "0.1200",
+        addsSalesTax: true,
+        totals: { subtotal: 102_500, tax: 12_300, total: 114_800 },
+      });
+      const sent = await submit(me, requestId, version);
+      expect(sent).toMatchObject({ rate: "0.1200", totals: { tax: 12_300 } });
+      expect(await requestRow(requestId)).toMatchObject({
+        taxRate: "0.1200",
+        requestedTaxCents: 12_300,
+      });
+    } finally {
+      await db
+        .update(budgetCycles)
+        .set({ defaultTaxRate: "0.1200" })
+        .where(eq(budgetCycles.id, cycleId));
+    }
+  });
+
+  it("turning sales tax off adds none, and submission snapshots 0%", async () => {
+    const { me, requestId, version } = await readyDraft();
+    const saved = await run((tx) =>
+      saveDraft(tx, me, { id: requestId, version, ...MIXER, addsSalesTax: false }),
+    );
+    expect(saved).toMatchObject({
+      rate: "0.0000",
+      totals: { subtotal: 102_500, tax: 0, total: 102_500 },
+    });
+    const saves = await db
+      .select({ details: auditEvents.details })
+      .from(auditEvents)
+      .where(
+        and(eq(auditEvents.eventType, "annual.draft_saved"), eq(auditEvents.entityId, requestId)),
+      );
+    // Only the save that changed the switch records it.
+    expect(saves.filter((s) => JSON.stringify(s.details).includes("addsSalesTax"))).toEqual([
+      {
+        details: expect.objectContaining({
+          before: { addsSalesTax: true },
+          after: expect.objectContaining({ addsSalesTax: false }),
+        }),
+      },
+    ]);
+
+    await submit(me, requestId, saved.version);
+    expect(await requestRow(requestId)).toMatchObject({
+      addsSalesTax: false,
+      taxRate: "0.0000",
+      requestedTaxCents: 0,
+      requestedTotalCents: 102_500,
+    });
+  });
+
+  it("a Settings rate change reaches drafts but never a submitted budget", async () => {
+    const sent = await readyDraft();
+    await submit(sent.me, sent.requestId, sent.version);
+    const draft = await readyDraft();
+    await setSettingsRate("0.0700");
+    try {
+      expect(await getRequestView(db, sent.me, sent.requestId)).toMatchObject({
+        rate: "0.1200",
+        totals: { tax: 12_300 },
+      });
+      expect(await getRequestView(db, draft.me, draft.requestId)).toMatchObject({
+        rate: "0.0700",
+        totals: { tax: 7_175 },
+      });
+    } finally {
+      await setSettingsRate("0.1200");
+    }
+  });
+
+  it("a revision can't turn sales tax off: the submitted rate stays", async () => {
+    const { me, requestId, version } = await readyDraft();
+    await submit(me, requestId, version);
+    const revised = await run((tx) =>
+      reviseRequest(tx, me, {
+        id: requestId,
+        version: version + 1,
+        idempotencyKey: randomUUID(),
+        ...MIXER,
+        title: "Sound desk, revised",
+        addsSalesTax: false,
+      }),
+    );
+    expect(revised).toMatchObject({ rate: "0.1200", totals: { tax: 12_300 } });
+    expect(await requestRow(requestId)).toMatchObject({ addsSalesTax: true, taxRate: "0.1200" });
   });
 });
 

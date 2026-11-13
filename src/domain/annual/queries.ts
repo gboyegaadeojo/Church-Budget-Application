@@ -13,7 +13,7 @@ import { effectiveDeadline } from "@/domain/cycles/service";
 import { departmentPolicy } from "@/domain/users/ministry-departments";
 import { authorize, type Subject } from "@/lib/authz";
 import type { TaxBreakdown } from "@/lib/money";
-import type { LineContent } from "./schema";
+import { draftTaxRate, type LineContent } from "./schema";
 import { unreadCounts } from "./messages";
 import { hiddenDecisions } from "./release";
 import {
@@ -174,8 +174,15 @@ export type RequestView = {
   representatives: { id: string; name: string }[];
   submittedAt: Date | null;
   lines: LineContent[];
-  /** The snapshotted rate once submitted; the current Settings rate for a draft (FR-05). */
+  /**
+   * The snapshotted rate once submitted. For a draft, the Settings rate, or 0% when the
+   * requester turned sales tax off (docs/decisions.md 2026-11-13).
+   */
   rate: string;
+  /** The Settings sales tax rate: what the draft's switch adds when it's on. */
+  salesTaxRate: string;
+  /** The requester's sales tax choice; only a draft can change it. */
+  addsSalesTax: boolean;
   totals: TaxBreakdown;
   editCount: number;
   editsRemaining: number;
@@ -235,7 +242,8 @@ export async function getRequestView(
     .innerJoin(users, eq(users.id, userDepartments.userId))
     .where(and(eq(userDepartments.departmentId, request.departmentId), eq(users.active, true)))
     .orderBy(asc(users.displayName));
-  const rate = request.taxRate ?? (await currentTaxRate(tx));
+  const salesTaxRate = await currentTaxRate(tx);
+  const rate = request.taxRate ?? draftTaxRate(salesTaxRate, request.addsSalesTax);
   const hidden = await hiddenDecisions(tx, actor, [request.id]);
   const held = hidden.has(request.id);
   return {
@@ -253,6 +261,8 @@ export async function getRequestView(
     submittedAt: request.submittedAt,
     lines,
     rate,
+    salesTaxRate,
+    addsSalesTax: request.addsSalesTax,
     totals: totalsOf(lines, rate),
     editCount: request.editCount,
     editsRemaining: editsRemaining(request),

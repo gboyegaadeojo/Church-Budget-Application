@@ -343,6 +343,12 @@ export const annualCopy = {
     items: "Budget items",
     itemsIntro: (percent: string) =>
       `Enter prices before tax. ${percent}% sales tax is added to the total.`,
+    itemsIntroNoTax: "Enter prices. No sales tax is added to this budget.",
+    /** The whole-budget sales tax switch, drafts only (docs/decisions.md 2026-11-13). */
+    salesTax: (percent: string) => `Add ${percent}% sales tax`,
+    salesTaxOnHint:
+      "On for most budgets. Turn it off if nothing in this budget is charged sales tax, like honorariums or gifts to people.",
+    salesTaxOffHint: "Off: no sales tax on this whole budget.",
     item: (n: number) => `Item ${n}`,
     itemName: "Item name",
     quantity: "Quantity",

@@ -4,6 +4,7 @@ import {
   lineTotal,
   MAX_QUANTITY,
   MAX_UNIT_PRICE_CENTS,
+  NO_TAX_RATE,
   parseCAD,
   sumCents,
   totalForward,
@@ -98,10 +99,13 @@ export const requestContentSchema = z
       .pipe(z.string().max(LIMITS.justification, e.justificationTooLong))
       .default(""),
     lines: z.array(lineSchema).max(LIMITS.lines, e.tooManyLines).default([]),
+    /** Add sales tax (the default), or none for the whole request. Drafts only. */
+    addsSalesTax: z.boolean().default(true),
   })
   .transform((content) => ({
     title: content.title,
     justification: content.justification,
+    addsSalesTax: content.addsSalesTax,
     lines: content.lines
       .filter((l) => !l.blank)
       .map((l): LineContent => ({
@@ -130,6 +134,15 @@ export function submissionErrors(content: RequestContent): Record<string, string
     if (line.unitPriceCents === 0 && !line.notes) errors[`lines.${i}.notes`] = e.zeroPriceNeedsNote;
   });
   return errors;
+}
+
+/**
+ * The rate a request that isn't submitted yet uses: the sales tax rate in Settings, or
+ * none when the requester turned sales tax off (docs/decisions.md 2026-11-13). Submission
+ * snapshots it; a submitted request always keeps its snapshot.
+ */
+export function draftTaxRate(salesTaxRate: string, addsSalesTax: boolean): string {
+  return addsSalesTax ? salesTaxRate : NO_TAX_RATE;
 }
 
 /** Subtotal, tax once on the subtotal, and total (FR-07). The server's figures always win. */

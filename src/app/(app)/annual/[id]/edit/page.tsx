@@ -78,12 +78,14 @@ async function EditContent({
           alsoEditing: request.representatives.filter((r) => r.id !== viewer.id).map((r) => r.name),
           editsRemaining: request.editsRemaining,
           rate: request.rate,
+          salesTaxRate: request.salesTaxRate,
           totals: request.totals,
           question: request.decision?.kind === "returned" ? request.decision.reason : null,
         }}
         initial={{
           title: request.title,
           justification: request.justification,
+          addsSalesTax: request.addsSalesTax,
           lines: request.lines.map((line) => ({
             name: line.name,
             quantity: String(line.quantity),
